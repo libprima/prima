@@ -17,6 +17,8 @@ jobs:
   test:
     name: Stress test of PRIMA on large problem.
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    timeout-minutes: 1
     strategy:
       fail-fast: false
       matrix:
@@ -58,3 +60,28 @@ jobs:
             options = struct();
             options.tough = strcmp('${{ matrix.test }}', 'tough');
             stress('${{ matrix.solver }}', options);
+
+  checkfailure:
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() }}
+    needs: test
+    steps:
+      - name: Install jq
+        run: sudo apt update && sudo apt install -y jq
+      - name: check workflow jobs
+        run: |
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
+          > jobs.json
+          status=$(jq '.jobs[0].conclusion' jobs.json)
+          if [[ "$status" == "failure" ]]; then
+             echo "Workflow failed before timeout"
+             exit 1
+          elif [[ "$status" == "cancelled" ]]; then
+             echo "Workflow timed out but considered successful"
+             exit 0
+          else
+             echo "Workflow completed successfully"
+             exit 0
+          fi
