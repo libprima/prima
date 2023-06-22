@@ -79,6 +79,7 @@ jobs:
           start_time=$(date -u -d "$started_at" +%s)
           duration=$((end_time - start_time))
           timeout_seconds=$((350 * 60 - 60)) # 350 minutes in seconds (minus 60)
+          status=${status//\"/}
           echo $status
           if [[ $status == "failure" ]]; then
              echo "Workflow failed before timeout"
