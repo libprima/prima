@@ -18,7 +18,7 @@ jobs:
     name: Stress test of PRIMA on large problem.
     runs-on: ${{ matrix.os }}
     continue-on-error: true
-    timeout-minutes: 3
+    timeout-minutes: 350
     strategy:
       fail-fast: false
       matrix:
@@ -77,7 +77,7 @@ jobs:
           status=$(jq '.jobs[0].conclusion' jobs.json)
           end_time=$(date -u -d "$completed_at" +%s)
           duration=$((end_time - start_time))
-          timeout_seconds=$((3 * 60 - 60)) # 6 hours in seconds (minus 60)
+          timeout_seconds=$((350 * 60 - 60)) # 350 minutes in seconds (minus 60)
           if [[ "$status" == "failure" ]]; then
              echo "Workflow failed before timeout"
              exit 1

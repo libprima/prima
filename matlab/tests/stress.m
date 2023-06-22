@@ -33,32 +33,17 @@ random_seed = yw;
 if isfield(options, 'n')
     n = options.n;
 else
-    if tough_test
-        switch solver_name
-        case 'uobyqa'
-            n = 160; %200; %120;
-        case 'newuoa'
-            n = 1200; %1500; %1000;
-        case 'bobyqa'
-            n = 1200; %1500; %1000;
-        case 'lincoa'
-            n = 300; %400; %500;
-        case 'cobyla'
-            n = 300; %250; %400;
-        end
-    else
-        switch solver_name
-        case 'uobyqa'
-            n = 160; %200; %120;
-        case 'newuoa'
-            n = 650; %800; %500;
-        case 'bobyqa'
-            n = 650; %800; %500;
-        case 'lincoa'
-            n = 400; %300; %500;
-        case 'cobyla'
-            n = 150; %250;
-        end
+    switch solver_name
+    case 'uobyqa'
+        n = 220;
+    case 'newuoa'
+        n = 2000;
+    case 'bobyqa'
+        n = 2000;
+    case 'lincoa'
+        n = 2000;
+    case 'cobyla'
+        n = 2000;
     end
 end
 
@@ -76,9 +61,9 @@ end
 
 % Set the options for the test
 test_options = struct();
-test_options.maxfun = 200 * n;
+test_options.maxfun = 500 * n;
 test_options.rhobeg = 1;
-test_options.rhoend = 1.0e-7;  % In this test, the solvers normally exit with RHO reaching RHOEND, except for UOBYQA
+test_options.rhoend = 1.0e-7;
 test_options.iprint = 2;
 test_options.debug = true;
 
