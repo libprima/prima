@@ -80,10 +80,10 @@ jobs:
           duration=$((end_time - start_time))
           timeout_seconds=$((350 * 60 - 60)) # 350 minutes in seconds (minus 60)
           echo $status
-          if [[ "$status" == "failure" ]]; then
+          if [[ $status == "failure" ]]; then
              echo "Workflow failed before timeout"
              exit 1
-          elif [[ "$status" == "cancelled" ]]; then
+          elif [[ $status == "cancelled" ]]; then
             if [[ $duration -ge $timeout_seconds ]]; then
                  echo "Workflow timed out but considered successful"
                  exit 0
