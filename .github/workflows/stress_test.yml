@@ -61,7 +61,7 @@ jobs:
             options.tough = strcmp('${{ matrix.test }}', 'tough');
             stress('${{ matrix.solver }}', options);
 
-  check_status:
+  check_timeout:
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     needs: test
@@ -76,14 +76,15 @@ jobs:
           > jobs.json
           status=$(jq '.jobs[0].conclusion' jobs.json)
           end_time=$(date -u -d "$completed_at" +%s)
+          start_time=$(date -u -d "$started_at" +%s)
           duration=$((end_time - start_time))
           timeout_seconds=$((350 * 60 - 60)) # 350 minutes in seconds (minus 60)
           if [[ "$status" == "failure" ]]; then
              echo "Workflow failed before timeout"
              exit 1
           elif [[ "$status" == "cancelled" ]]; then
-          if [[ $duration -ge $timeout_seconds ]]; then
-             echo "Workflow timed out but considered successful"
+            if [[ $duration -ge $timeout_seconds ]]; then
+                 echo "Workflow timed out but considered successful"
                  exit 0
              else
                  echo "Workflow was cancelled due to other reasons"
