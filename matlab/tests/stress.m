@@ -35,13 +35,13 @@ if isfield(options, 'n')
 else
     switch solver_name
     case 'uobyqa'
-        n = 300;
+         = 250;
     case 'newuoa'
         n = 5000;
     case 'bobyqa'
         n = 5000;
     case 'lincoa'
-        n = 5000;
+        n = 2500;
     case 'cobyla'
         n = 5000;
     end
