@@ -63,4 +63,5 @@ jobs:
         #     options = struct();
         #     options.tough = strcmp('${{ matrix.test }}', 'tough');
         #     stress('${{ matrix.solver }}', options);
-        { timeout 10 matlab -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); opt.n=10; stress('${{ matrix.solver }}', opt)"; exit_code=$?; } || true
+        run: |
+          { timeout 10 matlab -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); opt.n=10; stress('${{ matrix.solver }}', opt)"; exit_code=$?; } || true
