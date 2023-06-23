@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 21, 2023 AM01:46:27
+! Last Modified: Friday, June 23, 2023 PM03:30:01
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -182,7 +182,7 @@ real(RP), parameter :: SYMTOL_DFT = ZERO
 real(RP), parameter :: RHOBEG_DFT = ONE
 real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP
 real(RP), parameter :: FTARGET_DFT = -REALMAX
-real(RP), parameter :: CTOL_DFT = EPS
+real(RP), parameter :: CTOL_DFT = sqrt(EPS)
 real(RP), parameter :: CWEIGHT_DFT = 1.0E8_RP
 real(RP), parameter :: ETA1_DFT = TENTH
 real(RP), parameter :: ETA2_DFT = 0.7_RP
