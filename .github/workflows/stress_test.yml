@@ -90,7 +90,11 @@ jobs:
           echo $jobs_length
           for ((i=0; i<jobs_length; i++)); do
               job=$(echo "$response" | jq ".jobs[$i]")
+
               job_name=$(echo "$job" | jq -r '.name')
+              if [[ "$job_name" == "check_conclusion" ]] ; then
+                  continue
+              fi
 
               # # Check if the job has the name "stress_test"
               # job_name=$(echo "$job" | jq -r '.name')
@@ -114,8 +118,6 @@ jobs:
               if [[ "$conclusion" == "success" ]]; then
                   continue
               elif [[ "$conclusion" == "cancelled" ]] && [[ "$runtime" -ge "$MAX_RUNTIME_SECONDS" ]]; then
-                  continue
-              elif [[ "$job_name" == "check_conclusion" ]] ; then
                   continue
               else
                   all_successful_or_overtime=false
