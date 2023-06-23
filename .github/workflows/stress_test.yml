@@ -1,8 +1,8 @@
 name: Stress test on large problems
 
 on:
-  # Trigger the workflow on #PUSH or pull request
-  ##PUSH:
+  # Trigger the workflow on push or pull request
+  #push:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -18,7 +18,7 @@ jobs:
     name: Stress test of PRIMA on large problem
     runs-on: ${{ matrix.os }}
     continue-on-error: true
-    timeout-minutes: 3
+    timeout-minutes: 330
     strategy:
       fail-fast: false
       matrix:
@@ -74,8 +74,7 @@ jobs:
       - name: Check the conclusion of the stress test
         run: |
           # Set maximum running time of the stress tests
-          #MAX_RUNTIME_SECONDS=$((300*60))
-          MAX_RUNTIME_SECONDS=150
+          MAX_RUNTIME_SECONDS=$((300*60))
 
           # Fetch the jobs for the current workflow run using the GitHub API
           response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -107,7 +106,7 @@ jobs:
               start_time=$(date --utc --date "$started_at" +%s)
               end_time=$(date --utc --date "$completed_at" +%s)
               runtime=$((end_time - start_time))
-              echo "$job_name": "$conclusion" "$runtime"
+              echo "$job_name": "$conclusion", running time: "$runtime"
 
               # Check if the conclusion is success or cancelled due to overtime
               if [[ "$conclusion" == "success" ]]; then

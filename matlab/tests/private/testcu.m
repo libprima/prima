@@ -170,6 +170,7 @@ end
 if sequential
     for ip = minip : maxip
 
+        % Turn off unwanted warnings
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};
@@ -236,6 +237,8 @@ if sequential
     end
 else
     parfor ip = minip : maxip
+
+        % Turn off unwanted warnings
         orig_warning_state = warnoff(solvers);
 
         pname = plist{ip};

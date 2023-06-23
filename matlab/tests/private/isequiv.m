@@ -163,6 +163,7 @@ disp(['prob_end_runs_dir = ', prob_end_runs_dir]);
 if sequential
     for ip = minip : maxip
 
+        % Turn off unwanted warnings
         orig_warning_state = warnoff(solvers);
 
         pname = upper(plist{ip});
@@ -197,6 +198,7 @@ if sequential
 else
     parfor ip = minip : maxip
 
+        % Turn off unwanted warnings
         orig_warning_state = warnoff(solvers);
 
         pname = upper(plist{ip});
