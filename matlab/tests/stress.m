@@ -37,7 +37,6 @@ if isfield(options, 'n')
     n = options.n;
 else
     if tough_test
-    else
         switch solver_name
         case 'uobyqa'
             n = 140;  % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
