@@ -37,13 +37,13 @@ else
     case 'uobyqa'
         n = 200;
     case 'newuoa'
-        n = 5000;
+        n = 2000;
     case 'bobyqa'
-        n = 5000;
+        n = 2000;
     case 'lincoa'
-        n = 2500;
+        n = 2000;
     case 'cobyla'
-        n = 5000;
+        n = 2000;
     end
 end
 
