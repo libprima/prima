@@ -27,6 +27,7 @@ STRING="$DIR/common/$STRINGF90"
 MESSAGEF90="message.f90"
 MESSAGE="$DIR/common/$MESSAGEF90"
 COBYLB="$DIR/cobyla/cobylb.f90"
+CONSTS="$DIR/common/consts.F90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -114,6 +115,11 @@ fi
 # sunf95 is buggy with MAX. It does not ensure MAX(A, B) >= A even with both A and B being finite.
 if [[ -f "$COBYLB" ]] ; then
     sed -i -e '/call assert(cpen >= cpen_in/,+3d' "$COBYLB"
+fi
+
+# sunf95 does not allow to use sqrt for the initialization of constants.
+if [[ -f "$CONSTS" ]] ; then
+    sed -i "s|sqrt(EPS)|EPS|g" "$CONSTS"
 fi
 
 exit 0
