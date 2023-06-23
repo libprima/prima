@@ -15,7 +15,7 @@ env:
 
 jobs:
   stress_test:
-    name: Stress test of PRIMA on large problem.
+    name: Stress test of PRIMA on large problem
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     timeout-minutes: 1
@@ -68,7 +68,7 @@ jobs:
     steps:
       - name: Install jq
         run: sudo apt update && sudo apt install -y jq
-      - name: check workflow jobs
+      - name: Check the conclusion of the stress test
         run: |
           # Set maximum running time of the stress tests
           MAX_RUNTIME_SECONDS=$((300*60))
@@ -90,11 +90,11 @@ jobs:
           for ((i=0; i<jobs_length; i++)); do
               job=$(echo "$response" | jq ".jobs[$i]")
 
-              # Check if the job has the name "stress_test"
-              job_name=$(echo "$job" | jq -r '.name')
-              if [[ "$job_name" != "stress_test" ]]; then
-                  continue
-              fi
+              # # Check if the job has the name "stress_test"
+              # job_name=$(echo "$job" | jq -r '.name')
+              # if [[ "$job_name" != "stress_test" ]]; then
+              #     continue
+              # fi
 
               # Extract the conclusion and timestamps of the current stress_test job
               conclusion=$(echo "$job" | jq -r '.conclusion')
