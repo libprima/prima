@@ -18,7 +18,7 @@ jobs:
     name: Stress test of PRIMA on large problem
     runs-on: ${{ matrix.os }}
     continue-on-error: true
-    timeout-minutes: 1
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -61,7 +61,7 @@ jobs:
             options.tough = strcmp('${{ matrix.test }}', 'tough');
             stress('${{ matrix.solver }}', options);
 
-  check_conclusion:
+  check_conclusion:  # Do not define a "name". "check_conclusion" will be the name of the job, and it will be used below.
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     needs: stress_test
@@ -72,7 +72,7 @@ jobs:
         run: |
           # Set maximum running time of the stress tests
           #MAX_RUNTIME_SECONDS=$((300*60))
-          MAX_RUNTIME_SECONDS=60
+          MAX_RUNTIME_SECONDS=500
 
           # Fetch the jobs for the current workflow run using the GitHub API
           response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -91,16 +91,11 @@ jobs:
           for ((i=0; i<jobs_length; i++)); do
               job=$(echo "$response" | jq ".jobs[$i]")
 
+              # Skip the "check_conclusion" job (i.e., the current one).
               job_name=$(echo "$job" | jq -r '.name')
               if [[ "$job_name" == "check_conclusion" ]] ; then
                   continue
               fi
-
-              # # Check if the job has the name "stress_test"
-              # job_name=$(echo "$job" | jq -r '.name')
-              # if [[ "$job_name" != "stress_test" ]]; then
-              #     continue
-              # fi
 
               # Extract the conclusion and timestamps of the current stress_test job
               conclusion=$(echo "$job" | jq -r '.conclusion')
