@@ -163,7 +163,7 @@ if r > 0.9
     end
 elseif r > 0.8
     f = NaN;
-elseif r > 0.6
+elseif r > 0.7
     f = Inf;
 elseif r < -0.9
     f = -1e30;
