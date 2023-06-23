@@ -193,7 +193,8 @@ if sequential
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
 
-        warning(orig_warning_state);  % Restore the behavior of displaying warnings
+        % Restore the behavior of displaying warnings
+        warning(orig_warning_state);
     end
 else
     parfor ip = minip : maxip
@@ -227,7 +228,8 @@ else
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
 
-        warning(orig_warning_state);  % Restore the behavior of displaying warnings
+        % Restore the behavior of displaying warnings
+        warning(orig_warning_state);
     end
 end
 
@@ -532,7 +534,8 @@ catch exception
     % Do nothing for the moment
 end
 
-rng(orig_rng_state);  % Restore the random number generator state
+% Restore the random number generator state
+rng(orig_rng_state);
 
 if ~isempty(exception)
     if endsWith(exception.identifier, 'ConstraintFailureAtX0') && (strcmpi(solvers{1}, 'cobyla') || strcmpi(solvers{2}, 'cobyla'))

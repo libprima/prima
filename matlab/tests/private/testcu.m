@@ -232,7 +232,8 @@ if sequential
         system(['touch ', fullfile(prob_end_dir, pname)]);
         fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
 
-        warning(orig_warning_state); % Restore the behavior of displaying warnings
+        % Restore the behavior of displaying warnings
+        warning(orig_warning_state);
 
     end
 else
@@ -300,7 +301,8 @@ else
         system(['touch ', fullfile(prob_end_dir, pname)]);
         fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
 
-        warning(orig_warning_state); % Restore the behavior of displaying warnings
+        % Restore the behavior of displaying warnings
+        warning(orig_warning_state);
 
     end
 end
