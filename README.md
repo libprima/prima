@@ -105,9 +105,13 @@ to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness an
 reference implementation, extensive tests are conducted after each and every tiny modification,
 using the [CUTEst](https://github.com/ralna/CUTEst) problems via [MatCUTEst](https://github.com/equipez/matcutest).
 The tests do not only verify the faithfulness of the implementation but also check that **the solvers
-behave properly even if they are invoked with improper inputs or encounter failures of function evaluations**.
+behave properly even if they are invoked with improper inputs or [encounter failures of function
+evaluations](https://github.com/libprima/prima/blob/main/matlab/tests/private/tough.m)**.
+[**Stress tests**](https://github.com/equipez/prima/actions/workflows/stress_test.yml) are also conducted
+periodically to verify that the solvers work correctly without running into errors when applied to
+**excessively large problems**.
 
-The tests are automated by
+The tests are **automated** by
 [GitHub Actions](https://docs.github.com/en/actions). As of June 2023, more than
 42,000 "workflows" have been successfully run by GitHub Actions. Normally, each workflow consists of \~ 5
 ([sometimes more than 150](https://github.com/primalib/prima/actions/runs/5260791888))
