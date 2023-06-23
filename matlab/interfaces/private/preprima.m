@@ -894,7 +894,7 @@ maxfun = 500*lenx0;
 rhobeg = 1; % The default rhobeg and rhoend will be revised if solver = 'bobyqa'
 rhoend = 1e-6;
 ftarget = -inf;
-ctol = eps; % Tolerance for constraint violation; a point with a constraint violation at most ctol is considered feasible
+ctol = sqrt(eps); % Tolerance for constraint violation; a point with a constraint violation at most ctol is considered feasible
 cweight = 1e8;  % The weight of constraint violation in the selection of the returned x
 classical = false; % Call the classical Powell code? Classical mode recommended only for research purpose
 precision = 'double'; % The precision of the real calculation within the solver
