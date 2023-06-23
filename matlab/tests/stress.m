@@ -1,6 +1,9 @@
 function stress(solver, options)
 % STRESS  Stress test for the solver on problems large dimensions.
 
+% Turn off unwanted warnings
+orig_warning_state = warnoff({solver});
+
 if nargin < 2
     options = struct();
 end
@@ -103,6 +106,8 @@ while redo
     end
 end
 toc;
+
+warning(orig_warning_state);  % Restore the behavior of displaying warnings
 
 if ~isempty(exception)
     rethrow(exception);
