@@ -38,7 +38,7 @@ if isfield(options, 'n')
 else
     switch solver_name
     case 'uobyqa'
-        n = 160;
+        n = 160;  % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
     case 'newuoa'
         n = 1600;
     case 'bobyqa'
