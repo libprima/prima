@@ -107,7 +107,8 @@ while redo
 end
 toc;
 
-warning(orig_warning_state);  % Restore the behavior of displaying warnings
+% Restore the behavior of displaying warnings
+warning(orig_warning_state);
 
 if ~isempty(exception)
     rethrow(exception);
