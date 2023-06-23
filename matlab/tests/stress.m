@@ -38,15 +38,15 @@ if isfield(options, 'n')
 else
     switch solver_name
     case 'uobyqa'
-        n = 200;
+        n = 160;
     case 'newuoa'
-        n = 2000;
+        n = 1600;
     case 'bobyqa'
-        n = 2000;
+        n = 1600;
     case 'lincoa'
-        n = 2000;
+        n = 1600;
     case 'cobyla'
-        n = 2000;
+        n = 1600;
     end
 end
 
@@ -67,7 +67,7 @@ test_options = struct();
 test_options.maxfun = 500 * n;
 test_options.rhobeg = 1;
 test_options.rhoend = 1.0e-7;
-test_options.iprint = 2;
+test_options.iprint = 3;
 test_options.debug = true;
 
 % Generate the problem
