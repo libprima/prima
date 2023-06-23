@@ -76,7 +76,10 @@ jobs:
           # Fetch the jobs for the current workflow run using the GitHub API
           response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
           -H "Accept: application/vnd.github+json" \
-          "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs")
+          "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100"")
+
+          echo "Response:"
+          echo "$response"
 
           # Loop through all the stress_test jobs
           all_successful_or_overtime=true
