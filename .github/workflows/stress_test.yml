@@ -61,10 +61,10 @@ jobs:
             options.tough = strcmp('${{ matrix.test }}', 'tough');
             stress('${{ matrix.solver }}', options);
 
-  check_timeout:
+  check_conclusion:
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
-    needs: test
+    needs: stress_test
     steps:
       - name: Install jq
         run: sudo apt update && sudo apt install -y jq
