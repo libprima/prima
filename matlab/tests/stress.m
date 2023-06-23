@@ -36,17 +36,33 @@ random_seed = yw;
 if isfield(options, 'n')
     n = options.n;
 else
-    switch solver_name
-    case 'uobyqa'
-        n = 160;  % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
-    case 'newuoa'
-        n = 1600;
-    case 'bobyqa'
-        n = 1600;
-    case 'lincoa'
-        n = 1600;
-    case 'cobyla'
-        n = 1600;
+    if tough_test
+    else
+        switch solver_name
+        case 'uobyqa'
+            n = 140;  % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
+        case 'newuoa'
+            n = 1600;
+        case 'bobyqa'
+            n = 1600;
+        case 'lincoa'
+            n = 1200;
+        case 'cobyla'
+            n = 1200;
+        end
+    else
+        switch solver_name
+        case 'uobyqa'
+            n = 120;  % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
+        case 'newuoa'
+            n = 1200;
+        case 'bobyqa'
+            n = 1200;
+        case 'lincoa'
+            n = 1200;
+        case 'cobyla'
+            n = 1200;
+        end
     end
 end
 
