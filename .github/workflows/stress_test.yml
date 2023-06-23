@@ -81,6 +81,7 @@ jobs:
           # Loop through all the stress_test jobs
           all_successful_or_overtime=true
           jobs_length=$(echo "$response" | jq ' .jobs | length')
+          echo $jobs_length
           for ((i=0; i<jobs_length; i++)); do
               job=$(echo "$response" | jq ".jobs[$i]")
 
