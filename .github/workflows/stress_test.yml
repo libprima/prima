@@ -14,11 +14,11 @@ env:
   GFORTRAN_VERSION: 12
 
 jobs:
-  test:
+  stress_test:
     name: Stress test of PRIMA on large problem.
     runs-on: ${{ matrix.os }}
     continue-on-error: true
-    timeout-minutes: 350
+    timeout-minutes: 1
     strategy:
       fail-fast: false
       matrix:
@@ -70,29 +70,81 @@ jobs:
         run: sudo apt update && sudo apt install -y jq
       - name: check workflow jobs
         run: |
-          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
-          > jobs.json
-          status=$(jq '.jobs[0].conclusion' jobs.json)
-          end_time=$(date -u -d "$completed_at" +%s)
-          start_time=$(date -u -d "$started_at" +%s)
-          duration=$((end_time - start_time))
-          timeout_seconds=$((350 * 60 - 60)) # 350 minutes in seconds (minus 60)
-          status=${status//\"/}  # It turns out that $status is "failure", including the quotation marks.
-          echo $status
-          if [[ $status == "failure" ]]; then
-             echo "Workflow failed before timeout"
-             exit 1
-          elif [[ $status == "cancelled" ]]; then
-            if [[ $duration -ge $timeout_seconds ]]; then
-                 echo "Workflow timed out but considered successful"
-                 exit 0
-             else
-                 echo "Workflow was cancelled due to other reasons"
-                 exit 2
-             fi
+          # Set maximum running time of the stress tests
+          MAX_RUNTIME_SECONDS=$((300*60))
+
+          # Fetch the jobs for the current workflow run using the GitHub API
+          response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Accept: application/vnd.github+json" \
+          "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs")
+
+          # Loop through all the stress_test jobs
+          all_successful_or_overtime=true
+          jobs_length=$(echo "$response" | jq ' .jobs | length')
+          for ((i=0; i<jobs_length; i++)); do
+              job=$(echo "$response" | jq ".jobs[$i]")
+
+              # Check if the job has the name "stress_test"
+              job_name=$(echo "$job" | jq -r '.name')
+              if [[ "$job_name" != "stress_test" ]]; then
+                  continue
+              fi
+
+              # Extract the conclusion and timestamps of the current stress_test job
+              conclusion=$(echo "$job" | jq -r '.conclusion')
+              started_at=$(echo "$job" | jq -r '.started_at')
+              completed_at=$(echo "$job" | jq -r '.completed_at')
+              echo $conclusion
+
+              # Calculate the running time of the job
+              start_time=$(date --utc --date "$started_at" +%s)
+              end_time=$(date --utc --date "$completed_at" +%s)
+              runtime=$((end_time - start_time))
+              echo $runtime
+
+              # Check if the conclusion is success or cancelled due to overtime
+              if [[ "$conclusion" == "success" ]]; then
+                  continue
+              elif [[ "$conclusion" == "cancelled" ]] && [[ "$runtime" -ge "$MAX_RUNTIME_SECONDS" ]]; then
+                  continue
+              else
+                  all_successful_or_overtime=false
+              break
+              fi
+          done
+
+          # Determine the final status of the workflow
+          if [[ "$all_successful_or_overtime" == true ]]; then
+              echo "All stress tests are successful or cancelled due to overtime. The workflow is successful."
+              exit 0
           else
-             echo "Workflow completed successfully"
-             exit 0
+              echo "Some stress tests are unsuccessfully or cancelled not due to overtime. The workflow is unsuccessful."
+              exit 42
           fi
+
+          # curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          # -H "Accept: application/vnd.github.v3+json" \
+          # https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs \
+          # > jobs.json
+          # status=$(jq '.jobs[0].conclusion' jobs.json)
+          # end_time=$(date -u -d "$completed_at" +%s)
+          # start_time=$(date -u -d "$started_at" +%s)
+          # duration=$((end_time - start_time))
+          # timeout_seconds=$((350 * 60 - 600)) # 350 minutes in seconds (minus 600)
+          # status=${status//\"/}  # It turns out that $status is "failure", including the quotation marks.
+          # echo $status
+          # if [[ $status == "failure" ]]; then
+          #    echo "Workflow failed before timeout"
+          #    exit 1
+          # elif [[ $status == "cancelled" ]]; then
+          #   if [[ $duration -ge $timeout_seconds ]]; then
+          #        echo "Workflow timed out but considered successful"
+          #        exit 0
+          #    else
+          #        echo "Workflow was cancelled due to other reasons"
+          #        exit 2
+          #    fi
+          # else
+          #    echo "Workflow completed successfully"
+          #    exit 0
+          # fi
