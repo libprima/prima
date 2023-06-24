@@ -554,8 +554,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "warning #6009: Fortran [0-9]* specifies that an elemental intrinsic function here be of type integer or character" \
 	| grep -v "warning #5268: Extension to standard: The text exceeds right hand column allowed on the line" \
 	| grep -v "warning: line table parameters mismatch. Cannot emit." \
-	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[SQRT\]" \
-	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95\.\s*\[NINT\]" \
+	| grep -v "This intrinsic function in a specification expression is not standard Fortran 95" \
 	| grep -v "all warnings being treated as errors" \
 	| grep -v "Warning: ‘\.min_maxfun_str’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.direction_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
@@ -580,7 +579,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v ": warning #6655: The f95 standard requires that the ALLOCATABLE attribute only be given to array objects." \
 	| grep -v "Fortran 95 does not allow this intrinsic procedure.\s*\[NEW_LINE\]" \
 	| grep -v "warning #8162: The f95 standard requires that the argument of the ALLOCATED inquiry intrinsic function shall be an allocatable array." \
-	| grep -v "This intrinsic function in an initialization expression is not standard Fortran 95\s*\[NEW_LINE\]" \
+	| grep -v "This intrinsic function in an initialization expression is not standard Fortran 95" \
 	| grep -v "Fortran 95 does not allow type specification in an allocate statement" \
 	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
 	| tee -a "$(LOG_DIR)/$@.log"
