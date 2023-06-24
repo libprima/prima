@@ -139,7 +139,7 @@ DRIVER_DIR := $(TEST_DIR)
 COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
 SOLVER_SRC := $(shell sed "s/^/\.\/$(SOLVER)\//" $(SOLVER_DIR)/ffiles.txt)
 TESTSUITE_SRC := $(shell sed "s/^/\.\/$(TESTSUITE)\//" $(TESTSUITE_DIR)/ffiles.txt)
-DRIVER_SRC := test_$(SOLVER).f90 test.f90
+DRIVER_SRC := test_$(SOLVER).f90 test.F90
 SRC := $(COMMON_SRC) $(SOLVER_SRC) $(TESTSUITE_SRC) $(DRIVER_SRC)
 SRC_NO_TEST := $(COMMON_SRC) $(SOLVER_SRC)
 
@@ -817,7 +817,9 @@ $(TESTS_C) $(TESTS_INT_C):
 	$(eval IK := $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//")))
 	$(eval RP := $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//")))
 	$(eval QPAVLB := $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16))
-	$(eval EXTRA_FLAGS := -g -DPRIMA_DEBUGGING=$(DBG) -DPRIMA_AGGRESSIVE_OPTIONS=$(AGGRESSIVE) -DPRIMA_INTEGER_KIND=$(IK) -DPRIMA_REAL_PRECISION=$(RP) -DPRIMA_QP_AVAILABLE=$(QPAVLB))
+	$(eval EXTRA_FLAGS := -g -DPRIMA_DEBUGGING=$(DBG) -DPRIMA_AGGRESSIVE_OPTIONS=$(AGGRESSIVE) \
+		-DPRIMA_INTEGER_KIND=$(IK) -DPRIMA_REAL_PRECISION=$(RP) -DPRIMA_QP_AVAILABLE=$(QPAVLB) \
+		-DPRIMA_TESTDIM="'$(TESTDIM)'")
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
 	(if echo $@ | grep -q '9test'; then \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
@@ -834,13 +836,6 @@ $(TESTS_C) $(TESTS_INT_C):
 		if echo $@ | grep -q 'itest\|xtest' && [[ '$(OSTYPE)' = 'MAC' || '$(OSTYPE)' = 'LINUX' ]] ; then \
 			printf "Initialize Intel OneAPI." ; \
 			source /opt/intel/oneapi/setvars.sh 2&> /dev/null ; \
-		fi ; \
-		printf "\nPreparing the source code according to the testing dimension $(TESTDIM).\n" ; \
-		if [[ '$(TESTDIM)' = 'small' ]] ; then \
-			$(SEDI) 's|logical :: test_bigprob = .true.|logical :: test_bigprob = .false.|g' test_*.f90 ; \
-		fi ; \
-		if [[ '$(TESTDIM)' = 'big' ]] ; then \
-			$(SEDI) 's|logical :: test_bigprob = .false.|logical :: test_bigprob = .true.|g' test_*.f90; \
 		fi ; \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
 			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \

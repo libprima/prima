@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 11, 2023 PM02:43:24
+! Last Modified: Sunday, June 25, 2023 AM12:52:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,7 +17,7 @@ public :: test_solver
 contains
 
 
-subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed)
+subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed, testdim)
 
 use, non_intrinsic :: cobyla_mod, only : cobyla
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
@@ -33,21 +33,24 @@ use, non_intrinsic :: string_mod, only : strip, istr
 implicit none
 
 character(len=PNLEN), intent(in), optional :: probs(:)
-integer(IK), intent(in), optional :: dimstride
-integer(IK), intent(in), optional :: maxdim
 integer(IK), intent(in), optional :: mindim
+integer(IK), intent(in), optional :: maxdim
+integer(IK), intent(in), optional :: dimstride
 integer(IK), intent(in), optional :: nrand
 integer, intent(in), optional :: randseed
+character(len=*), intent(in), optional :: testdim
 
 character(len=*), parameter :: bigprob = 'bigprob'
 character(len=*), parameter :: solname = 'cobyla'
+character(len=:), allocatable :: testdim_loc
 character(len=*), parameter :: srname = 'TEST_COBYLA'
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 120_IK
+integer(IK), parameter :: bign = 100_IK
+integer(IK), parameter :: largen = 800_IK
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -64,7 +67,6 @@ integer(IK) :: n
 integer(IK) :: ndim
 integer(IK) :: nprobs
 integer(IK) :: nrand_loc
-logical :: test_bigprob = .false.
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: f
@@ -123,17 +125,25 @@ else
     randseed_loc = RANDSEED_DFT
 end if
 
+if (present(testdim)) then
+    call safealloc(testdim_loc, len(testdim))
+    testdim_loc = testdim
+else
+    call safealloc(testdim_loc, 5)
+    testdim_loc = 'small'
+end if
+
 
 ! Test the big problem
-if (test_bigprob) then
+if (testdim == 'big' .or. testdim == 'large') then
     probname = bigprob
-    n = bign
+    n = merge(bign, largen, testdim == 'big')
     do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
         call setseed(rseed)
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         call construct(prob, probname, n, m)
-        iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
+        iprint = 2_IK
         if (int(n) + 500 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else

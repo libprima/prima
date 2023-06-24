@@ -63,8 +63,6 @@ jobs:
 
 
   # The following job check whether the tests were successful or cancelled due to timeout.
-  # Do not define a "name" for this job. Then "check_success_timeout" will be the name, and it
-  # will be used below.
   check_success_timeout:
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
