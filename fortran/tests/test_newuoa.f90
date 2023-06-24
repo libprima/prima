@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 11, 2023 PM02:16:31
+! Last Modified: Sunday, June 25, 2023 AM12:12:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -17,7 +17,7 @@ public :: test_solver
 contains
 
 
-subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed)
+subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed, testdim)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -36,14 +36,17 @@ integer(IK), intent(in), optional :: maxdim
 integer(IK), intent(in), optional :: dimstride
 integer(IK), intent(in), optional :: nrand
 integer, intent(in), optional :: randseed
+character(len=*), intent(in), optional :: testdim
 
 character(len=*), parameter :: bigprob = 'bigprob'
 character(len=*), parameter :: solname = 'newuoa'
+character(len=:), allocatable :: testdim_loc
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 400_IK
+integer(IK), parameter :: bign = 300_IK
+integer(IK), parameter :: largen = 1600_IK
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -61,7 +64,6 @@ integer(IK) :: npt
 integer(IK) :: nnpt
 integer(IK) :: npt_list(10)
 integer(IK) :: nrand_loc
-logical :: test_bigprob = .false.
 real(RP) :: f
 real(RP) :: ftarget
 real(RP) :: rhobeg
@@ -109,17 +111,25 @@ else
     randseed_loc = RANDSEED_DFT
 end if
 
+if (present(testdim)) then
+    call safealloc(testdim_loc, len(testdim))
+    testdim_loc = testdim
+else
+    call safealloc(testdim_loc, 5)
+    testdim_loc = 'small'
+end if
+
 
 ! Test the big problem
-if (test_bigprob) then
+if (testdim == 'big' .or. testdim == 'large') then
     probname = bigprob
-    n = bign
+    n = merge(bign, largen, testdim == 'big')
     call construct(prob, probname, n)
     do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
         call setseed(rseed)
         npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
-        iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
+        iprint = 2_IK
         if (int(npt) + 800 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else

@@ -6,8 +6,12 @@ program test
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, February 12, 2023 PM01:57:22
+! Last Modified: Saturday, June 24, 2023 PM11:54:28
 !--------------------------------------------------------------------------------------------------!
+
+#if !defined PRIMA_TESTDIM
+#define PRIMA_TESTDIM small
+#endif
 
 use, non_intrinsic :: datetime_mod, only : year, week
 use, non_intrinsic :: test_solver_mod, only : test_solver
@@ -19,6 +23,6 @@ integer :: yw
 yw = 100 * modulo(year(), 100) + week()
 print *, 'The random seed is', yw
 
-call test_solver(randseed=yw)
+call test_solver(randseed=yw, testdim=PRIMA_TESTDIM)
 
 end program test
