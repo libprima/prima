@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 25, 2023 AM12:53:07
+! Last Modified: Sunday, June 25, 2023 AM01:17:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed di
 integer :: randseed_loc
 integer :: rseed
 integer(IK), parameter :: bign = 300_IK
-integer(IK), parameter :: largen = 1000_IK
+integer(IK), parameter :: largen = 800_IK
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim

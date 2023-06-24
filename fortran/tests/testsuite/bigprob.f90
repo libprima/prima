@@ -80,7 +80,7 @@ real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
 
 integer(IK) :: n
-real(RP), parameter :: alpha = 1.0_RP
+real(RP), parameter :: alpha = 4.0_RP
 
 n = int(size(x), kind(n))
 f = sum((x(1:n - 1) - ONE)**2 + alpha * (x(2:n) - x(1:n - 1)**2)**2); 
