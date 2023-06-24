@@ -14,11 +14,11 @@ env:
   GFORTRAN_VERSION: 12
 
 jobs:
-  stress_test:
+  test:
     name: Stress test of PRIMA on large problem
     runs-on: ${{ matrix.os }}
     continue-on-error: true
-      #timeout-minutes: 350
+    timeout-minutes: 1
     strategy:
       fail-fast: false
       matrix:
@@ -62,68 +62,13 @@ jobs:
             stress('${{ matrix.solver }}', options);
 
 
-  # The following job check whether the stress tests were successful or cancelled due to overtime.
-  # Do not define a "name" for this job. Then "check_conclusion" will be the name, and it will be used below.
-  check_conclusion:
+  # The following job check whether the tests were successful or cancelled due to overtime.
+  # Do not define a "name" for this job. Then "check_success_or_cancelled" will be the name, and it
+  # will be used below.
+  check_successful_or_cancelled
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
-    needs: stress_test
+    needs: test
     steps:
-      - name: Install jq
-        run: sudo apt update && sudo apt install -y jq
-      - name: Check the conclusion of the stress test
-        run: |
-          # Set maximum running time of the stress tests
-          MAX_RUNTIME_SECONDS=$((330*60))
-
-          # Fetch the jobs for the current workflow run using the GitHub API
-          response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github+json" \
-          "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs?per_page=100")
-
-          echo "Response:"
-          echo "$response"
-          echo "Jobs length:" "$(echo "$response" | jq ' .jobs | length')"
-
-          # Loop through all the stress_test jobs
-          all_successful_or_overtime=true
-          jobs_length=$(echo "$response" | jq ' .jobs | length')
-          for ((i=0; i<jobs_length; i++)); do
-              job=$(echo "$response" | jq ".jobs[$i]")
-
-              # Skip the "check_conclusion" job (i.e., the current one).
-              job_name=$(echo "$job" | jq -r '.name')
-              if [[ "$job_name" == "check_conclusion" ]] ; then
-                  continue
-              fi
-
-              # Extract the conclusion and timestamps of the current stress_test job
-              conclusion=$(echo "$job" | jq -r '.conclusion')
-              started_at=$(echo "$job" | jq -r '.started_at')
-              completed_at=$(echo "$job" | jq -r '.completed_at')
-
-              # Calculate the running time of the job
-              start_time=$(date --utc --date "$started_at" +%s)
-              end_time=$(date --utc --date "$completed_at" +%s)
-              runtime=$((end_time - start_time))
-              echo "$job_name": "$conclusion", running time: "$runtime"
-
-              # Check if the conclusion is success or cancelled due to overtime
-              if [[ "$conclusion" == "success" ]]; then
-                  continue
-              elif [[ "$conclusion" == "cancelled" ]] && [[ "$runtime" -ge "$MAX_RUNTIME_SECONDS" ]]; then
-                  continue
-              else
-                  all_successful_or_overtime=false
-              break
-              fi
-          done
-
-          # Determine the final status of the workflow
-          if [[ "$all_successful_or_overtime" == true ]]; then
-              echo "All stress tests are successful or cancelled due to overtime. The workflow is successful."
-              exit 0
-          else
-              echo "Some stress tests are unsuccessfully or cancelled not due to overtime. The workflow is unsuccessful."
-              exit 42
-          fi
+      - name: Check whether the tests were successful or cancelled
+        run: bash ../scripts/check_successful_or_cancelled ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
