@@ -62,10 +62,10 @@ jobs:
             stress('${{ matrix.solver }}', options);
 
 
-  # The following job check whether the tests were successful or cancelled due to overtime.
-  # Do not define a "name" for this job. Then "check_success_or_cancelled" will be the name, and it
+  # The following job check whether the tests were successful or cancelled due to timeout.
+  # Do not define a "name" for this job. Then "check_success_timeout" will be the name, and it
   # will be used below.
-  check_successful_or_cancelled:
+  check_success_timeout:
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     needs: test
@@ -77,5 +77,5 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           path: scripts
 
-      - name: Check whether the tests were successful or cancelled
-        run: bash scripts/check_successful_or_cancelled ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
+      - name: Check whether the tests were successful or cancelled due to timeout
+        run: bash scripts/check_success_timeout ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
