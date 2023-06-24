@@ -71,4 +71,4 @@ jobs:
     needs: test
     steps:
       - name: Check whether the tests were successful or cancelled
-        run: bash ../scripts/check_successful_or_cancelled ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
+        run: bash .github/scripts/check_successful_or_cancelled ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
