@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 25, 2023 AM01:17:51
+! Last Modified: Sunday, June 25, 2023 AM09:17:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,11 +19,11 @@ contains
 
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed, testdim)
 
-use, non_intrinsic :: lincoa_mod, only : lincoa
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
 use, non_intrinsic :: debug_mod, only : validate
 use, non_intrinsic :: infnan_mod, only : is_neginf
 use, non_intrinsic :: linalg_mod, only : eye
+use, non_intrinsic :: lincoa_mod, only : lincoa
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
@@ -43,15 +43,13 @@ character(len=*), intent(in), optional :: testdim
 
 character(len=*), parameter :: bigprob = 'bigprob'
 character(len=*), parameter :: solname = 'lincoa'
-character(len=:), allocatable :: testdim_loc
 character(len=*), parameter :: srname = 'TEST_LINCOA'
+character(len=:), allocatable :: testdim_loc
+character(len=PNLEN) :: fix_dim_probs(100)  ! Problems with fixed dimensions
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
-character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 300_IK
-integer(IK), parameter :: largen = 800_IK
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -66,11 +64,13 @@ integer(IK) :: maxhist
 integer(IK) :: mindim_loc
 integer(IK) :: n
 integer(IK) :: ndim
+integer(IK) :: nnpt
 integer(IK) :: nprobs
 integer(IK) :: npt
-integer(IK) :: nnpt
 integer(IK) :: npt_list(10)
 integer(IK) :: nrand_loc
+integer(IK), parameter :: bign = 300_IK
+integer(IK), parameter :: largen = 800_IK
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: f

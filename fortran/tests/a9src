@@ -69,4 +69,9 @@ if [[ -f "$DEBUG" ]] ; then
     sed -i "s|^\s*error stop.*$|stop|" "$DEBUG"
 fi
 
+for SOL in cobyla uobyqa newuoa bobyqa lincoa ; do
+    sed -i "s|character(len=:), allocatable|character(len=1024)|g" "$DIR/test_$SOL.f90"
+    sed -i "/safealloc(testdim.*$/d" "$DIR/test_$SOL.f90"
+done
+
 exit 0

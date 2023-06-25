@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 25, 2023 AM01:09:37
+! Last Modified: Sunday, June 25, 2023 AM09:13:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,14 +42,12 @@ character(len=*), intent(in), optional :: testdim
 
 character(len=*), parameter :: bigprob = 'bigprob'
 character(len=*), parameter :: solname = 'bobyqa'
-character(len=:), allocatable :: testdim_loc
 character(len=*), parameter :: srname = 'TEST_BOBYQA'
+character(len=:), allocatable :: testdim_loc
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 300_IK
-integer(IK), parameter :: largen = 1600_IK
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -62,11 +60,13 @@ integer(IK) :: maxhist
 integer(IK) :: mindim_loc
 integer(IK) :: n
 integer(IK) :: ndim
+integer(IK) :: nnpt
 integer(IK) :: nprobs
 integer(IK) :: npt
-integer(IK) :: nnpt
 integer(IK) :: npt_list(10)
 integer(IK) :: nrand_loc
+integer(IK), parameter :: bign = 300_IK
+integer(IK), parameter :: largen = 1600_IK
 real(RP) :: f
 real(RP) :: f_unc
 real(RP) :: ftarget

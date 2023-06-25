@@ -318,7 +318,7 @@ endif
 # Absoft af95
 # N.B.: According to Absoft support: With the Absoft compiler, automatic arrays are always allocated
 # on the stack. There is no option to move the allocation to the heap.
-AFORT := af95 -m1 -en -et -Rb -Rc -Rs -Rp
+AFORT := af95 -m1 -en -et -Rb -Rc -Rs -Rp -OPT:Olimit=6204
 
 atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
 	FCO := $(AFORT) $(FFLAGSO) -TENV:simd_zmask=off
@@ -818,8 +818,10 @@ $(TESTS_C) $(TESTS_INT_C):
 	$(eval RP := $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//")))
 	$(eval QPAVLB := $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16))
 	$(eval EXTRA_FLAGS := -g -DPRIMA_DEBUGGING=$(DBG) -DPRIMA_AGGRESSIVE_OPTIONS=$(AGGRESSIVE) \
-		-DPRIMA_INTEGER_KIND=$(IK) -DPRIMA_REAL_PRECISION=$(RP) -DPRIMA_QP_AVAILABLE=$(QPAVLB) \
-		-DPRIMA_TESTDIM="'$(TESTDIM)'")
+		-DPRIMA_INTEGER_KIND=$(IK) -DPRIMA_REAL_PRECISION=$(RP) -DPRIMA_QP_AVAILABLE=$(QPAVLB))
+	$(eval EXTRA_FLAGS := $(shell if ! echo $@ | grep -q 'atest'; then \
+		echo "$(EXTRA_FLAGS) -DPRIMA_TESTDIM=\"'$(TESTDIM)'\""; \
+		else echo "$(EXTRA_FLAGS)"; fi))
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
 	(if echo $@ | grep -q '9test'; then \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
