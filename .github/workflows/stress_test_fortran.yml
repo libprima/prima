@@ -33,6 +33,8 @@ jobs:
             compiler: x
           - os: macos-latest
             compiler: d
+          - compiler: s  # BOBYQA fails stest for unknown reason
+            solver: bobyqa
 
     steps:
       - name: Checkout repository
