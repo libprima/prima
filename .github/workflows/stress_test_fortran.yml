@@ -12,9 +12,8 @@ on:
 
 
 jobs:
-
   test:
-    name: Run gfortran tests
+    name: Stress test of PRIMA on large problem
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
