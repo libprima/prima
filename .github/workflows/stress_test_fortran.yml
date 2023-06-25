@@ -35,32 +35,32 @@ jobs:
         run: bash .github/scripts/misc_setup
 
       - name: Install AOCC
-        if: ${{ matrix.solver == 'd' }}
+        if: ${{ matrix.compiler == 'd' }}
         run: bash .github/scripts/install_aocc
 
       - name: Install gfortran
-        if: ${{ matrix.solver == 'g' }}
+        if: ${{ matrix.compiler == 'g' }}
         uses: awvwgk/setup-fortran@main
         id: setup-fortran
         with:
           compiler: gcc
 
       - name: Install Intel oneAPI
-        if: ${{ matrix.solver == 'i' || matrix.solver == 'x'}}
+        if: ${{ matrix.compiler == 'i' || matrix.compiler == 'x'}}
         run: bash .github/scripts/install_oneapi_linux.sh
 
       - name: Install nvfortran
-        if: ${{ matrix.solver == 'd' }}
+        if: ${{ matrix.compiler == 'v' }}
         run: bash .github/scripts/install_nvfortran
 
       - name: Install Oracle sunf95
-        if: ${{ matrix.solver == 's' }}
+        if: ${{ matrix.compiler == 's' }}
         run: bash .github/scripts/install_sunf95
 
       # Install Flang after AOCC, to make sure that flang is this one, while AOCC flang will be
       # known as aflang.
       - name: Install Flang
-        if: ${{ matrix.solver == 'f' }}
+        if: ${{ matrix.compiler == 'f' }}
         run: bash .github/scripts/install_flang
 
       - name: Conduct the test
