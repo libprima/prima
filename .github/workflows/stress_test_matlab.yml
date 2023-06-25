@@ -22,9 +22,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         matlab: [latest]
         solver: [cobyla, uobyqa, newuoa, bobyqa, lincoa]
+        precision: [single, double]
         test: [normal, tough]
 
     steps:
@@ -37,6 +38,14 @@ jobs:
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
+
+      - name: Install Intel oneAPI on macOS
+        if: startsWith(matrix.os, 'macos')
+        run: bash .github/scripts/install_oneapi_macos.sh
+
+      - name: Install Intel oneAPI on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'
 
       - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
         uses: actions/cache@v3.3.1
@@ -59,6 +68,7 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
             options.tough = strcmp('${{ matrix.test }}', 'tough');
+            options.precision = '${{ matrix.precision }}';
             stress('${{ matrix.solver }}', options);
 
 
