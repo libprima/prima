@@ -45,7 +45,7 @@ else
         case 'bobyqa'
             n = 1600;
         case 'lincoa'
-            n = 1000; %? % 800;
+            n = 1000;
         case 'cobyla'
             n = 800;
         end
@@ -58,9 +58,9 @@ else
         case 'bobyqa'
             n = 800;
         case 'lincoa'
-            n = 500; %?
+            n = 500;
         case 'cobyla'
-            n = 400; %?
+            n = 400;
         end
     end
 end
