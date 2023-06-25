@@ -61,7 +61,7 @@ else
             n = 600; %800;
         case 'cobyla'
             n = 400; %600;
-        e
+        end
     end
 end
 
