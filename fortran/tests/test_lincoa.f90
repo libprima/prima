@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 25, 2023 AM11:24:34
+! Last Modified: Sunday, June 25, 2023 PM05:48:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,18 +129,16 @@ else
 end if
 
 if (present(testdim)) then
-    call safealloc(testdim_loc, len(testdim))
     testdim_loc = testdim
 else
-    call safealloc(testdim_loc, 5)
     testdim_loc = 'small'
 end if
 
 
 ! Test the big problem
-if (testdim == 'big' .or. testdim == 'large') then
+if (testdim_loc == 'big' .or. testdim_loc == 'large') then
     probname = bigprob
-    n = merge(bign, largen, testdim == 'big')
+    n = merge(bign, largen, testdim_loc == 'big')
     do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
         call setseed(rseed)
