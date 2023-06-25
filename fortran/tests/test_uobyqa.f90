@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 25, 2023 AM12:53:26
+! Last Modified: Sunday, June 25, 2023 AM09:21:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,12 +21,12 @@ subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed, testdi
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: uobyqa_mod, only : uobyqa
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
 use, non_intrinsic :: string_mod, only : strip, istr
+use, non_intrinsic :: uobyqa_mod, only : uobyqa
 
 implicit none
 
@@ -45,8 +45,6 @@ character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 80_IK
-integer(IK), parameter :: largen = 160_IK
 integer(IK) :: dimstride_loc
 integer(IK) :: iprint
 integer(IK) :: iprob
@@ -59,6 +57,8 @@ integer(IK) :: n
 integer(IK) :: nprobs
 integer(IK) :: npt
 integer(IK) :: nrand_loc
+integer(IK), parameter :: bign = 80_IK
+integer(IK), parameter :: largen = 160_IK
 real(RP) :: f
 real(RP) :: ftarget
 real(RP) :: rhobeg

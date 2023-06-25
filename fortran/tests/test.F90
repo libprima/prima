@@ -6,11 +6,11 @@ program test
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, June 24, 2023 PM11:54:28
+! Last Modified: Sunday, June 25, 2023 AM09:10:43
 !--------------------------------------------------------------------------------------------------!
 
 #if !defined PRIMA_TESTDIM
-#define PRIMA_TESTDIM small
+#define PRIMA_TESTDIM 'small'
 #endif
 
 use, non_intrinsic :: datetime_mod, only : year, week
@@ -22,6 +22,12 @@ integer :: yw
 ! YW is the random seed for the tests. It is altered weekly to test the solvers as much as possible.
 yw = 100 * modulo(year(), 100) + week()
 print *, 'The random seed is', yw
+
+! PRIMA_TESTDIM is the dimension of the test problem. It can be 'small', 'big', or 'large'.
+! When it is 'small', then `test_solver` also accepts `mindim`, `maxdim`, and `dimstride`
+! to specify the dimensions of the test problems; when it is 'big' or 'large', then dimension of
+! the test is hard coded in `test_*.f90` for each solver.
+print *, 'The test dimension is ', PRIMA_TESTDIM
 
 call test_solver(randseed=yw, testdim=PRIMA_TESTDIM)
 

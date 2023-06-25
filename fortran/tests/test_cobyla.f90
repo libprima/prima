@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 25, 2023 AM01:18:02
+! Last Modified: Sunday, June 25, 2023 AM09:17:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,15 +42,13 @@ character(len=*), intent(in), optional :: testdim
 
 character(len=*), parameter :: bigprob = 'bigprob'
 character(len=*), parameter :: solname = 'cobyla'
-character(len=:), allocatable :: testdim_loc
 character(len=*), parameter :: srname = 'TEST_COBYLA'
+character(len=:), allocatable :: testdim_loc
+character(len=PNLEN) :: fix_dim_probs(100)  ! Problems with fixed dimensions
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
-character(len=PNLEN) :: fix_dim_probs(size(probs_loc))  ! Problems with fixed dimensions
 integer :: randseed_loc
 integer :: rseed
-integer(IK), parameter :: bign = 80_IK
-integer(IK), parameter :: largen = 800_IK
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
 integer(IK) :: idim
@@ -67,6 +65,8 @@ integer(IK) :: n
 integer(IK) :: ndim
 integer(IK) :: nprobs
 integer(IK) :: nrand_loc
+integer(IK), parameter :: bign = 80_IK
+integer(IK), parameter :: largen = 800_IK
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: f
