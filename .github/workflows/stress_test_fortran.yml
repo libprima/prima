@@ -13,7 +13,7 @@ on:
 
 jobs:
   test:
-    name: Stress test of PRIMA on large problem
+    name: Stress test of PRIMA on large problems
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

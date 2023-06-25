@@ -15,7 +15,7 @@ env:
 
 jobs:
   test:
-    name: Stress test of PRIMA on large problem
+    name: Stress test of PRIMA on large problems
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     #timeout-minutes: 350
