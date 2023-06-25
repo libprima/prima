@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 25, 2023 PM05:47:55
+! Last Modified: Sunday, June 25, 2023 PM08:37:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,10 +142,10 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         call construct(prob, probname, n, m)
         iprint = 2_IK
-        if (int(n) + 500 > huge(0_IK)) then
+        if (int(n) + 1000 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else
-            maxfun = n + int(500.0_RP * rand(), IK)
+            maxfun = n + int(1000.0_RP * rand(), IK)
         end if
         maxhist = maxfun
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
