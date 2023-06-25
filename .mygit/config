@@ -16,6 +16,7 @@
 	pushurl = git@github.com:equipez/prima.git
 	pushurl = git@github.com:s-prima/prima.git
     pushurl = git@github.com:zaikunzhang/prima.git
+	pushurl = git@github.com:sprimalib/prima.git
 	pushurl = git@gitlab.com:libprima/prima.git
     pushurl = git@gitee.com:libprima/prima.git
 	gh-resolved = base

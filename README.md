@@ -107,7 +107,7 @@ using the [CUTEst](https://github.com/ralna/CUTEst) problems via [MatCUTEst](htt
 The tests do not only verify the faithfulness of the implementation but also check that **the solvers
 behave properly even if they are invoked with improper inputs or [encounter failures of function
 evaluations](https://github.com/libprima/prima/blob/main/matlab/tests/private/tough.m)**.
-[**Stress tests**](https://github.com/equipez/prima/actions/workflows/stress_test.yml) are also conducted
+[**Stress tests**](#stress-tests) are also conducted
 periodically to verify that the solvers work correctly without running into errors when applied to
 **excessively large problems**.
 
@@ -154,6 +154,11 @@ to distribute this large amount of tests to several different Team accounts as f
     - [![Plot performance profiles, single](https://github.com/primalib/prima/actions/workflows/profile_single.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_single.yml)
     - [![Plot performance profiles, quadruple](https://github.com/primalib/prima/actions/workflows/profile_quadruple.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_quadruple.yml)
     - [![Plot performance profiles, various compiler options](https://github.com/primalib/prima/actions/workflows/profile_compiler_options.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_compiler_options.yml)
+
+- [Tests](https://github.com/sprimalib/prima/actions) at [sprimalib/prima](https://github.com/sprimalib/prima)<a name="stress-tests"></a>
+
+    - [![Stress test on large problems, Fortran](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml)
+    - [![Stress test on large problems, Fortran](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml)
 
 - [Tests](https://github.com/zequipe/prima/actions) at [zequipe/prima](https://github.com/zequipe/prima)
     - [![Test Flang](https://github.com/zequipe/prima/actions/workflows/test_flang.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_flang.yml)
