@@ -18,10 +18,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         compiler: [g, i, v, s, f, x, d]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [large]
+        exclude:
+          - os: macos-latest
+            compiler: v
+          - os: macos-latest
+            compiler: s
+          - os: macos-latest
+            compiler: f
+          - os: macos-latest
+            compiler: x
+          - os: macos-latest
+            compiler: d
 
     steps:
       - name: Checkout repository
@@ -44,9 +55,13 @@ jobs:
         with:
           compiler: gcc
 
-      - name: Install Intel oneAPI
-        if: ${{ matrix.compiler == 'i' || matrix.compiler == 'x'}}
+      - name: Install Intel oneAPI on Linux
+        if: ${{ startsWith(matrix.os, 'ubuntu') && (matrix.compiler == 'i' || matrix.compiler == 'x') }}
         run: bash .github/scripts/install_oneapi_linux.sh
+
+      - name: Install Intel oneAPI on macOS
+        if: ${{ startsWith(matrix.os, 'macos') && (matrix.compiler == 'i' || matrix.compiler == 'x') }}
+        run: bash .github/scripts/install_oneapi_macos.sh
 
       - name: Install nvfortran
         if: ${{ matrix.compiler == 'v' }}
