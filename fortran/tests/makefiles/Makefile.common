@@ -915,6 +915,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvdi3" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvsi3" \
 	| grep -v "‘cos_seed.dim\[0\].ubound’ may be used uninitialized" \
+	| grep -v "‘\.testdim_loc’ may be used uninitialized" \
 	| grep -v "Warning: ‘\.min_maxfun_str’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.direction_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
 	| grep -v "Warning: ‘\.msg’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
