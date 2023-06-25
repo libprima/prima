@@ -39,28 +39,28 @@ else
     if tough_test
         switch solver_name
         case 'uobyqa'
-            n = 150;
+            n = 150; % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
         case 'newuoa'
             n = 1600;
         case 'bobyqa'
             n = 1600;
         case 'lincoa'
-            n = 800;
+            n = 1000; %? % 800;
         case 'cobyla'
             n = 800;
         end
     else
         switch solver_name
         case 'uobyqa'
-            n = 150; %120; %100; %160 % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
+            n = 100; % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
         case 'newuoa'
             n = 800;
         case 'bobyqa'
-            n = 600; %800;
+            n = 800;
         case 'lincoa'
-            n = 600; %800;
+            n = 500; %?
         case 'cobyla'
-            n = 400; %600;
+            n = 400; %?
         end
     end
 end

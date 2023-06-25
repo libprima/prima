@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 25, 2023 AM09:17:35
+! Last Modified: Sunday, June 25, 2023 AM11:24:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -70,7 +70,7 @@ integer(IK) :: npt
 integer(IK) :: npt_list(10)
 integer(IK) :: nrand_loc
 integer(IK), parameter :: bign = 300_IK
-integer(IK), parameter :: largen = 800_IK
+integer(IK), parameter :: largen = 1000_IK
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: f
