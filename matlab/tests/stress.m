@@ -93,7 +93,8 @@ test_options.maxfun = 500 * n;
 test_options.rhobeg = 1;
 test_options.rhoend = 1.0e-7;
 test_options.iprint = 2;
-test_options.debug = true;
+%test_options.debug = true;
+test_options.debug = ~(ispc || ismac);
 
 % Generate the problem
 problem = stress_problem(n, problem_type, random_seed);
