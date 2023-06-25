@@ -8,17 +8,26 @@ if nargin < 2
     options = struct();
 end
 
+% Whether to conduct a TOUGH test
+tough_test = isfield(options, 'tough') && options.tough;
+
+% Which precision to test
+if isfield(options, 'precision') && ischstr(options.precision)
+    precision = options.precision;
+else
+    precision = 'double';
+end
+
 % Set up the solver
 old_directory = pwd();
 cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
 opt.debug = true;
+opt.single = strcmpi(precision, 'single');
+opt.quadruple = strcmpi(precision, 'quadruple');
 setup(solver, opt);
 cd(old_directory);
 solver_name = solver;
 solver = str2func(solver);
-
-% Whether to conduct a TOUGH test
-tough_test = isfield(options, 'tough') && options.tough;
 
 % Set the random seed using solver name. We ALTER THE SEED weekly to test the solvers as much as possible.
 if isfield(options, 'yw')
@@ -79,6 +88,7 @@ end
 
 % Set the options for the test
 test_options = struct();
+test_options.precision = precision;
 test_options.maxfun = 500 * n;
 test_options.rhobeg = 1;
 test_options.rhoend = 1.0e-7;
