@@ -67,6 +67,7 @@ jobs:
           cd "$ROOT_DIR"/fortran/tests
           export TESTDIM=${{ matrix.testdim }}
           make ${{matrix.compiler}}test_i2_r8_d1_tst.${{ matrix.solver }}
+          make ${{matrix.compiler}}test_i2_r4_d1_tst.${{ matrix.solver }}
 
       - name: Store artifacts
         uses: actions/upload-artifact@v3.1.2
