@@ -1,0 +1,79 @@
+name: Stress test on large problems, Fortran
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 18 * * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+
+
+jobs:
+
+  test:
+    name: Run gfortran tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        compiler: [g, i, v, s, f, x, d]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        testdim: [large]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.5.3
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
+
+      - name: Install AOCC
+        if: ${{ matrix.solver == 'd' }}
+        run: bash .github/scripts/install_aocc
+
+      - name: Install gfortran
+        if: ${{ matrix.solver == 'g' }}
+        uses: awvwgk/setup-fortran@main
+        id: setup-fortran
+        with:
+          compiler: gcc
+
+      - name: Install Intel oneAPI
+        if: ${{ matrix.solver == 'i' || matrix.solver == 'x'}}
+        run: bash .github/scripts/install_oneapi_linux.sh
+
+      - name: Install nvfortran
+        if: ${{ matrix.solver == 'd' }}
+        run: bash .github/scripts/install_nvfortran
+
+      - name: Install Oracle sunf95
+        if: ${{ matrix.solver == 's' }}
+        run: bash .github/scripts/install_sunf95
+
+      # Install Flang after AOCC, to make sure that flang is this one, while AOCC flang will be
+      # known as aflang.
+      - name: Install Flang
+        if: ${{ matrix.solver == 'f' }}
+        run: bash .github/scripts/install_flang
+
+      - name: Conduct the test
+        run: |
+          cd "$ROOT_DIR"/fortran/tests
+          export TESTDIM=${{ matrix.testdim }}
+          make ${{matrix.compiler}}test_i2_r8_d1_tst.${{ matrix.solver }}
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3.1.2
+        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
+        with:
+          path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
+
+      - name: Remove the test data
+        run: rm -rf ${{ env.TEST_DIR }}
