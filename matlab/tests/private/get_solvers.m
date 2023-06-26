@@ -39,6 +39,9 @@ olddir = pwd();
 % Will we compile the solvers?
 compile_flag = ~isfield(options, 'compile') || options.compile;
 
+% Do we have compiler options?
+with_compiler_options = compile_flag && isfield(options, 'compiler_options') && ischarstr(options.compiler_options);
+
 % Define `mexopts`, a cell array of structures, each of which contains the options for mexifying the
 % corresponding solver.
 mexopts = cell(length(solvers), 1);
@@ -69,7 +72,7 @@ for is = 1 : length(solvers)
         mexopts{is}.quadruple = (isverify || endsWith(solvers{is}, '_quadruple') || ismember([solvers{is}, '_quadruple'], solvers));
 
         % Should we be verbose?
-        mexopts{is}.verbose = (isfield(options, 'verbose') && options.verbose);
+        mexopts{is}.verbose = (isfield(options, 'verbose') && options.verbose || with_compiler_options);
     end
 end
 
@@ -82,11 +85,8 @@ mexopts = mexopts(ind);
 exception = [];
 try
 
-    compiler_options_modified = compile_flag && isfield(options, 'compiler_options') && ...
-        (isa(options.compiler_options, 'char') || isa(options.compiler_options, 'string'));
-    if compiler_options_modified
+    if with_compiler_options
         set_compiler_options(options.compiler_options);
-        mexopts{is}.verbose = true;  % Be verbose if compiler options are modified.
     end
 
     for is = 1 : length(solvers)
@@ -125,7 +125,7 @@ catch exception
 end
 
 % Restore the compiler options.
-if compiler_options_modified
+if with_compiler_options
     restore_compiler_options();
 end
 % Go back to the old directory.
