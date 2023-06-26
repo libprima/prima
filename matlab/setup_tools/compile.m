@@ -72,7 +72,11 @@ compiler_configurations = mex.getCompilerConfigurations('fortran', 'selected');
 if contains(compiler_configurations.Manufacturer, 'gnu', 'IgnoreCase', true)  % gfortran
     extra_compiler_options = '-fno-stack-arrays';
 elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', true)  % Intel compiler
-    extra_compiler_options = '-heap-arrays';
+    if ispc
+        extra_compiler_options = '/heap-arrays';
+    else
+        extra_compiler_options = '-heap-arrays';
+    end
 else
     warning('prima:UnrecognizedCompiler', 'Unrecognized compiler %s. The package may not work.', ...
         compiler_configurations.Name);
