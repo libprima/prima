@@ -81,11 +81,11 @@ else
         case 'newuoa'
             n = 600; %800;  % OK for single
         case 'bobyqa'
-            n = 700; %600; %800;  % OK for single
+            n = 600; %700; %600; %800;  % OK for single
         case 'lincoa'
-            n = 700; %600; %500; % OK
+            n = 600; %700; %600; %500; % OK
         case 'cobyla'
-            n = 500; %400;  % OK
+            n = 500; %600; %400;  % OK
         end
     end
 end
