@@ -53,11 +53,11 @@ else
     if ismac
         switch solver_name
         case 'uobyqa'
-            n = 40; % UOBYQA crashes if n >= 60
+            n = 50; % UOBYQA crashes if n >= 60
         case 'newuoa'
-            n = 400; % NEWUOA crashes if n >= 600
+            n = 500; % NEWUOA crashes if n >= 600
         case 'bobyqa'
-            n = 400; % BOBYQA crashes if n >= 600
+            n = 500; % BOBYQA crashes if n >= 600
         case 'lincoa'
             n = 400; % LINCOA crashes if n >= 500
         case 'cobyla'
