@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 25, 2023 PM08:37:53
+! Last Modified: Tuesday, June 27, 2023 AM07:43:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -128,15 +128,15 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         call setseed(rseed)
         npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
         iprint = 2_IK
-        if (int(npt) + 1000 > huge(0_IK)) then
+        if (int(npt) + 2000 > huge(0_IK)) then
             maxfun = huge(0_IK)
         else
-            maxfun = npt + int(1000.0_RP * rand(), IK)
+            maxfun = npt + int(2000.0_RP * rand(), IK)
         end if
         maxhist = maxfun
         ftarget = -REALMAX
         rhobeg = noisy(prob % Delta0)
-        rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(4.0_RP * rand() - 3.5_RP))
+        rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 6.0_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
         x = noisy(prob % x0)
         orig_calfun => prob % calfun
