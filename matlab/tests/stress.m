@@ -46,11 +46,36 @@ if isfield(options, 'n')
     n = options.n;
 else
     if ismac
+        switch solver_name
+        case 'uobyqa'
+            n = 60; % UOBYQA crashes if n >= 70
+        case 'newuoa'
+            n = 600; % NEWUOA crashes if n >= 700
+        case 'bobyqa'
+            n = 600; % BOBYQA crashes if n >= 700
+        case 'lincoa'
+            n = 500; % LINCOA crashes if n >= 600
+        case 'cobyla'
+            n = 400; % COBYLA crashes if n >= 500
+        end
+    elseif ispc
+        switch solver_name
+        case 'uobyqa'
+            n = 60; % UOBYQA crashes if n >= 70
+        case 'newuoa'
+            n = 600; % NEWUOA crashes if n >= 700
+        case 'bobyqa'
+            n = 600; % BOBYQA crashes if n >= 700
+        case 'lincoa'
+            n = 500; % LINCOA crashes if n >= 600
+        case 'cobyla'
+            n = 400; % COBYLA crashes if n >= 500
+        end
     elseif isunix
         if tough_test
             switch solver_name
             case 'uobyqa'
-                n = 150; % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
+                n = 150; % UOBYQA crashes if n > 200
             case 'newuoa'
                 n = 1600;
             case 'bobyqa'
@@ -63,7 +88,7 @@ else
         else
             switch solver_name
             case 'uobyqa'
-                n = 100; % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
+                n = 100; % UOBYQA crashes if n > 200
             case 'newuoa'
                 n = 800;
             case 'bobyqa'
@@ -73,19 +98,6 @@ else
             case 'cobyla'
                 n = 400;
             end
-        end
-    else
-        switch solver_name
-        case 'uobyqa'
-            n = 60; %70;
-        case 'newuoa'
-            n = 600; %800;  % OK for single
-        case 'bobyqa'
-            n = 600; %700; %600; %800;  % OK for single
-        case 'lincoa'
-            n = 600; %700; %600; %500; % OK
-        case 'cobyla'
-            n = 500; %600; %400;  % OK
         end
     end
 end
