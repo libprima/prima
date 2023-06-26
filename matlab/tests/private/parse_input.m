@@ -81,31 +81,31 @@ else
     options = struct();
 end
 
-fun = @(x) ischstr(x) && ismember(x, nocompile_flags);
+fun = @(x) ischarstr(x) && ismember(x, nocompile_flags);
 if any(cellfun(fun, argin))
     compile = false;
     argin = argin(~cellfun(fun, argin));
 end
 
-fun = @(x) ischstr(x) && ismember(x, sequential_flags);
+fun = @(x) ischarstr(x) && ismember(x, sequential_flags);
 if any(cellfun(fun, argin))
     sequential = true;
     argin = argin(~cellfun(fun, argin));
 end
 
-fun = @(x) ischstr(x) && ismember(x, reverse_flags);
+fun = @(x) ischarstr(x) && ismember(x, reverse_flags);
 if any(cellfun(fun, argin))
     reverse = true;
     argin = argin(~cellfun(fun, argin));
 end
 
-fun = @(x) ischstr(x) && ismember(x, problem_types);
+fun = @(x) ischarstr(x) && ismember(x, problem_types);
 if any(cellfun(fun, argin))
     problem_type = argin{find(cellfun(fun, argin), 1, 'first')};
     argin = argin(~cellfun(fun, argin));
 end
 
-fun = @(x) ischstr(x) && ismember(x, competitors);
+fun = @(x) ischarstr(x) && ismember(x, competitors);
 if any(cellfun(fun, argin))
     competitor = argin{find(cellfun(fun, argin), 1, 'first')};
     argin = argin(~cellfun(fun, argin));
@@ -122,7 +122,7 @@ if length(argin) == 3 && strcmp(invoker, 'verify')
 end
 
 if length(argin) == 3 && strcmp(invoker, 'profile')
-    fun = @(x) ischstr(x) && ismember(x, reload_flags);
+    fun = @(x) ischarstr(x) && ismember(x, reload_flags);
     if any(cellfun(fun, argin))
         reload = true;
         compile = false;
@@ -133,15 +133,15 @@ if length(argin) == 3 && strcmp(invoker, 'profile')
 end
 
 if length(argin) == 2
-    if ischstr(argin{1}) && isnumvec(argin{2}) && length(argin{2}) == 2
+    if ischarstr(argin{1}) && isnumvec(argin{2}) && length(argin{2}) == 2
         solver = argin{1};
         mindim = min(argin{2});
         maxdim = max(argin{2});
-    elseif ischstr(argin{2}) && isnumvec(argin{1}) && length(argin{1}) == 2
+    elseif ischarstr(argin{2}) && isnumvec(argin{1}) && length(argin{1}) == 2
         solver = argin{2};
         mindim = min(argin{1});
         maxdim = max(argin{1});
-    elseif ischstr(argin{1}) && ischstr(argin{2})
+    elseif ischarstr(argin{1}) && ischarstr(argin{2})
         argin = lower(argin);
         if length(intersect(argin, known_solvers)) == 1
             solver = intersect(argin, known_solvers);
@@ -163,7 +163,7 @@ if length(argin) == 2
 end
 
 if length(argin) == 1
-    if ischstr(argin{1})
+    if ischarstr(argin{1})
         solver = argin{1};
     else
         wrong_input = true;

@@ -17,7 +17,7 @@ end
 tough_test = isfield(options, 'tough') && options.tough;
 
 % Which precision to test
-if isfield(options, 'precision') && ischstr(options.precision)
+if isfield(options, 'precision') && ischarstr(options.precision)
     precision = options.precision;
 else
     precision = 'double';

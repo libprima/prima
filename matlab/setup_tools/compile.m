@@ -66,10 +66,15 @@ end
 % so the performance loss due to the heap allocation is negligible. This is true for derivative-free
 % optimization, but may not be true for optimization with derivatives.
 compiler_configurations = mex.getCompilerConfigurations('fortran', 'selected');
-if contains(compiler_configurations.Manufacturer, 'gnu', 'IgnoreCase', true)  % The Fortran compiler is gfortran.
-    compiler_options = 'FFLAGS="$FFLAGS -fno-stack-arrays"';
-elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', true)  % The Fortran compiler is ifort.
-    compiler_options = 'FFLAGS="$FFLAGS -heap-arrays"';
+if contains(compiler_configurations.Manufacturer, 'gnu', 'IgnoreCase', true)  % gfortran.
+    extra_compiler_options = '-fno-stack-arrays';
+elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', true)  % Intel compiler
+    extra_compiler_options = '-heap-arrays';
+end
+if ispc  % Windows
+    compiler_options = ['COMPFLAGS="$COMPFLAGS ', extra_compiler_options, '"'];
+else
+    compiler_options = ['FFLAGS="$FFLAGS ', extra_compiler_options, '"'];
 end
 
 % Name of the file that contains the list of Fortran files. There should be such a file in each

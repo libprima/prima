@@ -120,7 +120,7 @@ end
 
 if ~isempty(requirements.list)
     plist = requirements.list; % Use the list provided by the user, neglecting all other requirements
-    if (ischstr(plist))  % In case plist is indeed the name of a problem
+    if (ischarstr(plist))  % In case plist is indeed the name of a problem
         plist = {plist};
     end
 else
