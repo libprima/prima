@@ -26,6 +26,7 @@ end
 % Set up the solver
 old_directory = pwd();
 cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
+opt.verbose = true;
 opt.debug = true;
 opt.single = strcmpi(precision, 'single');
 opt.quadruple = strcmpi(precision, 'quadruple');
