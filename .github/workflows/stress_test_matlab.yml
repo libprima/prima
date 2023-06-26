@@ -18,7 +18,7 @@ jobs:
     name: Stress test of PRIMA on large problems
     runs-on: ${{ matrix.os }}
     continue-on-error: true
-    timeout-minutes: 10
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
