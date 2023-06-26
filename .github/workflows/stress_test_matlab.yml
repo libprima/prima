@@ -34,7 +34,7 @@ jobs:
             matlab: R2022a
           - os: ubuntu-20.04
             matlab: R2021a
-          - os: ubuntu-20.01
+          - os: ubuntu-20.04
             matlab: R2022a
           - os: ubuntu-20.04
             matlab: latest
