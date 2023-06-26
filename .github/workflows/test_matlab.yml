@@ -37,7 +37,7 @@ jobs:
           - os: macos-latest
             matlab: R2021b
 
-        # Only R2021a/b and R2022a are available on Windows.
+        # Only R2021a/b and R2022a are available on Windows 2019.
           - os: windows-2019
             matlab: R2020b
           - os: windows-2019
@@ -91,7 +91,7 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'
 
-      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September  
+      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
         uses: actions/cache@v3.3.1
         with:
           path: ${{ runner.tool_cache }}/MATLAB
