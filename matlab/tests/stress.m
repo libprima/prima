@@ -91,15 +91,15 @@ else
         else
             switch solver_name
             case 'uobyqa'
-                n = 60; %80;
+                n = 70; %60; %80;
             case 'newuoa'
-                n = 600; %800;  % OK for single
+                n = 700; %600; %800;  % OK for single
             case 'bobyqa'
-                n = 600; %800;  % OK for single
+                n = 700; %600; %800;  % OK for single
             case 'lincoa'
-                n = 600; %500; % OK
+                n = 700; %600; %500; % OK
             case 'cobyla'
-                n = 600; %400;  % OK
+                n = 700; %600; %400;  % OK
             end
         end
     end
