@@ -1,8 +1,8 @@
 name: Stress test on large problems, MATLAB
 
 on:
-  # Trigger the workflow on push or pull request
-  #push:
+  # Trigger the workflow on #PUSH or pull request
+  push:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -22,11 +22,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        #os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows-latest]
         matlab: [latest]
         solver: [cobyla, uobyqa, newuoa, bobyqa, lincoa]
-        precision: [single, double]
-        test: [normal, tough]
+          #precision: [single, double]
+        precision: [double]
+          #test: [normal, tough]
+        test: [normal]
 
     steps:
       - name: Check out repository

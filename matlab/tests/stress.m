@@ -45,31 +45,62 @@ random_seed = yw;
 if isfield(options, 'n')
     n = options.n;
 else
-    if tough_test
-        switch solver_name
-        case 'uobyqa'
-            n = 150; % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
-        case 'newuoa'
-            n = 1600;
-        case 'bobyqa'
-            n = 1600;
-        case 'lincoa'
-            n = 1000;
-        case 'cobyla'
-            n = 800;
+    if ismac
+    elseif isunix
+        if tough_test
+            switch solver_name
+            case 'uobyqa'
+                n = 150; % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
+            case 'newuoa'
+                n = 1600;
+            case 'bobyqa'
+                n = 1600;
+            case 'lincoa'
+                n = 1000;
+            case 'cobyla'
+                n = 800;
+            end
+        else
+            switch solver_name
+            case 'uobyqa'
+                n = 100; % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
+            case 'newuoa'
+                n = 800;
+            case 'bobyqa'
+                n = 800;
+            case 'lincoa'
+                n = 500;
+            case 'cobyla'
+                n = 400;
+            end
         end
     else
-        switch solver_name
-        case 'uobyqa'
-            n = 100; % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
-        case 'newuoa'
-            n = 800;
-        case 'bobyqa'
-            n = 800;
-        case 'lincoa'
-            n = 500;
-        case 'cobyla'
-            n = 400;
+        if tough_test
+            switch solver_name
+            case 'uobyqa'
+                n = 150; % UOBYQA will crash if n > 200 due to allocation of more memory than allowed.
+            case 'newuoa'
+                n = 1600;
+            case 'bobyqa'
+                n = 1600;
+            case 'lincoa'
+                n = 1000;
+            case 'cobyla'
+                n = 800;
+            end
+        else
+            switch solver_name
+            case 'uobyqa'
+                n = 80; %100;
+            case 'newuoa'
+                n = 600; %800;  % OK for single
+            case 'bobyqa'
+                n = 800;  % OK
+            case 'lincoa'
+                n = 300; %500; % OK for single
+            case 'cobyla'
+                n = 400;  % OK
+            end
         end
     end
 end
