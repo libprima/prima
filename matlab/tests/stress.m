@@ -1,8 +1,10 @@
 function stress(solver, options)
 %STRESS  Stress test for the solver on problems large dimensions.
-% N.B.: When the dimension beyond some limit, the MEX function will crash due to allocation of more
-% memory than allowed. As we can see below in the comments, the limit is much higher on Linux than
-% on macOS and Windows.
+% N.B.: When the dimension beyond some limit, the MEX function will crash due to memory violations.
+% As we can see below in the comments, the limit is much higher on Linux than on macOS and Windows.
+% This is probably because MEX uses gfortran on Linux, and it puts automatic arrays on the heap by
+% default, where as MEX uses ifort on macOS and Windows, and it puts automatic arrays on the stack
+% by default.
 
 % Turn off unwanted warnings
 orig_warning_state = warnoff({solver});
