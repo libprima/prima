@@ -52,24 +52,9 @@ jobs:
         shell: bash
         run: |
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd "$ROOT_DIR"/fortran/tests
-          $SEDI 's|800|100|g' test_*.f90
-          if [[ -f "test_uobyqa.f90" ]] ; then
-              $SEDI 's|bign = 120|bign = 90|g' test_uobyqa.f90
-          fi
-          if [[ -f "test_cobyla.f90" ]] ; then
-              $SEDI 's|bign = 120|bign = 70|g' test_cobyla.f90
-          fi
-          if [[ -f "test_newuoa.f90" ]] ; then
-              $SEDI 's|bign = 400|bign = 360|g' test_newuoa.f90
-          fi
-          if [[ -f "test_lincoa.f90" ]] ; then
-              $SEDI 's|bign = 400|bign = 380|g' test_lincoa.f90
-          fi
-          if [[ -f "test_bobyqa.f90" ]] ; then
-              $SEDI 's|bign = 400|bign = 380|g' test_bobyqa.f90
-          fi
-          export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
+          export FFLAGS=${{ matrix.fflags }}
+          export TESTDIM=${{ matrix.testdim }}
+          cd "$ROOT_DIR"/fortran/tests && make itest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make itest
 
       - name: Store artifacts

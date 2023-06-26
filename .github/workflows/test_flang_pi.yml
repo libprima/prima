@@ -40,14 +40,9 @@ jobs:
       - name: Conduct the test
         run: |
           #cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
-          cd "$ROOT_DIR"/fortran/tests
-          if [[ -f "test_cobyla.f90" ]] ; then
-              $SEDI 's|bign = 120|bign = 80|g' test_cobyla.f90
-          fi
-          if [[ -f "test_lincoa.f90" ]] ; then
-              $SEDI 's|bign = 400|bign = 380|g' test_lincoa.f90
-          fi
-          export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
+          export FFLAGS=${{ matrix.fflags }}
+          export TESTDIM=${{ matrix.testdim }}
+          cd "$ROOT_DIR"/fortran/tests && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make ftest
 
       - name: Store artifacts
