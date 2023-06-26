@@ -1,10 +1,19 @@
 function stress(solver, options)
 %STRESS  Stress test for the solver on problems large dimensions.
 % N.B.: When the dimension beyond some limit, the MEX function will crash due to memory violations.
-% As we can see below in the comments, the limit is much higher on Linux than on macOS and Windows.
-% This is probably because MEX uses gfortran on Linux, and it puts automatic arrays on the heap by
-% default, where as MEX uses ifort on macOS and Windows, and it puts automatic arrays on the stack
-% by default.
+% In the official version, the limit for each solver is much higher than the size of problems that
+% it is designed to solve. To achieve this, we have to force the MEX function to use the heap
+% instead of the stack for automatic arrays. This is done by the following compilation options:
+% gfortran on Linux: -fno-stack-arrays
+% Intel compiler on macOS: -heap-arrays
+% Intel compiler on Windows: /heap-arrays
+% As of gfortran 12.0, `-fno-stack-arrays` is indeed the default, and we specify it for safety; as
+% of Intel oneAPI 2023.1.0, `-no-heap-arrays` is the default, so we must specify `-heap-arrays`.
+% N.B.: We assume that the function evaluation is much more expensive than the memory allocation,
+% so the performance loss due to the heap allocation is negligible. This is true for derivative-free
+% optimization, but may not be true for optimization with derivatives.
+% See matlab/setup_tools/compile.m for details.
+
 
 % Turn off unwanted warnings
 orig_warning_state = warnoff({solver});
