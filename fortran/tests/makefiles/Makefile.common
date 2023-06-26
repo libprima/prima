@@ -419,7 +419,7 @@ GFSTD := 20$(shell [ $(FS) -lt 18 ] && echo 18 || echo $(FS))
 # 2. As of gfortran 11, gfortran raises a false positive warning regarding "maybe-uninitialized" of
 # allocatable characters. See
 # https://fortran-lang.discourse.group/t/warning-str-may-be-used-uninitialized
-WE := #$(shell if [[ $$($(GFORT) -dumpversion | sed 's|\..*||') -gt 11 || $$($(GFORT) -dumpversion | sed 's|\..*||') -gt 8 && -z '$(FFLAGSG)' ]] ; then echo "-Werror"; else echo ""; fi)
+WE := $(shell if [[ $$($(GFORT) -dumpversion 2>/dev/null || echo 0 | sed 's|\..*||') -gt 11 || $$($(GFORT) -dumpversion 2>/dev/null || echo 0 | sed 's|\..*||') -gt 8 && -z '$(FFLAGSG)' ]] ; then echo "-Werror"; else echo ""; fi)
 GFORT := $(GFORT) $(WE) -pedantic-errors -fmax-errors=1
 # `-fautomatic` (the default) tells `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
@@ -431,7 +431,7 @@ else
 	GFORT := $(GFORT) -fno-stack-arrays -fstack-check
 endif
 # -fsanitize=leak,address does not work with gdb.
-FSAN := $(shell if [[ $$($(GFORT) -dumpversion | sed 's|\..*||') -gt 9 ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
+FSAN := $(shell if [[ $$($(GFORT) -dumpversion 2>/dev/null || echo 0 | sed 's|\..*||') -gt 9 ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
 GFORT := $(GFORT) -std=f$(GFSTD) -fall-intrinsics -frecursive \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized \
 	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
@@ -837,7 +837,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	else \
 		if echo $@ | grep -q 'itest\|xtest' && [[ '$(OSTYPE)' = 'MAC' || '$(OSTYPE)' = 'LINUX' ]] ; then \
 			printf "Initialize Intel OneAPI." ; \
-			source /opt/intel/oneapi/setvars.sh 2&> /dev/null ; \
+			source /opt/intel/oneapi/setvars.sh 2> /dev/null ; \
 		fi ; \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
 			if [[ '$(FFLAGSO)' = '-fast' ]] ; then \
@@ -914,20 +914,20 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___powisf2" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvdi3" \
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvsi3" \
-	| grep -v "‘cos_seed.dim\[0\].ubound’ may be used uninitialized" \
-	| grep -v "‘\.testdim_loc’ may be used uninitialized" \
-	| grep -v "Warning: ‘\.min_maxfun_str’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.direction_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.msg’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.reason’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.fname’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.fstat’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\..*_message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.message’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.fname_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.position’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.sformat’ may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: ‘\.noise_type_loc’ may be used uninitialized.*\[-Wmaybe-uninitialized\\]" \
+	| grep -v "cos_seed.dim\[0\].ubound.* may be used uninitialized" \
+	| grep -v "\.testdim_loc.* may be used uninitialized" \
+	| grep -v "Warning: \.min_maxfun_str.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \.direction_loc.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \.msg.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \.reason.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \.fname.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \.fstat.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \..*_message.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \.message.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \.fname_loc.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \.position.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \.sformat.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
+	| grep -v "Warning: \.noise_type_loc.* may be used uninitialized.*\[-Wmaybe-uninitialized\\]" \
 	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
