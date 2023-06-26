@@ -1,8 +1,8 @@
 name: Stress test on large problems, MATLAB
 
 on:
-  # Trigger the workflow on #PUSH or pull request
-  push:
+  # Trigger the workflow on push or pull request
+  #push:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -10,26 +10,27 @@ on:
   # Trigger the workflow manually
   workflow_dispatch:
 
-env:
-  GFORTRAN_VERSION: 12
-
 jobs:
   test:
     name: Stress test of PRIMA on large problems
     runs-on: ${{ matrix.os }}
     continue-on-error: true
-    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        #os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         matlab: [latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
-          #precision: [single, double]
-        precision: [double]
-          #test: [normal, tough]
-        test: [normal]
+        test: [normal, tough]
+
+        # Test some old versions of OS and MATLAB.
+        include:
+          - os: ubuntu-20.04
+            matlab: R2020b
+          - os: macos-11
+            matlab: R2022a
+          - os: windows-2019
+            matlab: R2021a
 
     steps:
       - name: Check out repository
@@ -40,7 +41,15 @@ jobs:
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
+        run: |
+          GFVER=12
+          if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
+              GFVER=11
+          fi
+          if [[ "${{ matrix.matlab }}" = "R2020b" || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" = "R2021b" ]] ; then
+              GFVER=9
+          fi
+          bash .github/scripts/link_gfortran "$GFVER"
 
       - name: Install Intel oneAPI on macOS
         if: startsWith(matrix.os, 'macos')
@@ -71,7 +80,12 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
             options.tough = strcmp('${{ matrix.test }}', 'tough');
-            options.precision = '${{ matrix.precision }}';
+            daynum = day(datetime('now', 'TimeZone', 'Asia/Shanghai'));
+            if daynum % 2 == 0
+                options.precision = 'single';
+            else
+                options.precision = 'double';
+            end
             stress('${{ matrix.solver }}', options);
 
 

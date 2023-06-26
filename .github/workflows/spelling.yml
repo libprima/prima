@@ -3,7 +3,7 @@ name: Check Spelling
 # Comment management is handled through a secondary job, for details see:
 # https://github.com/check-spelling/check-spelling/wiki/Feature%3A-Restricted-Permissions
 #
-# `jobs.comment-#PUSH` runs when a #PUSH is made to a repository and the `jobs.spelling` job needs to make a comment
+# `jobs.comment-push` runs when a push is made to a repository and the `jobs.spelling` job needs to make a comment
 #   (in odd cases, it might actually run just to collapse a comment, but that's fairly rare)
 #   it needs `contents: write` in order to add a comment.
 #
@@ -20,7 +20,7 @@ name: Check Spelling
 #   This event listens to comments by users asking to update the metadata.
 #
 # `jobs.update`
-#   This job runs in response to an issue_comment and will #PUSH a new commit
+#   This job runs in response to an issue_comment and will push a new commit
 #   to update the spelling metadata.
 #
 # `with.experimental_apply_changes_via_bot`
@@ -34,7 +34,7 @@ name: Check Spelling
 #   For background, see: https://github.com/check-spelling/check-spelling/wiki/Feature:-Update-with-deploy-key
 
 on:
-  #PUSH:
+  push:
     branches:
     - "**"
     tags-ignore:
@@ -65,7 +65,7 @@ jobs:
     outputs:
       followup: ${{ steps.spelling.outputs.followup }}
     runs-on: ubuntu-latest
-    if: "contains(github.event_name, 'pull_request') || github.event_name == '#PUSH'"
+    if: "contains(github.event_name, 'pull_request') || github.event_name == 'push'"
     concurrency:
       group: spelling-${{ github.event.pull_request.number || github.ref }}
       # note: If you use only_check_changed_files, you do not want cancel-in-progress
@@ -75,7 +75,7 @@ jobs:
       id: spelling
       uses: check-spelling/check-spelling@main
       with:
-        suppress_#PUSH_for_open_pull_request: 1
+        suppress_push_for_open_pull_request: 1
         checkout: true
         check_file_names: 1
         spell_check_this: check-spelling/spell-check-this@prerelease
@@ -100,14 +100,14 @@ jobs:
           cspell:html-symbol-entities/entities.txt
           cspell:css/css.txt
 
-  comment-#PUSH:
+  comment-push:
     name: Report (Push)
-    # If your workflow isn't running on #PUSH, you can remove this job
+    # If your workflow isn't running on push, you can remove this job
     runs-on: ubuntu-latest
     needs: spelling
     permissions:
       contents: write
-    if: (success() || failure()) && needs.spelling.outputs.followup && github.event_name == '#PUSH'
+    if: (success() || failure()) && needs.spelling.outputs.followup && github.event_name == 'push'
     steps:
     - name: comment
       uses: check-spelling/check-spelling@main

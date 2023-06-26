@@ -51,61 +51,33 @@ random_seed = yw;
 if isfield(options, 'n')
     n = options.n;
 else
-    %if ismac
-    %    switch solver_name
-    %    case 'uobyqa'
-    %        n = 50; % UOBYQA crashes if n >= 60
-    %    case 'newuoa'
-    %        n = 500; % NEWUOA crashes if n >= 600
-    %    case 'bobyqa'
-    %        n = 500; % BOBYQA crashes if n >= 600
-    %    case 'lincoa'
-    %        n = 400; % LINCOA crashes if n >= 500
-    %    case 'cobyla'
-    %        n = 300; % COBYLA crashes if n >= 400
-    %    end
-    %elseif ispc
-    %    switch solver_name
-    %    case 'uobyqa'
-    %        n = 60; % UOBYQA crashes if n >= 70
-    %    case 'newuoa'
-    %        n = 600; % NEWUOA crashes if n >= 700
-    %    case 'bobyqa'
-    %        n = 600; % BOBYQA crashes if n >= 700
-    %    case 'lincoa'
-    %        n = 500; % LINCOA crashes if n >= 600
-    %    case 'cobyla'
-    %        n = 400; % COBYLA crashes if n >= 500
-    %    end
-    %else
-        if tough_test
-            switch solver_name
-            case 'uobyqa'
-                n = 150; % UOBYQA crashes if n > 200
-            case 'newuoa'
-                n = 1600;
-            case 'bobyqa'
-                n = 1600;
-            case 'lincoa'
-                n = 1000;
-            case 'cobyla'
-                n = 800;
-            end
-        else
-            switch solver_name
-            case 'uobyqa'
-                n = 100; % UOBYQA crashes if n > 200
-            case 'newuoa'
-                n = 800;
-            case 'bobyqa'
-                n = 800;
-            case 'lincoa'
-                n = 500;
-            case 'cobyla'
-                n = 400;
-            end
+    if tough_test
+        switch solver_name
+        case 'uobyqa'
+            n = 150; % UOBYQA crashes if n > 200
+        case 'newuoa'
+            n = 1600;
+        case 'bobyqa'
+            n = 1600;
+        case 'lincoa'
+            n = 1000;
+        case 'cobyla'
+            n = 800;
         end
-    %end
+    else
+        switch solver_name
+        case 'uobyqa'
+            n = 100; % UOBYQA crashes if n > 200
+        case 'newuoa'
+            n = 800;
+        case 'bobyqa'
+            n = 800;
+        case 'lincoa'
+            n = 500;
+        case 'cobyla'
+            n = 400;
+        end
+    end
 end
 
 % Set the type of the problem
@@ -128,6 +100,8 @@ test_options.rhobeg = 1;
 test_options.rhoend = 1.0e-7;
 test_options.iprint = 2;
 test_options.debug = true;
+fprintf('\n>>>>>> test_options =');
+test_options
 
 % Generate the problem
 problem = stress_problem(n, problem_type, random_seed);
