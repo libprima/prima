@@ -916,18 +916,18 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "warning: (x86_64)  could not find object file symbol for symbol ___subvsi3" \
 	| grep -v "cos_seed.dim\[0\].ubound.* may be used uninitialized" \
 	| grep -v "\.testdim_loc.* may be used uninitialized" \
-	| grep -v "Warning: \.min_maxfun_str.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \.direction_loc.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \.msg.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \.reason.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \.fname.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \.fstat.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \..*_message.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \.message.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \.fname_loc.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \.position.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \.sformat.* may be used uninitialized.*\[-Wmaybe-uninitialized\]" \
-	| grep -v "Warning: \.noise_type_loc.* may be used uninitialized.*\[-Wmaybe-uninitialized\\]" \
+	| grep -v "\.min_maxfun_str.* may be used uninitialized" \
+	| grep -v "\.direction_loc.* may be used uninitialized" \
+	| grep -v "\.msg.* may be used uninitialized" \
+	| grep -v "\.reason.* may be used uninitialized" \
+	| grep -v "\.fname.* may be used uninitialized" \
+	| grep -v "\.fstat.* may be used uninitialized" \
+	| grep -v "\..*_message.* may be used uninitialized" \
+	| grep -v "\.message.* may be used uninitialized" \
+	| grep -v "\.fname_loc.* may be used uninitialized" \
+	| grep -v "\.position.* may be used uninitialized" \
+	| grep -v "\.sformat.* may be used uninitialized" \
+	| grep -v "\.noise_type_loc.* may be used uninitialized" \
 	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
