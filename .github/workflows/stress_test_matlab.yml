@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         #os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [macos-latest, windows-latest]
+        os: [macos-latest]
         matlab: [latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
           #precision: [single, double]

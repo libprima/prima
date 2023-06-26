@@ -1,5 +1,8 @@
 function stress(solver, options)
-% STRESS  Stress test for the solver on problems large dimensions.
+%STRESS  Stress test for the solver on problems large dimensions.
+% N.B.: When the dimension beyond some limit, the MEX function will crash due to allocation of more
+% memory than allowed. As we can see below in the comments, the limit is much higher on Linux than
+% on macOS and Windows.
 
 % Turn off unwanted warnings
 orig_warning_state = warnoff({solver});
@@ -48,15 +51,15 @@ else
     if ismac
         switch solver_name
         case 'uobyqa'
-            n = 60; % UOBYQA crashes if n >= 70
+            n = 40; % UOBYQA crashes if n >= 60
         case 'newuoa'
-            n = 600; % NEWUOA crashes if n >= 700
+            n = 400; % NEWUOA crashes if n >= 600
         case 'bobyqa'
-            n = 600; % BOBYQA crashes if n >= 700
+            n = 400; % BOBYQA crashes if n >= 600
         case 'lincoa'
-            n = 500; % LINCOA crashes if n >= 600
+            n = 400; % LINCOA crashes if n >= 500
         case 'cobyla'
-            n = 400; % COBYLA crashes if n >= 500
+            n = 300; % COBYLA crashes if n >= 400
         end
     elseif ispc
         switch solver_name
@@ -71,7 +74,7 @@ else
         case 'cobyla'
             n = 400; % COBYLA crashes if n >= 500
         end
-    elseif isunix
+    else
         if tough_test
             switch solver_name
             case 'uobyqa'
