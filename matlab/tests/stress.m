@@ -77,7 +77,7 @@ else
     else
         switch solver_name
         case 'uobyqa'
-            n = 70; %60; %80;
+            n = 60; %70;
         case 'newuoa'
             n = 600; %800;  % OK for single
         case 'bobyqa'
