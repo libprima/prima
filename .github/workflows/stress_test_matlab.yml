@@ -26,18 +26,46 @@ jobs:
         # Exclude some versions of OS and MATLAB. In addition to the latest versions, we intend to
         # test the earliest version of MATLAB on each OS.
         exclude:
+          - os: ubuntu-latest
+            matlab: R2020b
+          - os: ubuntu-latest
+            matlab: R2021a
+          - os: ubuntu-latest
+            matlab: R2022a
           - os: ubuntu-20.04
             matlab: R2021a
           - os: ubuntu-20.01
             matlab: R2022a
+          - os: ubuntu-20.04
+            matlab: latest
+
+          - os: macos-latest
+            matlab: R2020b
+          - os: macos-latest
+            matlab: R2021a
+          - os: macos-latest
+            matlab: R2022a
           - os: macos-11
             matlab: R2020b
           - os: macos-11
             matlab: R2021a
+          - os: macos-11
+            matlab: latest
+
+          - os: windows-latest
+            matlab: R2020b
+          - os: windows-latest
+            matlab: R2021a
+          - os: windows-latest
+            matlab: R2022a
           - os: windows-2019
             matlab: R2020b
           - os: windows-2019
             matlab: R2022a
+          - os: windows-2019
+            matlab: latest
+
+
 
     steps:
       - name: Check out repository
