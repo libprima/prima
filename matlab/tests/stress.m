@@ -85,7 +85,7 @@ else
         case 'lincoa'
             n = 700; %600; %500; % OK
         case 'cobyla'
-            n = 600; %400;  % OK
+            n = 500; %400;  % OK
         end
     end
 end
