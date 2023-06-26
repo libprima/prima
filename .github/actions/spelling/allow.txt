@@ -2005,3 +2005,5 @@ hilb
 maxub
 minlb
 sprimalib
+COMPFLAGS
+daynum
