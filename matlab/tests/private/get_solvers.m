@@ -86,6 +86,7 @@ try
         (isa(options.compiler_options, 'char') || isa(options.compiler_options, 'string'));
     if compiler_options_modified
         set_compiler_options(options.compiler_options);
+        mexopts{is}.verbose = true;  % Be verbose if compiler options are modified.
     end
 
     for is = 1 : length(solvers)
