@@ -116,9 +116,9 @@ jobs:
             options = struct();
             options.tough = strcmp('${{ matrix.test }}', 'tough');
             daynum = day(datetime('now', 'TimeZone', 'Asia/Shanghai'));
-            if daynum % 3 == 0
+            if mod(daynum, 3) == 0
                 options.precision = 'single';
-            elseif daynum % 3 == 1
+            elseif mod(daynum, 3) == 1
                 options.precision = 'double';
             else
                 options.precision = 'quadruple';
