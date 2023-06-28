@@ -407,7 +407,7 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 # GNU gfortran
 # 0. With std=f2008, gfortran complains that the stop-code of `error stop` "must be a scalar default
 # CHARACTER or INTEGER constant expression". Thus we revise FSTD to f2018 or above. However, -std=f2018
-# is regonized by gfortran 9 or above. So we remove -std=f2018 if the compiler is gfortran 7 or below.
+# is recognized by gfortran 9 or above. So we remove -std=f2018 if the compiler is gfortran 7 or below.
 # 1. In the debug mode, our code includes the BACKTRACE function if the compiler is gfortran. This
 # makes the code not standard-conforming. So -std=f$(FSTD) cannot be imposed without -fall-intrinsics.
 # 2. As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
