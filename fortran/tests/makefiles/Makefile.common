@@ -406,13 +406,14 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 
 # GNU gfortran
 # 0. With std=f2008, gfortran complains that the stop-code of `error stop` "must be a scalar default
-# CHARACTER or INTEGER constant expression". Thus we revise FSTD to f2018 or above.
+# CHARACTER or INTEGER constant expression". Thus we revise FSTD to f2018 or above. However, -std=f2018
+# is regonized by gfortran 9 or above. So we remove -std=f2018 if the compiler is gfortran 7 or below.
 # 1. In the debug mode, our code includes the BACKTRACE function if the compiler is gfortran. This
 # makes the code not standard-conforming. So -std=f$(FSTD) cannot be imposed without -fall-intrinsics.
 # 2. As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
 #GFORT := gfortran -pg  # Compile for profiling with the gprof profiler. Does not work with macOS on GitHub Actions due to missing gcrt1.o
 GFORT := gfortran
-GFSTD := 20$(shell [ $(FS) -lt 18 ] && echo 18 || echo $(FS))
+GFSTD := $(shell  [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 8 ]] && ([[ $(FS) -lt 18 ]] && echo -std=f2018 || echo -std=f20$(FS)) || echo "")
 # 1. gfortran 7 raises a false positive warning regarding "maybe-uninitialized" of allocatable arrays.
 # See https://stackoverflow.com/questions/56261880/fortran-re-allocation-on-assignment-and-gfortran-warnings
 # 2. As of gfortran 11, gfortran raises a false positive warning regarding "maybe-uninitialized" of
@@ -431,7 +432,7 @@ else
 endif
 # -fsanitize=leak,address does not work with gdb.
 FSAN := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
-GFORT := $(GFORT) -std=f$(GFSTD) -fall-intrinsics -frecursive \
+GFORT := $(GFORT) $(GFSTD) -fall-intrinsics -frecursive \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized \
 	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
 	-Wuse-without-only -Wunused-parameter -Wreturn-type \
