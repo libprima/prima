@@ -116,10 +116,12 @@ jobs:
             options = struct();
             options.tough = strcmp('${{ matrix.test }}', 'tough');
             daynum = day(datetime('now', 'TimeZone', 'Asia/Shanghai'));
-            if daynum % 2 == 0
+            if daynum % 3 == 0
                 options.precision = 'single';
-            else
+            elseif daynum % 3 == 1
                 options.precision = 'double';
+            else
+                options.precision = 'quadruple';
             end
             stress('${{ matrix.solver }}', options);
 
