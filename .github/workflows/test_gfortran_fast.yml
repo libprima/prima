@@ -74,7 +74,6 @@ jobs:
                 export FFLAGS='-fast'
                 cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
-            if (( ${{ matrix.version }} < 8 )) ; then export FS=08; else export FS=18; fi  # Needed by the next line; `-f2018` is not implemented until gcc-8
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make gtest
 
       - name: Store artifacts

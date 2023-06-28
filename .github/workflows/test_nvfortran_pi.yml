@@ -75,4 +75,4 @@ jobs:
           path: scripts
 
       - name: Check whether the tests were successful or cancelled due to timeout
-        run: bash scripts/check_success_timeout_big_test ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
+        run: bash scripts/check_success_timeout ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
