@@ -141,7 +141,7 @@ for COMP in $COMP_LIST; do
             export FFLAGS=$FLG && make "$COMP"test_c."$SOLVER"
         done
     else
-        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' || $ARM32 == 'Y' ]] ; then
+        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $ARM32 == 'Y' ]] ; then
             TESTS="i2_r4_d1 i8_r4_d0"
         else
             TESTS="i2_r16_d1 i8_r4_d0"
