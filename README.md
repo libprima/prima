@@ -361,7 +361,7 @@ the [Hong Kong Ph.D. Fellowship Scheme](https://cerg1.ugc.edu.hk/hkpfs/index.htm
 
 PRIMA is a long-term project, which would not have been sustainable without the continued funds from the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc/) (ref. PolyU 253012/17P, PolyU 153054/20P,
-and PolyU 153066/21P) and [The Hong Kong Polytechnic University](https://www.polyu.edu.hk/) (PolyU),
+PolyU 153066/21P, and PolyU 153086/23P) and [The Hong Kong Polytechnic University](https://www.polyu.edu.hk/) (PolyU),
 in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA).
 
 
