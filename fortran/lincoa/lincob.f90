@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 15, 2023 PM08:11:49
+! Last Modified: Monday, July 03, 2023 AM12:34:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,7 +26,7 @@ public :: lincob
 contains
 
 
-subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bvec, ctol, cweight, &
+subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, Aineq, amat, bineq, bvec, ctol, cweight, &
     & eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, chist, cstrv, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA.
@@ -102,10 +102,10 @@ integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: npt
-real(RP), intent(in) :: A_orig(:, :)  ! A_ORIG(N, M) ; Better names? necessary?
-real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M) ; Better names? necessary?
-real(RP), intent(in) :: b_orig(:) ! B_ORIG(M) ; Better names? necessary?
-real(RP), intent(in) :: bvec(:)  ! BVEC(M) ; Better names? necessary?
+real(RP), intent(in) :: Aineq(:, :)  ! Aineq(Mineq, N)
+real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: bineq(:) ! Bineq(M)
+real(RP), intent(in) :: bvec(:)  ! BVEC(M)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: cweight
 real(RP), intent(in) :: eta1
@@ -131,7 +131,7 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 ! Local variables
 character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'LINCOB'
-integer(IK) :: iact(size(b_orig))
+integer(IK) :: iact(size(bineq))
 integer(IK) :: idz
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: k
@@ -164,10 +164,10 @@ logical :: shortd
 logical :: small_trrad
 logical :: trfail
 logical :: ximproved
-real(RP) :: b(size(b_orig))
+real(RP) :: b(size(bineq))
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: cfilt(maxfilt)
-real(RP) :: constr(size(b_orig))
+real(RP) :: constr(size(bineq))
 real(RP) :: d(size(x))
 real(RP) :: delbar
 real(RP) :: delta
@@ -187,7 +187,7 @@ real(RP) :: pqalt(npt)
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: qred
 real(RP) :: ratio
-real(RP) :: rescon(size(b_orig))
+real(RP) :: rescon(size(bineq))
 real(RP) :: rfac(size(x), size(x))
 real(RP) :: rho
 real(RP) :: xbase(size(x))
@@ -198,7 +198,7 @@ real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 
 ! Sizes.
-m = int(size(b_orig), kind(m))
+m = int(size(bvec), kind(m))
 n = int(size(x), kind(n))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
@@ -212,8 +212,7 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(maxfun >= npt + 1, 'MAXFUN >= NPT+1', srname)
-    call assert(size(A_orig, 1) == n .and. size(A_orig, 2) == m, 'SIZE(A_ORIG) == [N, M]', srname)
-    call assert(size(bvec) == m, 'SIZE(BVEC) == M', srname)
+    call assert(size(Aineq, 1) == size(bineq) .and. size(Aineq, 2) == n, 'SIZE(Aineq) == [SIZE(Bineq), N]', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
@@ -233,15 +232,15 @@ end if
 
 ! Initialize XBASE, XPT, FVAL, and KOPT.
 b = bvec
-call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
+call initxf(calfun, iprint, maxfun, Aineq, amat, bineq, ctol, ftarget, rhobeg, x, b, &
     & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
 x = xbase + xpt(:, kopt)
 f = fval(kopt)
 
-! Evaluate the constraints using A_ORIG and B_ORIG. Should we do this in INITXF?
+! Evaluate the constraints using Aineq and Bineq. Should we do this in INITXF?
 ! N.B.: We must initialize CONSTR and CSTRV. Otherwise, if REDUCE_RHO is TRUE after the very first
 ! iteration due to SHORTD, then RHOMSG will be called with CONSTR and CSTRV uninitialized.
-constr = matprod(x, A_orig) - b_orig
+constr = matprod(Aineq, x) - bineq
 cstrv = maximum([ZERO, constr])
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
@@ -265,7 +264,7 @@ if (subinfo /= INFO_DFT) then
     kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
     x = xfilt(:, kopt)
     f = ffilt(kopt)
-    constr = matprod(x, A_orig) - b_orig
+    constr = matprod(Aineq, x) - bineq
     cstrv = maximum([ZERO, constr])
     ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist)
@@ -386,8 +385,8 @@ do tr = 1, maxtr
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
-        ! Evaluate the constraints using A_ORIG and B_ORIG.
-        constr = matprod(x, A_orig) - b_orig
+        ! Evaluate the constraints using Aineq and Bineq.
+        constr = matprod(Aineq, x) - bineq
         cstrv = maximum([ZERO, constr])
 
         ! Print a message about the function evaluation according to IPRINT.
@@ -535,8 +534,8 @@ do tr = 1, maxtr
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
-        ! Evaluate the constraints using A_ORIG and B_ORIG.
-        constr = matprod(x, A_orig) - b_orig
+        ! Evaluate the constraints using Aineq and Bineq.
+        constr = matprod(Aineq, x) - bineq
         cstrv = maximum([ZERO, constr])
 
         ! Print a message about the function evaluation according to IPRINT.
@@ -618,7 +617,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
-    constr = matprod(x, A_orig) - b_orig
+    constr = matprod(Aineq, x) - bineq
     cstrv = maximum([ZERO, constr])
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
@@ -633,7 +632,7 @@ end if
 kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
 x = xfilt(:, kopt)
 f = ffilt(kopt)
-constr = matprod(x, A_orig) - b_orig
+constr = matprod(Aineq, x) - bineq
 cstrv = maximum([ZERO, constr])
 
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.

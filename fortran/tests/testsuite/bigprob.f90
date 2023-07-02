@@ -32,9 +32,9 @@ prob % lb = -TEN
 call safealloc(prob % ub, n)
 prob % ub = TEN
 
-call safealloc(prob % Aeq, n, m_loc)
-do j = 1, m_loc
-    do i = 1, n
+call safealloc(prob % Aeq, m_loc, n)
+do j = 1, n
+    do i = 1, m_loc
         prob % Aeq(i, j) = ONE / real(i + j, RP)
     end do
 end do
@@ -42,7 +42,7 @@ end do
 call safealloc(prob % beq, m_loc)
 prob % beq = sin(real([(j, j=1, m_loc)], RP))
 
-call safealloc(prob % Aineq, n, m_loc)
+call safealloc(prob % Aineq, m_loc, n)
 prob % Aineq = prob % Aeq
 
 call safealloc(prob % bineq, m_loc)

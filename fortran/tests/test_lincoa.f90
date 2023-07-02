@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, June 27, 2023 AM07:43:24
+! Last Modified: Monday, July 03, 2023 AM01:22:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -172,7 +172,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         print '(/A, I0, A, I0, A, I0, A, I0, A, I0)', &
            & strip(probname)//': N = ', n, ' NPT = ', npt, ' M = ', size(Aineq, 2), ', MAXFUN = ', maxfun, ', Random test ', irand
 
-        call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=Aineq, b=bineq, &
+        call lincoa(noisy_calfun, x, f, cstrv=cstrv, Aineq=Aineq, bineq=bineq, &
             & npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist,&
             & chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
@@ -267,9 +267,9 @@ else
                 orig_calfun => prob % calfun
 
                 if (prob % probtype == 'b') then
-                    call safealloc(Aineq, n, 2_IK * n)
-                    Aineq(:, 1_IK:n) = eye(n)
-                    Aineq(:, n + 1_IK:2_IK * n) = -eye(n)
+                    call safealloc(Aineq, 2_IK * n, n)
+                    Aineq(1_IK:n, :) = eye(n)
+                    Aineq(n + 1_IK:2_IK * n, :) = -eye(n)
                     call safealloc(bineq, 2_IK * n)
                     bineq = [prob % ub, -prob % lb]
                 else
@@ -284,7 +284,7 @@ else
 
                 call safealloc(x, n)
                 x = x0
-                call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=Aineq, b=bineq, &
+                call lincoa(noisy_calfun, x, f, cstrv=cstrv, Aineq=Aineq, bineq=bineq, &
                     & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
                     & xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
