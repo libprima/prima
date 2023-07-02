@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, May 30, 2023 PM06:28:30
+! Last Modified: Monday, July 03, 2023 AM01:25:45
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -97,9 +97,9 @@ x0(10:12) = 1.0_RP / ss
 A = 0.0_RP
 do j = 1, np
     do i = 1, 4
-        A(3 * i - 2, 4 * j + i - 4) = xp(j)
-        A(3 * i - 1, 4 * j + i - 4) = yp(j)
-        A(3 * i, 4 * j + i - 4) = zp(j)
+        A(4 * j + i - 4, 3 * i - 2) = xp(j)
+        A(4 * j + i - 4, 3 * i - 1) = yp(j)
+        A(4 * j + i - 4, 3 * i) = zp(j)
     end do
 end do
 
@@ -123,7 +123,7 @@ implicit none
 
 integer, parameter :: n = 12, np = 50
 integer :: nf, info
-real(RP) :: f, cstrv, x(n), x0(n), A(n, 4 * np), b(4 * np)
+real(RP) :: f, cstrv, x(n), x0(n), A(4 * np, n), b(4 * np)
 
 ! Set up X0 (starting point), A, and b.
 call setup(x0, A, b)

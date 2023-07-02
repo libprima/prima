@@ -353,7 +353,7 @@ elseif ~strcmp(invoker, 'prima') &&  probinfo.feasibility_problem
     end
 else % The problem turns out 'normal' during preprima
     % Include all the constraints into one single linear constraint
-    % (A_aug)'*x <= b_aug; note the TRANSPOSE due to the data structure of
+    % (A_aug)*x <= b_aug; note the TRANSPOSE due to the data structure of
     % the Fortran code.
     n = length(x0);
     idmatrix = eye(n, n); % If we want to use sparse matrix, the mex gateway has to be modified
@@ -363,9 +363,9 @@ else % The problem turns out 'normal' during preprima
     ub = ub(ub < inf); % Remove infinity bounds!
     % Note that preprima has removed the 'trivial' linear constraints in
     % [Aineq, bineq] and [Aeq, beq].
-    A_aug = [-Alb; Aub; Aineq; Aeq; -Aeq]';
+    A_aug = [-Alb; Aub; Aineq; Aeq; -Aeq];
     b_aug = [-lb(:); ub(:); bineq(:); beq(:); -beq(:)];
-    if ~(isempty(A_aug) && isempty(b_aug)) && ~(size(A_aug,1) == n && size(A_aug,2) == length(b_aug))
+    if ~(isempty(A_aug) && isempty(b_aug)) && ~(size(A_aug,1) == length(b_aug) && size(A_aug,2) == n)
         % Private/unexpected error
         error(sprintf('%s:InvalidAugLinCon', funname), '%s: UNEXPECTED ERROR: invalid augmented linear constraints.', funname);
     end
@@ -385,7 +385,7 @@ else % The problem turns out 'normal' during preprima
     % it feasible (which is a bit strange, but Powell decided to do it).
     % preprima has tried to make find a feasible x0. Raise a warning is
     % x0 is not 'feasible enough' so that the constraints will be modified.
-    if ~isempty(A_aug) && any(A_aug'*x0 > b_aug + 1e-10*max(1, abs(b_aug)))
+    if ~isempty(A_aug) && any(A_aug*x0 > b_aug + 1e-10*max(1, abs(b_aug)))
         output.constr_modified = true;
         wid = sprintf('%s:ConstraintModified', funname);
         wmsg = sprintf('%s will modify the right-hand sides of the constraints to make the starting point feasible.', funname);

@@ -4,17 +4,21 @@ module lincoa_mod
 !
 ! The algorithm approximately solves
 !
-!   min F(X) subject to A^T*X <= B,
+!   min F(X) subject to Aineq*X <= Bineq, Aeq*x = Beq, XL <= X <= XU,
 !
 ! where X is a vector of variables that has N components, F is a real-valued objective function,
-! A is an N-by-M matrix, and B is an M-dimensional real vector. It tackles the problem by a trust
-! region method that forms quadratic models by interpolation. Usually there is much freedom in each
-! new model after satisfying the interpolation conditions, which is taken up by minimizing the
-! Frobenius norm of the change to the second derivative matrix of the model. One new function value
-! is calculated on each iteration, usually at a point where the current model predicts a reduction
-! in the least value so far of the objective function subject to the linear constraints.
-! Alternatively, a new vector of variables may be chosen to replace an interpolation point that may
-! be too far away for reliability, and then the new point does not have to satisfy the constraints.
+! Aineq is an Mineq-by-N matrix, Bineq is an Mineq-dimensional real vector, Aeq is an Meq-by-N
+! matrix, Beq is an Meq-dimensional real vector, XL is an N-dimensional real vector, and XU is
+! an N-dimensional real vector.
+!
+! It tackles the problem by a trust region method that forms quadratic models by interpolation.
+! Usually there is much freedom in each new model after satisfying the interpolation conditions,
+! which is taken up by minimizing the Frobenius norm of the change to the second derivative matrix
+! of the model. One new function value is calculated on each iteration, usually at a point where
+! the current model predicts a reduction in the least value so far of the objective function subject
+! to the linear constraints. Alternatively, a new vector of variables may be chosen to replace an
+! interpolation point that may be too far away for reliability, and the new point does not have to
+! satisfy the constraints.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on the paper
 !
@@ -30,7 +34,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, May 08, 2023 PM03:14:33
+! Last Modified: Monday, July 03, 2023 AM01:36:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -43,9 +47,10 @@ contains
 
 subroutine lincoa(calfun, x, f, &
     & cstrv, &
-    & A, b, &
+    & Aineq, bineq, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, maxhist, maxfilt, info)
+!    & Aeq, beq, &
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
@@ -56,8 +61,8 @@ subroutine lincoa(calfun, x, f, &
 !
 ! or
 !
-! ! First define CALFUN, X, A, and B, and then do the following.
-! call lincoa(calfun, x, f, A = A, b = b, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! ! First define CALFUN, X, Aineq, and Bineq, and then do the following.
+! call lincoa(calfun, x, f, Aineq = Aineq, bineq = bineq, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See examples/lincoa_exmp.f90 for a concrete example.
 !
@@ -90,14 +95,15 @@ subroutine lincoa(calfun, x, f, &
 !
 ! CSTRV
 !   Output, REAL(RP) scalar.
-!   CSTRV will be set to the L-infinity constraint violation of X at exit, namely MAXVAL([0, A*X-B])
-!   N.B.: Even though A and B are scaled during the computation, we use the original A and B to
-!   evaluate CSTRV.
+!   CSTRV will be set to the L-infinity constraint violation of X at exit, namely
+!   MAXVAL([0, Aineq*X - Bineq, abs(Aeq*X - Beq), XL - X, X - XU])
+!   N.B.: We use the original constraints to evaluate CSTRV, even though they may be modified during
+!   the computation.
 !
-! A, B
-!   Input, REAL(RP) matrix of size [N, M] and REAL vector of size M unless they are both empty,
-!   default: [] and [].
-!   A and B represent the linear inequality constraints: A^T*X <= B.
+! Aineq, Bineq
+!   Input, REAL(RP) matrix of size [Mineq, N] and REAL vector of size Mineq unless they are both
+!   empty, default: [] and [].
+!   Aineq and Bineq represent the linear inequality constraints: Aineq*X <= Bineq.
 !
 ! NF
 !   Output, INTEGER(IK) scalar.
@@ -116,7 +122,7 @@ subroutine lincoa(calfun, x, f, &
 !
 ! CTOL
 !   Input, REAL(RP) scalar, default: machine epsilon.
-!   CTOL is the tolerance of constraint violation. Any X with MAXVAL(A^T*X-B) <= CTOL is
+!   CTOL is the tolerance of constraint violation. Any X with CSTRV(X) <= CTOL is
 !   considered feasible.
 !   N.B.: 1. CTOL is absolute, not relative. 2. CTOL is used only when selecting the returned X.
 !   It does not affect the iterations of the algorithm.
@@ -231,8 +237,8 @@ integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(in), optional :: npt
-real(RP), intent(in), optional :: A(:, :)  ! A(N, M)
-real(RP), intent(in), optional :: b(:)  ! B(M)
+real(RP), intent(in), optional :: Aineq(:, :)  ! Aineq(Mineq, N)
+real(RP), intent(in), optional :: bineq(:)  ! Bineq(Mineq)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
@@ -258,6 +264,7 @@ integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: j
 integer(IK) :: m
+integer(IK) :: mineq
 integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
@@ -279,31 +286,31 @@ real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: smallx
-real(RP), allocatable :: A_loc(:, :)  ! A_LOC(N, M)
-real(RP), allocatable :: A_normalized(:, :)  ! A_NORMALIZED(N, M)
-real(RP), allocatable :: b_loc(:)  ! B_LOC(M)
-real(RP), allocatable :: b_normalized(:)  ! B_NORMALIZED(M)
+real(RP), allocatable :: Aineq_loc(:, :)  ! Aineq_LOC(M, N)
+real(RP), allocatable :: amat(:, :)  ! AMAT(N, M); each column corresponds to a constraint
+real(RP), allocatable :: bineq_loc(:)  ! Bineq_LOC(M)
+real(RP), allocatable :: bvec(:)  ! BVEC(M)
 real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
 real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 
 ! Sizes
-if (present(b)) then
-    m = int(size(b), kind(m))
+if (present(bineq)) then
+    mineq = int(size(bineq), kind(mineq))
 else
-    m = 0
+    mineq = 0
 end if
 n = int(size(x), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(m >= 0, 'M >= 0', srname)
+    call assert(mineq >= 0, 'Mineq >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(present(A) .eqv. present(b), 'A and B are both present or both absent', srname)
-    if (present(A)) then
-        call assert((size(A, 1) == n .and. size(A, 2) == m) &
-            & .or. (size(A, 1) == 0 .and. size(A, 2) == 0 .and. m == 0), &
-            & 'SIZE(A) == [N, M] unless A and B are both empty', srname)
+    call assert(present(Aineq) .eqv. present(bineq), 'Aineq and Bineq are both present or both absent', srname)
+    if (present(Aineq)) then
+        call assert((size(Aineq, 1) == mineq .and. size(Aineq, 2) == n) &
+            & .or. (size(Aineq, 1) == 0 .and. size(Aineq, 2) == 0 .and. mineq == 0), &
+            & 'SIZE(Aineq) == [Mineq, N] unless Aineq and B are both empty', srname)
     end if
 end if
 
@@ -311,16 +318,17 @@ end if
 
 x = moderatex(x)
 
-call safealloc(A_loc, n, m)  ! NOT removable even in F2003, as A may be absent or of size 0-by-0.
-if (present(A) .and. m > 0) then
-    ! We must check M > 0. Otherwise, the size of A_LOC may be changed to 0-by-0 due to automatic
-    ! (re)allocation if that is the size of A; we allow A to be 0-by-0, but A_LOC should be n-by-0.
-    A_loc = A
+call safealloc(Aineq_loc, mineq, n)  ! NOT removable even in F2003, as Aineq may be absent or of size 0-by-0.
+if (present(Aineq) .and. mineq > 0) then
+    ! We must check Mineq > 0. Otherwise, the size of Aineq_LOC may be changed to 0-by-0 due to
+    ! automatic (re)allocation if that is the size of Aineq; we allow Aineq to be 0-by-0, but
+    ! Aineq_LOC should be n-by-0.
+    Aineq_loc = Aineq
 end if
 
-call safealloc(b_loc, m)  ! NOT removable even in F2003, as B may be absent.
-if (present(b)) then
-    b_loc = b
+call safealloc(bineq_loc, mineq)  ! NOT removable even in F2003, as Bineq may be absent.
+if (present(bineq)) then
+    bineq_loc = bineq
 end if
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
@@ -444,46 +452,53 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 ! Normalize the constraints after increasing the right hand sides if necessary so that the starting
 ! point is feasible.
-! N.B.: Yes, LINCOA modifies the right hand sides of the constraints to make the starting point
+! N.B.:
+! 1. Yes, LINCOA modifies the right hand sides of the constraints to make the starting point
 ! feasible if it is not. This is not ideal, but Powell's code was implemented in this way. In the
 ! MATLAB/Python code, we include a preprocessing subroutine to project the starting point to
 ! the feasible region if it is infeasible, so that the modification will not occur.
+! 2. The linear inequality constraints received by LINCOB is AMAT^T * X <= BVEC. Note that Each
+! column of AMAT corresponds to a constraint. This is different from Aineq and Aeq, whose row
+! correspond to constraints. AMAT is defined in this way because it is accessed in columns during
+! the computation, and because Fortran saves arrays in the column-major order. In Python/C
+! implementations, AMAT should be transposed.
 constr_modified = .false.; 
 smallx = 1.0E-6_RP * rhoend_loc
-call safealloc(A_normalized, n, m)
-call safealloc(b_normalized, m)
-if (m > 0) then
-    do j = 1, m
-        ax = inprod(x, A_loc(:, j))
-        anorm = norm(A_loc(:, j))
+m = mineq
+call safealloc(amat, n, m)
+call safealloc(bvec, m)
+if (mineq > 0) then
+    do j = 1, mineq
+        ax = inprod(Aineq_loc(j, :), x)
+        anorm = norm(Aineq_loc(j, :))
         if (anorm <= 0) then
             if (present(info)) then
                 info = ZERO_LINEAR_CONSTRAINT
             end if
             return
         end if
-        constr_modified = constr_modified .or. (ax - b_loc(j) > smallx * anorm)
-        b_normalized(j) = max(b_loc(j), ax) / anorm
-        A_normalized(:, j) = A_loc(:, j) / anorm
+        constr_modified = constr_modified .or. (ax - bineq_loc(j) > smallx * anorm)
+        bvec(j) = max(bineq_loc(j), ax) / anorm
+        amat(:, j) = Aineq_loc(j, :) / anorm
     end do
-    if (constr_modified) then
-        call warning(solver, 'The starting point is infeasible. '//solver// &
-            & ' modified the right-hand sides of the constraints to make it feasible')
-    end if
+end if
+if (constr_modified) then
+    call warning(solver, 'The starting point is infeasible. '//solver// &
+        & ' modified the right-hand sides of the constraints to make it feasible')
 end if
 
 
 !-------------------- Call LINCOB, which performs the real calculations. --------------------------!
-call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, A_loc, A_normalized, &
-    & b_loc, b_normalized, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
+call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aineq_loc, amat, &
+    & bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
     & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, chist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
-deallocate (A_loc)
-deallocate (A_normalized)
-deallocate (b_loc)
-deallocate (b_normalized)
+deallocate (Aineq_loc)
+deallocate (amat)
+deallocate (bineq_loc)
+deallocate (bvec)
 
 
 ! Write the outputs.

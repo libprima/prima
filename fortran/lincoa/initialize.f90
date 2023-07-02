@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 12, 2023 PM06:53:07
+! Last Modified: Monday, July 03, 2023 AM12:33:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: initxf, inith
 contains
 
 
-subroutine initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x0, b, &
+subroutine initxf(calfun, iprint, maxfun, Aineq, amat, bineq, ctol, ftarget, rhobeg, x0, b, &
     & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization about the interpolation points & their function values.
@@ -58,9 +58,9 @@ implicit none
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
-real(RP), intent(in) :: A_orig(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: Aineq(:, :)  ! AMAT(Mineq, N)
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
-real(RP), intent(in) :: b_orig(:)  ! B_ORIG(M)
+real(RP), intent(in) :: bineq(:)  ! Bineq(M)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
@@ -116,8 +116,7 @@ if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
-    call assert(size(A_orig, 1) == n .and. size(A_orig, 2) == m, 'SIZE(A_ORIG) == [N, M]', srname)
-    call assert(size(b_orig) == m, 'SIZE(B_ORIG) == M', srname)
+    call assert(size(Aineq, 1) == size(bineq) .and. size(Aineq, 2) == n, 'SIZE(Aineq) == [SIZE(Bineq), M]', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
     call assert(rhobeg > 0, 'RHOBEG > 0', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
@@ -203,8 +202,8 @@ feasible = (cval <= 0)
 do k = 1, npt
     x = xbase + xpt(:, k)
     call evaluate(calfun, x, f)
-    ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
-    constr = matprod(x, A_orig) - b_orig
+    ! For the output, we use Aineq and Bineq to evaluate the constraints.
+    constr = matprod(Aineq, x) - bineq
     cstrv = maximum([ZERO, constr])
 
     ! Print a message about the function evaluation according to IPRINT.
