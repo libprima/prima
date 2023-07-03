@@ -11,7 +11,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Monday, July 03, 2023 PM01:05:19
+! Last Modified: Monday, July 03, 2023 PM05:16:26
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -21,8 +21,8 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! This is the entry point to the Fortran MEX function. If the compiled MEX file is named as
 ! FUNCTION_NAME.mex*** (extension depends on the platform), then in MATLAB we can call:
 ! [x, f, cstrv, info, nf, xhist, fhist, chist] = ...
-!   FUNCTION_NAME(fun, x0, Aineq, bineq, Aeq, beq, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
-!   ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, output_xhist, maxfilt)
+!   FUNCTION_NAME(fun, x0, Aineq, bineq, Aeq, beq, lb, ub, rhobeg, rhoend, eta1, eta2, ...
+!   gamma1, gamma2, ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, output_xhist, maxfilt)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -65,17 +65,19 @@ real(RP) :: gamma1
 real(RP) :: gamma2
 real(RP) :: rhobeg
 real(RP) :: rhoend
-real(RP), allocatable :: Aineq(:, :)
 real(RP), allocatable :: Aeq(:, :)
-real(RP), allocatable :: bineq(:)
+real(RP), allocatable :: Aineq(:, :)
 real(RP), allocatable :: beq(:)
+real(RP), allocatable :: bineq(:)
 real(RP), allocatable :: chist(:)
 real(RP), allocatable :: fhist(:)
+real(RP), allocatable :: lb(:)
+real(RP), allocatable :: ub(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
 
 ! Validate the number of arguments
-call fmxVerifyNArgin(nargin, 21)
+call fmxVerifyNArgin(nargin, 23)
 call fmxVerifyNArgout(nargout, 8)
 
 ! Verify that input 1 is a function handle; the other inputs will be verified when read.
@@ -88,30 +90,32 @@ call fmxReadMPtr(pinput(3), Aineq)
 call fmxReadMPtr(pinput(4), bineq)
 call fmxReadMPtr(pinput(5), Aeq)
 call fmxReadMPtr(pinput(6), beq)
-call fmxReadMPtr(pinput(7), rhobeg)
-call fmxReadMPtr(pinput(8), rhoend)
-call fmxReadMPtr(pinput(9), eta1)
-call fmxReadMPtr(pinput(10), eta2)
-call fmxReadMPtr(pinput(11), gamma1)
-call fmxReadMPtr(pinput(12), gamma2)
-call fmxReadMPtr(pinput(13), ftarget)
-call fmxReadMPtr(pinput(14), ctol)
-call fmxReadMPtr(pinput(15), cweight)
-call fmxReadMPtr(pinput(16), maxfun)
-call fmxReadMPtr(pinput(17), npt)
-call fmxReadMPtr(pinput(18), iprint)
-call fmxReadMPtr(pinput(19), maxhist)
-call fmxReadMPtr(pinput(20), output_xhist)
-call fmxReadMPtr(pinput(21), maxfilt)
+call fmxReadMPtr(pinput(7), lb)
+call fmxReadMPtr(pinput(8), ub)
+call fmxReadMPtr(pinput(9), rhobeg)
+call fmxReadMPtr(pinput(10), rhoend)
+call fmxReadMPtr(pinput(11), eta1)
+call fmxReadMPtr(pinput(12), eta2)
+call fmxReadMPtr(pinput(13), gamma1)
+call fmxReadMPtr(pinput(14), gamma2)
+call fmxReadMPtr(pinput(15), ftarget)
+call fmxReadMPtr(pinput(16), ctol)
+call fmxReadMPtr(pinput(17), cweight)
+call fmxReadMPtr(pinput(18), maxfun)
+call fmxReadMPtr(pinput(19), npt)
+call fmxReadMPtr(pinput(20), iprint)
+call fmxReadMPtr(pinput(21), maxhist)
+call fmxReadMPtr(pinput(22), output_xhist)
+call fmxReadMPtr(pinput(23), maxfilt)
 
 ! Call the Fortran code
 ! There are different cases because XHIST may or may not be passed to the Fortran code.
 if (output_xhist) then
-    call lincoa(calfun, x, f, cstrv, Aineq, bineq, Aeq, beq, nf, rhobeg, rhoend, ftarget, &
+    call lincoa(calfun, x, f, cstrv, Aineq, bineq, Aeq, beq, lb, ub, nf, rhobeg, rhoend, ftarget, &
         & ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, xhist=xhist, fhist=fhist, &
         & chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 else
-    call lincoa(calfun, x, f, cstrv, Aineq, bineq, Aeq, beq, nf, rhobeg, rhoend, ftarget, &
+    call lincoa(calfun, x, f, cstrv, Aineq, bineq, Aeq, beq, lb, ub, nf, rhobeg, rhoend, ftarget, &
         & ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, fhist=fhist, chist=chist, &
         & maxhist=maxhist, maxfilt=maxfilt, info=info)
 end if
@@ -142,6 +146,8 @@ deallocate (Aineq) ! Allocated by fmxReadMPtr.
 deallocate (bineq) ! Allocated by fmxReadMPtr.
 deallocate (Aeq) ! Allocated by fmxReadMPtr.
 deallocate (beq) ! Allocated by fmxReadMPtr.
+deallocate (lb) ! Allocated by fmxReadMPtr.
+deallocate (ub) ! Allocated by fmxReadMPtr.
 deallocate (xhist)  ! Allocated by the solver
 deallocate (fhist)  ! Allocated by the solver
 deallocate (chist)  ! Allocated by the solver

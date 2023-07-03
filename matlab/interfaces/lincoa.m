@@ -352,31 +352,7 @@ elseif ~strcmp(invoker, 'prima') &&  probinfo.feasibility_problem
         output.exitflag = 15;
     end
 else % The problem turns out 'normal' during preprima
-    % Include all the constraints into one single linear constraint
-    % (A_aug)*x <= b_aug; note the TRANSPOSE due to the data structure of
-    % the Fortran code.
-    n = length(x0);
-    idmatrix = eye(n, n); % If we want to use sparse matrix, the mex gateway has to be modified
-    Alb = idmatrix(lb > -inf, :);
-    Aub = idmatrix(ub < inf, :);
-    lb = lb(lb > -inf); % Remove infinity bounds!
-    ub = ub(ub < inf); % Remove infinity bounds!
-    % Note that preprima has removed the 'trivial' linear constraints in
-    % [Aineq, bineq] and [Aeq, beq].
-    A_aug = [-Alb; Aub; Aineq];
-    b_aug = [-lb(:); ub(:); bineq(:)];
-    if ~(isempty(A_aug) && isempty(b_aug)) && ~(size(A_aug,1) == length(b_aug) && size(A_aug,2) == n)
-        % Private/unexpected error
-        error(sprintf('%s:InvalidAugLinCon', funname), '%s: UNEXPECTED ERROR: invalid augmented linear constraints.', funname);
-    end
-    if isempty(A_aug)
-        % We uniformly use [] to represent empty objects; its size is 0x0.
-        % Changing this may cause matrix dimension inconsistency.
-        A_aug = [];
-        b_aug = [];
-    end
-
-    if (length(b_aug) + 2*length(beq) > maxint())
+    if (length(bineq) + 2*length(beq) + 2*length(x0) > maxint())
         % Public/normal error
         error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
@@ -384,11 +360,11 @@ else % The problem turns out 'normal' during preprima
     % If x0 is not feasible, LINCOA will modify the constraints to make
     % it feasible (which is a bit strange, but Powell decided to do it).
     % preprima has tried to make find a feasible x0. Raise a warning is
-    % x0 is not 'feasible enough' so that the constraints will be modified.
-    if (~isempty(A_aug) && any(A_aug*x0 - b_aug > 1e-10*max(1, abs(b_aug)))) || (~isempty(Aeq) && any(abs(Aeq*x0 - beq) > 1e-10*max(1, abs(beq))))
+    % x0 is not 'feasible enough' so that the constraints may be modified.
+    if get_cstrv(x0, Aineq, bineq, Aeq, beq, lb, ub) > 1.0e-10*max(abs([1; bineq; beq; x0]))
         output.constr_modified = true;
         wid = sprintf('%s:ConstraintModified', funname);
-        wmsg = sprintf('%s will modify the right-hand sides of the constraints to make the starting point feasible.', funname);
+        wmsg = sprintf('%s may modify the right-hand sides of the constraints to make the starting point feasible.', funname);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
     else
@@ -403,8 +379,8 @@ else % The problem turns out 'normal' during preprima
     % however, public errors can occur due to, e.g., evalobj; error handling needed
     try
         [x, fx, constrviolation, exitflag, nf, xhist, fhist, chist] = ...
-            fsolver(fun, x0, A_aug, b_aug, Aeq, beq, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
-            ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, double(output_xhist), maxfilt);
+            fsolver(fun, x0, Aineq, bineq, Aeq, beq, lb, ub, rhobeg, rhoend, eta1, eta2, gamma1, ...
+            gamma2, ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, double(output_xhist), maxfilt);
         % Fortran MEX does not provide an API for reading Boolean variables. So we convert
         % output_xhist to a double (0 or 1) before passing it to the MEX gateway.
         % In C MEX, however, we have mxGetLogicals.

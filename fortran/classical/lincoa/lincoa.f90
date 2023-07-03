@@ -17,6 +17,7 @@ subroutine lincoa(calfun, x, f, &
     & cstrv, &
     & Aineq, bineq, &
     & Aeq, beq, &
+    & xl, xu, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, maxhist, maxfilt, info)
 
@@ -24,11 +25,12 @@ subroutine lincoa(calfun, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, REALMAX
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: linalg_mod, only : eye, trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
@@ -51,6 +53,8 @@ real(RP), intent(in), optional :: Aineq(:, :)
 real(RP), intent(in), optional :: bineq(:)
 real(RP), intent(in), optional :: Aeq(:, :)
 real(RP), intent(in), optional :: beq(:)
+real(RP), intent(in), optional :: xl(:)
+real(RP), intent(in), optional :: xu(:)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
@@ -79,12 +83,16 @@ integer(IK) :: iprint_loc
 integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
-integer(IK) :: mineq
 integer(IK) :: meq
+integer(IK) :: mineq
+integer(IK) :: mxl
+integer(IK) :: mxu
 integer(IK) :: n
 integer(IK) :: nf_loc
-integer(IK) :: npt_loc
 integer(IK) :: nhist
+integer(IK) :: npt_loc
+integer(IK), allocatable :: ixl(:)
+integer(IK), allocatable :: ixu(:)
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
 real(RP) :: cweight_loc
@@ -93,16 +101,22 @@ real(RP) :: eta2_loc
 real(RP) :: ftarget_loc
 real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
+real(RP) :: idmat(size(x), size(x))
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
-real(RP), allocatable :: Aineq_loc(:, :), Aeq_loc(:, :), A_loc(:, :)
-real(RP), allocatable :: bineq_loc(:), beq_loc(:), b_loc(:)
+real(RP) :: smallx
+real(RP) :: sum
+real(RP), allocatable :: A_loc(:, :)
+real(RP), allocatable :: Aeq_loc(:, :)
+real(RP), allocatable :: Aineq_loc(:, :)
+real(RP), allocatable :: b_loc(:)
+real(RP), allocatable :: beq_loc(:)
+real(RP), allocatable :: bineq_loc(:)
 real(RP), allocatable :: chist_loc(:)
 real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
-real(RP) :: smallx
-real(RP) :: sum
-logical :: constr_modified
+real(RP), allocatable :: xl_loc(:)
+real(RP), allocatable :: xu_loc(:)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Working variables
@@ -134,14 +148,24 @@ else
     call safealloc(beq_loc, 0_IK)
 end if
 
-! Sizes
-!if (present(b)) then
-!    m = int(size(b), kind(m))
-!else
-!    m = 0_IK
-!end if
+if (present(xl)) then
+    xl_loc = xl
+else
+    call safealloc(xl_loc, n)
+    xl_loc = -REALMAX
+end if
+mxl = int(count(xl_loc > -REALMAX), kind(mxl))
+
+if (present(xu)) then
+    xu_loc = xu
+else
+    call safealloc(xu_loc, n)
+    xu_loc = REALMAX
+end if
+mxu = int(count(xu_loc < REALMAX), kind(mxu))
+
 n = int(size(x), kind(n))
-m = mineq + 2 * meq
+m = mineq + 2 * meq + mxl + mxu
 call safealloc(A_loc, n, m)
 A_loc(:, 1:mineq) = transpose(Aineq_loc)
 A_loc(:, mineq + 1:mineq + meq) = transpose(Aeq_loc)
@@ -150,6 +174,14 @@ call safealloc(b_loc, m)
 b_loc(1:mineq) = bineq_loc
 b_loc(mineq + 1:mineq + meq) = beq_loc
 b_loc(mineq + meq + 1:mineq + 2 * meq) = -beq_loc
+idmat = eye(n, n)
+ixl = trueloc(xl_loc > -REALMAX)
+A_loc(:, mineq + 2 * meq + 1:mineq + 2 * meq + mxl) = -idmat(:, ixl)
+b_loc(mineq + 2 * meq + 1:mineq + 2 * meq + mxl) = -xl_loc(ixl)
+ixu = trueloc(xu_loc < REALMAX)
+A_loc(:, mineq + 2 * meq + mxl + 1:mineq + 2 * meq + mxl + mxu) = idmat(:, ixu)
+b_loc(mineq + 2 * meq + mxl + 1:mineq + 2 * meq + mxl + mxu) = xu_loc(ixu)
+
 
 ! Preconditions
 if (DEBUGGING) then
@@ -305,7 +337,6 @@ call safealloc(w, m * (2_IK + n) + npt_loc * (4_IK + n + npt_loc) + n * (9_IK + 
 ! is feasible.
 iamat = max(m + 3 * n, 2 * m + n, 2 * npt_loc) + 1
 ib = iamat + m * n
-constr_modified = .false.; 
 smallx = 1.0E-6_RP * rhoend_loc
 if (m > 0) then
     iw = iamat - 1
@@ -323,7 +354,6 @@ if (m > 0) then
             return
         end if
         temp = sqrt(temp)
-        constr_modified = constr_modified .or. (sum - b_loc(j) > smallx * temp)
         w(ib + j - 1) = max(b_loc(j), sum) / temp
         do i = 1, n
             iw = iw + 1

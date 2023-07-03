@@ -66,10 +66,10 @@ prob % x0(10:12) = ONE / ss
 prob % Delta0 = ONE
 prob % calfun => calfun_tetrahedron
 
-call safealloc(prob % lb, n)
-prob % lb = -REALMAX
-call safealloc(prob % ub, n)
-prob % ub = REALMAX
+call safealloc(prob % xl, n)
+prob % xl = -REALMAX
+call safealloc(prob % xu, n)
+prob % xu = REALMAX
 
 call safealloc(prob % Aeq, 0_IK, n)
 call safealloc(prob % beq, 0_IK)
