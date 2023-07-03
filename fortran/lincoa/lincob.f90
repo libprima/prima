@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, July 03, 2023 PM12:50:08
+! Last Modified: Monday, July 03, 2023 PM06:33:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,8 +27,8 @@ contains
 
 
 subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, Aeq, Aineq, amat, beq, bineq, bvec, &
-    & ctol, cweight, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, chist, cstrv, &
-    & f, fhist, xhist, info)
+    & ctol, cweight, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, xl, xu, x, nf, chist, &
+    & cstrv, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA.
 !
@@ -118,6 +118,8 @@ real(RP), intent(in) :: gamma1
 real(RP), intent(in) :: gamma2
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
+real(RP), intent(in) :: xl(:)
+real(RP), intent(in) :: xu(:)
 
 ! In-outputs
 real(RP), intent(inout) :: x(:)  ! X(N)
@@ -170,7 +172,7 @@ logical :: ximproved
 real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: cfilt(maxfilt)
-real(RP) :: constr(size(bvec))
+real(RP) :: constr(size(bineq) + size(beq) + 2 * size(x))
 real(RP) :: d(size(x))
 real(RP) :: delbar
 real(RP) :: delta
@@ -218,9 +220,10 @@ if (DEBUGGING) then
     call assert(size(Aeq, 1) == size(beq) .and. size(Aeq, 2) == n, 'SIZE(Aeq) == [SIZE(Beq), N]', srname)
     call assert(size(Aineq, 1) == size(bineq) .and. size(Aineq, 2) == n, 'SIZE(Aineq) == [SIZE(Bineq), N]', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
-    call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
+    call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
     call assert(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
         & 'MIN(MIN_MAXFILT, MAXFUN) <= MAXFILT <= MAXFUN', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
@@ -236,15 +239,15 @@ end if
 
 ! Initialize XBASE, XPT, FVAL, and KOPT.
 b = bvec
-call initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ftarget, rhobeg, x, b, &
-    & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
+call initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ftarget, rhobeg, xl, xu, &
+    & x, b, ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
 x = xbase + xpt(:, kopt)
 f = fval(kopt)
 
 ! Evaluate the constraints. Should we do this in INITXF?
 ! N.B.: We must initialize CONSTR and CSTRV. Otherwise, if REDUCE_RHO is TRUE after the very first
 ! iteration due to SHORTD, then RHOMSG will be called with CONSTR and CSTRV uninitialized.
-constr = [matprod(Aineq, x) - bineq, matprod(Aeq, x) - beq, -matprod(Aeq, x) + beq]
+constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
 cstrv = maximum([ZERO, constr])
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
@@ -268,7 +271,7 @@ if (subinfo /= INFO_DFT) then
     kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
     x = xfilt(:, kopt)
     f = ffilt(kopt)
-    constr = [matprod(Aineq, x) - bineq, matprod(Aeq, x) - beq, -matprod(Aeq, x) + beq]
+    constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
     cstrv = maximum([ZERO, constr])
     ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist)
@@ -390,7 +393,7 @@ do tr = 1, maxtr
         nf = nf + 1_IK
 
         ! Evaluate the constraints.
-        constr = [matprod(Aineq, x) - bineq, matprod(Aeq, x) - beq, -matprod(Aeq, x) + beq]
+        constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
         cstrv = maximum([ZERO, constr])
 
         ! Print a message about the function evaluation according to IPRINT.
@@ -539,7 +542,7 @@ do tr = 1, maxtr
         nf = nf + 1_IK
 
         ! Evaluate the constraints.
-        constr = [matprod(Aineq, x) - bineq, matprod(Aeq, x) - beq, -matprod(Aeq, x) + beq]
+        constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
         cstrv = maximum([ZERO, constr])
 
         ! Print a message about the function evaluation according to IPRINT.
@@ -621,7 +624,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
-    constr = [matprod(Aineq, x) - bineq, matprod(Aeq, x) - beq, -matprod(Aeq, x) + beq]
+    constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
     cstrv = maximum([ZERO, constr])
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
@@ -636,7 +639,7 @@ end if
 kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
 x = xfilt(:, kopt)
 f = ffilt(kopt)
-constr = [matprod(Aineq, x) - bineq, matprod(Aeq, x) - beq, -matprod(Aeq, x) + beq]
+constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
 cstrv = maximum([ZERO, constr])
 
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, June 11, 2023 PM05:39:46
+! Last Modified: Monday, July 03, 2023 PM04:57:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -113,7 +113,7 @@ if (DEBUGGING) then
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
-    call assert(all(is_finite(x0)), 'X0 is finite', srname)
+    call assert(size(x0) == n .and. all(is_finite(x0)), 'SIZE(X0) == N, X0 is finite', srname)
     call assert(rhobeg > 0, 'RHOBEG > 0', srname)
 end if
 

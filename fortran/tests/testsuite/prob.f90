@@ -45,8 +45,8 @@ type PROB_T
     integer(IK) :: m
     integer(IK) :: n
     real(RP), allocatable :: x0(:)
-    real(RP), allocatable :: lb(:)
-    real(RP), allocatable :: ub(:)
+    real(RP), allocatable :: xl(:)
+    real(RP), allocatable :: xu(:)
     real(RP), allocatable :: Aeq(:, :)
     real(RP), allocatable :: beq(:)
     real(RP), allocatable :: Aineq(:, :)
@@ -148,11 +148,11 @@ type(PROB_T), intent(inout) :: prob
 if (allocated(prob % x0)) then
     deallocate (prob % x0)
 end if
-if (allocated(prob % lb)) then
-    deallocate (prob % lb)
+if (allocated(prob % xl)) then
+    deallocate (prob % xl)
 end if
-if (allocated(prob % ub)) then
-    deallocate (prob % ub)
+if (allocated(prob % xu)) then
+    deallocate (prob % xu)
 end if
 if (allocated(prob % Aeq)) then
     deallocate (prob % Aeq)

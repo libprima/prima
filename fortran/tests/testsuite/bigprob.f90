@@ -27,10 +27,10 @@ prob % probtype = 'n'
 prob % n = n
 prob % m = m_loc
 
-call safealloc(prob % lb, n)
-prob % lb = -TEN
-call safealloc(prob % ub, n)
-prob % ub = TEN
+call safealloc(prob % xl, n)
+prob % xl = -TEN
+call safealloc(prob % xu, n)
+prob % xu = TEN
 
 call safealloc(prob % Aeq, m_loc, n)
 do j = 1, n

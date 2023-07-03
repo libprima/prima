@@ -45,10 +45,10 @@ end do
 prob % Delta0 = ONE
 prob % calfun => calfun_ptinsq
 
-call safealloc(prob % lb, n)
-prob % lb = -ONE
-call safealloc(prob % ub, n)
-prob % ub = ONE
+call safealloc(prob % xl, n)
+prob % xl = -ONE
+call safealloc(prob % xu, n)
+prob % xu = ONE
 
 call safealloc(prob % Aeq, 0_IK, n)
 call safealloc(prob % beq, 0_IK)

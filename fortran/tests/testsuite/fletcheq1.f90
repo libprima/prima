@@ -19,10 +19,10 @@ prob % Delta0 = HALF
 prob % calcfc => calcfc_fletcheq1
 
 n = prob % n
-call safealloc(prob % lb, n)
-prob % lb = -REALMAX
-call safealloc(prob % ub, n)
-prob % ub = REALMAX
+call safealloc(prob % xl, n)
+prob % xl = -REALMAX
+call safealloc(prob % xu, n)
+prob % xu = REALMAX
 call safealloc(prob % Aeq, 0_IK, n)
 call safealloc(prob % beq, 0_IK)
 call safealloc(prob % Aineq, 0_IK, n)

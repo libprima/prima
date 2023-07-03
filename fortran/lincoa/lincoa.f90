@@ -34,7 +34,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, July 03, 2023 PM03:08:42
+! Last Modified: Tuesday, July 04, 2023 AM12:55:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -49,6 +49,7 @@ subroutine lincoa(calfun, x, f, &
     & cstrv, &
     & Aineq, bineq, &
     & Aeq, beq, &
+    & xl, xu, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
@@ -104,6 +105,15 @@ subroutine lincoa(calfun, x, f, &
 !   Input, REAL(RP) matrix of size [Mineq, N] and REAL vector of size Mineq unless they are both
 !   empty, default: [] and [].
 !   Aineq and Bineq represent the linear inequality constraints: Aineq*X <= Bineq.
+!
+! Aeq, Beq
+!   Input, REAL(RP) matrix of size [Meq, N] and REAL vector of size Meq unless they are both
+!   empty, default: [] and [].
+!   Aeq and Beq represent the linear equality constraints: Aeq*X = Beq.
+!
+! XL, XU
+!   Input, REAL(RP) vectors of size N unless they are both empty, default: [] and [].
+!   XL and XU represent the lower and upper bounds of the variables: XL <= X <= XU.
 !
 ! NF
 !   Output, INTEGER(IK) scalar.
@@ -208,13 +218,13 @@ subroutine lincoa(calfun, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, REALMAX
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : ZERO_LINEAR_CONSTRAINT
-use, non_intrinsic :: linalg_mod, only : inprod, norm
+use, non_intrinsic :: linalg_mod, only : inprod, norm, eye, trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
@@ -250,6 +260,8 @@ real(RP), intent(in), optional :: gamma1
 real(RP), intent(in), optional :: gamma2
 real(RP), intent(in), optional :: rhobeg
 real(RP), intent(in), optional :: rhoend
+real(RP), intent(in), optional :: xl(:)  ! XL(N)
+real(RP), intent(in), optional :: xu(:)  ! XU(N)
 
 ! Optional outputs
 integer(IK), intent(out), optional :: info
@@ -266,15 +278,19 @@ integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: j
 integer(IK) :: m
-integer(IK) :: meq
-integer(IK) :: mineq
 integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
+integer(IK) :: meq
+integer(IK) :: mineq
+integer(IK) :: mxl
+integer(IK) :: mxu
 integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: nhist
 integer(IK) :: npt_loc
+integer(IK), allocatable :: ixl(:)
+integer(IK), allocatable :: ixu(:)
 logical :: constr_modified
 real(RP) :: anorm
 real(RP) :: ax
@@ -286,6 +302,7 @@ real(RP) :: eta2_loc
 real(RP) :: ftarget_loc
 real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
+real(RP) :: idmat(size(x), size(x))
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: smallx
@@ -298,6 +315,8 @@ real(RP), allocatable :: bvec(:)  ! BVEC(M)
 real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
 real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
+real(RP), allocatable :: xl_loc(:)  ! XL_LOC(N)
+real(RP), allocatable :: xu_loc(:)  ! XU_LOC(N)
 
 ! Sizes
 if (present(bineq)) then
@@ -359,6 +378,22 @@ call safealloc(beq_loc, meq)  ! NOT removable even in F2003, as Beq may be absen
 if (present(beq)) then
     beq_loc = beq
 end if
+
+call safealloc(xl_loc, n)  ! NOT removable even in F2003, as XL may be absent.
+if (present(xl)) then
+    xl_loc = xl
+else
+    xl_loc = -REALMAX
+end if
+mxl = int(count(xl_loc > -REALMAX), kind(mxl))
+
+call safealloc(xu_loc, n)  ! NOT removable even in F2003, as XU may be absent.
+if (present(xu)) then
+    xu_loc = xu
+else
+    xu_loc = REALMAX
+end if
+mxu = int(count(xu_loc < REALMAX), kind(mxu))
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
@@ -493,7 +528,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 ! implementations, AMAT should be transposed.
 constr_modified = .false.; 
 smallx = 1.0E-6_RP * rhoend_loc
-m = mineq + 2_IK * meq
+m = mineq + 2_IK * meq + mxl + mxu
 call safealloc(amat, n, m)
 call safealloc(bvec, m)
 if (mineq > 0) then
@@ -506,11 +541,12 @@ if (mineq > 0) then
             end if
             return
         end if
-        constr_modified = constr_modified .or. (ax - bineq_loc(j) > smallx * anorm)
+        constr_modified = (constr_modified .or. (ax - bineq_loc(j) > smallx * anorm))
         bvec(j) = max(bineq_loc(j), ax) / anorm
         amat(:, j) = Aineq_loc(j, :) / anorm
     end do
 end if
+
 ! The equality constraint Aeq*X = Beq will be handled as two inequality constraints Aeq*X <= Beq and
 ! -Aeq*X <= -Beq. Correspondingly, we append [Aeq^T, -Aeq^T] to AMAT and [Beq; -Beq] to BVEC, after
 ! some normalization.
@@ -524,13 +560,29 @@ if (meq > 0) then
             end if
             return
         end if
-        constr_modified = constr_modified .or. (abs(ax - beq_loc(j)) > smallx * anorm)
+        constr_modified = (constr_modified .or. (abs(ax - beq_loc(j)) > smallx * anorm))
         bvec(mineq + j) = max(beq_loc(j), ax) / anorm
         amat(:, mineq + j) = Aeq_loc(j, :) / anorm
         bvec(mineq + meq + j) = max(-beq_loc(j), -ax) / anorm
         amat(:, mineq + meq + j) = -Aeq_loc(j, :) / anorm
     end do
 end if
+
+! The bound constraints XL <= X <= XU will be handled as two inequality constraints -I*X <= -XL and
+! I*X <= XU. Correspondingly, we append [-I, I] to AMAT and [-XL; XU] to BVEC, after removing the
+! trvial bounds.
+idmat = eye(n, n)
+call safealloc(ixl, mxl)  ! Removable in F2003.
+ixl = trueloc(xl_loc > -REALMAX)
+amat(:, mineq + 2 * meq + 1:mineq + 2 * meq + mxl) = -idmat(:, ixl)
+bvec(mineq + 2 * meq + 1:mineq + 2 * meq + mxl) = max(-xl_loc(ixl), -x(ixl))
+call safealloc(ixu, mxu)  ! Removable in F2003.
+ixu = trueloc(xu_loc < REALMAX)
+amat(:, mineq + 2 * meq + mxl + 1:mineq + 2 * meq + mxl + mxu) = idmat(:, ixu)
+bvec(mineq + 2 * meq + mxl + 1:mineq + 2 * meq + mxl + mxu) = max(xu_loc(ixu), x(ixu))
+constr_modified = (constr_modified .or. any(x < xl_loc - smallx) .or. any(x > xu_loc + smallx))
+
+! Print a warning if the starting point is infeasible and the constraints are modified.
 if (constr_modified) then
     call warning(solver, 'The starting point is infeasible. '//solver// &
         & ' modified the right-hand sides of the constraints to make it feasible')
@@ -540,7 +592,8 @@ end if
 !-------------------- Call LINCOB, which performs the real calculations. --------------------------!
 call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
     & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
-    & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, chist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
+    & gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, chist_loc, cstrv_loc, &
+    & f, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
@@ -550,6 +603,10 @@ deallocate (amat)
 deallocate (bineq_loc)
 deallocate (beq_loc)
 deallocate (bvec)
+deallocate (xl_loc)
+deallocate (xu_loc)
+deallocate (ixl)
+deallocate (ixu)
 
 
 ! Write the outputs.
