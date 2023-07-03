@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, July 03, 2023 AM01:22:41
+! Last Modified: Monday, July 03, 2023 PM03:18:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -80,6 +80,8 @@ real(RP) :: rhobeg
 real(RP) :: rhoend
 real(RP), allocatable :: Aineq(:, :)
 real(RP), allocatable :: bineq(:)
+real(RP), allocatable :: Aeq(:, :)
+real(RP), allocatable :: beq(:)
 real(RP), allocatable :: chist(:)
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
@@ -168,11 +170,16 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         Aineq = prob % Aineq
         call safealloc(bineq, int(size(prob % bineq), IK))
         bineq = prob % bineq
+        call safealloc(Aeq, int(size(prob % Aeq, 1), IK), int(size(prob % Aeq, 2), IK))
+        Aeq = prob % Aeq
+        call safealloc(beq, int(size(prob % beq), IK))
+        beq = prob % beq
 
-        print '(/A, I0, A, I0, A, I0, A, I0, A, I0)', &
-           & strip(probname)//': N = ', n, ' NPT = ', npt, ' M = ', size(Aineq, 2), ', MAXFUN = ', maxfun, ', Random test ', irand
+        print '(/A, I0, A, I0, A, I0, A, I0, A, I0, A, I0)', &
+           & strip(probname)//': N = ', n, ' NPT = ', npt, ' Mineq = ', size(Aineq, 1), &
+           & ' Meq = ', size(Aeq, 1), ', MAXFUN = ', maxfun, ', Random test ', irand
 
-        call lincoa(noisy_calfun, x, f, cstrv=cstrv, Aineq=Aineq, bineq=bineq, &
+        call lincoa(noisy_calfun, x, f, cstrv=cstrv, Aineq=Aineq, bineq=bineq, Aeq=Aeq, beq=beq,&
             & npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist,&
             & chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
@@ -272,19 +279,25 @@ else
                     Aineq(n + 1_IK:2_IK * n, :) = -eye(n)
                     call safealloc(bineq, 2_IK * n)
                     bineq = [prob % ub, -prob % lb]
+                    call safealloc(Aeq, 0_IK, n)
+                    call safealloc(beq, 0_IK)
                 else
                     call safealloc(Aineq, int(size(prob % Aineq, 1), IK), int(size(prob % Aineq, 2), IK))
                     Aineq = prob % Aineq
                     call safealloc(bineq, int(size(prob % bineq), IK))
                     bineq = prob % bineq
+                    call safealloc(Aeq, int(size(prob % Aeq, 1), IK), int(size(prob % Aeq, 2), IK))
+                    Aeq = prob % Aeq
+                    call safealloc(beq, int(size(prob % beq), IK))
+                    beq = prob % beq
                 end if
 
-                print '(/A, I0, A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, &
-                    & ' M = ', size(Aineq, 2), ', Random test ', irand
+                print '(/A, I0, A, I0, A, I0, A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, &
+                    & ' Mineq = ', size(Aineq, 1), ' Meq = ', size(Aeq, 1), ', Random test ', irand
 
                 call safealloc(x, n)
                 x = x0
-                call lincoa(noisy_calfun, x, f, cstrv=cstrv, Aineq=Aineq, bineq=bineq, &
+                call lincoa(noisy_calfun, x, f, cstrv=cstrv, Aineq=Aineq, bineq=bineq, Aeq=Aeq, beq=beq, &
                     & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
                     & xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 

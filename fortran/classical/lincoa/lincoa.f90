@@ -16,6 +16,7 @@ contains
 subroutine lincoa(calfun, x, f, &
     & cstrv, &
     & Aineq, bineq, &
+    & Aeq, beq, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, maxhist, maxfilt, info)
 
@@ -48,6 +49,8 @@ integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(in), optional :: npt
 real(RP), intent(in), optional :: Aineq(:, :)
 real(RP), intent(in), optional :: bineq(:)
+real(RP), intent(in), optional :: Aeq(:, :)
+real(RP), intent(in), optional :: beq(:)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
@@ -77,6 +80,7 @@ integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
 integer(IK) :: mineq
+integer(IK) :: meq
 integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: npt_loc
@@ -91,8 +95,8 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
-real(RP), allocatable :: Aineq_loc(:, :), A_loc(:, :)
-real(RP), allocatable :: bineq_loc(:), b_loc(:)
+real(RP), allocatable :: Aineq_loc(:, :), Aeq_loc(:, :), A_loc(:, :)
+real(RP), allocatable :: bineq_loc(:), beq_loc(:), b_loc(:)
 real(RP), allocatable :: chist_loc(:)
 real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
@@ -120,19 +124,32 @@ else
     call safealloc(bineq_loc, 0_IK)
 end if
 
+if (present(Aeq)) then
+    meq = size(Aeq, 1)
+    Aeq_loc = Aeq
+    beq_loc = beq
+else
+    meq = 0_IK
+    call safealloc(Aeq_loc, 0_IK, n)
+    call safealloc(beq_loc, 0_IK)
+end if
+
 ! Sizes
 !if (present(b)) then
 !    m = int(size(b), kind(m))
 !else
 !    m = 0_IK
 !end if
-!n = int(size(x), kind(n))
 n = int(size(x), kind(n))
-m = mineq
+m = mineq + 2 * meq
 call safealloc(A_loc, n, m)
-A_loc = transpose(Aineq_loc)
+A_loc(:, 1:mineq) = transpose(Aineq_loc)
+A_loc(:, mineq + 1:mineq + meq) = transpose(Aeq_loc)
+A_loc(:, mineq + meq + 1:mineq + 2 * meq) = -transpose(Aeq_loc)
 call safealloc(b_loc, m)
-b_loc = bineq_loc
+b_loc(1:mineq) = bineq_loc
+b_loc(mineq + 1:mineq + meq) = beq_loc
+b_loc(mineq + meq + 1:mineq + 2 * meq) = -beq_loc
 
 ! Preconditions
 if (DEBUGGING) then

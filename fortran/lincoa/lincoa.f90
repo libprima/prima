@@ -34,7 +34,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, July 03, 2023 AM09:16:31
+! Last Modified: Monday, July 03, 2023 PM03:08:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -48,9 +48,9 @@ contains
 subroutine lincoa(calfun, x, f, &
     & cstrv, &
     & Aineq, bineq, &
+    & Aeq, beq, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, maxhist, maxfilt, info)
-!    & Aeq, beq, &
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
@@ -237,7 +237,9 @@ integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(in), optional :: npt
+real(RP), intent(in), optional :: Aeq(:, :)  ! Aeq(Meq, N)
 real(RP), intent(in), optional :: Aineq(:, :)  ! Aineq(Mineq, N)
+real(RP), intent(in), optional :: beq(:)  ! Beq(Meq)
 real(RP), intent(in), optional :: bineq(:)  ! Bineq(Mineq)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
@@ -264,6 +266,7 @@ integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: j
 integer(IK) :: m
+integer(IK) :: meq
 integer(IK) :: mineq
 integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
@@ -286,8 +289,10 @@ real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: smallx
+real(RP), allocatable :: Aeq_loc(:, :)  ! Aeq_LOC(Meq, N)
 real(RP), allocatable :: Aineq_loc(:, :)  ! Aineq_LOC(Mineq, N)
 real(RP), allocatable :: amat(:, :)  ! AMAT(N, M); each column corresponds to a constraint
+real(RP), allocatable :: beq_loc(:)  ! Beq_LOC(Meq)
 real(RP), allocatable :: bineq_loc(:)  ! Bineq_LOC(Mineq)
 real(RP), allocatable :: bvec(:)  ! BVEC(M)
 real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
@@ -300,6 +305,11 @@ if (present(bineq)) then
 else
     mineq = 0
 end if
+if (present(beq)) then
+    meq = int(size(beq), kind(meq))
+else
+    meq = 0
+end if
 n = int(size(x), kind(n))
 
 ! Preconditions
@@ -311,6 +321,12 @@ if (DEBUGGING) then
         call assert((size(Aineq, 1) == mineq .and. size(Aineq, 2) == n) &
             & .or. (size(Aineq, 1) == 0 .and. size(Aineq, 2) == 0 .and. mineq == 0), &
             & 'SIZE(Aineq) == [Mineq, N] unless Aineq and Bineq are both empty', srname)
+    end if
+    call assert(present(Aeq) .eqv. present(beq), 'Aeq and Beq are both present or both absent', srname)
+    if (present(Aeq)) then
+        call assert((size(Aeq, 1) == meq .and. size(Aeq, 2) == n) &
+            & .or. (size(Aeq, 1) == 0 .and. size(Aeq, 2) == 0 .and. meq == 0), &
+            & 'SIZE(Aeq) == [Meq, N] unless Aeq and Beq are both empty', srname)
     end if
 end if
 
@@ -329,6 +345,19 @@ end if
 call safealloc(bineq_loc, mineq)  ! NOT removable even in F2003, as Bineq may be absent.
 if (present(bineq)) then
     bineq_loc = bineq
+end if
+
+call safealloc(Aeq_loc, meq, n)  ! NOT removable even in F2003, as Aeq may be absent or of size 0-by-0.
+if (present(Aeq) .and. meq > 0) then
+    ! We must check Meq > 0. Otherwise, the size of Aeq_LOC may be changed to 0-by-0 due to
+    ! automatic (re)allocation if that is the size of Aeq; we allow Aeq to be 0-by-0, but
+    ! Aeq_LOC should be n-by-0.
+    Aeq_loc = Aeq
+end if
+
+call safealloc(beq_loc, meq)  ! NOT removable even in F2003, as Beq may be absent.
+if (present(beq)) then
+    beq_loc = beq
 end if
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
@@ -464,7 +493,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 ! implementations, AMAT should be transposed.
 constr_modified = .false.; 
 smallx = 1.0E-6_RP * rhoend_loc
-m = mineq
+m = mineq + 2_IK * meq
 call safealloc(amat, n, m)
 call safealloc(bvec, m)
 if (mineq > 0) then
@@ -482,6 +511,26 @@ if (mineq > 0) then
         amat(:, j) = Aineq_loc(j, :) / anorm
     end do
 end if
+! The equality constraint Aeq*X = Beq will be handled as two inequality constraints Aeq*X <= Beq and
+! -Aeq*X <= -Beq. Correspondingly, we append [Aeq^T, -Aeq^T] to AMAT and [Beq; -Beq] to BVEC, after
+! some normalization.
+if (meq > 0) then
+    do j = 1, meq
+        ax = inprod(Aeq_loc(j, :), x)
+        anorm = norm(Aeq_loc(j, :))
+        if (anorm <= 0) then
+            if (present(info)) then
+                info = ZERO_LINEAR_CONSTRAINT
+            end if
+            return
+        end if
+        constr_modified = constr_modified .or. (abs(ax - beq_loc(j)) > smallx * anorm)
+        bvec(mineq + j) = max(beq_loc(j), ax) / anorm
+        amat(:, mineq + j) = Aeq_loc(j, :) / anorm
+        bvec(mineq + meq + j) = max(-beq_loc(j), -ax) / anorm
+        amat(:, mineq + meq + j) = -Aeq_loc(j, :) / anorm
+    end do
+end if
 if (constr_modified) then
     call warning(solver, 'The starting point is infeasible. '//solver// &
         & ' modified the right-hand sides of the constraints to make it feasible')
@@ -489,15 +538,17 @@ end if
 
 
 !-------------------- Call LINCOB, which performs the real calculations. --------------------------!
-call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aineq_loc, amat, &
-    & bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
+call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
+    & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
     & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, chist_loc, cstrv_loc, f, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
 deallocate (Aineq_loc)
+deallocate (Aeq_loc)
 deallocate (amat)
 deallocate (bineq_loc)
+deallocate (beq_loc)
 deallocate (bvec)
 
 
