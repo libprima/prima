@@ -363,8 +363,8 @@ else % The problem turns out 'normal' during preprima
     ub = ub(ub < inf); % Remove infinity bounds!
     % Note that preprima has removed the 'trivial' linear constraints in
     % [Aineq, bineq] and [Aeq, beq].
-    A_aug = [-Alb; Aub; Aineq; Aeq; -Aeq];
-    b_aug = [-lb(:); ub(:); bineq(:); beq(:); -beq(:)];
+    A_aug = [-Alb; Aub; Aineq];
+    b_aug = [-lb(:); ub(:); bineq(:)];
     if ~(isempty(A_aug) && isempty(b_aug)) && ~(size(A_aug,1) == length(b_aug) && size(A_aug,2) == n)
         % Private/unexpected error
         error(sprintf('%s:InvalidAugLinCon', funname), '%s: UNEXPECTED ERROR: invalid augmented linear constraints.', funname);
@@ -376,7 +376,7 @@ else % The problem turns out 'normal' during preprima
         b_aug = [];
     end
 
-    if (length(b_aug) > maxint())
+    if (length(b_aug) + 2*length(beq) > maxint())
         % Public/normal error
         error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
@@ -385,7 +385,7 @@ else % The problem turns out 'normal' during preprima
     % it feasible (which is a bit strange, but Powell decided to do it).
     % preprima has tried to make find a feasible x0. Raise a warning is
     % x0 is not 'feasible enough' so that the constraints will be modified.
-    if ~isempty(A_aug) && any(A_aug*x0 > b_aug + 1e-10*max(1, abs(b_aug)))
+    if (~isempty(A_aug) && any(A_aug*x0 - b_aug > 1e-10*max(1, abs(b_aug)))) || (~isempty(Aeq) && any(abs(Aeq*x0 - beq) > 1e-10*max(1, abs(beq))))
         output.constr_modified = true;
         wid = sprintf('%s:ConstraintModified', funname);
         wmsg = sprintf('%s will modify the right-hand sides of the constraints to make the starting point feasible.', funname);
@@ -403,7 +403,7 @@ else % The problem turns out 'normal' during preprima
     % however, public errors can occur due to, e.g., evalobj; error handling needed
     try
         [x, fx, constrviolation, exitflag, nf, xhist, fhist, chist] = ...
-            fsolver(fun, x0, A_aug, b_aug, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
+            fsolver(fun, x0, A_aug, b_aug, Aeq, beq, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
             ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, double(output_xhist), maxfilt);
         % Fortran MEX does not provide an API for reading Boolean variables. So we convert
         % output_xhist to a double (0 or 1) before passing it to the MEX gateway.

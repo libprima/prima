@@ -46,11 +46,11 @@ call safealloc(prob % Aineq, m_loc, n)
 prob % Aineq = prob % Aeq
 
 call safealloc(prob % bineq, m_loc)
-prob % bineq = prob % beq + ONE
+prob % bineq = cos(real([(j**2, j=1, m_loc)], RP))
 
 ! Problem-specific code
 prob % probname = 'bigprob'
-call safealloc(prob % x0, n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
+call safealloc(prob % x0, n)
 prob % x0 = -ONE
 prob % Delta0 = HALF
 prob % calfun => calfun_bigprob
