@@ -34,7 +34,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, July 03, 2023 AM01:36:24
+! Last Modified: Monday, July 03, 2023 AM09:16:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -286,9 +286,9 @@ real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: smallx
-real(RP), allocatable :: Aineq_loc(:, :)  ! Aineq_LOC(M, N)
+real(RP), allocatable :: Aineq_loc(:, :)  ! Aineq_LOC(Mineq, N)
 real(RP), allocatable :: amat(:, :)  ! AMAT(N, M); each column corresponds to a constraint
-real(RP), allocatable :: bineq_loc(:)  ! Bineq_LOC(M)
+real(RP), allocatable :: bineq_loc(:)  ! Bineq_LOC(Mineq)
 real(RP), allocatable :: bvec(:)  ! BVEC(M)
 real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
 real(RP), allocatable :: fhist_loc(:)  ! FHIST_LOC(MAXFHIST)
@@ -310,7 +310,7 @@ if (DEBUGGING) then
     if (present(Aineq)) then
         call assert((size(Aineq, 1) == mineq .and. size(Aineq, 2) == n) &
             & .or. (size(Aineq, 1) == 0 .and. size(Aineq, 2) == 0 .and. mineq == 0), &
-            & 'SIZE(Aineq) == [Mineq, N] unless Aineq and B are both empty', srname)
+            & 'SIZE(Aineq) == [Mineq, N] unless Aineq and Bineq are both empty', srname)
     end if
 end if
 
@@ -458,7 +458,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 ! MATLAB/Python code, we include a preprocessing subroutine to project the starting point to
 ! the feasible region if it is infeasible, so that the modification will not occur.
 ! 2. The linear inequality constraints received by LINCOB is AMAT^T * X <= BVEC. Note that Each
-! column of AMAT corresponds to a constraint. This is different from Aineq and Aeq, whose row
+! column of AMAT corresponds to a constraint. This is different from Aineq and Aeq, whose rows
 ! correspond to constraints. AMAT is defined in this way because it is accessed in columns during
 ! the computation, and because Fortran saves arrays in the column-major order. In Python/C
 ! implementations, AMAT should be transposed.

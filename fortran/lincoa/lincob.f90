@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, July 03, 2023 AM12:34:03
+! Last Modified: Monday, July 03, 2023 AM09:19:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,7 @@ integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: npt
 real(RP), intent(in) :: Aineq(:, :)  ! Aineq(Mineq, N)
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
-real(RP), intent(in) :: bineq(:) ! Bineq(M)
+real(RP), intent(in) :: bineq(:) ! Bineq(Mineq)
 real(RP), intent(in) :: bvec(:)  ! BVEC(M)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: cweight
@@ -131,7 +131,7 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 ! Local variables
 character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'LINCOB'
-integer(IK) :: iact(size(bineq))
+integer(IK) :: iact(size(bvec))
 integer(IK) :: idz
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: k
@@ -164,10 +164,10 @@ logical :: shortd
 logical :: small_trrad
 logical :: trfail
 logical :: ximproved
-real(RP) :: b(size(bineq))
+real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: cfilt(maxfilt)
-real(RP) :: constr(size(bineq))
+real(RP) :: constr(size(bvec))
 real(RP) :: d(size(x))
 real(RP) :: delbar
 real(RP) :: delta
@@ -187,7 +187,7 @@ real(RP) :: pqalt(npt)
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: qred
 real(RP) :: ratio
-real(RP) :: rescon(size(bineq))
+real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x), size(x))
 real(RP) :: rho
 real(RP) :: xbase(size(x))

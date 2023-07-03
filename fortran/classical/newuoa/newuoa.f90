@@ -1,6 +1,6 @@
 module newuoa_mod
 !--------------------------------------------------------------------------------------------------!
-! Classical mode. Not maintained. Not recommended. Please use the modernized version instead.
+! Classical mode. Not maintained. Strongly discouraged. Please use the modernized version instead.
 !
 ! The usage is the same as the modernized version.
 !--------------------------------------------------------------------------------------------------!

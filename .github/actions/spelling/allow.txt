@@ -2008,3 +2008,4 @@ sprimalib
 COMPFLAGS
 daynum
 dfrv
+mineq

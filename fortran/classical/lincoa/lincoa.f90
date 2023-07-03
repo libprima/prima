@@ -1,6 +1,6 @@
 module lincoa_mod
 !--------------------------------------------------------------------------------------------------!
-! Classical mode. Not maintained. Not recommended. Please use the modernized version instead.
+! Classical mode. Not maintained. Strongly discouraged. Please use the modernized version instead.
 !
 ! The usage is the same as the modernized version.
 !--------------------------------------------------------------------------------------------------!
@@ -15,7 +15,7 @@ contains
 
 subroutine lincoa(calfun, x, f, &
     & cstrv, &
-    & A, b, &
+    & Aineq, bineq, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, maxhist, maxfilt, info)
 
@@ -46,8 +46,8 @@ integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
 integer(IK), intent(in), optional :: npt
-real(RP), intent(in), optional :: A(:, :)
-real(RP), intent(in), optional :: b(:)
+real(RP), intent(in), optional :: Aineq(:, :)
+real(RP), intent(in), optional :: bineq(:)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
@@ -76,6 +76,7 @@ integer(IK) :: iprint_loc
 integer(IK) :: maxfilt_loc
 integer(IK) :: maxfun_loc
 integer(IK) :: maxhist_loc
+integer(IK) :: mineq
 integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: npt_loc
@@ -90,8 +91,8 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
-real(RP), allocatable :: A_loc(:, :)
-real(RP), allocatable :: b_loc(:)
+real(RP), allocatable :: Aineq_loc(:, :), A_loc(:, :)
+real(RP), allocatable :: bineq_loc(:), b_loc(:)
 real(RP), allocatable :: chist_loc(:)
 real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
@@ -108,39 +109,54 @@ integer(IK) :: iw, iamat, ib, ndim, ixb, ixp, ifv, ixs, ixo, igo, ihq, ipq, ibma
 integer(IK), allocatable :: iact(:)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Sizes
-if (present(b)) then
-    m = int(size(b), kind(m))
+! Read the linear constraints
+if (present(Aineq)) then
+    mineq = size(Aineq, 1)
+    Aineq_loc = Aineq
+    bineq_loc = bineq
 else
-    m = 0_IK
+    mineq = 0_IK
+    call safealloc(Aineq_loc, 0_IK, n)
+    call safealloc(bineq_loc, 0_IK)
 end if
+
+! Sizes
+!if (present(b)) then
+!    m = int(size(b), kind(m))
+!else
+!    m = 0_IK
+!end if
+!n = int(size(x), kind(n))
 n = int(size(x), kind(n))
+m = mineq
+call safealloc(A_loc, n, m)
+A_loc = transpose(Aineq_loc)
+call safealloc(b_loc, m)
+b_loc = bineq_loc
 
 ! Preconditions
 if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(present(A) .eqv. present(b), 'A and B are both present or both absent', srname)
-    if (present(A)) then
-        call assert((size(A, 1) == n .and. size(A, 2) == m) &
-            & .or. (size(A, 1) == 0 .and. size(A, 2) == 0 .and. m == 0), &
-            & 'SIZE(A) == [N, M] unless A and B are both empty', srname)
-    end if
+    !call assert(present(A) .eqv. present(b), 'A and B are both present or both absent', srname)
+    !call assert((size(A, 1) == n .and. size(A, 2) == m) &
+    !    & .or. (size(A, 1) == 0 .and. size(A, 2) == 0 .and. m == 0), &
+    !    & 'SIZE(A) == [N, M] unless A and B are both empty', srname)
 end if
 
 ! Read the inputs
 
 x = moderatex(x)
 
-call safealloc(A_loc, n, m)
-if (present(A)) then
-    A_loc = A
-end if
+!call safealloc(A_loc, n, m)
+!if (present(A)) then
+!    A_loc = A
+!end if
 
-call safealloc(b_loc, m)
-if (present(b)) then
-    b_loc = b
-end if
+!call safealloc(b_loc, m)
+!if (present(b)) then
+!    b_loc = b
+!end if
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
