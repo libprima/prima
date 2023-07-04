@@ -78,5 +78,7 @@
         end
     ```
 
+21. constr_modified and the warning "%s:ConstraintModified" are removed. The warning is now raised
+    in the Fortran code.
 
 Check other changes by comparing the matlab interfaces (vimdiff).
