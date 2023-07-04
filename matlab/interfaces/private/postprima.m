@@ -164,7 +164,6 @@ output = rmfield(output, 'exitflag'); % output does not include exitflag at retu
 nf = output.funcCount;
 constrviolation = output.constrviolation;
 if strcmp(solver, 'lincoa')
-    constr_modified = output.constr_modified;
     output = rmfield(output, 'constr_modified');
 end
 if ~isfield(output, 'warnings') || isempty(output.warnings)
@@ -588,7 +587,7 @@ if options.debug && ~options.classical
     % violation in quadruple precision. In MATLAB, which uses double precision, x1 may be regarded
     % as a wrong return if the two constraint violations become equal due to rounding. This did
     % happen in a test on 20230214.
-    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~(strcmp(solver, 'lincoa') && constr_modified) && ~strcmp(options.precision, 'quadruple')
+    if (fx ~= minf) && ~(isnan(fx) && isnan(minf)) && ~strcmp(options.precision, 'quadruple')
         % Public/unexpected error
         error(sprintf('%s:InvalidFhist', invoker), ...
              '%s: UNEXPECTED ERROR: %s returns an fhist that does not match nf or fx.', invoker, solver);
@@ -621,7 +620,7 @@ if options.debug && ~options.classical
         error(sprintf('%s:InvalidChist', invoker), ...
              '%s: UNEXPECTED ERROR: %s is a feasible solver yet it returns a positive constrviolation.', invoker, solver);
     end
-    if strcmp(options.precision, 'double') && ((strcmp(solver, 'lincoa') && ~constr_modified) || strcmp(solver, 'cobyla'))
+    if strcmp(options.precision, 'double') && (strcmp(solver, 'lincoa') || strcmp(solver, 'cobyla'))
         Aineq = probinfo.raw_data.Aineq;
         bineq = probinfo.raw_data.bineq(:);  % The same as fmincon, we allow bineq to be a row vector
         Aeq = probinfo.raw_data.Aeq;
@@ -774,7 +773,7 @@ if options.debug && ~options.classical
             end
 
             % Check whether chist = constrviolation(xhist).
-            if (strcmp(solver, 'lincoa') && ~constr_modified) || strcmp(solver, 'cobyla')
+            if strcmp(solver, 'lincoa') || strcmp(solver, 'cobyla')
                 % In this case, chist has been set to output.chist, but output.chist has been
                 % removed if the problem is unconstrained.
                 chistx = NaN(1, nhist);
