@@ -656,7 +656,7 @@ if options.debug && ~options.classical
         else
             cf = chist(fhist == fx);
         end
-        if (nhist >= nf) && ~any(cf == cstrv_returned) && ~(isnan(cstrv_returned) && ~any(~isnan(cf)))
+        if (nhist >= nf) && ~any(cf == cstrv_returned) && ~(isnan(cstrv_returned) && all(isnan(cf)))
             % Public/unexpected error
             % Note: When nhist < nf, FHIST and CHIST do not contain the whole history.
             error(sprintf('%s:InvalidFhist', invoker), ...

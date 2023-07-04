@@ -358,7 +358,7 @@ else % The problem turns out 'normal' during preprima
     end
 
     % If x0 is not feasible, LINCOA will modify the constraints to make
-    % it feasible (which is a bit strange, but Powell decided to do it).
+    % it feasible (which is a bit strange, but Powell decided to do so).
     % preprima has tried to make find a feasible x0. Raise a warning is
     % x0 is not 'feasible enough' so that the constraints may be modified.
     if get_cstrv(x0, Aineq, bineq, Aeq, beq, lb, ub) > 1.0e-10*max(abs([1; bineq; beq; x0]))
