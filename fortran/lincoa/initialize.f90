@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, July 03, 2023 PM09:07:07
+! Last Modified: Wednesday, July 05, 2023 AM01:16:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,8 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
+use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: message_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : setij
@@ -99,8 +100,10 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
+integer(IK), allocatable :: ixl(:)
+integer(IK), allocatable :: ixu(:)
 logical :: feasible(size(xpt, 2))
-real(RP) :: constr(size(bineq) + size(beq) + 2 * size(x0))
+real(RP) :: constr(size(bineq) + size(beq))
 real(RP) :: cstrv
 real(RP) :: f
 real(RP) :: x(size(x0))
@@ -206,12 +209,17 @@ end do
 feasible = (cval <= 0)
 
 ! Set FVAL by evaluating F. Totally parallelizable except for FMSG.
+! IXL and IXU are the indices of the nontrivial lower and upper bounds, respectively.
+call safealloc(ixl, int(count(xl > -REALMAX), IK))  ! Removable in F2003.
+call safealloc(ixu, int(count(xu < REALMAX), IK))   ! Removable in F2003.
+ixl = trueloc(xl > -REALMAX)
+ixu = trueloc(xu < REALMAX)
 do k = 1, npt
     x = xbase + xpt(:, k)
     call evaluate(calfun, x, f)
     ! Evaluate the constraints.
-    constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
-    cstrv = maximum([ZERO, constr])
+    constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq)]
+    cstrv = maximum([ZERO, constr, xl(ixl) - x(ixl), x(ixu) - xu(ixu)])
 
     ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x, cstrv, constr)
@@ -229,6 +237,9 @@ do k = 1, npt
         exit
     end if
 end do
+
+! Deallocate IXL and IXU as they have finished their job.
+deallocate (ixl, ixu)
 
 nf = int(count(evaluated), kind(nf))
 ! Since the starting point is supposed to be feasible, there should be at least one feasible point.
