@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, July 03, 2023 PM06:33:13
+! Last Modified: Wednesday, July 05, 2023 AM12:50:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -80,7 +80,8 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, linspace, norm
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, linspace, norm, trueloc
+use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: message_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul, updateh
@@ -156,6 +157,8 @@ integer(IK) :: ngetact
 integer(IK) :: nhist
 integer(IK) :: subinfo
 integer(IK) :: tr
+integer(IK), allocatable :: ixl(:)
+integer(IK), allocatable :: ixu(:)
 logical :: accurate_mod
 logical :: adequate_geo
 logical :: bad_trstep
@@ -172,7 +175,7 @@ logical :: ximproved
 real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: cfilt(maxfilt)
-real(RP) :: constr(size(bineq) + size(beq) + 2 * size(x))
+real(RP) :: constr(size(bineq) + size(beq))
 real(RP) :: d(size(x))
 real(RP) :: delbar
 real(RP) :: delta
@@ -237,6 +240,12 @@ end if
 ! Calculation starts !
 !====================!
 
+! IXL and IXU are the indices of the nontrivial lower and upper bounds, respectively.
+call safealloc(ixl, int(count(xl > -REALMAX), IK))  ! Removable in F2003.
+call safealloc(ixu, int(count(xu < REALMAX), IK))   ! Removable in F2003.
+ixl = trueloc(xl > -REALMAX)
+ixu = trueloc(xu < REALMAX)
+
 ! Initialize XBASE, XPT, FVAL, and KOPT.
 b = bvec
 call initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ftarget, rhobeg, xl, xu, &
@@ -247,8 +256,8 @@ f = fval(kopt)
 ! Evaluate the constraints. Should we do this in INITXF?
 ! N.B.: We must initialize CONSTR and CSTRV. Otherwise, if REDUCE_RHO is TRUE after the very first
 ! iteration due to SHORTD, then RHOMSG will be called with CONSTR and CSTRV uninitialized.
-constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
-cstrv = maximum([ZERO, constr])
+constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq)]
+cstrv = maximum([ZERO, constr, xl(ixl) - x(ixl), x(ixu) - xu(ixu)])
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
 ! N.B.: The filter is used only when selecting which iterate to return. It does not interfere with
@@ -271,8 +280,8 @@ if (subinfo /= INFO_DFT) then
     kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
     x = xfilt(:, kopt)
     f = ffilt(kopt)
-    constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
-    cstrv = maximum([ZERO, constr])
+    constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq)]
+    cstrv = maximum([ZERO, constr, xl(ixl) - x(ixl), x(ixu) - xu(ixu)])
     ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist)
     call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
@@ -393,8 +402,8 @@ do tr = 1, maxtr
         nf = nf + 1_IK
 
         ! Evaluate the constraints.
-        constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
-        cstrv = maximum([ZERO, constr])
+        constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq)]
+        cstrv = maximum([ZERO, constr, xl(ixl) - x(ixl), x(ixu) - xu(ixu)])
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, 'Trust region', iprint, nf, delta, f, x, cstrv, constr)
@@ -542,8 +551,8 @@ do tr = 1, maxtr
         nf = nf + 1_IK
 
         ! Evaluate the constraints.
-        constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
-        cstrv = maximum([ZERO, constr])
+        constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq)]
+        cstrv = maximum([ZERO, constr, xl(ixl) - x(ixl), x(ixu) - xu(ixu)])
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, 'Geometry', iprint, nf, delbar, f, x, cstrv, constr)
@@ -624,8 +633,8 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
-    constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
-    cstrv = maximum([ZERO, constr])
+    constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq)]
+    cstrv = maximum([ZERO, constr, xl(ixl) - x(ixl), x(ixu) - xu(ixu)])
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
     call fmsg(solver, 'Trust region', iprint, nf, rho, f, x, cstrv, constr)
@@ -639,8 +648,11 @@ end if
 kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
 x = xfilt(:, kopt)
 f = ffilt(kopt)
-constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq), xl - x, x - xu]
-cstrv = maximum([ZERO, constr])
+constr = [matprod(Aineq, x) - bineq, abs(matprod(Aeq, x) - beq)]
+cstrv = maximum([ZERO, constr, xl(ixl) - x(ixl), x(ixu) - xu(ixu)])
+
+! Deallocate IXL and IXU as they have finished their job.
+deallocate(ixl, ixu)
 
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)
