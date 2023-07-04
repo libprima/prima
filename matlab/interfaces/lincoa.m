@@ -224,7 +224,6 @@ internal_invokers = {'prima'}; % Invokers from this package; may have others in 
 % intended to pass to postprima.
 % OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation;
 % for internal solvers (solvers from prima), it should also contain fhist, chist, warnings;
-% for lincoa, it should also contain constr_modified;
 % for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq.
 output = struct();
 % N.B.: DO NOT record anything in PROBINFO. If the solver is called by prima,
@@ -318,7 +317,6 @@ if ~strcmp(invoker, 'prima') && probinfo.infeasible % The problem turned out inf
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
-    output.constr_modified = false;
 elseif ~strcmp(invoker, 'prima') && probinfo.nofreex % x was fixed by the bound constraints during preprima
     output.x = probinfo.fixedx_value;
     output.fx = fun(output.x);
@@ -330,7 +328,6 @@ elseif ~strcmp(invoker, 'prima') && probinfo.nofreex % x was fixed by the bound 
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_fixedx;
     output.chist = output.constrviolation;
-    output.constr_modified = false;
 elseif ~strcmp(invoker, 'prima') &&  probinfo.feasibility_problem
     output.x = x0;  % preprima has tried to set x0 to a feasible point (but may have failed)
     % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
@@ -345,7 +342,6 @@ elseif ~strcmp(invoker, 'prima') &&  probinfo.feasibility_problem
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
-    output.constr_modified = false; % LINCOA requires constr_modified to exist in output
     if output.constrviolation <= eps  % Did preprima find a feasible point?
         output.exitflag = 14;
     else
@@ -362,13 +358,10 @@ else % The problem turns out 'normal' during preprima
     % preprima has tried to make find a feasible x0. Raise a warning is
     % x0 is not 'feasible enough' so that the constraints may be modified.
     if get_cstrv(x0, Aineq, bineq, Aeq, beq, lb, ub) > 1.0e-10*max(abs([1; bineq; beq; x0]))
-        output.constr_modified = true;
         wid = sprintf('%s:ConstraintModified', funname);
         wmsg = sprintf('%s may modify the right-hand sides of the constraints to make the starting point feasible.', funname);
         warning(wid, '%s', wmsg);
         output.warnings = [output.warnings, wmsg];
-    else
-        output.constr_modified = false;
     end
 
     % Call the Fortran code
