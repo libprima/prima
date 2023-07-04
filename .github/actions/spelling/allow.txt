@@ -2010,3 +2010,8 @@ daynum
 dfrv
 mineq
 BQPGABIM
+idmat
+ixl
+ixu
+mxl
+mxu
