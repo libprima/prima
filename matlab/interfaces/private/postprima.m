@@ -115,10 +115,6 @@ if ismember(solver, all_solvers('internal'))
     % For internal solvers, output should contain fhist, chist, and warnings
     obligatory_output_fields = [obligatory_output_fields, 'fhist', 'chist', 'warnings'];
 end
-if strcmp(solver, 'lincoa')
-    % For lincoa, output should contain constr_modified
-    obligatory_output_fields = [obligatory_output_fields, 'constr_modified'];
-end
 if ismember(solver, all_solvers('nonlinearly_constrained_solvers')) && ismember(solver, all_solvers('internal'))
     % For nonlinearly constrained internal solvers, output should contain nlinceq and nlceq
     obligatory_output_fields = [obligatory_output_fields, 'nlcineq', 'nlceq'];
@@ -163,9 +159,6 @@ exitflag = output.exitflag;
 output = rmfield(output, 'exitflag'); % output does not include exitflag at return
 nf = output.funcCount;
 constrviolation = output.constrviolation;
-if strcmp(solver, 'lincoa')
-    output = rmfield(output, 'constr_modified');
-end
 if ~isfield(output, 'warnings') || isempty(output.warnings)
     output.warnings = {};
 end
