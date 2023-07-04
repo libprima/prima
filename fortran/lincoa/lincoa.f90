@@ -34,7 +34,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, July 04, 2023 PM05:59:29
+! Last Modified: Tuesday, July 04, 2023 PM11:20:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -223,7 +223,6 @@ use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: infos_mod, only : ZERO_LINEAR_CONSTRAINT
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: preproc_mod, only : preproc
@@ -500,13 +499,7 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc, present(chist), chist_loc)
 
 ! Wrap the linear and bound constraints into a single constraint: AMAT^T*X <= BVEC.
-call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, rhoend_loc, xl_loc, xu_loc, x, amat, bvec, info_loc)
-if (info_loc == ZERO_LINEAR_CONSTRAINT) then
-    if (present(info)) then
-        info = info_loc
-    end if
-    return  ! N.B.: F are other possible outputs are undefined. This is problematic. To be resolved.
-end if
+call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, rhoend_loc, xl_loc, xu_loc, x, amat, bvec)
 
 !-------------------- Call LINCOB, which performs the real calculations. --------------------------!
 call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
@@ -516,15 +509,7 @@ call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
-deallocate (Aineq_loc)
-deallocate (Aeq_loc)
-deallocate (amat)
-deallocate (bineq_loc)
-deallocate (beq_loc)
-deallocate (bvec)
-deallocate (xl_loc)
-deallocate (xu_loc)
-
+deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec, xl_loc, xu_loc)
 
 ! Write the outputs.
 
@@ -614,7 +599,7 @@ end if
 end subroutine lincoa
 
 
-subroutine get_lincon(Aeq, Aineq, beq, bineq, rhoend, xl, xu, x0, amat, bvec, info)
+subroutine get_lincon(Aeq, Aineq, beq, bineq, rhoend, xl, xu, x0, amat, bvec)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine wraps the linear and bound constraints into a single constraint: AMAT^T*X <= BVEC.
 ! N.B.:
@@ -634,8 +619,7 @@ subroutine get_lincon(Aeq, Aineq, beq, bineq, rhoend, xl, xu, x0, amat, bvec, in
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, warning
-use, non_intrinsic :: infos_mod, only : INFO_DFT, ZERO_LINEAR_CONSTRAINT
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, eye, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, eye, trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
 
 implicit none
@@ -653,32 +637,33 @@ real(RP), intent(in) :: x0(:)
 ! Outputs
 real(RP), intent(out), allocatable :: amat(:, :)
 real(RP), intent(out), allocatable :: bvec(:)
-integer(IK), intent(out) :: info
 
 ! Local variables
 character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'GET_LINCON'
-integer(IK) :: i
-integer(IK), allocatable :: ixl(:)
-integer(IK), allocatable :: ixu(:)
 integer(IK) :: m
 integer(IK) :: meq
 integer(IK) :: mineq
 integer(IK) :: mxl
 integer(IK) :: mxu
 integer(IK) :: n
+integer(IK), allocatable :: ieq(:)
+integer(IK), allocatable :: iineq(:)
+integer(IK), allocatable :: ixl(:)
+integer(IK), allocatable :: ixu(:)
 logical :: constr_modified
-real(RP) :: ax
-real(RP) :: anorm
+real(RP) :: Aeq_norm(size(Aeq, 1))
+real(RP) :: Aeqx0(size(Aeq, 1))
+real(RP) :: Aineq_norm(size(Aineq, 1))
+real(RP) :: Aineqx0(size(Aineq, 1))
 real(RP) :: idmat(size(x0), size(x0))
 real(RP) :: smallx
+real(RP), allocatable :: Anorm(:)
 
 ! Sizes
 n = int(size(x0), kind(n))
 mineq = int(size(bineq), kind(mineq))
 meq = int(size(beq), kind(meq))
-mxl = int(count(xl > -REALMAX), kind(mxl))
-mxu = int(count(xu < REALMAX), kind(mxu))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -691,60 +676,59 @@ end if
 ! Calculation starts !
 !====================!
 
-info = INFO_DFT
-constr_modified = .false.
-smallx = 1.0E-6_RP * rhoend
+! Decide the number of valid and nontrivial constraints.
+Aineq_norm = sqrt(sum(Aineq**2, dim=2))
+Aeq_norm = sqrt(sum(Aeq**2, dim=2))
+mineq = int(count(Aineq_norm > 0), kind(mineq))
+meq = int(count(Aeq_norm > 0), kind(meq))
+mxl = int(count(xl > -REALMAX), kind(mxl))
+mxu = int(count(xu < REALMAX), kind(mxu))
+m = mineq + 2_IK * meq + mxl + mxu  ! The final number of linear inequality constraints.
 
-! M is the final number of linear inequality constraints.
-m = mineq + 2_IK * meq + mxl + mxu
+! Allocate memory. Removable in F2003.
+call safealloc(iineq, mineq)
+call safealloc(ieq, meq)
+call safealloc(ixl, mxl)
+call safealloc(ixu, mxu)
 call safealloc(amat, n, m)
 call safealloc(bvec, m)
+call safealloc(Anorm, mineq + 2_IK * meq)
 
-! Include the linear inequality constraints.
-do i = 1, mineq
-    ax = inprod(Aineq(i, :), x0)
-    anorm = norm(Aineq(i, :))
-    if (anorm <= 0) then
-        info = ZERO_LINEAR_CONSTRAINT
-        return
-    end if
-    constr_modified = (constr_modified .or. (ax - bineq(i) > smallx * anorm))
-    amat(:, i) = Aineq(i, :) / anorm
-    bvec(i) = max(bineq(i), ax) / anorm
-end do
-
-! The equality constraint Aeq*X = Beq will be handled as two inequality constraints Aeq*X <= Beq and
-! -Aeq*X <= -Beq. Correspondingly, we append [Aeq^T, -Aeq^T] to AMAT and [Beq; -Beq] to BVEC, after
-! some normalization.
-do i = 1, meq
-    ax = inprod(Aeq(i, :), x0)
-    anorm = norm(Aeq(i, :))
-    if (anorm <= 0) then
-        info = ZERO_LINEAR_CONSTRAINT
-        return
-    end if
-    constr_modified = (constr_modified .or. (abs(ax - beq(i)) > smallx * anorm))
-    amat(:, mineq + i) = Aeq(i, :) / anorm
-    bvec(mineq + i) = max(beq(i), ax) / anorm
-    amat(:, mineq + meq + i) = -Aeq(i, :) / anorm
-    bvec(mineq + meq + i) = max(-beq(i), -ax) / anorm
-end do
-
-! The bound constraints XL <= X <= XU will be handled as two inequality constraints -I*X <= -XL and
-! I*X <= XU. Correspondingly, we append [-I, I] to AMAT and [-XL; XU] to BVEC, after removing the
-! trivial bounds.
-idmat = eye(n, n)
-call safealloc(ixl, mxl)  ! Removable in F2003.
+! Define the indices of the valid and nontrivial constraints.
+iineq = trueloc(Aineq_norm > 0)
+ieq = trueloc(Aeq_norm > 0)
 ixl = trueloc(xl > -REALMAX)
-amat(:, mineq + 2 * meq + 1:mineq + 2 * meq + mxl) = -idmat(:, ixl)
-bvec(mineq + 2 * meq + 1:mineq + 2 * meq + mxl) = max(-xl(ixl), -x0(ixl))
-call safealloc(ixu, mxu)  ! Removable in F2003.
 ixu = trueloc(xu < REALMAX)
-amat(:, mineq + 2 * meq + mxl + 1:mineq + 2 * meq + mxl + mxu) = idmat(:, ixu)
-bvec(mineq + 2 * meq + mxl + 1:mineq + 2 * meq + mxl + mxu) = max(xu(ixu), x0(ixu))
-constr_modified = (constr_modified .or. any(x0 < xl - smallx) .or. any(x0 > xu + smallx))
+
+! Wrap the linear constraints.
+! The equality constraint Aeq*X = Beq are handled as two constraints -Aeq*X <= -Beq, Aeq*X <= Beq.
+! The bound constraint XL <= X <= XU is handled as two constraints -X <= -XL, X <= XU.
+! N.B.: The code below is inefficient in terms of memory, as we prefer readability.
+idmat = eye(n, n)
+amat = reshape(shape=shape(amat), source= &
+    & [transpose(Aineq(iineq, :)), transpose(Aeq(ieq, :)), -transpose(Aeq(ieq, :)), -idmat(:, ixl), idmat(:, ixu)])
+bvec = [bineq(iineq), beq(ieq), -beq(ieq), -xl(ixl), xu(ixu)]
+!!MATLAB code:
+!!amat = [Aineq(iineq, :)', Aeq(ieq, :)', -Aeq(ieq, :)', -idmat(:, ixl), idmat(:, ixu)];
+!!bvec = [bineq(iineq); beq(ieq); -beq(ieq); -xl(ixl); xu(ixu)];
+
+! Modify BVEC if necessary so that the initial point is feasible.
+Aineqx0 = matprod(Aineq, x0)
+Aeqx0 = matprod(Aeq, x0)
+bvec = max(bvec, [Aineqx0(iineq), Aeqx0(ieq), -Aeqx0(ieq), -x0(ixl), x0(ixu)])
+
+! Normalize the linear constraints so that each constraint has a gradient of norm 1.
+Anorm = [Aineq_norm(iineq), Aeq_norm(ieq), Aeq_norm(ieq)]
+amat(:, 1:mineq + 2 * meq) = amat(:, 1:mineq + 2 * meq) / spread(Anorm, dim=1, ncopies=n)
+bvec(1:mineq + 2 * meq) = bvec(1:mineq + 2 * meq) / Anorm
+
+! Deallocate memory.
+deallocate (iineq, ieq, ixl, ixu, Anorm)
 
 ! Print a warning if the starting point is infeasible and the constraints are modified.
+smallx = 1.0E-6_RP * rhoend
+constr_modified = (any(Aineqx0 - bineq > smallx * Aineq_norm) .or. any(abs(Aeqx0 - beq) > smallx * Aeq_norm) &
+    & .or. any(x0 < xl - smallx) .or. any(x0 > xu + smallx))
 if (constr_modified) then
     call warning(solver, 'The starting point is infeasible. '//solver// &
         & ' modified the right-hand sides of the constraints to make it feasible')
@@ -758,8 +742,6 @@ end if
 if (DEBUGGING) then
     call assert(size(amat, 1) == size(x0) .and. size(amat, 2) == size(bvec), &
         & 'SIZE(AMAT) == [SIZE(X), SIZE(BVEC)]', srname)
-    call assert(info == INFO_DFT .or. info == ZERO_LINEAR_CONSTRAINT, &
-        & 'INFO == INFO_DFT .or. INFO == ZERO_LINEAR_CONSTRAINT', srname)
     call assert(all(matprod(x0, amat) - bvec <= max(1.0E-12_RP, 1.0E2 * EPS) * &
         & (ONE + sum(abs(x0)) + sum(abs(bvec)))), 'The starting point is feasible', srname)
 end if
