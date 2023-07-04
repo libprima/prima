@@ -27,14 +27,16 @@ module lincoa_mod
 !
 ! and Powell's code, with modernization, bug fixes, and improvements.
 !
-! Powell did not publish a paper to introduce the algorithm. The above paper does not describe
+! N.B.:
+! 1. Powell did not publish a paper to introduce the algorithm. The above paper does not describe
 ! LINCOA but discusses how to solve linearly-constrained trust-region subproblems.
+! 2. Powell's code does not accept linear equality constraints or bound constraints.
 !
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, July 04, 2023 PM11:54:21
+! Last Modified: Wednesday, July 05, 2023 AM12:14:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -662,13 +664,11 @@ real(RP), allocatable :: Anorm(:)
 
 ! Sizes
 n = int(size(x0), kind(n))
-mineq = int(size(bineq), kind(mineq))
-meq = int(size(beq), kind(meq))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(size(Aineq, 1) == mineq .and. size(Aineq, 2) == n, 'SIZE(AEQ) == [MINEQ, N]', srname)
-    call assert(size(Aeq, 1) == meq .and. size(Aeq, 2) == n, 'SIZE(AEQ) == [MEQ, N]', srname)
+    call assert(size(Aineq, 1) == size(bineq) .and. size(Aineq, 2) == n, 'SIZE(AINEQ) == [SIZE(BINEQ), N]', srname)
+    call assert(size(Aeq, 1) == size(beq) .and. size(Aeq, 2) == n, 'SIZE(AEQ) == [SIZE(BEQ), N]', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == SIZE(XU) == N', srname)
 end if
 
@@ -676,14 +676,19 @@ end if
 ! Calculation starts !
 !====================!
 
-! Decide the number of valid and nontrivial constraints.
+! Decide the number of valid (gradient is nonzero) and nontrivial constraints.
 Aineq_norm = sqrt(sum(Aineq**2, dim=2))
 Aeq_norm = sqrt(sum(Aeq**2, dim=2))
-mineq = int(count(Aineq_norm > 0), kind(mineq))  ! Redefined
-meq = int(count(Aeq_norm > 0), kind(meq))  ! Redefined
+mineq = int(count(Aineq_norm > 0), kind(mineq))
+meq = int(count(Aeq_norm > 0), kind(meq))
 mxl = int(count(xl > -REALMAX), kind(mxl))
 mxu = int(count(xu < REALMAX), kind(mxu))
 m = mineq + 2_IK * meq + mxl + mxu  ! The final number of linear inequality constraints.
+
+! Print a warning if some constraints are invalid. They will be ignored (Powell's code would stop).
+if (mineq < size(Aineq, 1) .or. meq < size(Aeq, 1)) then
+    call warning(solver, 'Some linear constraints have zero gradients; they are ignored')
+end if
 
 ! Allocate memory. Removable in F2003.
 call safealloc(iineq, mineq)
@@ -703,7 +708,9 @@ ixu = trueloc(xu < REALMAX)
 ! Wrap the linear constraints.
 ! The equality constraint Aeq*X = Beq are handled as two constraints -Aeq*X <= -Beq, Aeq*X <= Beq.
 ! The bound constraint XL <= X <= XU is handled as two constraints -X <= -XL, X <= XU.
-! N.B.: The code below is quite inefficient in terms of memory, as we prefer readability.
+! N.B.:
+! 1. The treatment of the equality constraints is naive. One may choose to eliminate them instead.
+! 2. The code below is quite inefficient in terms of memory, as we prefer readability.
 idmat = eye(n, n)
 amat = reshape(shape=shape(amat), source= &
     & [transpose(Aineq(iineq, :)), -transpose(Aeq(ieq, :)), transpose(Aeq(ieq, :)), -idmat(:, ixl), idmat(:, ixu)])
