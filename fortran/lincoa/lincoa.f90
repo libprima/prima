@@ -34,7 +34,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, July 04, 2023 PM03:55:15
+! Last Modified: Tuesday, July 04, 2023 PM05:59:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -701,38 +701,34 @@ call safealloc(amat, n, m)
 call safealloc(bvec, m)
 
 ! Include the linear inequality constraints.
-if (mineq > 0) then
-    do i = 1, mineq
-        ax = inprod(Aineq(i, :), x0)
-        anorm = norm(Aineq(i, :))
-        if (anorm <= 0) then
-            info = ZERO_LINEAR_CONSTRAINT
-            return
-        end if
-        constr_modified = (constr_modified .or. (ax - bineq(i) > smallx * anorm))
-        bvec(i) = max(bineq(i), ax) / anorm
-        amat(:, i) = Aineq(i, :) / anorm
-    end do
-end if
+do i = 1, mineq
+    ax = inprod(Aineq(i, :), x0)
+    anorm = norm(Aineq(i, :))
+    if (anorm <= 0) then
+        info = ZERO_LINEAR_CONSTRAINT
+        return
+    end if
+    constr_modified = (constr_modified .or. (ax - bineq(i) > smallx * anorm))
+    amat(:, i) = Aineq(i, :) / anorm
+    bvec(i) = max(bineq(i), ax) / anorm
+end do
 
 ! The equality constraint Aeq*X = Beq will be handled as two inequality constraints Aeq*X <= Beq and
 ! -Aeq*X <= -Beq. Correspondingly, we append [Aeq^T, -Aeq^T] to AMAT and [Beq; -Beq] to BVEC, after
 ! some normalization.
-if (meq > 0) then
-    do i = 1, meq
-        ax = inprod(Aeq(i, :), x0)
-        anorm = norm(Aeq(i, :))
-        if (anorm <= 0) then
-            info = ZERO_LINEAR_CONSTRAINT
-            return
-        end if
-        constr_modified = (constr_modified .or. (abs(ax - beq(i)) > smallx * anorm))
-        bvec(mineq + i) = max(beq(i), ax) / anorm
-        amat(:, mineq + i) = Aeq(i, :) / anorm
-        bvec(mineq + meq + i) = max(-beq(i), -ax) / anorm
-        amat(:, mineq + meq + i) = -Aeq(i, :) / anorm
-    end do
-end if
+do i = 1, meq
+    ax = inprod(Aeq(i, :), x0)
+    anorm = norm(Aeq(i, :))
+    if (anorm <= 0) then
+        info = ZERO_LINEAR_CONSTRAINT
+        return
+    end if
+    constr_modified = (constr_modified .or. (abs(ax - beq(i)) > smallx * anorm))
+    amat(:, mineq + i) = Aeq(i, :) / anorm
+    bvec(mineq + i) = max(beq(i), ax) / anorm
+    amat(:, mineq + meq + i) = -Aeq(i, :) / anorm
+    bvec(mineq + meq + i) = max(-beq(i), -ax) / anorm
+end do
 
 ! The bound constraints XL <= X <= XU will be handled as two inequality constraints -I*X <= -XL and
 ! I*X <= XU. Correspondingly, we append [-I, I] to AMAT and [-XL; XU] to BVEC, after removing the
