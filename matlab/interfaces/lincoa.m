@@ -353,17 +353,6 @@ else % The problem turns out 'normal' during preprima
         error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
 
-    % If x0 is not feasible, LINCOA will modify the constraints to make
-    % it feasible (which is a bit strange, but Powell decided to do so).
-    % preprima has tried to make find a feasible x0. Raise a warning is
-    % x0 is not 'feasible enough' so that the constraints may be modified.
-    if get_cstrv(x0, Aineq, bineq, Aeq, beq, lb, ub) > 1.0e-10*max(abs([1; bineq; beq; x0]))
-        wid = sprintf('%s:ConstraintModified', funname);
-        wmsg = sprintf('%s may modify the right-hand sides of the constraints to make the starting point feasible.', funname);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    end
-
     % Call the Fortran code
     mfiledir = fileparts(mfilename('fullpath'));  % The directory where this .m file resides.
     mexdir = fullfile(mfiledir, 'private');
