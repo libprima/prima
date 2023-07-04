@@ -2016,3 +2016,7 @@ ixu
 mxl
 mxu
 lincon
+Aeqx
+Aineqx
+ieq
+iineq

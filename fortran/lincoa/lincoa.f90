@@ -34,7 +34,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, July 04, 2023 PM11:20:28
+! Last Modified: Tuesday, July 04, 2023 PM11:54:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -679,8 +679,8 @@ end if
 ! Decide the number of valid and nontrivial constraints.
 Aineq_norm = sqrt(sum(Aineq**2, dim=2))
 Aeq_norm = sqrt(sum(Aeq**2, dim=2))
-mineq = int(count(Aineq_norm > 0), kind(mineq))
-meq = int(count(Aeq_norm > 0), kind(meq))
+mineq = int(count(Aineq_norm > 0), kind(mineq))  ! Redefined
+meq = int(count(Aeq_norm > 0), kind(meq))  ! Redefined
 mxl = int(count(xl > -REALMAX), kind(mxl))
 mxu = int(count(xu < REALMAX), kind(mxu))
 m = mineq + 2_IK * meq + mxl + mxu  ! The final number of linear inequality constraints.
@@ -703,19 +703,19 @@ ixu = trueloc(xu < REALMAX)
 ! Wrap the linear constraints.
 ! The equality constraint Aeq*X = Beq are handled as two constraints -Aeq*X <= -Beq, Aeq*X <= Beq.
 ! The bound constraint XL <= X <= XU is handled as two constraints -X <= -XL, X <= XU.
-! N.B.: The code below is inefficient in terms of memory, as we prefer readability.
+! N.B.: The code below is quite inefficient in terms of memory, as we prefer readability.
 idmat = eye(n, n)
 amat = reshape(shape=shape(amat), source= &
-    & [transpose(Aineq(iineq, :)), transpose(Aeq(ieq, :)), -transpose(Aeq(ieq, :)), -idmat(:, ixl), idmat(:, ixu)])
-bvec = [bineq(iineq), beq(ieq), -beq(ieq), -xl(ixl), xu(ixu)]
+    & [transpose(Aineq(iineq, :)), -transpose(Aeq(ieq, :)), transpose(Aeq(ieq, :)), -idmat(:, ixl), idmat(:, ixu)])
+bvec = [bineq(iineq), -beq(ieq), beq(ieq), -xl(ixl), xu(ixu)]
 !!MATLAB code:
-!!amat = [Aineq(iineq, :)', Aeq(ieq, :)', -Aeq(ieq, :)', -idmat(:, ixl), idmat(:, ixu)];
-!!bvec = [bineq(iineq); beq(ieq); -beq(ieq); -xl(ixl); xu(ixu)];
+!!amat = [Aineq(iineq, :)', -Aeq(ieq, :)', Aeq(ieq, :)', -idmat(:, ixl), idmat(:, ixu)];
+!!bvec = [bineq(iineq); -beq(ieq); beq(ieq); -xl(ixl); xu(ixu)];
 
 ! Modify BVEC if necessary so that the initial point is feasible.
 Aineqx0 = matprod(Aineq, x0)
 Aeqx0 = matprod(Aeq, x0)
-bvec = max(bvec, [Aineqx0(iineq), Aeqx0(ieq), -Aeqx0(ieq), -x0(ixl), x0(ixu)])
+bvec = max(bvec, [Aineqx0(iineq), -Aeqx0(ieq), Aeqx0(ieq), -x0(ixl), x0(ixu)])
 
 ! Normalize the linear constraints so that each constraint has a gradient of norm 1.
 Anorm = [Aineq_norm(iineq), Aeq_norm(ieq), Aeq_norm(ieq)]
@@ -725,10 +725,10 @@ bvec(1:mineq + 2 * meq) = bvec(1:mineq + 2 * meq) / Anorm
 ! Deallocate memory.
 deallocate (iineq, ieq, ixl, ixu, Anorm)
 
-! Print a warning if the starting point is infeasible and the constraints are modified.
+! Print a warning if the starting point is sufficiently infeasible and the constraints are modified.
 smallx = 1.0E-6_RP * rhoend
-constr_modified = (any(Aineqx0 - bineq > smallx * Aineq_norm) .or. any(abs(Aeqx0 - beq) > smallx * Aeq_norm) &
-    & .or. any(x0 < xl - smallx) .or. any(x0 > xu + smallx))
+constr_modified = (any(Aineqx0 - bineq > smallx * Aineq_norm) .or. &
+    & any(abs(Aeqx0 - beq) > smallx * Aeq_norm) .or. any(x0 < xl - smallx) .or. any(x0 > xu + smallx))
 if (constr_modified) then
     call warning(solver, 'The starting point is infeasible. '//solver// &
         & ' modified the right-hand sides of the constraints to make it feasible')

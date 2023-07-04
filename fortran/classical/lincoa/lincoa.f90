@@ -168,12 +168,12 @@ n = int(size(x), kind(n))
 m = mineq + 2 * meq + mxl + mxu
 call safealloc(A_loc, n, m)
 A_loc(:, 1:mineq) = transpose(Aineq_loc)
-A_loc(:, mineq + 1:mineq + meq) = transpose(Aeq_loc)
-A_loc(:, mineq + meq + 1:mineq + 2 * meq) = -transpose(Aeq_loc)
+A_loc(:, mineq + 1:mineq + meq) = -transpose(Aeq_loc)
+A_loc(:, mineq + meq + 1:mineq + 2 * meq) = transpose(Aeq_loc)
 call safealloc(b_loc, m)
 b_loc(1:mineq) = bineq_loc
-b_loc(mineq + 1:mineq + meq) = beq_loc
-b_loc(mineq + meq + 1:mineq + 2 * meq) = -beq_loc
+b_loc(mineq + 1:mineq + meq) = -beq_loc
+b_loc(mineq + meq + 1:mineq + 2 * meq) = beq_loc
 idmat = eye(n, n)
 ixl = trueloc(xl_loc > -REALMAX)
 A_loc(:, mineq + 2 * meq + 1:mineq + 2 * meq + mxl) = -idmat(:, ixl)
