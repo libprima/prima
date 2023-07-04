@@ -596,7 +596,7 @@ if options.debug && ~options.classical
     % 1. COBYLA cannot ensure fx == fun(x) or constr == con(x) due to rounding errors. Instead of
     % checking the equality, we check whether the relative error is within cobyla_prec.
     % 2. There can also be a difference between constrviolation and cstrv due to rounding errors,
-    % especially if the problem is scaled.
+    % especially if the problem is scaled or reduced.
     % 3. The precision of the constraints seem to be lower for cobyla and lincoa due to the
     % matrix-vector products.
     %%%%%%%%%%%%%%%%%%%%%% Old values %%%%%%%%%%%%%%%%%%%%%%
@@ -607,7 +607,7 @@ if options.debug && ~options.classical
     %bobyqa_prec = 1e-10;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     cobyla_prec = 1e-7;
-    lincoa_prec = 1e-9;
+    lincoa_prec = 1e-7;
     bobyqa_prec = 1e-12;
 
     % Check whether constrviolation is correct
@@ -643,8 +643,8 @@ if options.debug && ~options.classical
             cstrv(cstrv > constrmax | isnan(cstrv)) = constrmax;
         end
         if ~(isnan(cstrv) && isnan(constrviolation)) && ~(cstrv == inf && constrviolation == inf) && ...
-                ~(abs(constrviolation-cstrv) <= lincoa_prec*max(1,abs(cstrv)) && strcmp(solver, 'lincoa')) && ...
-                ~(abs(constrviolation-cstrv) <= cobyla_prec*max(1,abs(cstrv)) && strcmp(solver, 'cobyla'))
+                ~(abs(constrviolation-cstrv) <= lincoa_prec*max(1, cstrv) && strcmp(solver, 'lincoa')) && ...
+                ~(abs(constrviolation-cstrv) <= cobyla_prec*max(1, cstrv) && strcmp(solver, 'cobyla'))
             % Public/unexpected error
             error(sprintf('%s:InvalidConstrViolation', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
@@ -688,7 +688,8 @@ if options.debug && ~options.classical
         % use "fx ~= funx" to check COBYLA.
         %if ~(isnan(fx) && isnan(funx)) && ~((fx == funx) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
         % Zaikun 20220930: It seems that BOBYQA can also return fx ~= fun(x) if RESCUE is invoked.
-        if ~(isnan(fx) && isnan(funx)) && ~((fx == funx) || (abs(funx-fx) <= bobyqa_prec*max(1, abs(fx)) && strcmp(solver, 'bobyqa')) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
+        if ~(isnan(fx) && isnan(funx)) && ~((fx == funx) || (abs(funx-fx) <= bobyqa_prec*max(1, abs(fx)) ...
+                && strcmp(solver, 'bobyqa')) || (abs(funx-fx) <= cobyla_prec*max(1, abs(fx)) && strcmp(solver, 'cobyla')))
             % Public/unexpected error
             error(sprintf('%s:InvalidFx', invoker), ...
                 '%s: UNEXPECTED ERROR: %s returns an fx that does not match x.', invoker, solver);
@@ -797,8 +798,8 @@ if options.debug && ~options.classical
                     chistx(chistx > constrmax | isnan(chistx)) = constrmax;
                 end
                 if any(~(isnan(chist) & isnan(chistx)) & ~((chist == chistx) | ...
-                        (abs(chistx-chist) <= lincoa_prec*max(1, abs(chist)) & strcmp(solver, 'lincoa')) | ...
-                        (abs(chistx-chist) <= cobyla_prec*max(1, abs(chist)) & strcmp(solver, 'cobyla'))))
+                        (abs(chistx-chist) <= lincoa_prec*max(1, chist) & strcmp(solver, 'lincoa')) | ...
+                        (abs(chistx-chist) <= cobyla_prec*max(1, chist) & strcmp(solver, 'cobyla'))))
                     % Public/unexpected error
                     error(sprintf('%s:InvalidFx', invoker), ...
                         '%s: UNEXPECTED ERROR: %s returns an chist that does not match xhist.', invoker, solver);
