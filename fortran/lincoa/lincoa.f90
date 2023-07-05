@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 05, 2023 AM01:48:25
+! Last Modified: Wednesday, July 05, 2023 PM05:13:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -706,11 +706,11 @@ ixl = trueloc(xl > -REALMAX)
 ixu = trueloc(xu < REALMAX)
 
 ! Wrap the linear constraints.
-! The equality constraint Aeq*X = Beq are handled as two constraints -Aeq*X <= -Beq, Aeq*X <= Beq.
+! The equality constraint Aeq*X = Beq is handled as two constraints -Aeq*X <= -Beq, Aeq*X <= Beq.
 ! The bound constraint XL <= X <= XU is handled as two constraints -X <= -XL, X <= XU.
 ! N.B.:
 ! 1. The treatment of the equality constraints is naive. One may choose to eliminate them instead.
-! 2. The code below is quite inefficient in terms of memory, as we prefer readability.
+! 2. The code below is quite inefficient in terms of memory, but we prefer readability.
 idmat = eye(n, n)
 amat = reshape(shape=shape(amat), source= &
     & [transpose(Aineq(iineq, :)), -transpose(Aeq(ieq, :)), transpose(Aeq(ieq, :)), -idmat(:, ixl), idmat(:, ixu)])
@@ -723,13 +723,6 @@ bvec = [bineq(iineq), -beq(ieq), beq(ieq), -xl(ixl), xu(ixu)]
 Aineqx0 = matprod(Aineq, x0)
 Aeqx0 = matprod(Aeq, x0)
 bvec = max(bvec, [Aineqx0(iineq), -Aeqx0(ieq), Aeqx0(ieq), -x0(ixl), x0(ixu)])
-
-!write (*, *) mineq, size(Aineq, 1)
-!write (*, *) Aineqx0(127), bvec(127), Aineq_norm(127)
-!write (*, *) Aineq(127, :)
-!write (*, *) amat(:, 127)
-!write (*, *) x0
-!write (*, *) sum(amat(:, 127) * x0)
 
 ! Normalize the linear constraints so that each constraint has a gradient of norm 1.
 Anorm = [Aineq_norm(iineq), Aeq_norm(ieq), Aeq_norm(ieq)]
@@ -756,10 +749,6 @@ end if
 if (DEBUGGING) then
     call assert(size(amat, 1) == size(x0) .and. size(amat, 2) == size(bvec), &
         & 'SIZE(AMAT) == [SIZE(X), SIZE(BVEC)]', srname)
-    !write (*, *) 'r', (matprod(x0, amat) - bvec) / (ONE + sum(abs(x0)) + sum(abs(bvec)))
-    !write (*, *) 'r', maxloc(matprod(x0, amat) - bvec), maxval(matprod(x0, amat) - bvec) / (ONE + sum(abs(x0)) + sum(abs(bvec)))
-    !write (*, *) 'bvec', bvec
-    !write (*, *) 'x0', x0
     call assert(all(matprod(x0, amat) - bvec <= max(1.0E-12_RP, 1.0E2 * EPS) * &
         & (ONE + sum(abs(x0)) + sum(abs(bvec)))), 'The starting point is feasible', srname)
 end if
