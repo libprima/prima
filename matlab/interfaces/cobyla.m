@@ -520,6 +520,9 @@ if ~isempty(Aeq)
     ceq = [ceq; Aeq*x - beq];
 end
 constr = [-cineq; ceq; -ceq];
+
+%constr = [x(lb > -Inf) - lb(lb > -Inf); ub(ub < Inf) - x(ub < Inf); bineq - Aineq*x; beq - Aeq*x; Aeq*x - b];
+
 if ~isempty(nonlcon)
     [nlcineq, nlceq, succ] = nonlcon(x); % Nonlinear constraints: nlcineq <= 0, nlceq = 0
     if succ
