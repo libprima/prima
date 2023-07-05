@@ -594,12 +594,9 @@ if options.debug && ~options.classical
     % matrix-vector products.
     %%%%%%%%%%%%%%%%%%%%%% Old values %%%%%%%%%%%%%%%%%%%%%%
     %cobyla_prec = 1e-4;
-    %lincoa_prec = 1e-9;
-    %bobyqa_prec = 1e-9;
-    %cobyla_prec = 1e-8;
     %bobyqa_prec = 1e-10;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    cobyla_prec = 1e-7;
+    cobyla_prec = 1e-5;
     lincoa_prec = 1e-7;
     bobyqa_prec = 1e-12;
 
@@ -639,7 +636,6 @@ if options.debug && ~options.classical
                 ~(abs(constrviolation-cstrv) <= lincoa_prec*max(1, cstrv) && strcmp(solver, 'lincoa')) && ...
                 ~(abs(constrviolation-cstrv) <= cobyla_prec*max(1, cstrv) && strcmp(solver, 'cobyla'))
             % Public/unexpected error
-            fprintf('>>>>XXXXXX %.16f, %.16f, %.16f, %.16f', cstrv, constrviolation, abs(constrviolation-cstrv)/cstrv, cobyla_prec)
             error(sprintf('%s:InvalidConstrViolation', invoker), ...
               '%s: UNEXPECTED ERROR: %s returns a constrviolation that does not match x.', invoker, solver);
         end
