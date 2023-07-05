@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 05, 2023 PM05:13:39
+! Last Modified: Wednesday, July 05, 2023 PM09:42:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -676,66 +676,66 @@ end if
 ! Calculation starts !
 !====================!
 
-! Decide the number of valid (gradient is nonzero) and nontrivial constraints.
-Aineq_norm = sqrt(sum(Aineq**2, dim=2))
-Aeq_norm = sqrt(sum(Aeq**2, dim=2))
-mineq = int(count(Aineq_norm > 0), kind(mineq))
-meq = int(count(Aeq_norm > 0), kind(meq))
+! Decide the number of nontrivial and valid (gradient is nonzero) constraints.
 mxl = int(count(xl > -REALMAX), kind(mxl))
 mxu = int(count(xu < REALMAX), kind(mxu))
-m = mineq + 2_IK * meq + mxl + mxu  ! The final number of linear inequality constraints.
+Aeq_norm = sqrt(sum(Aeq**2, dim=2))
+meq = int(count(Aeq_norm > 0), kind(meq))
+Aineq_norm = sqrt(sum(Aineq**2, dim=2))
+mineq = int(count(Aineq_norm > 0), kind(mineq))
+m = mxl + mxu + 2_IK * meq + mineq  ! The final number of linear inequality constraints.
 
 ! Print a warning if some constraints are invalid. They will be ignored (Powell's code would stop).
-if (mineq < size(Aineq, 1) .or. meq < size(Aeq, 1)) then
+if (meq < size(Aeq, 1) .or. mineq < size(Aineq, 1)) then
     call warning(solver, 'Some linear constraints have zero gradients; they are ignored')
 end if
 
 ! Allocate memory. Removable in F2003.
-call safealloc(iineq, mineq)
-call safealloc(ieq, meq)
 call safealloc(ixl, mxl)
 call safealloc(ixu, mxu)
+call safealloc(ieq, meq)
+call safealloc(iineq, mineq)
 call safealloc(amat, n, m)
 call safealloc(bvec, m)
-call safealloc(Anorm, mineq + 2_IK * meq)
+call safealloc(Anorm, 2_IK * meq + mineq)
 
 ! Define the indices of the valid and nontrivial constraints.
-iineq = trueloc(Aineq_norm > 0)
-ieq = trueloc(Aeq_norm > 0)
 ixl = trueloc(xl > -REALMAX)
 ixu = trueloc(xu < REALMAX)
+ieq = trueloc(Aeq_norm > 0)
+iineq = trueloc(Aineq_norm > 0)
 
 ! Wrap the linear constraints.
-! The equality constraint Aeq*X = Beq is handled as two constraints -Aeq*X <= -Beq, Aeq*X <= Beq.
 ! The bound constraint XL <= X <= XU is handled as two constraints -X <= -XL, X <= XU.
+! The equality constraint Aeq*X = Beq is handled as two constraints -Aeq*X <= -Beq, Aeq*X <= Beq.
 ! N.B.:
 ! 1. The treatment of the equality constraints is naive. One may choose to eliminate them instead.
 ! 2. The code below is quite inefficient in terms of memory, but we prefer readability.
 idmat = eye(n, n)
 amat = reshape(shape=shape(amat), source= &
-    & [transpose(Aineq(iineq, :)), -transpose(Aeq(ieq, :)), transpose(Aeq(ieq, :)), -idmat(:, ixl), idmat(:, ixu)])
-bvec = [bineq(iineq), -beq(ieq), beq(ieq), -xl(ixl), xu(ixu)]
+    & [-idmat(:, ixl), idmat(:, ixu), -transpose(Aeq(ieq, :)), transpose(Aeq(ieq, :)), transpose(Aineq(iineq, :))])
+bvec = [-xl(ixl), xu(ixu), -beq(ieq), beq(ieq), bineq(iineq)]
 !!MATLAB code:
-!!amat = [Aineq(iineq, :)', -Aeq(ieq, :)', Aeq(ieq, :)', -idmat(:, ixl), idmat(:, ixu)];
-!!bvec = [bineq(iineq); -beq(ieq); beq(ieq); -xl(ixl); xu(ixu)];
+!!amat = [-idmat(:, ixl), idmat(:, ixu), -Aeq(ieq, :)', Aeq(ieq, :)', Aineq(iineq, :)'];
+!!bvec = [-xl(ixl); xu(ixu); -beq(ieq); beq(ieq); bineq(iineq)];
 
 ! Modify BVEC if necessary so that the initial point is feasible.
-Aineqx0 = matprod(Aineq, x0)
 Aeqx0 = matprod(Aeq, x0)
-bvec = max(bvec, [Aineqx0(iineq), -Aeqx0(ieq), Aeqx0(ieq), -x0(ixl), x0(ixu)])
+Aineqx0 = matprod(Aineq, x0)
+bvec = max(bvec, [-x0(ixl), x0(ixu), -Aeqx0(ieq), Aeqx0(ieq), Aineqx0(iineq)])
 
 ! Normalize the linear constraints so that each constraint has a gradient of norm 1.
-Anorm = [Aineq_norm(iineq), Aeq_norm(ieq), Aeq_norm(ieq)]
-amat(:, 1:mineq + 2 * meq) = amat(:, 1:mineq + 2 * meq) / spread(Anorm, dim=1, ncopies=n)
-bvec(1:mineq + 2 * meq) = bvec(1:mineq + 2 * meq) / Anorm
+Anorm = [Aeq_norm(ieq), Aeq_norm(ieq), Aineq_norm(iineq)]
+amat(:, mxl + mxu + 1:m) = amat(:, mxl + mxu + 1:m) / spread(Anorm, dim=1, ncopies=n)
+bvec(mxl + mxu + 1:m) = bvec(mxl + mxu + 1:m) / Anorm
 
 ! Deallocate memory.
-deallocate (iineq, ieq, ixl, ixu, Anorm)
+deallocate (ixl, ixu, ieq, iineq, Anorm)
 
 ! Print a warning if the starting point is sufficiently infeasible and the constraints are modified.
 smallx = 1.0E-6_RP * rhoend
-constr_modified = (any(Aineqx0 - bineq > smallx * Aineq_norm) .or. &
-    & any(abs(Aeqx0 - beq) > smallx * Aeq_norm) .or. any(x0 < xl - smallx) .or. any(x0 > xu + smallx))
+constr_modified = (any(x0 + smallx < xl) .or. any(x0 - smallx > xu) .or. &
+    & any(abs(Aeqx0 - beq) > smallx * Aeq_norm) .or. any(Aineqx0 - bineq > smallx * Aineq_norm))
 if (constr_modified) then
     call warning(solver, 'The starting point is infeasible. '//solver// &
         & ' modified the right-hand sides of the constraints to make it feasible')
