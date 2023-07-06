@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, May 22, 2023 AM10:39:46
+! Last Modified: Thursday, July 06, 2023 PM01:51:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -319,7 +319,7 @@ if (present(constr0)) then
             call errstop(srname, 'SIZE(CONSTR0) /= M. Exiting', INVALID_INPUT)
         else
             call warning(srname, 'SIZE(CONSTR0) /= M. Exiting')
-            return
+            return  ! This may be problematic, as outputs like F are undefined.
         end if
     end if
 end if

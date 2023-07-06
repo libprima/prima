@@ -476,11 +476,13 @@ else % The problem turns out 'normal' during preprima
     output.nlcineq = [];
     output.nlceq = [];
     if ~isempty(nonlcon)
-        output.nlcineq = -constr(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq);
+        % N.B.: The nonlinear constraints are sent to the Fortran backend as [nlceq; -nlceq; -nlcineq].
+        % See the function cobyla_con for details.
+        output.nlcineq = -constr(end-m_nlcineq+1 : end);
         if isempty(output.nlcineq)
             output.nlcineq = []; % We uniformly use [] to represent empty objects
         end
-        output.nlceq = -constr(end-m_nlceq+1 : end);
+        output.nlceq = -constr(end-m_nlceq-m_nlcineq+1 : end-m_nlcineq);
         if isempty(output.nlceq)
             output.nlceq = []; % We uniformly use [] to represent empty objects
         end
@@ -511,24 +513,27 @@ function [constr, m_nlcineq, m_nlceq] = cobyla_con(x, Aineq, bineq, Aeq, beq, lb
 % The Fortran backend takes at input a constraint: constr(x) >= 0
 % m_nlcineq = number of nonlinear inequality constraints
 % m_nlceq = number of nonlinear equality constraints
-cineq = [lb(lb>-inf) - x(lb>-inf); x(ub<inf) - ub(ub<inf)];
-ceq = [];
-if ~isempty(Aineq)
-    cineq = [cineq; Aineq*x - bineq];
-end
+cbnd = [x(lb>-inf) - lb(lb>-inf); ub(ub<inf) - x(ub<inf)];
 if ~isempty(Aeq)
-    ceq = [ceq; Aeq*x - beq];
+    lceq = Aeq*x - beq;
+else
+    lceq = [];
 end
-constr = [-cineq; ceq; -ceq];
+if ~isempty(Aineq)
+    lcineq = Aineq*x - bineq;
+else
+    lcineq = [];
+end
+constr = [cbnd; lceq; -lceq; -lcineq];
 
-%constr = [x(lb > -Inf) - lb(lb > -Inf); ub(ub < Inf) - x(ub < Inf); bineq - Aineq*x; beq - Aeq*x; Aeq*x - b];
+%constr = [x(lb > -Inf) - lb(lb > -Inf); ub(ub < Inf) - x(ub < Inf); Aeq*x - beq; beq - Aeq*x; bineq - Aineq*x];
 
 if ~isempty(nonlcon)
     [nlcineq, nlceq, succ] = nonlcon(x); % Nonlinear constraints: nlcineq <= 0, nlceq = 0
     if succ
         m_nlcineq = length(nlcineq);
         m_nlceq = length(nlceq);
-        constr = [constr; -nlcineq; nlceq; -nlceq];
+        constr = [constr; nlceq; -nlceq; -nlcineq];
     else
         % Evaluation of nonlcon fails.
         % In this case, we pass a SCALAR NaN to the MEX gateway, which will handle it properly.
