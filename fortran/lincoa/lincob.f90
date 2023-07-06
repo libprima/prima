@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, July 06, 2023 PM03:12:24
+! Last Modified: Thursday, July 06, 2023 PM05:31:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,12 +32,11 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, Aeq, Aineq, amat, beq, b
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA.
 !
-! The arguments IPRINT, MAXFILT, MAXFUN, MAXHIST, NPT, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1,
-! GAMMA2, RHOBEG, RHOEND, X, NF, F, XHIST, FHIST, CHIST, CSTRV and INFO are identical to the
-! corresponding arguments in subroutine LINCOA.
+! The arguments IPRINT, MAXFILT, MAXFUN, MAXHIST, NPT, AEQ, AINEQ, BEQ, BINEQ, CTOL, CWEIGHT, ETA1,
+! ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, XHIST, FHIST, CHIST, CSTRV and INFO are
+! identical to the corresponding arguments in subroutine LINCOA.
 ! AMAT is a matrix whose columns are the constraint gradients, scaled so that they have unit length.
-! B contains on entry the right hand sides of the constraints, scaled as above, but later B is
-!   modified for variables relative to XBASE.
+! BVEC contains on entry the right hand sides of the constraints, scaled as above.
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
 !   of the model and Lagrange functions.
 ! XOPT is the displacement from XBASE of the feasible vector of variables that provides the least
@@ -175,7 +174,7 @@ logical :: ximproved
 real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: cfilt(maxfilt)
-real(RP) :: constr(size(beq) + size(bineq))
+real(RP) :: constr(count(xl > -REALMAX) + count(xu < REALMAX) + size(bineq) + size(beq))
 real(RP) :: constr_leq(size(beq))
 real(RP) :: constr_lineq(size(bineq))
 real(RP) :: d(size(x))
@@ -260,7 +259,7 @@ f = fval(kopt)
 ! iteration due to SHORTD, then RHOMSG will be called with CONSTR and CSTRV uninitialized.
 constr_lineq = matprod(Aineq, x) - bineq
 constr_leq = matprod(Aeq, x) - beq
-constr = [constr_lineq, constr_leq]
+constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
 cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
@@ -286,7 +285,7 @@ if (subinfo /= INFO_DFT) then
     f = ffilt(kopt)
     constr_lineq = matprod(Aineq, x) - bineq
     constr_leq = matprod(Aeq, x) - beq
-    constr = [constr_lineq, constr_leq]
+    constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
     cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
     call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
     ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
@@ -410,7 +409,7 @@ do tr = 1, maxtr
         ! Evaluate the constraints.
         constr_lineq = matprod(Aineq, x) - bineq
         constr_leq = matprod(Aeq, x) - beq
-        constr = [constr_lineq, constr_leq]
+        constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
         cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
 
         ! Print a message about the function evaluation according to IPRINT.
@@ -561,7 +560,7 @@ do tr = 1, maxtr
         ! Evaluate the constraints.
         constr_lineq = matprod(Aineq, x) - bineq
         constr_leq = matprod(Aeq, x) - beq
-        constr = [constr_lineq, constr_leq]
+        constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
         cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
 
         ! Print a message about the function evaluation according to IPRINT.
@@ -645,7 +644,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     nf = nf + 1_IK
     constr_lineq = matprod(Aineq, x) - bineq
     constr_leq = matprod(Aeq, x) - beq
-    constr = [constr_lineq, constr_leq]
+    constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
     cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
@@ -662,7 +661,7 @@ x = xfilt(:, kopt)
 f = ffilt(kopt)
 constr_lineq = matprod(Aineq, x) - bineq
 constr_leq = matprod(Aeq, x) - beq
-constr = [constr_lineq, constr_leq]
+constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
 cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
 
 ! Deallocate IXL and IXU as they have finished their job.

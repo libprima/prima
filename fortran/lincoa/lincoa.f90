@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 05, 2023 PM09:42:19
+! Last Modified: Thursday, July 06, 2023 PM04:00:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -134,8 +134,7 @@ subroutine lincoa(calfun, x, f, &
 !
 ! CTOL
 !   Input, REAL(RP) scalar, default: machine epsilon.
-!   CTOL is the tolerance of constraint violation. Any X with CSTRV(X) <= CTOL is
-!   considered feasible.
+!   CTOL is the tolerance of constraint violation. X is considered feasible if CSTRV(X) <= CTOL.
 !   N.B.: 1. CTOL is absolute, not relative. 2. CTOL is used only when selecting the returned X.
 !   It does not affect the iterations of the algorithm.
 !
