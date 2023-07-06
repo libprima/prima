@@ -2021,3 +2021,6 @@ Aineqx
 ieq
 iineq
 AINEQ
+cbnd
+lceq
+lcineq

@@ -463,11 +463,13 @@ else % The problem turns out 'normal' during preprima
     output.constrviolation = constrviolation;
     output.chist = chist;
     if output_nlchist
-        output.nlcihist = -conhist(end-m_nlcineq-2*m_nlceq+1 : end-2*m_nlceq, :);
+        % N.B.: The nonlinear constraints are sent to the Fortran backend as [nlceq; -nlceq; -nlcineq].
+        % See the function cobyla_con for details.
+        output.nlcihist = -conhist(end-m_nlcineq+1 : end, :);
         if isempty(output.nlcihist)
             output.nlcihist = []; % We uniformly use [] to represent empty objects
         end
-        output.nlcehist = -conhist(end-m_nlceq+1 : end, :);
+        output.nlcehist = -conhist(end-m_nlceq-m_nlcineq+1 : end-m_nlcineq, :);
         if isempty(output.nlcehist)
             output.nlcehist = []; % We uniformly use [] to represent empty objects
         end
