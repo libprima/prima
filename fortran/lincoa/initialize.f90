@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, July 06, 2023 PM03:14:03
+! Last Modified: Thursday, July 06, 2023 PM05:25:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,7 +103,7 @@ integer(IK) :: subinfo
 integer(IK), allocatable :: ixl(:)
 integer(IK), allocatable :: ixu(:)
 logical :: feasible(size(xpt, 2))
-real(RP) :: constr(size(bineq) + size(beq))
+real(RP) :: constr(count(xl > -REALMAX) + count(xu < REALMAX) + size(bineq) + size(beq))
 real(RP) :: constr_leq(size(beq))
 real(RP) :: constr_lineq(size(bineq))
 real(RP) :: cstrv
@@ -222,7 +222,7 @@ do k = 1, npt
     ! Evaluate the constraints.
     constr_lineq = matprod(Aineq, x) - bineq
     constr_leq = matprod(Aeq, x) - beq
-    constr = [constr_lineq, constr_leq]
+    constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
     cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
 
     ! Print a message about the function evaluation according to IPRINT.
