@@ -38,7 +38,7 @@ jobs:
           export PATH=$PATH:"~/local/bin"
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
           # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
-          FFLAGS=-O$(($(date +%d) % 5))
+          FFLAGS=-O$(($(date +%-d) % 5))
           FFLAGS=${FFLAGS/O0/g}
           FFLAGS=${FFLAGS/O4/fast}
           export FFLAGS

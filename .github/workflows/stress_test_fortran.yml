@@ -84,7 +84,7 @@ jobs:
         run: |
           cd "$ROOT_DIR"/fortran/tests
           export TESTDIM=${{ matrix.testdim }}
-          RK=$((2**($(date +%d) % 3 + 2)))
+          RK=$((2**($(date +%-d) % 3 + 2)))
           echo "RK = " $RK
           if [[ $RK==16 && dfrv == *${{ matrix.compiler }}* ]] ; then
               echo "r16 test is skipped for compiler " ${{ matrix.compiler }}
