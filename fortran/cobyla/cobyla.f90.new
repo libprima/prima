@@ -56,21 +56,22 @@ subroutine cobyla(calcfc, m_nonlcon, x, f, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, conhist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
-! Among all the arguments, only CALCFC, M, X, and F are obligatory. The others are OPTIONAL and you
-! can neglect them unless you are familiar with the algorithm. Any unspecified optional input will
-! take the default value detailed below. For instance, we may invoke the solver as follows.
+! Among all the arguments, only CALCFC, M_NONLCON, X, and F are obligatory. The others are
+! OPTIONAL and you can neglect them unless you are familiar with the algorithm. Any unspecified
+! optional input will take the default value detailed below. For instance, we may invoke the
+! solver as follows.
 !
-! ! First define CALCFC, M, and X, and then do the following.
+! ! First define CALCFC, M_NONLCON, and X, and then do the following.
 ! call cobyla(calcfc, m_nonlcon, x, f)
 !
 ! or
 !
-! ! First define CALCFC, M, and X, and then do the following.
+! ! First define CALCFC, M_NONLCON, and X, and then do the following.
 ! call cobyla(calcfc, m_nonlcon, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! ! IMPORTANT NOTICE: The user must set M correctly to the number of nonlinear constraints, namely
-! ! the size of CONSTR introduced below. Set M to 0 if there is no nonlinear constraint.
+! ! IMPORTANT NOTICE: The user must set M_NONLCON correctly to the number of nonlinear constraints,
+! ! namely the size of CONSTR introduced below. Set it to 0 if there is no nonlinear constraint.
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 ! See examples/cobyla_exmp.f90 for a concrete example.
@@ -94,17 +95,17 @@ subroutine cobyla(calcfc, m_nonlcon, x, f, &
 !    real(RP), intent(out) :: constr(:)
 !    end subroutine calcfc
 !   !-------------------------------------------------------------------------!
-!   Besides, the subroutine should NOT access CONSTR beyond CONSTR(1:M), where M is the second
-!   compulsory argument (see below), signifying the number of nonlinear constraints.
+!   Besides, the subroutine should NOT access CONSTR beyond CONSTR(1:M_NONLCON), where M_NONLCON
+!   is the second compulsory argument (see below), signifying the number of nonlinear constraints.
 !
-! M
+! M_NONLCON
 !   Input, INTEGER(IK) scalar.
-!   M must be set to the number of nonlinear constraints, namely the size (length) of CONSTR(X).
+!   M_NONLCON must be set to the number of nonlinear constraints, namely the size of CONSTR(X).
 !   N.B.:
-!   1. M must be specified correctly, or the program will crash!!!
-!   2. Why don't we define M as optional and default it to 0 when it is absent? This is because
-!   we need to allocate memory for CONSTR_LOC according to M. To ensure that the size of CONSTR_LOC
-!   is correct, we require the user to specify M explicitly.
+!   1. M_NONLCON must be specified correctly, or the program will crash!!!
+!   2. Why don't we define M_NONLCON as optional and default it to 0 when it is absent? This is
+!   because we need to allocate memory for CONSTR_LOC according to M_NONLCON. To ensure that the
+!   size of CONSTR_LOC is correct, we require the user to specify M_NONLCON explicitly.
 !
 ! X
 !   Input and output, REAL(RP) vector.
@@ -145,7 +146,7 @@ subroutine cobyla(calcfc, m_nonlcon, x, f, &
 ! CONSTR0
 !   Input, REAL(RP) vector.
 !   CONSTR0, if present, should be set to the nonlinear constraint value at the starting X; in
-!   addition, SIZE(CONSTR0) must be M, or the solver will abort.
+!   addition, SIZE(CONSTR0) must be M_NONLCON, or the solver will abort.
 !
 ! NF
 !   Output, INTEGER(IK) scalar.
@@ -213,7 +214,7 @@ subroutine cobyla(calcfc, m_nonlcon, x, f, &
 !   while setting MAXHIST = MAXFUN requests XHIST/FHIST/CHIST/CONHIST to output all the history.
 !   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST)); if FHIST is present, its
 !   size at exit will be min(NF, MAXHIST); if CHIST is present, its size at exit will be
-!   min(NF, MAXHIST); if CONHIST is present, its size at exit will be (M, min(NF, MAXHIST)).
+!   min(NF, MAXHIST); if CONHIST is present, its size at exit will be (M_NONLCON, min(NF, MAXHIST)).
 !
 !   IMPORTANT NOTICE:
 !   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
@@ -281,7 +282,7 @@ real(RP), intent(in), optional :: Aeq(:, :)  ! Aeq(Meq, N)
 real(RP), intent(in), optional :: Aineq(:, :)  ! Aineq(Mineq, N)
 real(RP), intent(in), optional :: beq(:)  ! Beq(Meq)
 real(RP), intent(in), optional :: bineq(:)  ! Bineq(Mineq)
-real(RP), intent(in), optional :: constr0(:)    ! CONSTR0(M)
+real(RP), intent(in), optional :: constr0(:)    ! CONSTR0(M_NONLCON)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
@@ -299,8 +300,8 @@ real(RP), intent(in), optional :: xu(:)  ! XU(N)
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
 real(RP), intent(out), allocatable, optional :: chist(:)    ! CHIST(MAXCHIST)
-real(RP), intent(out), allocatable, optional :: conhist(:, :)   ! CONHIST(M, MAXCONHIST)
-real(RP), intent(out), allocatable, optional :: constr(:)   ! CONSTR(M)
+real(RP), intent(out), allocatable, optional :: conhist(:, :)   ! CONHIST(M_NONLCON, MAXCONHIST)
+real(RP), intent(out), allocatable, optional :: constr(:)   ! CONSTR(M_NONLCON)
 real(RP), intent(out), allocatable, optional :: fhist(:)    ! FHIST(MAXFHIST)
 real(RP), intent(out), allocatable, optional :: xhist(:, :) ! XHIST(N, MAXXHIST)
 real(RP), intent(out), optional :: cstrv
@@ -331,8 +332,8 @@ real(RP), allocatable :: Aineq_loc(:, :)  ! Aineq_LOC(Mineq, N)
 real(RP), allocatable :: beq_loc(:)  ! Beq_LOC(Meq)
 real(RP), allocatable :: bineq_loc(:)  ! Bineq_LOC(Mineq)
 real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
-real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M, MAXCONHIST)
-real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M)
+real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M_NONLCON, MAXCONHIST)
+real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M_NONLCON)
 real(RP), allocatable :: fhist_loc(:)   ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 real(RP), allocatable :: xl_loc(:)  ! XL_LOC(N)
@@ -346,13 +347,13 @@ end if
 ! Sizes
 n = int(size(x), kind(n))
 
-! Exit if the size of CONSTR0 is inconsistent with M.
+! Exit if the size of CONSTR0 is inconsistent with M_NONLCON.
 if (present(constr0)) then
     if (size(constr0) /= m_nonlcon) then
         if (DEBUGGING) then
-            call errstop(srname, 'SIZE(CONSTR0) /= M. Exiting', INVALID_INPUT)
+            call errstop(srname, 'SIZE(CONSTR0) /= M_NONLCON. Exiting', INVALID_INPUT)
         else
-            call warning(srname, 'SIZE(CONSTR0) /= M. Exiting')
+            call warning(srname, 'SIZE(CONSTR0) /= M_NONLCON. Exiting')
             return  ! This may be problematic, as outputs like F are undefined.
         end if
     end if
@@ -476,13 +477,13 @@ end if
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
-    & m=m_nonlcon, is_constrained=(m > 0), ctol=ctol_loc, cweight=cweight_loc, eta1=eta1_loc, &
+    & m=m_nonlcon, is_constrained=(m_nonlcon > 0), ctol=ctol_loc, cweight=cweight_loc, eta1=eta1_loc, &
     & eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc, maxfilt=maxfilt_loc)
 
 ! Further revise MAXHIST_LOC according to MAXHISTMEM, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
-! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN)
-! if they are requested; replace MAXFUN with 0 for the history that is not requested.
+! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M_NONLCON, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST =
+! NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for the history not requested.
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc, &
     & present(chist), chist_loc, m_nonlcon, present(conhist), conhist_loc)
 
@@ -594,7 +595,7 @@ if (DEBUGGING) then
             & 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
     end if
     if (present(conhist)) then
-        call assert(size(conhist, 1) == m_nonlcon .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M, NHIST]', srname)
+        call assert(size(conhist, 1) == m_nonlcon .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M_NONLCON, NHIST]', srname)
         call assert(.not. any(is_nan(conhist) .or. is_neginf(conhist)), 'CONHIST does not contain NaN/-Inf', srname)
     end if
     if (present(fhist) .and. present(chist)) then
