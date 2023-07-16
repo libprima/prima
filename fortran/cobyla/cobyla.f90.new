@@ -614,17 +614,19 @@ real(RP), intent(in) :: x_internal(:)
 real(RP), intent(out) :: f_internal
 real(RP), intent(out) :: constr_internal(:)
 ! Local variables
-integer(IK), allocatable :: ixl(:), ixu(:)
+integer(IK), allocatable :: ixl(:), ixu(:), mxl, mxu
 real(RP) :: constr_nlc(m_nonlcon)
 
 call calcfc(x_internal, f_internal, constr_nlc)
+mxl = int(count(xl > -REALMAX), IK)
+mxu = int(count(xu < REALMAX), IK)
 call safealloc(ixl, mxl)
 call safealloc(ixu, mxu)
 ixl = trueloc(xl > -REALMAX)
 ixu = trueloc(xu < REALMAX)
 constr_internal = [x_internal(ixl) - xl(ixl), xu(ixu) - x_internal(ixu), &
     & matprod(Aeq, x_internal) - beq, beq - matprod(Aeq, x_internal), &
-    & matprod(Aineq, x_internal) - bineq, constr_nlc]
+    & bineq - matprod(Aineq, x_internal), constr_nlc]
 end subroutine
 
 end subroutine cobyla

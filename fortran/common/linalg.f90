@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, July 05, 2023 PM03:44:51
+! Last Modified: Sunday, July 16, 2023 PM11:51:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1062,7 +1062,7 @@ function lsqr_Rfull(b, Q, R) result(x)
 ! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
 ! This function is used in LINCOA, where,
 ! 1. The economy-size QR factorization is supplied externally (Q is called QFAC and R is called RFAC);
-! 3. R is non-singular.
+! 2. R is non-singular.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
