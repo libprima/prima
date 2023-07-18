@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, July 18, 2023 AM12:57:35
+! Last Modified: Tuesday, July 18, 2023 AM11:14:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -280,7 +280,7 @@ else
                     & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
                     & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
-                if (prob % probtype == 'l') then  ! Run the test without constraints
+                if (prob % probtype == 'l') then  ! Run the test without nonlinear constraints
                     call safealloc(x_alt, n)
                     x_alt = x0
                     call cobyla(noisy_calcfc, m, x_alt, f_alt, Aineq=Aineq, bineq=bineq, Aeq=Aeq, beq=beq, &
@@ -290,7 +290,7 @@ else
                     call validate(abs(f - f_alt) <= 0 .or. (is_neginf(f) .and. is_neginf(f_alt)), 'F == F_ALT', srname)
                 end if
 
-                if (prob % probtype == 'b') then  ! Run the test without constraints
+                if (prob % probtype == 'b') then  ! Run the test without linear/nonlinear constraints
                     call safealloc(x_alt, n)
                     x_alt = x0
                     call cobyla(noisy_calcfc, m, x_alt, f_alt, xl=xl, xu=xu, rhobeg=rhobeg, rhoend=rhoend, &
