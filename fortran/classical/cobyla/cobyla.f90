@@ -122,6 +122,8 @@ real(RP), allocatable :: fhist_loc(:)
 real(RP), allocatable :: xhist_loc(:, :)
 real(RP), allocatable :: xl_loc(:)  ! XL_LOC(N)
 real(RP), allocatable :: xu_loc(:)  ! XU_LOC(N)
+
+
 ! Sizes
 if (present(bineq)) then
     mineq = int(size(bineq), kind(mineq))
@@ -177,10 +179,9 @@ if (present(constr0)) then
     end if
 end if
 
+
 ! Read the inputs.
 
-! Allocate memory for CONSTR_LOC.
-call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 
 call safealloc(Aineq_loc, mineq, n)  ! NOT removable even in F2003, as Aineq may be absent or of size 0-by-0.
 if (present(Aineq) .and. mineq > 0) then
@@ -226,6 +227,8 @@ end if
 call safealloc(ixu, mxu)
 ixu = trueloc(xu_loc < REALMAX)
 
+! Allocate memory for CONSTR_LOC.
+call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 !! If the user provides the function & constraint value at X0, then set up F_X0 and CONSTR_X0.
 if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
     f = f0
@@ -452,9 +455,6 @@ real(RP), intent(out) :: f_internal
 real(RP), intent(out) :: constr_internal(:)
 ! Local variables
 real(RP) :: constr_nlc(m_nonlcon)
-real(RP) :: constr_eq(meq)
-
-constr_eq = matprod(Aeq_loc, x_internal) - beq_loc
 
 call calcfc(x_internal, f_internal, constr_nlc)
 constr_internal = [x_internal(ixl) - xl_loc(ixl), xu_loc(ixu) - x_internal(ixu), &
