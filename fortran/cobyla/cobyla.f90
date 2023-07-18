@@ -36,7 +36,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, July 18, 2023 PM02:51:02
+! Last Modified: Tuesday, July 18, 2023 PM11:33:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -336,19 +336,21 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
+real(RP) :: cstrv_norma
 real(RP), allocatable :: Aeq_loc(:, :)  ! Aeq_LOC(Meq, N)
 real(RP), allocatable :: Aineq_loc(:, :)  ! Aineq_LOC(Mineq, N)
+real(RP), allocatable :: amat(:, :)  ! AMAT(N, M); each column corresponds to a constraint
 real(RP), allocatable :: beq_loc(:)  ! Beq_LOC(Meq)
 real(RP), allocatable :: bineq_loc(:)  ! Bineq_LOC(Mineq)
+real(RP), allocatable :: bvec(:)  ! BVEC(M)
 real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
 real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M_NONLCON, MAXCONHIST)
 real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M_NONLCON)
+real(RP), allocatable :: constr_norma(:)
 real(RP), allocatable :: fhist_loc(:)   ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 real(RP), allocatable :: xl_loc(:)  ! XL_LOC(N)
 real(RP), allocatable :: xu_loc(:)  ! XU_LOC(N)
-real(RP), allocatable :: constr_norma(:)
-real(RP) :: cstrv_norma
 
 ! Sizes
 if (present(bineq)) then
@@ -589,6 +591,9 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
     & present(chist), chist_loc, m, present(conhist), conhist_loc)
 !    & present(chist), chist_loc, m_nonlcon, present(conhist), conhist_loc)
 
+! Wrap the linear and bound constraints into a single constraint: AMAT^T*X <= BVEC.
+call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, xl_loc, xu_loc, amat, bvec)
+
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
 !call cobylb(calcfc_internal, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, cweight_loc, eta1_loc, eta2_loc, &
@@ -596,6 +601,9 @@ call cobylb(calcfc_internal, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, cwei
     & ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, f, x, nf_loc, &
     & chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
+
+! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
+deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec, xl_loc, xu_loc)
 
 
 ! Write the outputs.
@@ -723,14 +731,9 @@ real(RP), intent(out) :: f_internal
 real(RP), intent(out) :: constr_internal(:)
 ! Local variables
 real(RP) :: constr_nlc(m_nonlcon)
-real(RP) :: constr_leq(meq)
-
-constr_leq = matprod(Aeq_loc, x_internal) - beq_loc
 
 call calcfc(x_internal, f_internal, constr_nlc)
-constr_internal = [x_internal(ixl) - xl_loc(ixl), xu_loc(ixu) - x_internal(ixu), &
-    & constr_leq, -constr_leq, &
-    & bineq_loc - matprod(Aineq_loc, x_internal), constr_nlc]
+constr_internal = [bvec - matprod(x_internal, amat), constr_nlc]
 
 
 call evaluate(calcfc_norma, x, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
@@ -739,6 +742,111 @@ call assert(sum(abs(constr_loc - constr_norma)) <= 1.0E2_RP * EPS * max(1.0_RP, 
 end subroutine
 
 end subroutine cobyla
+
+
+subroutine get_lincon(Aeq, Aineq, beq, bineq, xl, xu, amat, bvec)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine wraps the linear and bound constraints into a single constraint: AMAT^T*X <= BVEC.
+! N.B.:
+! 1. The linear inequality constraints received by COBYLA is AMAT^T * X <= BVEC. Note that Each
+! column of AMAT corresponds to a constraint. This is different from Aineq and Aeq, whose rows
+! correspond to constraints. AMAT is defined in this way because it is accessed in columns during
+! the computation, and because Fortran saves arrays in the column-major order. In Python/C
+! implementations, AMAT should be transposed.
+! 2. LINCOA normalizes the linear constraints so that each constraint has a gradient of norm 1.
+! However, COBYLA does not do this.
+!--------------------------------------------------------------------------------------------------!
+
+! Common modules
+use, non_intrinsic :: consts_mod, only : RP, IK, REALMAX, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: linalg_mod, only : eye, trueloc
+use, non_intrinsic :: memory_mod, only : safealloc
+
+implicit none
+
+! Inputs
+real(RP), intent(in) :: Aeq(:, :)
+real(RP), intent(in) :: Aineq(:, :)
+real(RP), intent(in) :: beq(:)
+real(RP), intent(in) :: bineq(:)
+real(RP), intent(in) :: xl(:)
+real(RP), intent(in) :: xu(:)
+
+! Outputs
+real(RP), intent(out), allocatable :: amat(:, :)
+real(RP), intent(out), allocatable :: bvec(:)
+
+! Local variables
+character(len=*), parameter :: srname = 'GET_LINCON'
+integer(IK) :: m
+integer(IK) :: meq
+integer(IK) :: mineq
+integer(IK) :: mxl
+integer(IK) :: mxu
+integer(IK) :: n
+integer(IK), allocatable :: ixl(:)
+integer(IK), allocatable :: ixu(:)
+real(RP) :: idmat(size(xl), size(xl))
+
+! Sizes
+n = int(size(xl), kind(n))
+
+! Preconditions
+if (DEBUGGING) then
+    call assert(size(Aineq, 1) == size(bineq) .and. size(Aineq, 2) == n, 'SIZE(AINEQ) == [SIZE(BINEQ), N]', srname)
+    call assert(size(Aeq, 1) == size(beq) .and. size(Aeq, 2) == n, 'SIZE(AEQ) == [SIZE(BEQ), N]', srname)
+    call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == SIZE(XU) == N', srname)
+end if
+
+!====================!
+! Calculation starts !
+!====================!
+
+! Decide the number of nontrivial constraints.
+mxl = int(count(xl > -REALMAX), kind(mxl))
+mxu = int(count(xu < REALMAX), kind(mxu))
+meq = int(size(beq), kind(meq))
+mineq = int(size(bineq), kind(mineq))
+m = mxl + mxu + 2_IK * meq + mineq  ! The final number of linear inequality constraints.
+
+! Allocate memory. Removable in F2003.
+call safealloc(ixl, mxl)
+call safealloc(ixu, mxu)
+call safealloc(amat, n, m)
+call safealloc(bvec, m)
+
+! Define the indices of the nontrivial bound constraints.
+ixl = trueloc(xl > -REALMAX)
+ixu = trueloc(xu < REALMAX)
+
+! Wrap the linear constraints.
+! The bound constraint XL <= X <= XU is handled as two constraints -X <= -XL, X <= XU.
+! The equality constraint Aeq*X = Beq is handled as two constraints -Aeq*X <= -Beq, Aeq*X <= Beq.
+! N.B.:
+! 1. The treatment of the equality constraints is naive. One may choose to eliminate them instead.
+! 2. The code below is quite inefficient in terms of memory, but we prefer readability.
+idmat = eye(n, n)
+amat = reshape(shape=shape(amat), source= &
+    & [-idmat(:, ixl), idmat(:, ixu), -transpose(Aeq), transpose(Aeq), transpose(Aineq)])
+bvec = [-xl(ixl), xu(ixu), -beq, beq, bineq]
+!!MATLAB code:
+!!amat = [-idmat(:, ixl), idmat(:, ixu), -Aeq', Aeq', Aineq'];
+!!bvec = [-xl(ixl); xu(ixu); -beq; beq; bineq];
+
+! Deallocate memory.
+deallocate (ixl, ixu)
+
+!====================!
+!  Calculation ends  !
+!====================!
+
+! Postconditions
+if (DEBUGGING) then
+    call assert(size(amat, 1) == size(xl) .and. size(amat, 2) == size(bvec), &
+        & 'SIZE(AMAT) == [SIZE(X), SIZE(BVEC)]', srname)
+end if
+end subroutine get_lincon
 
 
 end module cobyla_mod
