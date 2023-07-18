@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, July 04, 2023 AM12:53:02
+! Last Modified: Tuesday, July 18, 2023 AM11:14:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -300,7 +300,7 @@ else
                     & xl=xl, xu=xu, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
                     & xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
-                if (prob % probtype == 'b') then  ! Run the test without constraints
+                if (prob % probtype == 'b') then  ! Run the test without linear constraints
                     call safealloc(x_alt, n)
                     x_alt = x0
                     call lincoa(noisy_calfun, x_alt, f_alt, xl=xl, xu=xu, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &

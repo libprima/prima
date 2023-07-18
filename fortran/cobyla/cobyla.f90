@@ -36,7 +36,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, July 18, 2023 AM11:03:06
+! Last Modified: Tuesday, July 18, 2023 PM12:47:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -721,6 +721,7 @@ end if
 
 
 contains
+
 
 subroutine calcfc_internal(x_internal, f_internal, constr_internal)
 implicit none
