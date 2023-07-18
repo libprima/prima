@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, July 18, 2023 AM11:14:16
+! Last Modified: Tuesday, July 18, 2023 PM11:07:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,7 +24,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
 use, non_intrinsic :: debug_mod, only : validate
 use, non_intrinsic :: infnan_mod, only : is_neginf
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: noise_mod, only : noisy, noisy_calcfc, orig_calcfc
+use, non_intrinsic :: noise_mod, only : noisy, noisy_calcfc, noisy_calcfc, orig_calcfc
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
@@ -183,7 +183,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
            & strip(probname)//': N = ', n, ' M = ', m, ' Mineq = ', size(Aineq, 1), &
            & ' Meq = ', size(Aeq, 1), ', MAXFUN = ', maxfun, ', Random test ', irand
 
-        call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, Aineq=Aineq, bineq=bineq, &
+        call cobyla(noisy_calcfc, noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, Aineq=Aineq, bineq=bineq, &
             & Aeq=Aeq, beq=beq, xl=xl, xu=xu, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxfilt=maxfilt,&
             & maxhist=maxhist, fhist=fhist, xhist=xhist, chist=chist, conhist=conhist,&
             & ftarget=ftarget, ctol=ctol, iprint=iprint)
@@ -275,7 +275,7 @@ else
 
                 call safealloc(x, n)
                 x = x0
-                call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, Aineq=Aineq, bineq=bineq, &
+                call cobyla(noisy_calcfc, noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, Aineq=Aineq, bineq=bineq, &
                     & Aeq=Aeq, beq=beq, xl=xl, xu=xu, rhobeg=rhobeg, rhoend=rhoend, &
                     & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
                     & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
@@ -283,7 +283,7 @@ else
                 if (prob % probtype == 'l') then  ! Run the test without nonlinear constraints
                     call safealloc(x_alt, n)
                     x_alt = x0
-                    call cobyla(noisy_calcfc, m, x_alt, f_alt, Aineq=Aineq, bineq=bineq, Aeq=Aeq, beq=beq, &
+                    call cobyla(noisy_calcfc, noisy_calcfc, m, x_alt, f_alt, Aineq=Aineq, bineq=bineq, Aeq=Aeq, beq=beq, &
                         & xl=xl, xu=xu, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
                         & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
                     call validate(all(abs(x - x_alt) <= 0), 'X == X_ALT', srname)
@@ -293,7 +293,7 @@ else
                 if (prob % probtype == 'b') then  ! Run the test without linear/nonlinear constraints
                     call safealloc(x_alt, n)
                     x_alt = x0
-                    call cobyla(noisy_calcfc, m, x_alt, f_alt, xl=xl, xu=xu, rhobeg=rhobeg, rhoend=rhoend, &
+                    call cobyla(noisy_calcfc, noisy_calcfc, m, x_alt, f_alt, xl=xl, xu=xu, rhobeg=rhobeg, rhoend=rhoend, &
                         & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
                     call validate(all(abs(x - x_alt) <= 0), 'X == X_ALT', srname)
                     call validate(abs(f - f_alt) <= 0 .or. (is_neginf(f) .and. is_neginf(f_alt)), 'F == F_ALT', srname)
@@ -302,8 +302,8 @@ else
                 if (prob % probtype == 'u') then  ! Run the test without constraints
                     call safealloc(x_alt, n)
                     x_alt = x0
-                    call cobyla(noisy_calcfc, m, x_alt, f_alt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, &
-                        & fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+                    call cobyla(noisy_calcfc, noisy_calcfc, m, x_alt, f_alt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+                        &maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
                     call validate(all(abs(x - x_alt) <= 0), 'X == X_ALT', srname)
                     call validate(abs(f - f_alt) <= 0 .or. (is_neginf(f) .and. is_neginf(f_alt)), 'F == F_ALT', srname)
                 end if

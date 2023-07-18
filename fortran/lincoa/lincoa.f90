@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, July 06, 2023 PM04:00:24
+! Last Modified: Tuesday, July 18, 2023 PM11:27:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -511,6 +511,7 @@ call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
 deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec, xl_loc, xu_loc)
+
 
 ! Write the outputs.
 
