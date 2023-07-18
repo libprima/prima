@@ -11,10 +11,10 @@ module cobyla_mod
 !   min F(X) subject to CONSTR(X) <= 0, Aineq*X <= Bineq, Aeq*x = Beq, XL <= X <= XU,
 !
 ! where X is a vector of variables that has N components, F is a real-valued objective function, and
-! CONSTR(X) is an M-dimensional vector-valued mapping representing the nonlinear constraints, Aineq
-! is an Mineq-by-N matrix, Bineq is an Mineq-dimensional real vector, Aeq is an Meq-by-N matrix, Beq
-! is an Meq-dimensional real vector, XL is an N-dimensional real vector, and XU is an N-dimensional
-! real vector.
+! CONSTR(X) is an M_NONLCON-dimensional vector-valued mapping representing the nonlinear constraints,
+! Aineq is an Mineq-by-N matrix, Bineq is an Mineq-dimensional real vector, Aeq is an Meq-by-N
+! matrix, Beq is an Meq-dimensional real vector, XL is an N-dimensional real vector, and XU is an
+! N-dimensional real vector.
 !
 ! The algorithm employs linear approximations to the objective and nonlinear constraint functions,
 ! the approximations being formed by linear interpolation at N + 1 points in the space of the
@@ -36,7 +36,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, July 18, 2023 PM12:47:49
+! Last Modified: Tuesday, July 18, 2023 PM02:51:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -405,11 +405,8 @@ if (present(constr0)) then
     end if
 end if
 
-! Read the inputs.
 
-! Allocate memory for CONSTR_LOC.
-!call safealloc(constr_loc, m_nonlcon)  ! NOT removable even in F2003!
-call safealloc(constr_loc, m)  ! NOT removable even in F2003!
+! Read the inputs.
 
 call safealloc(Aineq_loc, mineq, n)  ! NOT removable even in F2003, as Aineq may be absent or of size 0-by-0.
 if (present(Aineq) .and. mineq > 0) then
@@ -455,10 +452,13 @@ end if
 call safealloc(ixu, mxu)
 ixu = trueloc(xu_loc < REALMAX)
 
-! If the user provides the function & nonlinear constraint value at X0, then set up [F, CONSTR_LOC]
-! to them. Otherwise, set [F, CONSTR_LOC] = [F(X0), CONSTR(X0)], so that COBYLB only needs a single
-! interface.
+! Allocate memory for CONSTR_LOC.
+!call safealloc(constr_loc, m_nonlcon)  ! NOT removable even in F2003!
+call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 call safealloc(constr_norma, m)
+
+! If the user provides the function & nonlinear constraint value at X0, then set up [F, CONSTR_LOC]
+! to them. Otherwise, set [F, CONSTR_LOC] = [F(X0), CONSTR(X0)], so COBYLB only needs one interface.
 if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
     f = f0
     !constr_loc = constr0
@@ -467,10 +467,6 @@ if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
     & bineq_loc - matprod(Aineq_loc, x), constr0]
 
     call evaluate(calcfc_norma, x, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
-    !write (16, *) constr_loc
-    !write (16, *) constr_norma
-    !write (16, *) sum(abs(constr_loc - constr_norma)) / max(1.0_RP, sum(abs(constr_norma)))
-    !close (16)
     call assert(sum(abs(constr_loc - constr_norma)) <= 1.0E2_RP * EPS * max(1.0_RP, sum(abs(constr_norma))), &
         & 'constr_loc == constr_norma', srname)
 else
@@ -480,11 +476,6 @@ else
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
-
-!write (16, *) 'b', xl_loc, xu_loc
-!write (16, *) 'ineq', Aineq_loc, bineq_loc
-!write (16, *) 'eq', Aeq_loc, beq_loc
-
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
@@ -732,21 +723,17 @@ real(RP), intent(out) :: f_internal
 real(RP), intent(out) :: constr_internal(:)
 ! Local variables
 real(RP) :: constr_nlc(m_nonlcon)
-real(RP) :: constr_eq(meq)
+real(RP) :: constr_leq(meq)
 
-constr_eq = matprod(Aeq_loc, x_internal) - beq_loc
+constr_leq = matprod(Aeq_loc, x_internal) - beq_loc
 
 call calcfc(x_internal, f_internal, constr_nlc)
 constr_internal = [x_internal(ixl) - xl_loc(ixl), xu_loc(ixu) - x_internal(ixu), &
-    & constr_eq, -constr_eq, &
+    & constr_leq, -constr_leq, &
     & bineq_loc - matprod(Aineq_loc, x_internal), constr_nlc]
 
 
 call evaluate(calcfc_norma, x, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
-!write (16, *) constr_loc
-!write (16, *) constr_norma
-!write (16, *) sum(abs(constr_loc - constr_norma)) / max(1.0_RP, sum(abs(constr_norma)))
-!close (16)
 call assert(sum(abs(constr_loc - constr_norma)) <= 1.0E2_RP * EPS * max(1.0_RP, sum(abs(constr_norma))), &
     & 'constr_loc == constr_norma', srname)
 end subroutine

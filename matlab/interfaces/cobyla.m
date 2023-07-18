@@ -508,10 +508,12 @@ return
 
 %%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%
 function [f, constr, m_nlcineq, m_nlceq] = cobyla_funcon(x, fun, nonlcon)
+% This function wraps fun and nonlcon into a single function handle, which will be passed to
+% the Fortran backend.
+% The nonlinear constraint expected by the Fortran backend: constr(x) >= 0
+% m_nlcineq is the number of nonlinear inequality constraints
+% m_nlceq is the number of nonlinear equality constraints
 f = fun(x);
-% The Fortran backend takes at input a constraint: constr(x) >= 0
-% m_nlcineq = number of nonlinear inequality constraints
-% m_nlceq = number of nonlinear equality constraints
 if ~isempty(nonlcon)
     [nlcineq, nlceq, succ] = nonlcon(x); % Nonlinear constraints: nlcineq <= 0, nlceq = 0
     if succ
