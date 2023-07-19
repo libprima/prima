@@ -36,7 +36,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, July 18, 2023 PM11:33:38
+! Last Modified: Wednesday, July 19, 2023 PM08:30:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -250,7 +250,7 @@ subroutine cobyla(calcfc, calcfc_norma, m_nonlcon, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, REALMAX
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, REALMAX, CONSTRMAX
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
@@ -454,6 +454,9 @@ end if
 call safealloc(ixu, mxu)
 ixu = trueloc(xu_loc < REALMAX)
 
+! Wrap the linear and bound constraints into a single constraint: AMAT^T*X <= BVEC.
+call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, xl_loc, xu_loc, amat, bvec)
+
 ! Allocate memory for CONSTR_LOC.
 !call safealloc(constr_loc, m_nonlcon)  ! NOT removable even in F2003!
 call safealloc(constr_loc, m)  ! NOT removable even in F2003!
@@ -464,20 +467,21 @@ call safealloc(constr_norma, m)
 if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
     f = f0
     !constr_loc = constr0
-    constr_loc = [x(ixl) - xl_loc(ixl), xu_loc(ixu) - x(ixu), &
+    constr_loc = max(-CONSTRMAX, min(CONSTRMAX, [x(ixl) - xl_loc(ixl), xu_loc(ixu) - x(ixu), &
     & matprod(Aeq_loc, x) - beq_loc, beq_loc - matprod(Aeq_loc, x), &
-    & bineq_loc - matprod(Aineq_loc, x), constr0]
-
-    call evaluate(calcfc_norma, x, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
-    call assert(sum(abs(constr_loc - constr_norma)) <= 1.0E2_RP * EPS * max(1.0_RP, sum(abs(constr_norma))), &
-        & 'constr_loc == constr_norma', srname)
+    & bineq_loc - matprod(Aineq_loc, x), constr0]))
 else
     x = moderatex(x)
-    !call evaluate(calcfc_internal, x, f, constr_loc, cstrv_loc) ! Indeed, CSTRV_LOC needs not to be evaluated.
-    call evaluate(calcfc_norma, x, f, constr_loc, cstrv_loc) ! Indeed, CSTRV_LOC needs not to be evaluated.
+    call evaluate(calcfc_internal, x, f, constr_loc, cstrv_loc) ! Indeed, CSTRV_LOC needs not to be evaluated.
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
+
+call evaluate(calcfc_norma, x, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
+!print *, '----', constr_loc
+!print *, '====', constr_norma
+call assert(all(abs(constr_loc - constr_norma) <= 1.0E3_RP * EPS * max(1.0_RP, abs(constr_norma))), &
+    & 'constr_loc == constr_norma', srname)
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
@@ -590,9 +594,6 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc, &
     & present(chist), chist_loc, m, present(conhist), conhist_loc)
 !    & present(chist), chist_loc, m_nonlcon, present(conhist), conhist_loc)
-
-! Wrap the linear and bound constraints into a single constraint: AMAT^T*X <= BVEC.
-call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, xl_loc, xu_loc, amat, bvec)
 
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
@@ -733,12 +734,19 @@ real(RP), intent(out) :: constr_internal(:)
 real(RP) :: constr_nlc(m_nonlcon)
 
 call calcfc(x_internal, f_internal, constr_nlc)
-constr_internal = [bvec - matprod(x_internal, amat), constr_nlc]
+constr_internal = max(-CONSTRMAX, min(CONSTRMAX, [bvec - matprod(x_internal, amat), constr_nlc]))
 
 
-call evaluate(calcfc_norma, x, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
-call assert(sum(abs(constr_loc - constr_norma)) <= 1.0E2_RP * EPS * max(1.0_RP, sum(abs(constr_norma))), &
-    & 'constr_loc == constr_norma', srname)
+call evaluate(calcfc_norma, x_internal, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
+!print *, '----', constr_internal, f
+!print *, '====', constr_norma, f_internal
+!print *, '++++', bvec
+!print *, '++++', amat
+!print *, '++++', x_internal
+!print *, '++++', constr_nlc
+!print *, '++++', constr_norma(size(constr_norma) - m_nonlcon + 1:)
+call assert(all(abs(constr_internal - constr_norma) <= 1.0E3_RP * EPS * max(1.0_RP, abs(constr_norma))), &
+    & 'constr_internal == constr_norma', srname)
 end subroutine
 
 end subroutine cobyla
