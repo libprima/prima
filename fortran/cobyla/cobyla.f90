@@ -36,7 +36,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, July 19, 2023 PM08:30:15
+! Last Modified: Wednesday, July 19, 2023 PM09:48:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -467,15 +467,16 @@ call safealloc(constr_norma, m)
 if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
     f = f0
     !constr_loc = constr0
-    constr_loc = max(-CONSTRMAX, min(CONSTRMAX, [x(ixl) - xl_loc(ixl), xu_loc(ixu) - x(ixu), &
-    & matprod(Aeq_loc, x) - beq_loc, beq_loc - matprod(Aeq_loc, x), &
-    & bineq_loc - matprod(Aineq_loc, x), constr0]))
+    constr_loc(m - m_nonlcon + 1:) = constr0
 else
     x = moderatex(x)
-    call evaluate(calcfc_internal, x, f, constr_loc, cstrv_loc) ! Indeed, CSTRV_LOC needs not to be evaluated.
+    call evaluate(calcfc, x, f, constr_loc(m - m_nonlcon + 1:), cstrv_loc) ! Indeed, CSTRV_LOC needs not to be evaluated.
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
+constr_loc(1:m - m_nonlcon) = max(-CONSTRMAX, min(CONSTRMAX, [x(ixl) - xl_loc(ixl), xu_loc(ixu) - x(ixu), &
+& matprod(Aeq_loc, x) - beq_loc, beq_loc - matprod(Aeq_loc, x), &
+& bineq_loc - matprod(Aineq_loc, x)]))
 
 call evaluate(calcfc_norma, x, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
 !print *, '----', constr_loc
@@ -598,9 +599,9 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
 !call cobylb(calcfc_internal, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, cweight_loc, eta1_loc, eta2_loc, &
-call cobylb(calcfc_internal, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, cweight_loc, eta1_loc, eta2_loc, &
-    & ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, f, x, nf_loc, &
-    & chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
+call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
+    & eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, &
+    & f, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
@@ -719,36 +720,6 @@ if (DEBUGGING) then
     end if
 end if
 
-
-contains
-
-
-subroutine calcfc_internal(x_internal, f_internal, constr_internal)
-implicit none
-! Inputs
-real(RP), intent(in) :: x_internal(:)
-! Outputs
-real(RP), intent(out) :: f_internal
-real(RP), intent(out) :: constr_internal(:)
-! Local variables
-real(RP) :: constr_nlc(m_nonlcon)
-
-call calcfc(x_internal, f_internal, constr_nlc)
-constr_internal = max(-CONSTRMAX, min(CONSTRMAX, [bvec - matprod(x_internal, amat), constr_nlc]))
-
-
-call evaluate(calcfc_norma, x_internal, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
-!print *, '----', constr_internal, f
-!print *, '====', constr_norma, f_internal
-!print *, '++++', bvec
-!print *, '++++', amat
-!print *, '++++', x_internal
-!print *, '++++', constr_nlc
-!print *, '++++', constr_norma(size(constr_norma) - m_nonlcon + 1:)
-call assert(all(abs(constr_internal - constr_norma) <= 1.0E3_RP * EPS * max(1.0_RP, abs(constr_norma))), &
-    & 'constr_internal == constr_norma', srname)
-end subroutine
-
 end subroutine cobyla
 
 
@@ -787,7 +758,7 @@ real(RP), intent(out), allocatable :: bvec(:)
 
 ! Local variables
 character(len=*), parameter :: srname = 'GET_LINCON'
-integer(IK) :: m
+integer(IK) :: m_lcon
 integer(IK) :: meq
 integer(IK) :: mineq
 integer(IK) :: mxl
@@ -816,13 +787,13 @@ mxl = int(count(xl > -REALMAX), kind(mxl))
 mxu = int(count(xu < REALMAX), kind(mxu))
 meq = int(size(beq), kind(meq))
 mineq = int(size(bineq), kind(mineq))
-m = mxl + mxu + 2_IK * meq + mineq  ! The final number of linear inequality constraints.
+m_lcon = mxl + mxu + 2_IK * meq + mineq  ! The final number of linear inequality constraints.
 
 ! Allocate memory. Removable in F2003.
 call safealloc(ixl, mxl)
 call safealloc(ixu, mxu)
-call safealloc(amat, n, m)
-call safealloc(bvec, m)
+call safealloc(amat, n, m_lcon)
+call safealloc(bvec, m_lcon)
 
 ! Define the indices of the nontrivial bound constraints.
 ixl = trueloc(xl > -REALMAX)

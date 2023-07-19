@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, July 19, 2023 PM08:25:57
+! Last Modified: Wednesday, July 19, 2023 PM11:15:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -27,7 +27,7 @@ public :: cobylb
 contains
 
 
-subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ftarget, &
+subroutine cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta2, ftarget, &
     & gamma1, gamma2, rhobeg, rhoend, constr, f, x, nf, chist, conhist, cstrv, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of COBYLA.
@@ -40,7 +40,7 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ft
 ! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, TENTH, EPS, REALMAX, &
-    & DEBUGGING, MIN_MAXFILT
+    & DEBUGGING, MIN_MAXFILT, CONSTRMAX
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -66,6 +66,8 @@ procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy proced
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun
+real(RP), intent(in) :: amat(:, :) ! AMAT(N, M_LCON)
+real(RP), intent(in) :: bvec(:) ! BVEC(M_LCON)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: cweight
 real(RP), intent(in) :: eta1
@@ -206,7 +208,7 @@ end if
 ! function value (regardless of the constraint violation), and SIM(:, 1:N) holds the displacements
 ! from the other vertices to SIM(:, N+1). FVAL, CONMAT, and CVAL hold the function values,
 ! constraint values, and constraint violations on the vertices in the order corresponding to SIM.
-call initxfc(calcfc, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
+call initxfc(calcfc_internal, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
    & conmat, cval, fhist, fval, sim, simi, xhist, evaluated, subinfo)
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
@@ -308,7 +310,7 @@ do tr = 1, maxtr
     ! 3. In GEOSTEP, deciding the direction of the geometry step.
     ! They do not appear explicitly in the trust-region subproblem, though the trust-region center
     ! (i.e., the current optimal vertex) is defined by them.
-    cpen = getcpen(conmat, cpen, cval, delta, fval, rho, sim, simi)
+    cpen = getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi)
 
     ! Switch the best vertex of the current simplex to SIM(:, N + 1).
     call updatepole(cpen, conmat, cval, fval, sim, simi, subinfo)
@@ -325,6 +327,7 @@ do tr = 1, maxtr
     ! the objective function gradient after the constraint gradients in the array A.
     ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    A(:, 1:size(bvec)) = -amat
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
@@ -369,7 +372,7 @@ do tr = 1, maxtr
     else
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc, x, f, constr, cstrv)
+        call evaluate(calcfc_internal, x, f, constr, cstrv)
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
@@ -536,7 +539,7 @@ do tr = 1, maxtr
 
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc, x, f, constr, cstrv)
+        call evaluate(calcfc_internal, x, f, constr, cstrv)
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
@@ -592,7 +595,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     ! Zaikun 20230615: UPDATEXFC or UPDATEPOLE is not called since the last trust-region step. Hence
     ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
     x = sim(:, n + 1) + d
-    call evaluate(calcfc, x, f, constr, cstrv)
+    call evaluate(calcfc_internal, x, f, constr, cstrv)
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
@@ -645,10 +648,40 @@ if (DEBUGGING) then
         & 'No point in the history is better than X', srname)
 end if
 
+
+contains
+
+
+subroutine calcfc_internal(x_internal, f_internal, constr_internal)
+implicit none
+! Inputs
+real(RP), intent(in) :: x_internal(:)
+! Outputs
+real(RP), intent(out) :: f_internal
+real(RP), intent(out) :: constr_internal(:)
+! Local variables
+real(RP) :: constr_nlc(m - size(bvec))
+
+call calcfc(x_internal, f_internal, constr_nlc)
+constr_internal = max(-CONSTRMAX, min(CONSTRMAX, [bvec - matprod(x_internal, amat), constr_nlc]))
+
+
+!call evaluate(calcfc_norma, x_internal, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
+!print *, '----', constr_internal, f
+!print *, '====', constr_norma, f_internal
+!print *, '++++', bvec
+!print *, '++++', amat
+!print *, '++++', x_internal
+!print *, '++++', constr_nlc
+!print *, '++++', constr_norma(size(constr_norma) - m_nonlcon + 1:)
+!call assert(all(abs(constr_internal - constr_norma) <= 1.0E3_RP * EPS * max(1.0_RP, abs(constr_norma))), &
+!    & 'constr_internal == constr_norma', srname)
+end subroutine
+
 end subroutine cobylb
 
 
-function getcpen(conmat_in, cpen_in, cval_in, delta, fval_in, rho, sim_in, simi_in) result(cpen)
+function getcpen(amat, bvec, conmat_in, cpen_in, cval_in, delta, fval_in, rho, sim_in, simi_in) result(cpen)
 !--------------------------------------------------------------------------------------------------!
 ! This function gets the penalty parameter CPEN so that PREREM = PREREF + CPEN * PREREC > 0.
 ! See the discussions around equation (9) of the COBYLA paper.
@@ -668,6 +701,8 @@ use, non_intrinsic :: update_mod, only : findpole, updatepole
 implicit none
 
 ! Inputs
+real(RP), intent(in) :: amat(:, :)
+real(RP), intent(in) :: bvec(:)
 real(RP), intent(in) :: conmat_in(:, :)
 real(RP), intent(in) :: cpen_in
 real(RP), intent(in) :: cval_in(:)
@@ -761,6 +796,7 @@ do iter = 1, n + 1_IK
     ! Calculate the linear approximations to the objective and constraint functions, placing minus
     ! the objective function gradient after the constraint gradients in the array A.
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    A(:, 1:size(bvec)) = -amat
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
     b = [-conmat(:, n + 1), -fval(n + 1)]
