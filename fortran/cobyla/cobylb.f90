@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, July 19, 2023 PM11:15:41
+! Last Modified: Thursday, July 20, 2023 AM10:18:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -373,6 +373,7 @@ do tr = 1, maxtr
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc_internal, x, f, constr, cstrv)
+        cstrv = maxval([ZERO, -constr])
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
@@ -540,6 +541,7 @@ do tr = 1, maxtr
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc_internal, x, f, constr, cstrv)
+        cstrv = maxval([ZERO, -constr])
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
@@ -596,6 +598,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
     x = sim(:, n + 1) + d
     call evaluate(calcfc_internal, x, f, constr, cstrv)
+    cstrv = maxval([ZERO, -constr])
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
@@ -661,21 +664,8 @@ real(RP), intent(out) :: f_internal
 real(RP), intent(out) :: constr_internal(:)
 ! Local variables
 real(RP) :: constr_nlc(m - size(bvec))
-
 call calcfc(x_internal, f_internal, constr_nlc)
-constr_internal = max(-CONSTRMAX, min(CONSTRMAX, [bvec - matprod(x_internal, amat), constr_nlc]))
-
-
-!call evaluate(calcfc_norma, x_internal, f, constr_norma, cstrv_norma) ! Indeed, CSTRV_LOC needs not to be evaluated.
-!print *, '----', constr_internal, f
-!print *, '====', constr_norma, f_internal
-!print *, '++++', bvec
-!print *, '++++', amat
-!print *, '++++', x_internal
-!print *, '++++', constr_nlc
-!print *, '++++', constr_norma(size(constr_norma) - m_nonlcon + 1:)
-!call assert(all(abs(constr_internal - constr_norma) <= 1.0E3_RP * EPS * max(1.0_RP, abs(constr_norma))), &
-!    & 'constr_internal == constr_norma', srname)
+constr_internal = [max(-CONSTRMAX, min(CONSTRMAX, bvec - matprod(x_internal, amat))), constr_nlc]
 end subroutine
 
 end subroutine cobylb
