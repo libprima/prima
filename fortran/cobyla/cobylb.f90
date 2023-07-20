@@ -23,7 +23,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 PM11:08:35
+! Last Modified: Friday, July 21, 2023 AM12:44:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -672,7 +672,7 @@ real(RP), intent(out) :: constr_internal(:)
 ! Local variables
 real(RP) :: constr_nlc(m - size(bvec))
 call calcfc(x_internal, f_internal, constr_nlc)
-! 20230720: For the moment, COBYLB handles the constraint as constaint >= 0. So we need to change the sign.
+! 20230720: For the moment, COBYLB handles the constraint as constraint >= 0. So we need to change the sign.
 constr_internal = [max(-CONSTRMAX, min(CONSTRMAX, bvec - matprod(x_internal, amat))), -constr_nlc]
 end subroutine
 
