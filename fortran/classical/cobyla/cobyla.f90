@@ -13,7 +13,7 @@ public :: cobyla
 contains
 
 
-subroutine cobyla(calcfc, calcfc_norma, m_nonlcon, x, f, &
+subroutine cobyla(calcfc, m_nonlcon, x, f, &
     & cstrv, constr, &
     & Aineq, bineq, &
     & Aeq, beq, &
@@ -44,7 +44,6 @@ implicit none
 
 ! Compulsory arguments
 procedure(OBJCON) :: calcfc
-procedure(OBJCON) :: calcfc_norma ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)
 real(RP), intent(out) :: f
 integer(IK), intent(in) :: m_nonlcon

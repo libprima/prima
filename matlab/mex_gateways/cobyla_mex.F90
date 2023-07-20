@@ -11,7 +11,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Thursday, July 20, 2023 AM12:26:23
+! Last Modified: Thursday, July 20, 2023 AM10:26:03
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -56,7 +56,6 @@ integer(IK) :: nf
 logical :: output_conhist
 logical :: output_xhist
 mwPointer :: funcon_ptr
-mwPointer :: funcon_norma_ptr
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: cweight
@@ -84,8 +83,7 @@ real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
 
 ! Validate the number of arguments
-!call fmxVerifyNArgin(nargin, 25)
-call fmxVerifyNArgin(nargin, 26)
+call fmxVerifyNArgin(nargin, 25)
 call fmxVerifyNArgout(nargout, 10)
 
 ! Verify that input 1 is a function handle; the other inputs will be verified when read.
@@ -93,7 +91,6 @@ call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
 
 ! Read the inputs
 funcon_ptr = pinput(1)  ! FUNCON_PTR is a pointer to the function handle
-funcon_norma_ptr = pinput(26)
 call fmxReadMPtr(pinput(2), x)
 call fmxReadMPtr(pinput(3), f0)
 call fmxReadMPtr(pinput(4), constr0)
@@ -125,22 +122,22 @@ m = int(size(constr0), kind(m))  ! M is a compulsory input of the Fortran code.
 ! Call the Fortran code
 ! There are different cases because XHIST/CONHIST may or may not be passed to the Fortran code.
 if (output_xhist .and. output_conhist) then
-    call cobyla(calcfc, calcfc_norma, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
+    call cobyla(calcfc, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
         & f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
         & gamma1, gamma2, xhist=xhist, fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, &
         & maxfilt=maxfilt, info=info)
 elseif (output_xhist) then
-    call cobyla(calcfc, calcfc_norma, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
+    call cobyla(calcfc, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
         & f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
         & gamma1, gamma2, xhist=xhist, fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, &
         & info=info)
 elseif (output_conhist) then
-    call cobyla(calcfc, calcfc_norma, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
+    call cobyla(calcfc, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
         & f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
         & gamma1, gamma2, fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, &
         & maxfilt=maxfilt, info=info)
 else
-    call cobyla(calcfc, calcfc_norma, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
+    call cobyla(calcfc, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
         & f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
         & gamma1, gamma2, fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 end if
@@ -201,19 +198,5 @@ real(RP), intent(out) :: f_sub
 real(RP), intent(out) :: constr_sub(:)
 call evalcb(funcon_ptr, x_sub, f_sub, constr_sub)
 end subroutine calcfc
-!--------------------------------------------------------------------!
-subroutine calcfc_norma(x_sub, f_sub, constr_sub)
-! This is an internal procedure that defines CALCFC. Since F2008, we
-! can pass internal procedures as actual arguments. See Note 12.18
-! on page 290 of WD 1539-1 J3/10-007r1 (F2008 Working Document).
-! We implement CALCFC internally so that FUNCON_PTR is visible to it.
-! Do NOT pass FUNCON_PTR by a module variable, which is thread-unsafe.
-use, non_intrinsic :: cbfun_mod, only : evalcb
-implicit none
-real(RP), intent(in) :: x_sub(:)
-real(RP), intent(out) :: f_sub
-real(RP), intent(out) :: constr_sub(:)
-call evalcb(funcon_norma_ptr, x_sub, f_sub, constr_sub)
-end subroutine calcfc_norma
 !--------------------------------------------------------------------!
 end subroutine mexFunction
