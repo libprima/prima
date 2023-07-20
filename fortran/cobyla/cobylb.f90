@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 AM11:04:25
+! Last Modified: Thursday, July 20, 2023 AM11:32:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -536,7 +536,7 @@ do tr = 1, maxtr
         ! rather than DELTA. This should not be done here, because D should improve the geometry of
         ! the simplex when SIM(:, JDROP) is replaced with D; the quality of the geometry is defined
         ! by DELTA instead of DELBAR as in (14) of the COBYLA paper. See GEOSTEP for more detail.
-        d = geostep(jdrop_geo, cpen, conmat, cval, delta, fval, factor_gamma, simi)
+        d = geostep(jdrop_geo, amat, bvec, cpen, conmat, cval, delta, fval, factor_gamma, simi)
 
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.

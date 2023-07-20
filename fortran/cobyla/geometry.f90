@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, June 13, 2023 PM08:48:48
+! Last Modified: Thursday, July 20, 2023 AM11:34:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -359,7 +359,7 @@ end if
 end function setdrop_geo
 
 
-function geostep(jdrop, cpen, conmat, cval, delta, fval, factor_gamma, simi) result(d)
+function geostep(jdrop, amat, bvec, cpen, conmat, cval, delta, fval, factor_gamma, simi) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a geometry step so that the geometry of the interpolation set is improved
 ! when SIM(:, JDRO_GEO) is replaced with SIM(:, N+1) + D. See (15)--(17) of the COBYLA paper.
@@ -380,6 +380,8 @@ implicit none
 
 ! Inputs
 integer(IK), intent(in) :: jdrop
+real(RP), intent(in) :: amat(:, :)
+real(RP), intent(in) :: bvec(:)
 real(RP), intent(in) :: conmat(:, :)    ! CONMAT(M, N+1)
 real(RP), intent(in) :: cpen
 real(RP), intent(in) :: cval(:)     ! CVAL(N+1)
@@ -442,6 +444,7 @@ d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 ! Calculate the coefficients of the linear approximations to the objective and constraint functions,
 ! placing minus the objective function gradient after the constraint gradients in the array A.
 A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+A(:, 1:size(bvec)) = -amat
 !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))'; % Implicit expansion for subtraction
 A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
 cvmaxp = maxval([ZERO, -matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
