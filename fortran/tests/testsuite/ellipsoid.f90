@@ -44,5 +44,5 @@ real(RP), intent(out) :: f
 call assert(size(x) == 3 .and. size(constr) == 1, 'SIZE(X) == 3, SIZE(CONSTR) == 1', srname)
 
 f = x(1) * x(2) * x(3)
-constr(1) = ONE - x(1)**2 - 2.0_RP * x(2)**2 - 3.0_RP * x(3)**2
+constr(1) = -ONE + x(1)**2 + 2.0_RP * x(2)**2 + 3.0_RP * x(3)**2
 end subroutine calcfc_ellipsoid

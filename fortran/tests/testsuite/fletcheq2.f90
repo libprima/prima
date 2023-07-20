@@ -44,7 +44,7 @@ real(RP), intent(out) :: f
 call assert(size(x) == 3 .and. size(constr) == 3, 'SIZE(X) == 3, SIZE(CONSTR) == 3', srname)
 
 f = x(3)
-constr(1) = 5.0_RP * x(1) - x(2) + x(3)
-constr(2) = x(3) - x(1)**2 - x(2)**2 - 4.0 * x(2)
-constr(3) = x(3) - 5.0 * x(1) - x(2)
+constr(1) = -5.0_RP * x(1) + x(2) - x(3)
+constr(2) = -x(3) + x(1)**2 + x(2)**2 + 4.0 * x(2)
+constr(3) = -x(3) + 5.0 * x(1) + x(2)
 end subroutine calcfc_fletcheq2
