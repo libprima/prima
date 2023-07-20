@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 AM11:34:32
+! Last Modified: Thursday, July 20, 2023 PM12:04:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -359,7 +359,7 @@ end if
 end function setdrop_geo
 
 
-function geostep(jdrop, amat, bvec, cpen, conmat, cval, delta, fval, factor_gamma, simi) result(d)
+function geostep(jdrop, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamma, simi) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a geometry step so that the geometry of the interpolation set is improved
 ! when SIM(:, JDRO_GEO) is replaced with SIM(:, N+1) + D. See (15)--(17) of the COBYLA paper.
@@ -443,6 +443,8 @@ d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 
 ! Calculate the coefficients of the linear approximations to the objective and constraint functions,
 ! placing minus the objective function gradient after the constraint gradients in the array A.
+! N.B.: CONMAT and SIMI have been updated after the last trust-region step, but A has not. So we
+! cannot pass A from outside.
 A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
 A(:, 1:size(bvec)) = -amat
 !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))'; % Implicit expansion for subtraction
