@@ -2,7 +2,8 @@
 ! 1. Modify evaluate, trstlp, geostep etc so that the nonlinear constraint becomes constr(x) <= 0.
 ! N.B.:  Remember to modify the definition of nlceq, nlcehist, etc in cobyla.m. Remember to modify
 ! the extreme barrier in evaluate.
-! 2. Modify the code so that calcfc_internal is not needed. Modify constr, conhist etc.
+! 2. Modify the code so that calcfc_internal is not needed. Modify constr, conhist etc. What about
+! defining nlconstr, lconstr, nlchist, etc?
 !
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -22,7 +23,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 PM12:21:15
+! Last Modified: Thursday, July 20, 2023 PM12:38:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
