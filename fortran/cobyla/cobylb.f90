@@ -1,6 +1,8 @@
 !TODO:
 ! 1. Modify evaluate, trstlp, geostep etc so that the nonlinear constraint becomes constr(x) <= 0.
-! 2. Modify the code so that calcfc_internal is not needed.
+! N.B.:  Remember to modify the definition of nlceq, nlcehist, etc in cobyla.m. Remember to modify
+! the extreme barrier in evaluate.
+! 2. Modify the code so that calcfc_internal is not needed. Modify constr, conhist etc.
 !
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -20,7 +22,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 PM12:08:54
+! Last Modified: Thursday, July 20, 2023 PM12:21:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -669,7 +671,8 @@ real(RP), intent(out) :: constr_internal(:)
 ! Local variables
 real(RP) :: constr_nlc(m - size(bvec))
 call calcfc(x_internal, f_internal, constr_nlc)
-constr_internal = [max(-CONSTRMAX, min(CONSTRMAX, bvec - matprod(x_internal, amat))), constr_nlc]
+! 20230720: For the moment, COBYLB handles the constraint as constaint >= 0. So we need to change the sign.
+constr_internal = [max(-CONSTRMAX, min(CONSTRMAX, bvec - matprod(x_internal, amat))), -constr_nlc]
 end subroutine
 
 end subroutine cobylb

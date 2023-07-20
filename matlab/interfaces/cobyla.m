@@ -509,7 +509,7 @@ return
 function [f, constr, m_nlcineq, m_nlceq] = cobyla_funcon(x, fun, nonlcon)
 % This function wraps fun and nonlcon into a single function handle, which will be passed to
 % the Fortran backend.
-% The nonlinear constraint expected by the Fortran backend: constr(x) >= 0
+% The nonlinear constraint expected by the Fortran backend: constr(x) <= 0
 % m_nlcineq is the number of nonlinear inequality constraints
 % m_nlceq is the number of nonlinear equality constraints
 f = fun(x);
@@ -518,7 +518,7 @@ if ~isempty(nonlcon)
     if succ
         m_nlcineq = length(nlcineq);
         m_nlceq = length(nlceq);
-        constr = [nlceq; -nlceq; -nlcineq];
+        constr = [-nlceq; nlceq; nlcineq];
     else
         % Evaluation of nonlcon fails.
         % In this case, we pass a SCALAR NaN to the MEX gateway, which will handle it properly.

@@ -36,7 +36,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 AM11:04:47
+! Last Modified: Thursday, July 20, 2023 PM12:16:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -470,6 +470,8 @@ else
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
+! 20230720: For the moment, COBYLB handles the constraint as constaint >= 0. So we need to change the sign.
+constr_loc(m - m_nonlcon + 1:m) = -constr_loc(m - m_nonlcon + 1:m)
 constr_loc(1:m - m_nonlcon) = max(-CONSTRMAX, min(CONSTRMAX, [x(ixl) - xl_loc(ixl), xu_loc(ixu) - x(ixu), &
 & matprod(Aeq_loc, x) - beq_loc, beq_loc - matprod(Aeq_loc, x), &
 & bineq_loc - matprod(Aineq_loc, x)]))
