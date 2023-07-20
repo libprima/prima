@@ -44,7 +44,7 @@ real(RP), intent(out) :: f
 call assert(size(x) == 4 .and. size(constr) == 3, 'SIZE(X) == 4, SIZE(CONSTR) == 3', srname)
 
 f = x(1)**2 + x(2)**2 + 2.0_RP * x(3)**2 + x(4)**2 - 5.0_RP * x(1) - 5.0_RP * x(2) - 21.0_RP * x(3) + 7.0_RP * x(4)
-constr(1) = 8.0_RP - x(1)**2 - x(2)**2 - x(3)**2 - x(4)**2 - x(1) + x(2) - x(3) + x(4)
-constr(2) = 10.0_RP - x(1)**2 - 2.0_RP * x(2)**2 - x(3)**2 - 2.0_RP * x(4)**2 + x(1) + x(4)
-constr(3) = 5.0_RP - 2.0_RP * x(1)**2 - x(2)**2 - x(3)**2 - 2.0_RP * x(1) + x(2) + x(4)
+constr(1) = -(8.0_RP - x(1)**2 - x(2)**2 - x(3)**2 - x(4)**2 - x(1) + x(2) - x(3) + x(4))
+constr(2) = -(10.0_RP - x(1)**2 - 2.0_RP * x(2)**2 - x(3)**2 - 2.0_RP * x(4)**2 + x(1) + x(4))
+constr(3) = -(5.0_RP - 2.0_RP * x(1)**2 - x(2)**2 - x(3)**2 - 2.0_RP * x(1) + x(2) + x(4))
 end subroutine calcfc_rsnszk

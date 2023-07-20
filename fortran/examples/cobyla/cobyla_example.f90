@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, May 30, 2023 PM06:25:46
+! Last Modified: Thursday, July 20, 2023 PM12:29:33
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -62,20 +62,20 @@ real(kind(1.0_RP)), intent(out) :: f
 call assert(size(x) == 9 .and. size(constr) == 14, 'SIZE(X) == 9, SIZE(CONSTR) == 14', srname)
 
 f = -0.5_RP * (x(1) * x(4) - x(2) * x(3) + x(3) * x(9) - x(5) * x(9) + x(5) * x(8) - x(6) * x(7))
-constr(1) = 1.0_RP - x(3)**2 - x(4)**2
-constr(2) = 1.0_RP - x(9)**2
-constr(3) = 1.0_RP - x(5)**2 - x(6)**2
-constr(4) = 1.0_RP - x(1)**2 - (x(2) - x(9))**2
-constr(5) = 1.0_RP - (x(1) - x(5))**2 - (x(2) - x(6))**2
-constr(6) = 1.0_RP - (x(1) - x(7))**2 - (x(2) - x(8))**2
-constr(7) = 1.0_RP - (x(3) - x(5))**2 - (x(4) - x(6))**2
-constr(8) = 1.0_RP - (x(3) - x(7))**2 - (x(4) - x(8))**2
-constr(9) = 1.0_RP - x(7)**2 - (x(8) - x(9))**2
-constr(10) = x(1) * x(4) - x(2) * x(3)
-constr(11) = x(3) * x(9)
+constr(1) = -1.0_RP + x(3)**2 + x(4)**2
+constr(2) = -1.0_RP + x(9)**2
+constr(3) = -1.0_RP + x(5)**2 + x(6)**2
+constr(4) = -1.0_RP + x(1)**2 + (x(2) + x(9))**2
+constr(5) = -1.0_RP + (x(1) + x(5))**2 + (x(2) + x(6))**2
+constr(6) = -1.0_RP + (x(1) + x(7))**2 + (x(2) + x(8))**2
+constr(7) = -1.0_RP + (x(3) + x(5))**2 + (x(4) + x(6))**2
+constr(8) = -1.0_RP + (x(3) + x(7))**2 + (x(4) + x(8))**2
+constr(9) = -1.0_RP + x(7)**2 + (x(8) + x(9))**2
+constr(10) = -x(1) * x(4) + x(2) * x(3)
+constr(11) = -x(3) * x(9)
 constr(12) = -x(5) * x(9)
-constr(13) = x(5) * x(8) - x(6) * x(7)
-constr(14) = x(9)
+constr(13) = -x(5) * x(8) + x(6) * x(7)
+constr(14) = -x(9)
 end subroutine calcfc_hexagon
 
 end module calcfc_mod

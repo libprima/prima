@@ -58,4 +58,5 @@ constr(11) = x(3) * x(9)
 constr(12) = -x(5) * x(9)
 constr(13) = x(5) * x(8) - x(6) * x(7)
 constr(14) = x(9)
+constr = -constr
 end subroutine calcfc_hexagon

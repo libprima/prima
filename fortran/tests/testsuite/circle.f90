@@ -44,5 +44,5 @@ real(RP), intent(out) :: f
 call assert(size(x) == 2 .and. size(constr) == 1, 'SIZE(X) == 2, SIZE(CONSTR) == 1', srname)
 
 f = x(1) * x(2)
-constr(1) = ONE - x(1)**2 - x(2)**2
+constr(1) = -ONE + x(1)**2 + x(2)**2
 end subroutine calcfc_circle
