@@ -233,7 +233,7 @@ if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
     f = f0
     constr_loc = [x(ixl) - xl_loc(ixl), xu_loc(ixu) - x(ixu), &
     & matprod(Aeq_loc, x) - beq_loc, beq_loc - matprod(Aeq_loc, x), &
-    & bineq_loc - matprod(Aineq_loc, x), constr0]
+    & bineq_loc - matprod(Aineq_loc, x), -constr0]
     cstrv_loc = maxval([ZERO, -constr_loc])
 else
     ! Replace any NaN in X by ZERO and Inf/-Inf in X by REALMAX/-REALMAX.
@@ -459,7 +459,7 @@ real(RP) :: constr_nlc(m_nonlcon)
 call calcfc(x_internal, f_internal, constr_nlc)
 constr_internal = [x_internal(ixl) - xl_loc(ixl), xu_loc(ixu) - x_internal(ixu), &
     & matprod(Aeq_loc, x_internal) - beq_loc, beq_loc - matprod(Aeq_loc, x_internal), &
-    & bineq_loc - matprod(Aineq_loc, x_internal), constr_nlc]
+    & bineq_loc - matprod(Aineq_loc, x_internal), -constr_nlc]
 
 end subroutine
 
