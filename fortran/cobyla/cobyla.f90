@@ -36,7 +36,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 AM10:17:38
+! Last Modified: Thursday, July 20, 2023 AM10:26:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,7 @@ public :: cobyla
 contains
 
 
-subroutine cobyla(calcfc, calcfc_norma, m_nonlcon, x, f, &
+subroutine cobyla(calcfc, m_nonlcon, x, f, &
     & cstrv, constr, &
     & Aineq, bineq, &
     & Aeq, beq, &
@@ -270,7 +270,6 @@ implicit none
 
 ! Compulsory arguments
 procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
-procedure(OBJCON) :: calcfc_norma ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)     ! X(N)
 real(RP), intent(out) :: f
 integer(IK), intent(in) :: m_nonlcon
@@ -336,7 +335,6 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
-real(RP) :: cstrv_norma
 real(RP), allocatable :: Aeq_loc(:, :)  ! Aeq_LOC(Meq, N)
 real(RP), allocatable :: Aineq_loc(:, :)  ! Aineq_LOC(Mineq, N)
 real(RP), allocatable :: amat(:, :)  ! AMAT(N, M); each column corresponds to a constraint
@@ -346,7 +344,6 @@ real(RP), allocatable :: bvec(:)  ! BVEC(M)
 real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
 real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M_NONLCON, MAXCONHIST)
 real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M_NONLCON)
-real(RP), allocatable :: constr_norma(:)
 real(RP), allocatable :: fhist_loc(:)   ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 real(RP), allocatable :: xl_loc(:)  ! XL_LOC(N)
@@ -460,7 +457,6 @@ call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, xl_loc, xu_loc, amat, bv
 ! Allocate memory for CONSTR_LOC.
 !call safealloc(constr_loc, m_nonlcon)  ! NOT removable even in F2003!
 call safealloc(constr_loc, m)  ! NOT removable even in F2003!
-call safealloc(constr_norma, m)
 
 ! If the user provides the function & nonlinear constraint value at X0, then set up [F, CONSTR_LOC]
 ! to them. Otherwise, set [F, CONSTR_LOC] = [F(X0), CONSTR(X0)], so COBYLB only needs one interface.

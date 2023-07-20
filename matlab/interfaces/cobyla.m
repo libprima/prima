@@ -436,11 +436,10 @@ else % The problem turns out 'normal' during preprima
     % The mexified Fortran Function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
-        funcon_norma = @(x) cobyla_norma_funcon(x, fun, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
         [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
             fsolver(funcon, x0, f_x0, constr_x0, Aineq, bineq, Aeq, beq, lb, ub, rhobeg, rhoend, ...
             eta1, eta2, gamma1, gamma2, ftarget, ctol, cweight, maxfun, iprint, maxhist, ...
-            double(output_xhist), double(output_nlchist), maxfilt, funcon_norma);
+            double(output_xhist), double(output_nlchist), maxfilt);
         % Fortran MEX does not provide an API for reading Boolean variables. So we convert
         % output_xhist and output_nlchist to doubles (0 or 1) before passing them to the MEX gateway.
         % In C MEX, however, we have mxGetLogicals.
@@ -532,46 +531,5 @@ else
     m_nlcineq = 0;
     m_nlceq = 0;
     constr = [];
-end
-return
-
-%%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%
-function [f, constr, m_nlcineq, m_nlceq] = cobyla_norma_funcon(x, fun, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
-f = fun(x);
-[constr, m_nlcineq, m_nlceq] = cobyla_norma_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon);
-return
-
-function [constr, m_nlcineq, m_nlceq] = cobyla_norma_con(x, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
-% The Fortran backend takes at input a constraint: constr(x) >= 0
-% m_nlcineq = number of nonlinear inequality constraints
-% m_nlceq = number of nonlinear equality constraints
-%cineq = [lb(lb>-inf) - x(lb>-inf); x(ub<inf) - ub(ub<inf)];
-ceq = [];
-cineq = [];
-if ~isempty(Aineq)
-    cineq = [cineq; Aineq*x - bineq];
-end
-if ~isempty(Aeq)
-    ceq = [ceq; Aeq*x - beq];
-end
-%constr = [-cineq; ceq; -ceq];
-constr = [x(lb>-inf) - lb(lb>-inf); ub(ub<inf) - x(ub<inf); ceq; -ceq; -cineq];
-if ~isempty(nonlcon)
-    [nlcineq, nlceq, succ] = nonlcon(x); % Nonlinear constraints: nlcineq <= 0, nlceq = 0
-    if succ
-        m_nlcineq = length(nlcineq);
-        m_nlceq = length(nlceq);
-        constr = [constr; nlceq; -nlceq; -nlcineq];
-    else
-        % Evaluation of nonlcon fails.
-        % In this case, we pass a SCALAR NaN to the MEX gateway, which will handle it properly.
-        % Ideally, we should return an NaN vector with proper size, but the size is unknown here.
-        m_nlcineq = NaN;
-        m_nlceq = NaN;
-        constr = NaN;
-    end
-else
-    m_nlcineq = 0;
-    m_nlceq = 0;
 end
 return
