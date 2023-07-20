@@ -36,7 +36,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 AM10:26:28
+! Last Modified: Thursday, July 20, 2023 AM11:04:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -337,10 +337,10 @@ real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP), allocatable :: Aeq_loc(:, :)  ! Aeq_LOC(Meq, N)
 real(RP), allocatable :: Aineq_loc(:, :)  ! Aineq_LOC(Mineq, N)
-real(RP), allocatable :: amat(:, :)  ! AMAT(N, M); each column corresponds to a constraint
+real(RP), allocatable :: amat(:, :)  ! AMAT(N, M_LCON); each column corresponds to a linear constraint
 real(RP), allocatable :: beq_loc(:)  ! Beq_LOC(Meq)
 real(RP), allocatable :: bineq_loc(:)  ! Bineq_LOC(Mineq)
-real(RP), allocatable :: bvec(:)  ! BVEC(M)
+real(RP), allocatable :: bvec(:)  ! BVEC(M_LCON)
 real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
 real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M_NONLCON, MAXCONHIST)
 real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M_NONLCON)
@@ -466,7 +466,7 @@ if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
     constr_loc(m - m_nonlcon + 1:m) = constr0
 else
     x = moderatex(x)
-    call evaluate(calcfc, x, f, constr_loc(m - m_nonlcon + 1:m), cstrv_loc) ! Indeed, CSTRV_LOC needs not to be evaluated.
+    call evaluate(calcfc, x, f, constr_loc(m - m_nonlcon + 1:m)) ! Indeed, CSTRV_LOC needs not to be evaluated.
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
