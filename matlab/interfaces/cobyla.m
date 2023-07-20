@@ -463,7 +463,7 @@ else % The problem turns out 'normal' during preprima
     output.constrviolation = constrviolation;
     output.chist = chist;
     if output_nlchist
-        % N.B.: The nonlinear constraints are sent to the Fortran backend as [nlceq; -nlceq; -nlcineq].
+        % N.B.: The nonlinear constraints are sent to the Fortran backend as [-nlceq; nlceq; nlcineq].
         % See the function cobyla_con for details.
         output.nlcihist = -conhist(end-m_nlcineq+1 : end, :);
         if isempty(output.nlcihist)
@@ -478,7 +478,7 @@ else % The problem turns out 'normal' during preprima
     output.nlcineq = [];
     output.nlceq = [];
     if ~isempty(nonlcon)
-        % N.B.: The nonlinear constraints are sent to the Fortran backend as [nlceq; -nlceq; -nlcineq].
+        % N.B.: The nonlinear constraints are sent to the Fortran backend as [-nlceq; nlceq; nlcineq].
         % See the function cobyla_con for details.
         output.nlcineq = -constr(end-m_nlcineq+1 : end);
         if isempty(output.nlcineq)
