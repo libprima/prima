@@ -1,0 +1,10 @@
+[project]
+name = "prima"
+version = "0.0.1"
+dependencies = [
+	"numpy"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]  # ["."] by default
+exclude = ["prima.examples*"]  # empty by default
