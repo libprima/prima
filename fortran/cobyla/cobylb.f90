@@ -1,3 +1,7 @@
+!TODO:
+! 1. Modify evaluate, trstlp, geostep etc so that the nonlinear constraint becomes constr(x) <= 0.
+! 2. Modify the code so that calcfc_internal is not needed.
+!
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of COBYLA.
@@ -16,7 +20,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 AM11:32:16
+! Last Modified: Thursday, July 20, 2023 PM12:08:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -536,7 +540,7 @@ do tr = 1, maxtr
         ! rather than DELTA. This should not be done here, because D should improve the geometry of
         ! the simplex when SIM(:, JDROP) is replaced with D; the quality of the geometry is defined
         ! by DELTA instead of DELBAR as in (14) of the COBYLA paper. See GEOSTEP for more detail.
-        d = geostep(jdrop_geo, amat, bvec, cpen, conmat, cval, delta, fval, factor_gamma, simi)
+        d = geostep(jdrop_geo, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamma, simi)
 
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
