@@ -16,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 AM10:18:06
+! Last Modified: Thursday, July 20, 2023 AM11:04:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -372,7 +372,7 @@ do tr = 1, maxtr
     else
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc_internal, x, f, constr, cstrv)
+        call evaluate(calcfc_internal, x, f, constr)
         cstrv = maxval([ZERO, -constr])
         nf = nf + 1_IK
 
@@ -540,7 +540,7 @@ do tr = 1, maxtr
 
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc_internal, x, f, constr, cstrv)
+        call evaluate(calcfc_internal, x, f, constr)
         cstrv = maxval([ZERO, -constr])
         nf = nf + 1_IK
 
@@ -597,7 +597,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     ! Zaikun 20230615: UPDATEXFC or UPDATEPOLE is not called since the last trust-region step. Hence
     ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
     x = sim(:, n + 1) + d
-    call evaluate(calcfc_internal, x, f, constr, cstrv)
+    call evaluate(calcfc_internal, x, f, constr)
     cstrv = maxval([ZERO, -constr])
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
