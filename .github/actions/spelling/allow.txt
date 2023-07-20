@@ -2024,3 +2024,5 @@ AINEQ
 cbnd
 lceq
 lcineq
+lconstr
+nlconstr
