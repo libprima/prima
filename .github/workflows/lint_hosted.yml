@@ -24,6 +24,18 @@ jobs:
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
     steps:
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # all of these default to true, but feel free to set to "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Checkout repository
         uses: actions/checkout@v3.5.3
         with:
