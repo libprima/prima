@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, July 20, 2023 AM10:30:48
+! Last Modified: Friday, July 21, 2023 AM09:18:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,6 +146,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
         call setseed(rseed)
         m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
+        m = min(m, floor(real(huge(m)) / 8.0, IK) - n - 2_IK)  ! Avoid integer overflow when calculating UNIT_MEMO in PREPROC/HISTORY
         call construct(prob, probname, n, m)
         iprint = 2_IK
         if (int(n) + 2000 > huge(0_IK)) then

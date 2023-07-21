@@ -23,7 +23,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, July 21, 2023 AM12:44:17
+! Last Modified: Friday, July 21, 2023 AM01:25:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -193,6 +193,8 @@ if (DEBUGGING) then
     call assert(ctol >= 0, 'CTOL >= 0', srname)
     call assert(cweight >= 0, 'CWEIGHT >= 0', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
+    call assert(size(amat, 1) == size(x) .and. size(amat, 2) == size(bvec), &
+        & 'SIZE(AMAT) == [N, SIZE(BVEC)]', srname)
     call assert(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
         & 'MIN(MIN_MAXFILT, MAXFUN) <= MAXFILT <= MAXFUN', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
