@@ -36,7 +36,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, July 21, 2023 AM12:44:38
+! Last Modified: Friday, July 21, 2023 AM09:54:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -388,6 +388,12 @@ if (DEBUGGING) then
         call assert((size(Aeq, 1) == meq .and. size(Aeq, 2) == n) &
             & .or. (size(Aeq, 1) == 0 .and. size(Aeq, 2) == 0 .and. meq == 0), &
             & 'SIZE(Aeq) == [Meq, N] unless Aeq and Beq are both empty', srname)
+    end if
+    if (present(xl)) then
+        call assert(size(xl) == n .or. size(xl) == 0, 'SIZE(XL) == N unless XL is empty', srname)
+    end if
+    if (present(xu)) then
+        call assert(size(xu) == n .or. size(xu) == 0, 'SIZE(XU) == N unless XU is empty', srname)
     end if
     call assert(present(f0) .eqv. present(constr0), 'F0 and CONSTR0 are both present or both absent', srname)
 end if

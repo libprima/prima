@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, July 18, 2023 PM11:27:21
+! Last Modified: Friday, July 21, 2023 AM09:54:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -334,6 +334,12 @@ if (DEBUGGING) then
         call assert((size(Aeq, 1) == meq .and. size(Aeq, 2) == n) &
             & .or. (size(Aeq, 1) == 0 .and. size(Aeq, 2) == 0 .and. meq == 0), &
             & 'SIZE(Aeq) == [Meq, N] unless Aeq and Beq are both empty', srname)
+    end if
+    if (present(xl)) then
+        call assert(size(xl) == n .or. size(xl) == 0, 'SIZE(XL) == N unless XL is empty', srname)
+    end if
+    if (present(xu)) then
+        call assert(size(xu) == n .or. size(xu) == 0, 'SIZE(XU) == N unless XU is empty', srname)
     end if
 end if
 
