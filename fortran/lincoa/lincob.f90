@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, July 06, 2023 PM05:31:54
+! Last Modified: Wednesday, July 26, 2023 AM09:16:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -73,7 +73,7 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, Aeq, Aineq, amat, beq, b
 
 ! Generic models
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, REALMAX, MIN_MAXFILT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, TENTH, REALMAX, MIN_MAXFILT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -494,9 +494,11 @@ do tr = 1, maxtr
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-    close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
+    close_itpset = all(distsq <= max(delta**2, (TEN * rho)**2))
     ! Below are some alternative definitions of CLOSE_ITPSET.
+    ! N.B.: The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
     ! !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's code.
+    ! !close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
     ! !close_itpset = all(distsq <= delta**2)  ! Does not work as well as Powell's version.
     ! !close_itpset = all(distsq <= 10.0_RP * delta**2)  ! Does not work as well as Powell's version.
     ! !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.

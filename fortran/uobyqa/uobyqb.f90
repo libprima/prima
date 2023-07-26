@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 15, 2023 PM08:12:56
+! Last Modified: Wednesday, July 26, 2023 AM10:16:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -304,6 +304,7 @@ do tr = 1, maxtr
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
     close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
     ! Below are some alternative definitions of CLOSE_ITPSET.
+    ! N.B.: The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
     ! !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Powell's code.
     ! !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
