@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 20, 2023 AM06:19:49
+! Last Modified: Wednesday, July 26, 2023 AM09:19:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -407,8 +407,10 @@ do tr = 1, maxtr
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-    close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's code.
+    close_itpset = all(distsq <= max(delta**2, (TEN * rho)**2))
     ! Below are some alternative definitions of CLOSE_ITPSET.
+    ! N.B.: The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
+    ! !close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's code.
     ! !close_itpset = all(distsq <= (TEN * delta)**2)  ! Does not work as well as Powell's version.
     ! !close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
