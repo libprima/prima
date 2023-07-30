@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 26, 2023 AM10:16:31
+! Last Modified: Sunday, July 30, 2023 AM05:00:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -384,9 +384,11 @@ do tr = 1, maxtr
 
         ! DELBAR is the trust-region radius for the geometry improvement subproblem.
         ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
-        ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
-        ! improve the performance slightly according to a test on 20220720.
-        delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
+        ! DISTSQ into consideration.
+        delbar = rho
+        !delbar = max(TENTH * delta, rho)  ! Powell's LINCOA code
+        !delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)  ! Powell's BOBYQA code
+        !delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)  ! Powell's NEWUOA code
 
         d = geostep(knew_geo, kopt, delbar, pl, xpt)
 
