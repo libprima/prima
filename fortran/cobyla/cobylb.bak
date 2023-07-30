@@ -87,7 +87,7 @@ real(RP), intent(in) :: rhoend
 
 ! In-outputs
 ! On entry, [X, F, CONSTR] = [X0, F(X0), CONSTR(X0)]
-real(RP), intent(inout) :: nlconstr(:)    ! NLCONSTR(M_NONLCoN)
+real(RP), intent(inout) :: nlconstr(:)    ! NLCONSTR(M_NONLCON)
 real(RP), intent(inout) :: f
 real(RP), intent(inout) :: x(:)     ! X(N)
 
@@ -203,7 +203,7 @@ if (DEBUGGING) then
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
-    call assert(size(conhist, 1) == m_nonlon .and. maxconhist * (maxconhist - maxhist) == 0, &
+    call assert(size(conhist, 1) == m_nonlcon .and. maxconhist * (maxconhist - maxhist) == 0, &
         & 'SIZE(CONHIST, 1) == M, SIZE(CONHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
     call assert(factor_alpha > 0 .and. factor_alpha < factor_gamma .and. factor_gamma < 1, &
