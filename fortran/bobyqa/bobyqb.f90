@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, July 30, 2023 PM06:34:55
+! Last Modified: Monday, July 31, 2023 AM06:50:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -465,8 +465,8 @@ do tr = 1, maxtr
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
         ! scheme GEOSTEP. Note that DELTA has been updated before arriving here.
-        delbar = max(HALF * delta, rho)
-        !delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)  ! Powell's code
+        !delbar = max(HALF * delta, rho)
+        delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)  ! Powell's code
         !delbar = rho  ! Powell's UOBYQA code
         !delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)  ! Powell's NEWUOA code
         !delbar = max(TENTH * delta, rho)  ! Powell's LINCOA code
