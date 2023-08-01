@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, June 08, 2023 AM11:59:47
+! Last Modified: Wednesday, August 02, 2023 AM01:38:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -24,17 +24,17 @@ function trstlp(A_in, b_in, delta) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
 ! stage, D is set to the shortest vector that minimizes the greatest violation of the constraints
-!       dot_product(A(1:N, K), D) >= B(K),  K = 1, 2, 3, ..., M,
+!       dot_product(A(1:N, K), D) <= B(K),  K = 1, 2, 3, ..., M,
 ! subject to the Euclidean length of D being at most DELTA. If its length is strictly less than
 ! DELTA, then the second stage uses the resultant freedom in D to minimize the objective function
-!       dot_product(-A(1:N, M+1), D)
+!       dot_product(A(1:N, M+1), D)
 ! subject to no increase in any greatest constraint violation. This notation allows the gradient of
 ! the objective function to be regarded as the gradient of a constraint. Therefore the two stages
 ! are distinguished by MCON == M and MCON > M respectively.
 !
 ! It is possible but rare that a degeneracy may prevent D from attaining the target length DELTA.
 !
-! CVIOL is the largest constraint violation of the current D: MAXVAL([B(1:M)-A(:,1:M)^T*D), ZERO]).
+! CVIOL is the largest constraint violation of the current D: MAXVAL([A(:,1:M)^T*D-B(1:M), ZERO]).
 ! ICON is the index of a most violated constraint if CVIOL is positive.
 !
 ! NACT is the number of constraints in the active set and IACT(1), ...,IACT(NACT) are their indices,
@@ -251,8 +251,8 @@ if (stage == 1) then
     ! 2. In MATLAB, linspace(1, mcon, mcon) can also be written as (1:mcon).
     nact = 0
     d = ZERO
-    cviol = maxval([b, ZERO])
-    vmultc = cviol - b
+    cviol = maxval([-b, ZERO])
+    vmultc = cviol + b
     z = eye(n)
     if (mcon == 0 .or. cviol <= 0) then
         ! Check whether a quick return is possible. Make sure the In-outputs have been initialized.
@@ -262,7 +262,7 @@ if (stage == 1) then
     if (all(is_nan(b))) then
         return
     else
-        icon = int(maxloc(b, mask=(.not. is_nan(b)), dim=1), kind(icon))
+        icon = int(maxloc(-b, mask=(.not. is_nan(b)), dim=1), kind(icon))
         !!MATLAB: [~, icon] = max(b, [], 'omitnan');
     end if
     m = mcon
@@ -280,7 +280,7 @@ else
 
     ! In Powell's code, stage 2 uses the ZDOTA and CVIOL calculated by stage 1. Here we re-calculate
     ! them so that they need not be passed from stage 1 to 2, and hence the coupling is reduced.
-    cviol = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    cviol = maxval([matprod(d, A(:, 1:m)) - b(1:m), ZERO])
 end if
 zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
 !!MATLAB: zdota(1:nact) = sum(z(:, 1:nact) .* A(:, iact(1:nact)), 1);  % Row vector
@@ -308,7 +308,7 @@ do iter = 1, maxiter
     if (stage == 1) then
         optnew = cviol
     else
-        optnew = -inprod(d, A(:, mcon))
+        optnew = inprod(d, A(:, mcon))
     end if
 
     ! End the current stage of the calculation if 3 consecutive iterations have either failed to
@@ -410,9 +410,9 @@ do iter = 1, maxiter
         ! Usually during stage 1 the vector SDIRN gives a search direction that reduces all the
         ! active constraint violations by one simultaneously.
         if (stage == 1) then
-            sdirn = sdirn - ((inprod(sdirn, A(:, iact(nact))) - ONE) / zdota(nact)) * z(:, nact)
+            sdirn = sdirn - ((inprod(sdirn, A(:, iact(nact))) + ONE) / zdota(nact)) * z(:, nact)
         else
-            sdirn = (ONE / zdota(nact)) * z(:, nact)
+            sdirn = -(ONE / zdota(nact)) * z(:, nact)
             ! SDIRN = Z(:, NACT)/(A(:,IACT(NACT))^T*Z(:, NACT))
             ! SDIRN^T*A(:, IACT(NACT)) = 1, SDIRN is orthogonal to A(:, IACT(1:NACT-1)) and is
             ! parallel to Z(:, NACT).
@@ -453,7 +453,7 @@ do iter = 1, maxiter
             sdirn = sdirn - inprod(sdirn, z(:, nact + 1)) * z(:, nact + 1)
             ! SDIRN is orthogonal to Z(:, NACT+1)
         else
-            sdirn = (ONE / zdota(nact)) * z(:, nact)
+            sdirn = -(ONE / zdota(nact)) * z(:, nact)
             ! SDIRN = Z(:, NACT)/(A(:,IACT(NACT))^T*Z(:, NACT))
             ! SDIRN^T*A(:, IACT(NACT)) = 1, SDIRN is orthogonal to A(:, IACT(1:NACT-1)) and is
             ! parallel to Z(:, NACT).
@@ -517,7 +517,7 @@ do iter = 1, maxiter
     dnew = d + step * sdirn
     if (stage == 1) then
         !cvold = cviol
-        cviol = maxval([b(iact(1:nact)) - matprod(dnew, A(:, iact(1:nact))), ZERO])
+        cviol = maxval([matprod(dnew, A(:, iact(1:nact))) - b(iact(1:nact)), ZERO])
         ! N.B.: CVIOL will be used when calculating VMULTD(NACT+1 : MCON).
     end if
 
@@ -528,12 +528,12 @@ do iter = 1, maxiter
     ! Set VMULTD to the VMULTC vector that would occur if D became DNEW. A device is included to
     ! force VMULTD(K)=ZERO if deviations from this value can be attributed to computer rounding
     ! errors. First calculate the new Lagrange multipliers.
-    vmultd(1:nact) = lsqr(A(:, iact(1:nact)), dnew, z(:, 1:nact), zdota(1:nact))
+    vmultd(1:nact) = -lsqr(A(:, iact(1:nact)), dnew, z(:, 1:nact), zdota(1:nact))
     if (stage == 2) then
         vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems never activated.
     end if
     ! Complete VMULTD by finding the new constraint residuals. (Powell wrote "Complete VMULTC ...")
-    cvshift = matprod(dnew, A(:, iact)) - b(iact) + cviol  ! Only CVSHIFT(nact+1:mcon) is needed.
+    cvshift = -matprod(dnew, A(:, iact)) + b(iact) + cviol  ! Only CVSHIFT(nact+1:mcon) is needed.
     cvsabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cviol
     cvshift(trueloc(isminor(cvshift, cvsabs))) = ZERO
     !!MATLAB: cvshift(isminor(cvshift, cvsabs)) = 0;
@@ -560,9 +560,9 @@ do iter = 1, maxiter
     vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     if (stage == 1) then
         !cviol = (ONE - frac) * cvold + frac * cviol  ! Powell's version
-        ! In theory, CVIOL = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CVIOL updated
+        ! In theory, CVIOL = MAXVAL([MATPROD(D, A(:, 1:M)) - B(1:M), ZERO]), yet the CVIOL updated
         ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
-        cviol = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+        cviol = maxval([matprod(d, A(:, 1:m)) - b(1:m), ZERO])
     end if
 
     if (icon < 1 .or. icon > mcon) then
