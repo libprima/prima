@@ -23,7 +23,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM02:07:45
+! Last Modified: Wednesday, August 02, 2023 AM04:59:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -334,16 +334,16 @@ do tr = 1, maxtr
     ! Calculate the linear approximations to the objective and constraint functions, placing the
     ! objective function gradient after the constraint gradients in the array A.
     ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
-    A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
-    A(:, 1:size(bvec)) = -amat
+    A(:, 1:m) = -transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    A(:, 1:size(bvec)) = amat
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
-    A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
+    A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
-    ! We set it to -FVAL(N + 1) following Powell's code.
-    b = [-conmat(:, n + 1), -fval(n + 1)]
+    ! We set it to FVAL(N + 1) following Powell's code.
+    b = [conmat(:, n + 1), fval(n + 1)]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
-    d = trstlp(-A, -b, delta)
+    d = trstlp(A, b, delta)
     dnorm = min(delta, norm(d))
 
     ! Is the trust-region trial step short? Note that we compare DNORM with RHO, not DELTA.
@@ -355,15 +355,15 @@ do tr = 1, maxtr
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
-    ! 1. B(1:M) = -CONMAT(:, N + 1), and hence MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]) is the
+    ! 1. B(1:M) = -CONMAT(:, N + 1), and hence MAXVAL([MATPROD(D, A(:, 1:M)) - B(1:M), ZERO]) is the
     ! L-infinity violation of the linearized constraints corresponding to D. When D = 0, the
-    ! violation is MAXVAL([B(1:M), ZERO]) = CVAL(N+1). PREREC is the reduction of this violation
-    ! achieved by D, which is nonnegative in theory; PREREC = 0 iff B(1:M) <= 0, i.e., the
+    ! violation is MAXVAL([-B(1:M), ZERO]) = CVAL(N+1). PREREC is the reduction of this violation
+    ! achieved by D, which is nonnegative in theory; PREREC = 0 iff B(1:M) >= 0, i.e., the
     ! trust-region center satisfies the linearized constraints.
     ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
     ! 3. Due to 2, in theory, MAXIMUM([PREREC, PREREF]) > 0 if SHORTD is FALSE.
-    prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
-    preref = inprod(d, A(:, m + 1))  ! Can be negative.
+    prerec = cval(n + 1) - maxval([matprod(d, A(:, 1:m)) - b(1:m), ZERO])
+    preref = -inprod(d, A(:, m + 1))  ! Can be negative.
 
     ! Evaluate PREREM, which is the predicted reduction in the merit function.
     ! In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true numerically.
@@ -795,18 +795,18 @@ do iter = 1, n + 1_IK
 
     ! Calculate the linear approximations to the objective and constraint functions, placing the
     ! objective function gradient after the constraint gradients in the array A.
-    A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
-    A(:, 1:size(bvec)) = -amat
+    A(:, 1:m) = -transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    A(:, 1:size(bvec)) = amat
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
-    A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
-    b = [-conmat(:, n + 1), -fval(n + 1)]
+    A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
+    b = [conmat(:, n + 1), fval(n + 1)]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
-    d = trstlp(-A, -b, delta)
+    d = trstlp(A, b, delta)
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
-    prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
-    preref = inprod(d, A(:, m + 1))  ! Can be negative.
+    prerec = cval(n + 1) - maxval([matprod(d, A(:, 1:m)) - b(1:m), ZERO])
+    preref = -inprod(d, A(:, m + 1))  ! Can be negative.
 
     if (.not. (prerec > 0 .and. preref < 0)) then  ! PREREC <= 0 or PREREF >= 0 or either is NaN.
         exit
