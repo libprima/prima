@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM01:38:56
+! Last Modified: Wednesday, August 02, 2023 AM02:05:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -533,7 +533,7 @@ do iter = 1, maxiter
         vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems never activated.
     end if
     ! Complete VMULTD by finding the new constraint residuals. (Powell wrote "Complete VMULTC ...")
-    cvshift = -matprod(dnew, A(:, iact)) + b(iact) + cviol  ! Only CVSHIFT(nact+1:mcon) is needed.
+    cvshift = cviol - (matprod(dnew, A(:, iact)) - b(iact))  ! Only CVSHIFT(nact+1:mcon) is needed.
     cvsabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cviol
     cvshift(trueloc(isminor(cvshift, cvsabs))) = ZERO
     !!MATLAB: cvshift(isminor(cvshift, cvsabs)) = 0;
@@ -560,9 +560,9 @@ do iter = 1, maxiter
     vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     if (stage == 1) then
         !cviol = (ONE - frac) * cvold + frac * cviol  ! Powell's version
-        ! In theory, CVIOL = MAXVAL([MATPROD(D, A(:, 1:M)) - B(1:M), ZERO]), yet the CVIOL updated
-        ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
-        cviol = maxval([matprod(d, A(:, 1:m)) - b(1:m), ZERO])
+        ! In theory, CVIOL = MAXVAL([MATPROD(D, A) - B, ZERO]), yet the CVIOL updated as above
+        ! can be quite different from this value if A has huge entries (e.g., > 1E20).
+        cviol = maxval([matprod(d, A) - b, ZERO])
     end if
 
     if (icon < 1 .or. icon > mcon) then
