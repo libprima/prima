@@ -23,7 +23,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM01:15:20
+! Last Modified: Wednesday, August 02, 2023 AM02:07:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -127,8 +127,8 @@ logical :: shortd
 logical :: trfail
 logical :: ximproved
 real(RP) :: A(size(x), size(constr) + 1)
-! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
-! approximate gradient for the objective function.
+! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is the approximate
+! gradient for the objective function.
 real(RP) :: actrem
 real(RP) :: b(size(constr) + 1)
 real(RP) :: cfilt(min(max(maxfilt, 1_IK), maxfun))
@@ -331,8 +331,8 @@ do tr = 1, maxtr
     ! Does the interpolation set have acceptable geometry? It affects IMPROVE_GEO and REDUCE_RHO.
     adequate_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
 
-    ! Calculate the linear approximations to the objective and constraint functions, placing minus
-    ! the objective function gradient after the constraint gradients in the array A.
+    ! Calculate the linear approximations to the objective and constraint functions, placing the
+    ! objective function gradient after the constraint gradients in the array A.
     ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     A(:, 1:size(bvec)) = -amat
@@ -793,8 +793,8 @@ do iter = 1, n + 1_IK
         exit
     end if
 
-    ! Calculate the linear approximations to the objective and constraint functions, placing minus
-    ! the objective function gradient after the constraint gradients in the array A.
+    ! Calculate the linear approximations to the objective and constraint functions, placing the
+    ! objective function gradient after the constraint gradients in the array A.
     A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     A(:, 1:size(bvec)) = -amat
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction

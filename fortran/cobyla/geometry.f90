@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, July 20, 2023 PM12:04:53
+! Last Modified: Wednesday, August 02, 2023 AM02:07:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -442,7 +442,7 @@ d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 ! See (17) of the COBYLA paper and  line 225 of Powell's cobylb.f.
 
 ! Calculate the coefficients of the linear approximations to the objective and constraint functions,
-! placing minus the objective function gradient after the constraint gradients in the array A.
+! placing the objective function gradient after the constraint gradients in the array A.
 ! N.B.: CONMAT and SIMI have been updated after the last trust-region step, but A has not. So we
 ! cannot pass A from outside.
 A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
