@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, July 31, 2023 AM06:50:06
+! Last Modified: Tuesday, August 01, 2023 PM05:26:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -411,8 +411,8 @@ do tr = 1, maxtr
     ! Below are some alternative definitions of CLOSE_ITPSET.
     ! N.B.: The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
     ! !close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's code.
-    ! !close_itpset = all(distsq <= (TEN * delta)**2)  ! Does not work as well as Powell's version.
     ! !close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
+    ! !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's LINCOA code.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
     ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive in practice.
@@ -465,7 +465,6 @@ do tr = 1, maxtr
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
         ! scheme GEOSTEP. Note that DELTA has been updated before arriving here.
-        !delbar = max(HALF * delta, rho)
         delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)  ! Powell's code
         !delbar = rho  ! Powell's UOBYQA code
         !delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)  ! Powell's NEWUOA code
