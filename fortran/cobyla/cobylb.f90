@@ -23,7 +23,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, July 26, 2023 PM04:19:40
+! Last Modified: Wednesday, August 02, 2023 AM01:15:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -343,7 +343,7 @@ do tr = 1, maxtr
     b = [-conmat(:, n + 1), -fval(n + 1)]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
-    d = trstlp(A, b, delta)
+    d = trstlp(-A, -b, delta)
     dnorm = min(delta, norm(d))
 
     ! Is the trust-region trial step short? Note that we compare DNORM with RHO, not DELTA.
@@ -802,7 +802,7 @@ do iter = 1, n + 1_IK
     b = [-conmat(:, n + 1), -fval(n + 1)]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
-    d = trstlp(A, b, delta)
+    d = trstlp(-A, -b, delta)
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
