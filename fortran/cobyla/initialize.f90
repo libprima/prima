@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM09:29:29
+! Last Modified: Wednesday, August 02, 2023 AM11:28:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,7 +35,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatef, moderatec
 use, non_intrinsic :: history_mod, only : savehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT
 use, non_intrinsic :: linalg_mod, only : eye, inv, isinv
 use, non_intrinsic :: message_mod, only : fmsg
@@ -210,17 +210,24 @@ if (DEBUGGING) then
     call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
     call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N + 1', srname)
     call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
+    call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
+        & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
     call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
         & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
+    call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
+        & is_posinf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/+Inf', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
-    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_posinf(conmat)), 'CONMAT does not contain NaN/+Inf', srname)
     call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
         & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
+    call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+        & 'FHIST does not contain NaN/+Inf', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
-        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
+        & 'SIZE(FVAL) == N+1 and FVAL does not contain NaN/+Inf', srname)
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
@@ -249,7 +256,7 @@ subroutine initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, nfilt, cf
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf, is_finite
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: selectx_mod, only : savefilt
 implicit none
 
@@ -292,11 +299,11 @@ if (DEBUGGING) then
     call assert(size(xfilt, 1) == n .and. size(xfilt, 2) == maxfilt, 'SIZE(XFILT) == [N, MAXFILT]', srname)
     call assert(size(ffilt) == maxfilt, 'SIZE(FFILT) == MAXFILT', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
-    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_posinf(conmat)), 'CONMAT does not contain NaN/+Inf', srname)
     call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
         & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
-        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
+        & 'SIZE(FVAL) == N+1 and FVAL does not contain NaN/+Inf', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
     call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
@@ -327,8 +334,8 @@ end do
 if (DEBUGGING) then
     call assert(nfilt <= maxfilt, 'NFILT <= MAXFILT', srname)
     call assert(size(confilt, 1) == m .and. size(confilt, 2) == maxfilt, 'SIZE(CONFILT) == [M, MAXFILT]', srname)
-    call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
-        & 'CONFILT does not contain NaN/-Inf', srname)
+    call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_posinf(confilt(:, 1:nfilt))), &
+        & 'CONFILT does not contain NaN/+Inf', srname)
     call assert(size(cfilt) == maxfilt, 'SIZE(CFILT) == MAXFILT', srname)
     call assert(.not. any(cfilt(1:nfilt) < 0 .or. is_nan(cfilt(1:nfilt)) .or. is_posinf(cfilt(1:nfilt))), &
         & 'CFILT does not contain negative values or NaN/Inf', srname)

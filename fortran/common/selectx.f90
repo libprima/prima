@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, June 11, 2023 PM03:13:42
+! Last Modified: Wednesday, August 02, 2023 AM11:24:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,7 +36,7 @@ subroutine savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, cons
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: linalg_mod, only : trueloc
 
 implicit none
@@ -108,11 +108,11 @@ if (DEBUGGING) then
     ! Check CONSTR and CONFILT.
     call assert(present(constr) .eqv. present(confilt), 'CONSTR and CONFILT are both present or both absent', srname)
     if (present(constr)) then
-        ! CONSTR cannot contain NaN/-Inf due to the moderated extreme barrier.
-        call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), 'CONSTR does not contain NaN/-Inf', srname)
+        ! CONSTR cannot contain NaN/+Inf due to the moderated extreme barrier.
+        call assert(.not. any(is_nan(constr) .or. is_posinf(constr)), 'CONSTR does not contain NaN/+Inf', srname)
         call assert(size(confilt, 1) == m .and. size(confilt, 2) == maxfilt, 'SIZE(CONFILT) == [M, MAXFILT]', srname)
-        call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
-            & 'CONFILT does not contain NaN/-Inf', srname)
+        call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_posinf(confilt(:, 1:nfilt))), &
+            & 'CONFILT does not contain NaN/+Inf', srname)
     end if
 end if
 
@@ -203,8 +203,8 @@ if (DEBUGGING) then
     ! Check CONFILT.
     if (present(confilt)) then
         call assert(size(confilt, 1) == m .and. size(confilt, 2) == maxfilt, 'SIZE(CONFILT) == [M, MAXFILT]', srname)
-        call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_neginf(confilt(:, 1:nfilt))), &
-            & 'CONFILT does not contain NaN/-Inf', srname)
+        call assert(.not. any(is_nan(confilt(:, 1:nfilt)) .or. is_posinf(confilt(:, 1:nfilt))), &
+            & 'CONFILT does not contain NaN/+Inf', srname)
     end if
 end if
 
