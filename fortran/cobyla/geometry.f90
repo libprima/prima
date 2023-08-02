@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 PM08:22:22
+! Last Modified: Thursday, August 03, 2023 AM07:44:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -448,7 +448,7 @@ d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 ! cannot pass A from outside.
 A(:, 1:m_lcon) = amat
 A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
-!!MATLAB: A(:, 1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
+!!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
 A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
 ! CVPD and CVND are the predicted constraint violation of D and -D by the linear models.
 cvpd = maxval([ZERO, conmat(:, n + 1) + matprod(d, A(:, 1:m))])
