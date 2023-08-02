@@ -7,7 +7,7 @@
 ! 3. Check b(m+1), shouldn't it be -fval(n+1)?
 ! 4. Check the definition and name of cmax and cmin in fcratio.
 ! 5. Modify the pre/postconditions that involve constr and conmat. They now should not contain Inf
-!    rather than -Inf.
+!    rather than -Inf. This is related to `evaluate`.
 !
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -27,7 +27,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM09:50:12
+! Last Modified: Wednesday, August 02, 2023 AM10:36:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -880,18 +880,20 @@ end if
 ! Calculation starts !
 !====================!
 
-cmin = -maxval(conmat, dim=2)
-cmax = -minval(conmat, dim=2)
+! N.B.: In the original version of COBYLA, Powell proposed the ratio for constraints in the form of
+! CONSTR(X) >= 0, but the constraints we consider here are CONSTR(X) <= 0. Hence we need to change
+! the sign of the constraints before taking CMIN and CMAX.
+cmin = minval(-conmat, dim=2)
+cmax = maxval(-conmat, dim=2)
 fmin = minval(fval)
 fmax = maxval(fval)
+r = ZERO
 if (any(cmin < HALF * cmax) .and. fmin < fmax) then
     denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
     ! Powell mentioned the following alternative in Section 4 of his COBYLA paper. According to a
     ! test on 20230610, it does not make much difference to the performance.
     ! !denom = maxval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
     r = (fmax - fmin) / denom
-else
-    r = ZERO
 end if
 
 !====================!

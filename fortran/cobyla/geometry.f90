@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM09:39:42
+! Last Modified: Wednesday, August 02, 2023 AM10:13:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -398,8 +398,8 @@ character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: m
 integer(IK) :: n
 real(RP) :: A(size(simi, 1), size(conmat, 1) + 1)
-real(RP) :: cvmaxn
-real(RP) :: cvmaxp
+real(RP) :: cvnd
+real(RP) :: cvpd
 real(RP) :: vsigj
 
 ! Sizes
@@ -449,9 +449,11 @@ A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, n
 A(:, 1:size(bvec)) = amat
 !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))'; % Implicit expansion for subtraction
 A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
-cvmaxp = maxval([ZERO, matprod(d, A(:, 1:m)) + conmat(:, n + 1)])
-cvmaxn = maxval([ZERO, -matprod(d, A(:, 1:m)) + conmat(:, n + 1)])
-if (-TWO * inprod(d, A(:, m + 1)) < cpen * (cvmaxp - cvmaxn)) then
+! CVPD and CVND are the predicted constraint violation of D and -D by the linear models.
+cvpd = maxval([ZERO, conmat(:, n + 1) + matprod(d, A(:, 1:m))])
+cvnd = maxval([ZERO, conmat(:, n + 1) - matprod(d, A(:, 1:m))])
+! Take -D if the linear models predict that its merit function value is lower.
+if (-TWO * inprod(d, A(:, m + 1)) < cpen * (cvpd - cvnd)) then
     d = -d
 end if
 
