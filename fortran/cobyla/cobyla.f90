@@ -36,7 +36,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, July 21, 2023 AM09:54:11
+! Last Modified: Wednesday, August 02, 2023 AM06:03:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -472,16 +472,14 @@ if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
     constr_loc(m - m_nonlcon + 1:m) = constr0
 else
     x = moderatex(x)
-    call evaluate(calcfc, x, f, constr_loc(m - m_nonlcon + 1:m)) ! Indeed, CSTRV_LOC needs not to be evaluated.
+    call evaluate(calcfc, x, f, constr_loc(m - m_nonlcon + 1:m))
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
-! 20230720: For the moment, COBYLB handles the constraint as constraint >= 0. So we need to change the sign.
-constr_loc(m - m_nonlcon + 1:m) = -constr_loc(m - m_nonlcon + 1:m)
-constr_loc(1:m - m_nonlcon) = max(-CONSTRMAX, min(CONSTRMAX, [x(ixl) - xl_loc(ixl), xu_loc(ixu) - x(ixu), &
-& matprod(Aeq_loc, x) - beq_loc, beq_loc - matprod(Aeq_loc, x), &
-& bineq_loc - matprod(Aineq_loc, x)]))
-cstrv_loc = maxval([ZERO, -constr_loc])
+constr_loc(1:m - m_nonlcon) = max(-CONSTRMAX, min(CONSTRMAX, [xl_loc(ixl) - x(ixl), x(ixu) - xu_loc(ixu), &
+& beq_loc - matprod(Aeq_loc, x), matprod(Aeq_loc, x) - beq_loc, &
+& matprod(Aineq_loc, x) - bineq_loc]))
+cstrv_loc = maxval([ZERO, constr_loc])
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if

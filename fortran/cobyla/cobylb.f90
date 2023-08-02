@@ -4,6 +4,10 @@
 ! the extreme barrier in evaluate.
 ! 2. Modify the code so that calcfc_internal is not needed. Modify constr, conhist etc. What about
 ! defining nlconstr, lconstr, nlchist, etc?
+! 3. Check b(m+1), shouldn't it be -fval(n+1)?
+! 4. Check the definition and name of cmax and cmin in fcratio.
+! 5. Modify the pre/postconditions that involve constr and conmat. They now should not contain Inf
+!    rather than -Inf.
 !
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -23,7 +27,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM04:59:38
+! Last Modified: Wednesday, August 02, 2023 AM09:50:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -334,13 +338,13 @@ do tr = 1, maxtr
     ! Calculate the linear approximations to the objective and constraint functions, placing the
     ! objective function gradient after the constraint gradients in the array A.
     ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
-    A(:, 1:m) = -transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     A(:, 1:size(bvec)) = amat
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
     ! We set it to FVAL(N + 1) following Powell's code.
-    b = [conmat(:, n + 1), fval(n + 1)]
+    b = [-conmat(:, n + 1), fval(n + 1)]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
     d = trstlp(A, b, delta)
@@ -381,7 +385,8 @@ do tr = 1, maxtr
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc_internal, x, f, constr)
-        cstrv = maxval([ZERO, -constr])
+        constr = -constr
+        cstrv = maxval([ZERO, constr])
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
@@ -549,7 +554,8 @@ do tr = 1, maxtr
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc_internal, x, f, constr)
-        cstrv = maxval([ZERO, -constr])
+        constr = -constr
+        cstrv = maxval([ZERO, constr])
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
@@ -606,7 +612,8 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
     x = sim(:, n + 1) + d
     call evaluate(calcfc_internal, x, f, constr)
-    cstrv = maxval([ZERO, -constr])
+    constr = -constr
+    cstrv = maxval([ZERO, constr])
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
@@ -795,11 +802,11 @@ do iter = 1, n + 1_IK
 
     ! Calculate the linear approximations to the objective and constraint functions, placing the
     ! objective function gradient after the constraint gradients in the array A.
-    A(:, 1:m) = -transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
     A(:, 1:size(bvec)) = amat
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
-    b = [conmat(:, n + 1), fval(n + 1)]
+    b = [-conmat(:, n + 1), fval(n + 1)]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
     d = trstlp(A, b, delta)
@@ -873,8 +880,8 @@ end if
 ! Calculation starts !
 !====================!
 
-cmin = minval(conmat, dim=2)
-cmax = maxval(conmat, dim=2)
+cmin = -maxval(conmat, dim=2)
+cmax = -minval(conmat, dim=2)
 fmin = minval(fval)
 fmax = maxval(fval)
 if (any(cmin < HALF * cmax) .and. fmin < fmax) then

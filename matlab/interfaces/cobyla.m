@@ -465,11 +465,11 @@ else % The problem turns out 'normal' during preprima
     if output_nlchist
         % N.B.: The nonlinear constraints are sent to the Fortran backend as [-nlceq; nlceq; nlcineq].
         % See the function cobyla_con for details.
-        output.nlcihist = -conhist(end-m_nlcineq+1 : end, :);
+        output.nlcihist = conhist(end-m_nlcineq+1 : end, :);
         if isempty(output.nlcihist)
             output.nlcihist = []; % We uniformly use [] to represent empty objects
         end
-        output.nlcehist = -conhist(end-m_nlceq-m_nlcineq+1 : end-m_nlcineq, :);
+        output.nlcehist = conhist(end-m_nlceq-m_nlcineq+1 : end-m_nlcineq, :);
         if isempty(output.nlcehist)
             output.nlcehist = []; % We uniformly use [] to represent empty objects
         end
@@ -480,11 +480,11 @@ else % The problem turns out 'normal' during preprima
     if ~isempty(nonlcon)
         % N.B.: The nonlinear constraints are sent to the Fortran backend as [-nlceq; nlceq; nlcineq].
         % See the function cobyla_con for details.
-        output.nlcineq = -constr(end-m_nlcineq+1 : end);
+        output.nlcineq = constr(end-m_nlcineq+1 : end);
         if isempty(output.nlcineq)
             output.nlcineq = []; % We uniformly use [] to represent empty objects
         end
-        output.nlceq = -constr(end-m_nlceq-m_nlcineq+1 : end-m_nlcineq);
+        output.nlceq = constr(end-m_nlceq-m_nlcineq+1 : end-m_nlcineq);
         if isempty(output.nlceq)
             output.nlceq = []; % We uniformly use [] to represent empty objects
         end
