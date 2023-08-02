@@ -27,7 +27,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM11:53:29
+! Last Modified: Wednesday, August 02, 2023 PM07:12:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -343,8 +343,8 @@ do tr = 1, maxtr
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
     ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
-    ! We set it to FVAL(N + 1) following Powell's code.
-    b = [-conmat(:, n + 1), fval(n + 1)]
+    ! Powell's code sets it to FVAL(N + 1).
+    b = [-conmat(:, n + 1), ZERO]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
     d = trstlp(A, b, delta)
@@ -802,7 +802,7 @@ do iter = 1, n + 1_IK
     A(:, 1:size(bvec)) = amat
     !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
     A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
-    b = [-conmat(:, n + 1), fval(n + 1)]
+    b = [-conmat(:, n + 1), ZERO]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
     d = trstlp(A, b, delta)
