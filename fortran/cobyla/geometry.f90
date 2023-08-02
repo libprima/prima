@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM05:09:18
+! Last Modified: Wednesday, August 02, 2023 AM09:39:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -445,12 +445,12 @@ d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 ! placing the objective function gradient after the constraint gradients in the array A.
 ! N.B.: CONMAT and SIMI have been updated after the last trust-region step, but A has not. So we
 ! cannot pass A from outside.
-A(:, 1:m) = -transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
 A(:, 1:size(bvec)) = amat
 !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))'; % Implicit expansion for subtraction
 A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
-cvmaxp = maxval([ZERO, matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
-cvmaxn = maxval([ZERO, -matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
+cvmaxp = maxval([ZERO, matprod(d, A(:, 1:m)) + conmat(:, n + 1)])
+cvmaxn = maxval([ZERO, -matprod(d, A(:, 1:m)) + conmat(:, n + 1)])
 if (-TWO * inprod(d, A(:, m + 1)) < cpen * (cvmaxp - cvmaxn)) then
     d = -d
 end if
