@@ -33,7 +33,7 @@ module cobyla_mod
 ! 1. In Powell's implementation, the constraints are in the form of CONSTR(X) >= 0, whereas we
 ! consider CONSTR(X) <= 0.
 ! 2. Powell's implementation does not deal with bound and linear constraints explicitly, but we do.
-! 3. The formulation of constraints is consistent with FMINCON of MATLAB.
+! 3. Our formulation of constraints is consistent with FMINCON of MATLAB.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on the COBYLA paper and Powell's code, with
 ! modernization, bug fixes, and improvements.
@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM11:36:48
+! Last Modified: Wednesday, August 02, 2023 AM11:49:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

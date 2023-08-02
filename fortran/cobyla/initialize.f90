@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM11:28:45
+! Last Modified: Wednesday, August 02, 2023 AM11:53:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -159,7 +159,6 @@ do k = 1, n + 1_IK
         j = k - 1_IK
         x(j) = x(j) + rhobeg
         call evaluate(calcfc, x, f, constr)
-        constr = -constr
         cstrv = maxval([ZERO, constr])
     end if
 

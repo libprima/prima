@@ -27,7 +27,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM11:28:22
+! Last Modified: Wednesday, August 02, 2023 AM11:53:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -385,7 +385,6 @@ do tr = 1, maxtr
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc_internal, x, f, constr)
-        constr = -constr
         cstrv = maxval([ZERO, constr])
         nf = nf + 1_IK
 
@@ -554,7 +553,6 @@ do tr = 1, maxtr
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc_internal, x, f, constr)
-        constr = -constr
         cstrv = maxval([ZERO, constr])
         nf = nf + 1_IK
 
@@ -612,7 +610,6 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
     x = sim(:, n + 1) + d
     call evaluate(calcfc_internal, x, f, constr)
-    constr = -constr
     cstrv = maxval([ZERO, constr])
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
@@ -680,8 +677,7 @@ real(RP), intent(out) :: constr_internal(:)
 ! Local variables
 real(RP) :: constr_nlc(m - size(bvec))
 call calcfc(x_internal, f_internal, constr_nlc)
-! 20230720: For the moment, COBYLB handles the constraint as constraint >= 0. So we need to change the sign.
-constr_internal = [max(-CONSTRMAX, min(CONSTRMAX, bvec - matprod(x_internal, amat))), -constr_nlc]
+constr_internal = [max(-CONSTRMAX, min(CONSTRMAX, matprod(x_internal, amat) - bvec)), constr_nlc]
 end subroutine
 
 end subroutine cobylb
