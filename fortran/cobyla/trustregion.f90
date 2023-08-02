@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM02:05:19
+! Last Modified: Wednesday, August 02, 2023 AM10:45:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -31,6 +31,10 @@ function trstlp(A_in, b_in, delta) result(d)
 ! subject to no increase in any greatest constraint violation. This notation allows the gradient of
 ! the objective function to be regarded as the gradient of a constraint. Therefore the two stages
 ! are distinguished by MCON == M and MCON > M respectively.
+!
+! N.B.: In Powell's implementation, the constraints are dot_product(A(1:N, K), D) >= B(K), and the
+! second stage minimizes dot_product(-A(1:N, M+1), D). In other words, the A and B in our
+! implementation are the negative of those in Powell's implementation.
 !
 ! It is possible but rare that a degeneracy may prevent D from attaining the target length DELTA.
 !

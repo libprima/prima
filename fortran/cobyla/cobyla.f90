@@ -29,6 +29,10 @@ module cobyla_mod
 ! constraints together into a single penalty function. The name of the subroutine is derived from
 ! the phrase Constrained Optimization BY Linear Approximations.
 !
+! N.B.: In Powell's implementation, the constraints are in the form of CONSTR(X) >= 0, whereas we
+! consider CONSTR(X) <= 0. In addition, Powell's implementation does not deal with bound and linear
+! constraints explicitly, whereas we do.
+!
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on the COBYLA paper and Powell's code, with
 ! modernization, bug fixes, and improvements.
 !
@@ -36,7 +40,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM06:03:38
+! Last Modified: Wednesday, August 02, 2023 AM10:43:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
