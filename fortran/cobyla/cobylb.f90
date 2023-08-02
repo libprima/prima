@@ -27,7 +27,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM10:36:46
+! Last Modified: Wednesday, August 02, 2023 AM11:28:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -55,7 +55,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, TENTH, 
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
@@ -258,7 +258,7 @@ if (subinfo /= INFO_DFT) then
         call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
             & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
         call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
-            & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
+            & is_posinf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/+Inf', srname)
         call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
         call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
             & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
@@ -657,7 +657,7 @@ if (DEBUGGING) then
     call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
         & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
     call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
-        & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
+        & is_posinf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/+Inf', srname)
     call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
     call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
         & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
@@ -696,7 +696,7 @@ function getcpen(amat, bvec, conmat_in, cpen_in, cval_in, delta, fval_in, rho, s
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite, is_neginf, is_posinf, is_nan
+use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isinv
 
@@ -750,11 +750,11 @@ if (DEBUGGING) then
     call assert(size(amat, 1) == n .and. size(amat, 2) == size(bvec), 'SIZE(AMAT) == [N, SIZE(BVEC)]', srname)
     call assert(cpen_in > 0, 'CPEN > 0', srname)
     call assert(size(conmat_in, 1) == m .and. size(conmat_in, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
-    call assert(.not. any(is_nan(conmat_in) .or. is_neginf(conmat_in)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(.not. any(is_nan(conmat_in) .or. is_posinf(conmat_in)), 'CONMAT does not contain NaN/+Inf', srname)
     call assert(size(cval_in) == n + 1 .and. .not. any(cval_in < 0 .or. is_nan(cval_in) .or. is_posinf(cval_in)), &
         & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
     call assert(size(fval_in) == n + 1 .and. .not. any(is_nan(fval_in) .or. is_posinf(fval_in)), &
-        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
+        & 'SIZE(FVAL) == N+1 and FVAL does not contain NaN/+Inf', srname)
     call assert(size(sim_in, 1) == n .and. size(sim_in, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim_in)), 'SIM is finite', srname)
     call assert(all(maxval(abs(sim_in(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
@@ -853,6 +853,7 @@ function fcratio(conmat, fval) result(r)
 
 use, non_intrinsic :: consts_mod, only : RP, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 implicit none
 
 ! Inputs
@@ -874,6 +875,8 @@ character(len=*), parameter :: srname = 'FCRATIO'
 if (DEBUGGING) then
     call assert(size(fval) >= 1, 'SIZE(FVAL) >= 1', srname)
     call assert(size(conmat, 2) == size(fval), 'SIZE(CONMAT, 2) == SIZE(FVAL)', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_posinf(conmat)), 'CONMAT does not contain NaN/+Inf', srname)
+    call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL does not contain NaN/+Inf', srname)
 end if
 
 !====================!
@@ -882,7 +885,7 @@ end if
 
 ! N.B.: In the original version of COBYLA, Powell proposed the ratio for constraints in the form of
 ! CONSTR(X) >= 0, but the constraints we consider here are CONSTR(X) <= 0. Hence we need to change
-! the sign of the constraints before taking CMIN and CMAX.
+! the sign of the constraints before defining CMIN and CMAX.
 cmin = minval(-conmat, dim=2)
 cmax = maxval(-conmat, dim=2)
 fmin = minval(fval)

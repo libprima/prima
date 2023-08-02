@@ -29,9 +29,11 @@ module cobyla_mod
 ! constraints together into a single penalty function. The name of the subroutine is derived from
 ! the phrase Constrained Optimization BY Linear Approximations.
 !
-! N.B.: In Powell's implementation, the constraints are in the form of CONSTR(X) >= 0, whereas we
-! consider CONSTR(X) <= 0. In addition, Powell's implementation does not deal with bound and linear
-! constraints explicitly, whereas we do.
+! N.B.:
+! 1. In Powell's implementation, the constraints are in the form of CONSTR(X) >= 0, whereas we
+! consider CONSTR(X) <= 0.
+! 2. Powell's implementation does not deal with bound and linear constraints explicitly, but we do.
+! 3. The formulation of constraints is consistent with FMINCON of MATLAB.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net) based on the COBYLA paper and Powell's code, with
 ! modernization, bug fixes, and improvements.
@@ -40,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM10:43:05
+! Last Modified: Wednesday, August 02, 2023 AM11:36:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -258,7 +260,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, TEN, TENTH, EP
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
 use, non_intrinsic :: history_mod, only : prehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_neginf, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INVALID_INPUT
 use, non_intrinsic :: linalg_mod, only : trueloc, matprod
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -713,7 +715,7 @@ if (DEBUGGING) then
     if (present(conhist)) then
         !call assert(size(conhist, 1) == m_nonlcon .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M_NONLCON, NHIST]', srname)
         call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M_NONLCON, NHIST]', srname)
-        call assert(.not. any(is_nan(conhist) .or. is_neginf(conhist)), 'CONHIST does not contain NaN/-Inf', srname)
+        call assert(.not. any(is_nan(conhist) .or. is_posinf(conhist)), 'CONHIST does not contain NaN/+Inf', srname)
     end if
     if (present(fhist) .and. present(chist)) then
         call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv_loc, ctol_loc)), &
