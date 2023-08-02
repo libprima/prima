@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Thursday, July 20, 2023 AM11:09:28
+! Last Modified: Wednesday, August 02, 2023 PM12:26:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -71,7 +71,8 @@ end function moderatef
 function moderatec(c) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function moderates the constraint value, the constraint demanding this value to be NONNEGATIVE.
-! It replaces NaN and any value below -CONSTRMAX by -CONSTRMAX, and any value above CONSTRMAX by CONSTRMAX.
+! It replaces any value below -CONSTRMAX by -CONSTRMAX, and any NaN or value above CONSTRMAX by
+! CONSTRMAX.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, CONSTRMAX
 use, non_intrinsic :: infnan_mod, only : is_nan
@@ -84,7 +85,7 @@ real(RP), intent(in) :: c(:)
 real(RP) :: y(size(c))
 
 y = c
-y(trueloc(is_nan(c))) = -CONSTRMAX
+y(trueloc(is_nan(c))) = CONSTRMAX
 y = max(-CONSTRMAX, min(CONSTRMAX, y))
 end function moderatec
 
@@ -149,14 +150,13 @@ end subroutine evaluatef
 
 subroutine evaluatefc(calcfc, x, f, constr)
 !--------------------------------------------------------------------------------------------------!
-! This function evaluates CALCFC at X, setting F to the objective function value, CONSTR to the
-! constraint value, and CSTRV to the constraint violation. Nan/Inf are handled by a moderated
-! extreme barrier.
+! This function evaluates CALCFC at X, setting F to the objective function value and CONSTR to the
+! constraint value. Nan/Inf are handled by a moderated extreme barrier.
 !--------------------------------------------------------------------------------------------------!
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 implicit none
 
@@ -203,10 +203,9 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     ! With X not containing NaN, and with the moderated extreme barrier, F cannot be NaN/+Inf, and
-    ! CONSTR cannot be NaN/-Inf.
+    ! CONSTR cannot be NaN/+Inf.
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
-    call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), &
-        & 'CONSTR does not contain NaN/-Inf', srname)
+    call assert(.not. any(is_nan(constr) .or. is_posinf(constr)), 'CONSTR does not contain NaN/+Inf', srname)
 end if
 
 end subroutine evaluatefc
