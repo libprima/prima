@@ -1,5 +1,5 @@
-!TODO: Modify the code so that calcfc_internal is not needed. Modify constr, conhist etc. What about
-! defining nlconstr, lconstr, nlchist, etc?
+! TODO: Modify the code so that calcfc_internal is not needed? If yes, modify constr, conhist etc.
+! What about defining nlconstr, lconstr, nlchist, etc?
 !
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -19,7 +19,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM09:09:32
+! Last Modified: Thursday, August 03, 2023 AM10:36:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -656,17 +656,18 @@ contains
 
 
 subroutine calcfc_internal(x_internal, f_internal, constr_internal)
+!--------------------------------------------------------------------------------------------------!
+! This internal subroutine evaluates the objective function and ALL the constraints.
+!--------------------------------------------------------------------------------------------------!
 implicit none
 ! Inputs
 real(RP), intent(in) :: x_internal(:)
 ! Outputs
 real(RP), intent(out) :: f_internal
 real(RP), intent(out) :: constr_internal(:)
-! Local variables
-real(RP) :: constr_nlc(m - size(bvec))
-call calcfc(x_internal, f_internal, constr_nlc)
-constr_internal = [matprod(x_internal, amat) - bvec, constr_nlc]
-end subroutine
+constr_internal(1:m_lcon) = matprod(x_internal, amat) - bvec
+call calcfc(x_internal, f_internal, constr_internal(m_lcon + 1:m))
+end subroutine calcfc_internal
 
 end subroutine cobylb
 

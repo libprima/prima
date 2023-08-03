@@ -13,7 +13,7 @@ public :: cobyla
 contains
 
 
-subroutine cobyla(calcfc, m_nonlcon, x, f, &
+subroutine cobyla(calcfc, m_nlcon, x, f, &
     & cstrv, constr, &
     & Aineq, bineq, &
     & Aeq, beq, &
@@ -46,7 +46,7 @@ implicit none
 procedure(OBJCON) :: calcfc
 real(RP), intent(inout) :: x(:)
 real(RP), intent(out) :: f
-integer(IK), intent(in) :: m_nonlcon
+integer(IK), intent(in) :: m_nlcon
 
 ! Optional inputs
 integer(IK), intent(in), optional :: iprint
@@ -57,7 +57,7 @@ real(RP), intent(in), optional :: Aeq(:, :)  ! Aeq(Meq, N)
 real(RP), intent(in), optional :: Aineq(:, :)  ! Aineq(Mineq, N)
 real(RP), intent(in), optional :: beq(:)  ! Beq(Meq)
 real(RP), intent(in), optional :: bineq(:)  ! Bineq(Mineq)
-real(RP), intent(in), optional :: constr0(:)    ! CONSTR0(M_NONLCON)
+real(RP), intent(in), optional :: constr0(:)    ! CONSTR0(M_NLCON)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
@@ -144,7 +144,7 @@ if (present(xu)) then
 else
     mxu = 0
 end if
-m = mxu + mxl + 2_IK * meq + mineq + m_nonlcon
+m = mxu + mxl + 2_IK * meq + mineq + m_nlcon
 n = int(size(x), kind(n))
 
 ! Preconditions
@@ -166,13 +166,13 @@ if (DEBUGGING) then
     call assert(present(f0) .eqv. present(constr0), 'F0 and CONSTR0 are both present or both absent', srname)
 end if
 
-! Exit if the size of CONSTR0 is inconsistent with M_NONLCON.
+! Exit if the size of CONSTR0 is inconsistent with M_NLCON.
 if (present(constr0)) then
-    if (size(constr0) /= m_nonlcon) then
+    if (size(constr0) /= m_nlcon) then
         if (DEBUGGING) then
-            call errstop(srname, 'SIZE(CONSTR0) /= M_NONLCON. Exiting')
+            call errstop(srname, 'SIZE(CONSTR0) /= M_NLCON. Exiting')
         else
-            call warning(srname, 'SIZE(CONSTR0) /= M_NONLCON. Exiting')
+            call warning(srname, 'SIZE(CONSTR0) /= M_NLCON. Exiting')
             return
         end if
     end if
@@ -454,7 +454,7 @@ real(RP), intent(in) :: x_internal(:)
 real(RP), intent(out) :: f_internal
 real(RP), intent(out) :: constr_internal(:)
 ! Local variables
-real(RP) :: constr_nlc(m_nonlcon)
+real(RP) :: constr_nlc(m_nlcon)
 
 call calcfc(x_internal, f_internal, constr_nlc)
 constr_internal = [x_internal(ixl) - xl_loc(ixl), xu_loc(ixu) - x_internal(ixu), &

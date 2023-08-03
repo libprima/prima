@@ -8,10 +8,10 @@ module cobyla_mod
 !
 ! COBYLA approximately solves
 !
-!   min F(X) subject to CONSTR(X) <= 0, Aineq*X <= Bineq, Aeq*x = Beq, XL <= X <= XU,
+!   min F(X) subject to NLCONSTR(X) <= 0, Aineq*X <= Bineq, Aeq*x = Beq, XL <= X <= XU,
 !
 ! where X is a vector of variables that has N components, F is a real-valued objective function, and
-! CONSTR(X) is an M_NONLCON-dimensional vector-valued mapping representing the nonlinear constraints,
+! NLCONSTR(X) is an M_NLCON-dimensional vector-valued mapping representing the nonlinear constraints,
 ! Aineq is an Mineq-by-N matrix, Bineq is an Mineq-dimensional real vector, Aeq is an Meq-by-N
 ! matrix, Beq is an Meq-dimensional real vector, XL is an N-dimensional real vector, and XU is an
 ! N-dimensional real vector.
@@ -31,7 +31,7 @@ module cobyla_mod
 !
 ! N.B.:
 ! 1. In Powell's implementation, the constraints are in the form of CONSTR(X) >= 0, whereas we
-! consider CONSTR(X) <= 0.
+! consider CONSTR(X) <= 0, where CONSTR is a vector-valued function that wraps all constraints.
 ! 2. Powell's implementation does not deal with bound and linear constraints explicitly, but we do.
 ! 3. Our formulation of constraints is consistent with FMINCON of MATLAB.
 !
@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM09:13:16
+! Last Modified: Thursday, August 03, 2023 AM10:35:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,31 +53,31 @@ public :: cobyla
 contains
 
 
-subroutine cobyla(calcfc, m_nonlcon, x, f, &
+subroutine cobyla(calcfc, m_nlcon, x, f, &
     & cstrv, constr, &
     & Aineq, bineq, &
     & Aeq, beq, &
     & xl, xu, &
-    & f0, constr0, &
+    & f0, nlconstr0, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, conhist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
-! Among all the arguments, only CALCFC, M_NONLCON, X, and F are obligatory. The others are
+! Among all the arguments, only CALCFC, M_NLCON, X, and F are obligatory. The others are
 ! OPTIONAL and you can neglect them unless you are familiar with the algorithm. Any unspecified
 ! optional input will take the default value detailed below. For instance, we may invoke the
 ! solver as follows.
 !
-! ! First define CALCFC, M_NONLCON, and X, and then do the following.
-! call cobyla(calcfc, m_nonlcon, x, f)
+! ! First define CALCFC, M_NLCON, and X, and then do the following.
+! call cobyla(calcfc, m_nlcon, x, f)
 !
 ! or
 !
-! ! First define CALCFC, M_NONLCON, and X, and then do the following.
-! call cobyla(calcfc, m_nonlcon, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! ! First define CALCFC, M_NLCON, and X, and then do the following.
+! call cobyla(calcfc, m_nlcon, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! ! IMPORTANT NOTICE: The user must set M_NONLCON correctly to the number of nonlinear constraints,
-! ! namely the size of CONSTR introduced below. Set it to 0 if there is no nonlinear constraint.
+! ! IMPORTANT NOTICE: The user must set M_NLCON correctly to the number of nonlinear constraints,
+! ! namely the size of NLCONSTR introduced below. Set it to 0 if there is no nonlinear constraint.
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 ! See examples/cobyla_exmp.f90 for a concrete example.
@@ -90,28 +90,28 @@ subroutine cobyla(calcfc, m_nonlcon, x, f, &
 !
 ! CALCFC
 !   Input, subroutine.
-!   CALCFC(X, F, CONSTR) should evaluate the objective function and nonlinear constraints at the
+!   CALCFC(X, F, NLCONSTR) should evaluate the objective function and nonlinear constraints at the
 !   given REAL(RP) vector X; it should set the objective function value to the REAL(RP) scalar F
-!   and the nonlinear constraint value to the REAL(RP) vector CONSTR. It must be provided by the
+!   and the nonlinear constraint value to the REAL(RP) vector NLCONSTR. It must be provided by the
 !   user, and its definition must conform to the following interface:
 !   !-------------------------------------------------------------------------!
-!    subroutine calcfc(x, f, constr)
+!    subroutine calcfc(x, f, nlconstr)
 !    real(RP), intent(in) :: x(:)
 !    real(RP), intent(out) :: f
-!    real(RP), intent(out) :: constr(:)
+!    real(RP), intent(out) :: nlconstr(:)
 !    end subroutine calcfc
 !   !-------------------------------------------------------------------------!
-!   Besides, the subroutine should NOT access CONSTR beyond CONSTR(1:M_NONLCON), where M_NONLCON
+!   Besides, the subroutine should NOT access NLCONSTR beyond NLCONSTR(1:M_NLCON), where M_NLCON
 !   is the second compulsory argument (see below), signifying the number of nonlinear constraints.
 !
-! M_NONLCON
+! M_NLCON
 !   Input, INTEGER(IK) scalar.
-!   M_NONLCON must be set to the number of nonlinear constraints, namely the size of CONSTR(X).
+!   M_NLCON must be set to the number of nonlinear constraints, namely the size of NLCONSTR(X).
 !   N.B.:
-!   1. M_NONLCON must be specified correctly, or the program will crash!!!
-!   2. Why don't we define M_NONLCON as optional and default it to 0 when it is absent? This is
-!   because we need to allocate memory for CONSTR_LOC according to M_NONLCON. To ensure that the
-!   size of CONSTR_LOC is correct, we require the user to specify M_NONLCON explicitly.
+!   1. M_NLCON must be specified correctly, or the program will crash!!!
+!   2. Why don't we define M_NLCON as optional and default it to 0 when it is absent? This is
+!   because we need to allocate memory for CONSTR_LOC using M_NLCON. To ensure that the size of
+!   CONSTR_LOC is correct, we require the user to specify M_NLCON explicitly.
 !
 ! X
 !   Input and output, REAL(RP) vector.
@@ -125,11 +125,11 @@ subroutine cobyla(calcfc, m_nonlcon, x, f, &
 ! CSTRV
 !   Output, REAL(RP) scalar.
 !   CSTRV will be set to the constraint violation of X at exit, i.e.,
-!   MAXVAL([0, XL - X, X - XU, Aineq*X - Bineq, ABS(Aeq*X -Beq), CONSTR(X)]).
+!   MAXVAL([0, XL - X, X - XU, Aineq*X - Bineq, ABS(Aeq*X -Beq), NLCONSTR(X)]).
 !
 ! CONSTR
 !   Output, ALLOCATABLE REAL(RP) vector.
-!   CONSTR will be set to the nonlinear constraint value of X at exit.
+!   CONSTR will be set to the constraint value of X at exit.
 !
 ! Aineq, Bineq
 !   Input, REAL(RP) matrix of size [Mineq, N] and REAL vector of size Mineq unless they are both
@@ -149,10 +149,10 @@ subroutine cobyla(calcfc, m_nonlcon, x, f, &
 !   Input, REAL(RP) scalar.
 !   F0, if present, should be set to the objective function value of the starting X.
 !
-! CONSTR0
+! NLCONSTR0
 !   Input, REAL(RP) vector.
-!   CONSTR0, if present, should be set to the nonlinear constraint value at the starting X; in
-!   addition, SIZE(CONSTR0) must be M_NONLCON, or the solver will abort.
+!   NLCONSTR0, if present, should be set to the nonlinear constraint value at the starting X; in
+!   addition, SIZE(NLCONSTR0) must be M_NLCON, or the solver will abort.
 !
 ! NF
 !   Output, INTEGER(IK) scalar.
@@ -220,7 +220,7 @@ subroutine cobyla(calcfc, m_nonlcon, x, f, &
 !   while setting MAXHIST = MAXFUN requests XHIST/FHIST/CHIST/CONHIST to output all the history.
 !   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST)); if FHIST is present, its
 !   size at exit will be min(NF, MAXHIST); if CHIST is present, its size at exit will be
-!   min(NF, MAXHIST); if CONHIST is present, its size at exit will be (M_NONLCON, min(NF, MAXHIST)).
+!   min(NF, MAXHIST); if CONHIST is present, its size at exit will be (M_NLCON, min(NF, MAXHIST)).
 !
 !   IMPORTANT NOTICE:
 !   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
@@ -278,7 +278,7 @@ implicit none
 procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)     ! X(N)
 real(RP), intent(out) :: f
-integer(IK), intent(in) :: m_nonlcon
+integer(IK), intent(in) :: m_nlcon
 
 ! Optional inputs
 integer(IK), intent(in), optional :: iprint
@@ -289,7 +289,7 @@ real(RP), intent(in), optional :: Aeq(:, :)  ! Aeq(Meq, N)
 real(RP), intent(in), optional :: Aineq(:, :)  ! Aineq(Mineq, N)
 real(RP), intent(in), optional :: beq(:)  ! Beq(Meq)
 real(RP), intent(in), optional :: bineq(:)  ! Bineq(Mineq)
-real(RP), intent(in), optional :: constr0(:)    ! CONSTR0(M_NONLCON)
+real(RP), intent(in), optional :: nlconstr0(:)    ! NLCONSTR0(M_NLCON)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
@@ -307,8 +307,8 @@ real(RP), intent(in), optional :: xu(:)  ! XU(N)
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
 real(RP), intent(out), allocatable, optional :: chist(:)    ! CHIST(MAXCHIST)
-real(RP), intent(out), allocatable, optional :: conhist(:, :)   ! CONHIST(M_NONLCON, MAXCONHIST)
-real(RP), intent(out), allocatable, optional :: constr(:)   ! CONSTR(M_NONLCON)
+real(RP), intent(out), allocatable, optional :: conhist(:, :)   ! CONHIST(M_NLCON, MAXCONHIST)
+real(RP), intent(out), allocatable, optional :: constr(:)   ! CONSTR(M_NLCON)
 real(RP), intent(out), allocatable, optional :: fhist(:)    ! FHIST(MAXFHIST)
 real(RP), intent(out), allocatable, optional :: xhist(:, :) ! XHIST(N, MAXXHIST)
 real(RP), intent(out), optional :: cstrv
@@ -348,8 +348,8 @@ real(RP), allocatable :: beq_loc(:)  ! Beq_LOC(Meq)
 real(RP), allocatable :: bineq_loc(:)  ! Bineq_LOC(Mineq)
 real(RP), allocatable :: bvec(:)  ! BVEC(M_LCON)
 real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
-real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M_NONLCON, MAXCONHIST)
-real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M_NONLCON)
+real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M_NLCON, MAXCONHIST)
+real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M_NLCON)
 real(RP), allocatable :: fhist_loc(:)   ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 real(RP), allocatable :: xl_loc(:)  ! XL_LOC(N)
@@ -376,7 +376,7 @@ if (present(xu)) then
 else
     mxu = 0
 end if
-m = mxu + mxl + 2_IK * meq + mineq + m_nonlcon
+m = mxu + mxl + 2_IK * meq + mineq + m_nlcon
 n = int(size(x), kind(n))
 
 ! Preconditions
@@ -401,16 +401,16 @@ if (DEBUGGING) then
     if (present(xu)) then
         call assert(size(xu) == n .or. size(xu) == 0, 'SIZE(XU) == N unless XU is empty', srname)
     end if
-    call assert(present(f0) .eqv. present(constr0), 'F0 and CONSTR0 are both present or both absent', srname)
+    call assert(present(f0) .eqv. present(nlconstr0), 'F0 and NLCONSTR0 are both present or both absent', srname)
 end if
 
-! Exit if the size of CONSTR0 is inconsistent with M_NONLCON.
-if (present(constr0)) then
-    if (size(constr0) /= m_nonlcon) then
+! Exit if the size of NLCONSTR0 is inconsistent with M_NLCON.
+if (present(nlconstr0)) then
+    if (size(nlconstr0) /= m_nlcon) then
         if (DEBUGGING) then
-            call errstop(srname, 'SIZE(CONSTR0) /= M_NONLCON. Exiting', INVALID_INPUT)
+            call errstop(srname, 'SIZE(NLCONSTR0) /= M_NLCON. Exiting', INVALID_INPUT)
         else
-            call warning(srname, 'SIZE(CONSTR0) /= M_NONLCON. Exiting')
+            call warning(srname, 'SIZE(NLCONSTR0) /= M_NLCON. Exiting')
             return  ! This may be problematic, as outputs like F are undefined.
         end if
     end if
@@ -467,23 +467,20 @@ ixu = trueloc(xu_loc < REALMAX)
 call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, xl_loc, xu_loc, amat, bvec)
 
 ! Allocate memory for CONSTR_LOC.
-!call safealloc(constr_loc, m_nonlcon)  ! NOT removable even in F2003!
 call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 
 ! If the user provides the function & nonlinear constraint value at X0, then set up [F, CONSTR_LOC]
 ! to them. Otherwise, set [F, CONSTR_LOC] = [F(X0), CONSTR(X0)], so COBYLB only needs one interface.
-if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
+constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)
+if (present(f0) .and. present(nlconstr0) .and. all(is_finite(x))) then
     f = f0
-    !constr_loc = constr0
-    constr_loc(m - m_nonlcon + 1:m) = constr0
+    constr_loc(m - m_nlcon + 1:m) = nlconstr0
 else
     x = moderatex(x)
-    call evaluate(calcfc, x, f, constr_loc(m - m_nonlcon + 1:m))
+    call evaluate(calcfc, x, f, constr_loc(m - m_nlcon + 1:m))
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
-constr_loc(1:m - m_nonlcon) = moderatec([xl_loc(ixl) - x(ixl), x(ixu) - xu_loc(ixu), &
-    & beq_loc - matprod(Aeq_loc, x), matprod(Aeq_loc, x) - beq_loc, matprod(Aineq_loc, x) - bineq_loc])
 cstrv_loc = maxval([constr_loc, ZERO])
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
@@ -592,11 +589,10 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 
 ! Further revise MAXHIST_LOC according to MAXHISTMEM, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
-! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M_NONLCON, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST =
+! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M_NLCON, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST =
 ! NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for the history not requested.
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc, &
     & present(chist), chist_loc, m, present(conhist), conhist_loc)
-!    & present(chist), chist_loc, m_nonlcon, present(conhist), conhist_loc)
 
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
@@ -615,7 +611,6 @@ deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec, xl_loc, xu_loc)
 ! Copy CONSTR_LOC to CONSTR if needed.
 if (present(constr)) then
     !------------------------------------------------------!
-    !call safealloc(constr, m_nonlcon)  ! Removable in F2003.
     call safealloc(constr, m)  ! Removable in F2003.
     !------------------------------------------------------!
     constr = constr_loc
@@ -681,7 +676,6 @@ deallocate (chist_loc)
 if (present(conhist)) then
     nhist = min(nf_loc, int(size(conhist_loc, 2), IK))
     !---------------------------------------------------------------!
-    !call safealloc(conhist, m_nonlcon, nhist)  ! Removable in F2003.
     call safealloc(conhist, m, nhist)  ! Removable in F2003.
     !---------------------------------------------------------------!
     conhist = conhist_loc(:, 1:nhist)  ! The same as XHIST, we must cap CONHIST at NF_LOC.
@@ -712,8 +706,7 @@ if (DEBUGGING) then
             & 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
     end if
     if (present(conhist)) then
-        !call assert(size(conhist, 1) == m_nonlcon .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M_NONLCON, NHIST]', srname)
-        call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M_NONLCON, NHIST]', srname)
+        call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M_NLCON, NHIST]', srname)
         call assert(.not. any(is_nan(conhist) .or. is_posinf(conhist)), 'CONHIST does not contain NaN/+Inf', srname)
     end if
     if (present(fhist) .and. present(chist)) then
