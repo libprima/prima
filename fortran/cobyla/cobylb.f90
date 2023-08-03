@@ -1,11 +1,5 @@
-!TODO:
-! 1. Modify evaluate, trstlp, geostep etc so that the nonlinear constraint becomes constr(x) <= 0.
-! N.B.:  Remember to modify the definition of nlceq, nlcehist, etc in cobyla.m. Remember to modify
-! the extreme barrier in evaluate.
-! 2. Modify the code so that calcfc_internal is not needed. Modify constr, conhist etc. What about
+!TODO: Modify the code so that calcfc_internal is not needed. Modify constr, conhist etc. What about
 ! defining nlconstr, lconstr, nlchist, etc?
-! 3. Modify the pre/postconditions that involve constr and conmat. They now should not contain Inf
-!    rather than -Inf. This is related to `evaluate`.
 !
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -25,7 +19,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM08:46:55
+! Last Modified: Thursday, August 03, 2023 AM09:09:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -49,7 +43,7 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, et
 ! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, TENTH, EPS, REALMAX, &
-    & DEBUGGING, MIN_MAXFILT, CONSTRMAX
+    & DEBUGGING, MIN_MAXFILT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -671,7 +665,7 @@ real(RP), intent(out) :: constr_internal(:)
 ! Local variables
 real(RP) :: constr_nlc(m - size(bvec))
 call calcfc(x_internal, f_internal, constr_nlc)
-constr_internal = [max(-CONSTRMAX, min(CONSTRMAX, matprod(x_internal, amat) - bvec)), constr_nlc]
+constr_internal = [matprod(x_internal, amat) - bvec, constr_nlc]
 end subroutine
 
 end subroutine cobylb
