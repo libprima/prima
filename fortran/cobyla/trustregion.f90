@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM08:45:13
+! Last Modified: Thursday, August 03, 2023 AM09:14:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -112,8 +112,8 @@ end if
 
 ! Form A_aug and B_aug. This allows the gradient of the objective function to be regarded as the
 ! gradient of a constraint in the second stage.
-A_aug = reshape([A, g], [n, m + 1_IK])
-b_aug = [b, ZERO]
+A_aug = reshape([A, g], [n, m + 1_IK])  !!MATLAB: A_aug = [A, g];
+b_aug = [b, ZERO]  !!MATLAB: b_aug = [b; 0];
 
 ! Scale the problem if A_aug contains large values. Otherwise, floating point exceptions may occur.
 ! Note that the trust-region step is scale invariant.

@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM08:44:46
+! Last Modified: Thursday, August 03, 2023 AM09:51:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -366,7 +366,7 @@ function geostep(jdrop, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamm
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm
@@ -450,7 +450,7 @@ A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat
 cvpd = maxval([ZERO, conmat(:, n + 1) + matprod(d, A)])
 cvnd = maxval([ZERO, conmat(:, n + 1) - matprod(d, A)])
 ! Take -D if the linear models predict that its merit function value is lower.
-if (-TWO * inprod(d, g) < cpen * (cvpd - cvnd)) then
+if (-inprod(d, g) + cpen * cvnd < inprod(d, g) + cpen * cvpd) then
     d = -d
 end if
 

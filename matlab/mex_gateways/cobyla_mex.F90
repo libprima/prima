@@ -11,7 +11,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Thursday, July 20, 2023 AM10:26:03
+! Last Modified: Thursday, August 03, 2023 AM09:59:17
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -21,7 +21,7 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! This is the entry point to the Fortran MEX function. If the compiled MEX file is named as
 ! FUNCTION_NAME.mex*** (extension depends on the platform), then in MATLAB we can call:
 ! [x, f, cstrv, constr, info, nf, xhist, fhist, chist, conhist] = ...
-!   FUNCTION_NAME(funcon, x0, f0, constr0, Aineq, bineq, Aeq, beq, lb, ub, rhobeg, rhoend, ...
+!   FUNCTION_NAME(funcon, x0, f0, nlconstr0, Aineq, bineq, Aeq, beq, lb, ub, rhobeg, rhoend, ...
 !   eta1, eta2, gamma1, gamma2, ftarget, ctol, cweight, maxfun, iprint, maxhist, output_xhist, ...
 !   output_conhist, maxfilt)
 !--------------------------------------------------------------------------------------------------!
@@ -48,7 +48,7 @@ mwPointer, intent(out) :: poutput(nargout)
 ! Local variables
 integer(IK) :: info
 integer(IK) :: iprint
-integer(IK) :: m
+integer(IK) :: m_nlcon
 integer(IK) :: maxfilt
 integer(IK) :: maxfun
 integer(IK) :: maxhist
@@ -75,7 +75,7 @@ real(RP), allocatable :: bineq(:)
 real(RP), allocatable :: chist(:)
 real(RP), allocatable :: conhist(:, :)
 real(RP), allocatable :: constr(:)
-real(RP), allocatable :: constr0(:)
+real(RP), allocatable :: nlconstr0(:)
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: lb(:)
 real(RP), allocatable :: ub(:)
@@ -93,7 +93,7 @@ call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
 funcon_ptr = pinput(1)  ! FUNCON_PTR is a pointer to the function handle
 call fmxReadMPtr(pinput(2), x)
 call fmxReadMPtr(pinput(3), f0)
-call fmxReadMPtr(pinput(4), constr0)
+call fmxReadMPtr(pinput(4), nlconstr0)
 call fmxReadMPtr(pinput(5), Aineq)
 call fmxReadMPtr(pinput(6), bineq)
 call fmxReadMPtr(pinput(7), Aeq)
@@ -117,28 +117,28 @@ call fmxReadMPtr(pinput(24), output_conhist)
 call fmxReadMPtr(pinput(25), maxfilt)
 
 ! Get the sizes
-m = int(size(constr0), kind(m))  ! M is a compulsory input of the Fortran code.
+m_nlcon = int(size(nlconstr0), kind(m_nlcon))  ! M_NLCON is a compulsory input of the Fortran code.
 
 ! Call the Fortran code
 ! There are different cases because XHIST/CONHIST may or may not be passed to the Fortran code.
 if (output_xhist .and. output_conhist) then
-    call cobyla(calcfc, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
-        & f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
+    call cobyla(calcfc, m_nlcon, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
+        & f0, nlconstr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
         & gamma1, gamma2, xhist=xhist, fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, &
         & maxfilt=maxfilt, info=info)
 elseif (output_xhist) then
-    call cobyla(calcfc, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
-        & f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
+    call cobyla(calcfc, m_nlcon, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
+        & f0, nlconstr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
         & gamma1, gamma2, xhist=xhist, fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, &
         & info=info)
 elseif (output_conhist) then
-    call cobyla(calcfc, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
-        & f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
+    call cobyla(calcfc, m_nlcon, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
+        & f0, nlconstr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
         & gamma1, gamma2, fhist=fhist, chist=chist, conhist=conhist, maxhist=maxhist, &
         & maxfilt=maxfilt, info=info)
 else
-    call cobyla(calcfc, m, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
-        & f0, constr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
+    call cobyla(calcfc, m_nlcon, x, f, cstrv, constr, Aineq, bineq, Aeq, beq, lb, ub, &
+        & f0, nlconstr0, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, &
         & gamma1, gamma2, fhist=fhist, chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 end if
 
@@ -169,7 +169,7 @@ call fmxWriteMPtr(conhist(:, 1:min(int(nf), size(conhist, 2))), poutput(10))
 
 ! Free memory. Indeed, automatic deallocation would take place.
 deallocate (x) ! Allocated by fmxReadMPtr.
-deallocate (constr0)  ! Allocated by fmxReadMPtr.
+deallocate (nlconstr0)  ! Allocated by fmxReadMPtr.
 deallocate (Aineq) ! Allocated by fmxReadMPtr.
 deallocate (bineq) ! Allocated by fmxReadMPtr.
 deallocate (Aeq) ! Allocated by fmxReadMPtr.
