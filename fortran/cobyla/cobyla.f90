@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM10:35:50
+! Last Modified: Friday, August 04, 2023 AM01:44:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -54,13 +54,13 @@ contains
 
 
 subroutine cobyla(calcfc, m_nlcon, x, f, &
-    & cstrv, constr, &
+    & cstrv, nlconstr, &
     & Aineq, bineq, &
     & Aeq, beq, &
     & xl, xu, &
     & f0, nlconstr0, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
-    & xhist, fhist, chist, conhist, maxhist, maxfilt, info)
+    & xhist, fhist, chist, nlchist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALCFC, M_NLCON, X, and F are obligatory. The others are
 ! OPTIONAL and you can neglect them unless you are familiar with the algorithm. Any unspecified
@@ -127,9 +127,9 @@ subroutine cobyla(calcfc, m_nlcon, x, f, &
 !   CSTRV will be set to the constraint violation of X at exit, i.e.,
 !   MAXVAL([0, XL - X, X - XU, Aineq*X - Bineq, ABS(Aeq*X -Beq), NLCONSTR(X)]).
 !
-! CONSTR
+! NLCONSTR
 !   Output, ALLOCATABLE REAL(RP) vector.
-!   CONSTR will be set to the constraint value of X at exit.
+!   NLCONSTR will be set to the nonlinear constraint value of X at exit.
 !
 ! Aineq, Bineq
 !   Input, REAL(RP) matrix of size [Mineq, N] and REAL vector of size Mineq unless they are both
@@ -206,21 +206,21 @@ subroutine cobyla(calcfc, m_nlcon, x, f, &
 !   factor of GAMMA2 when the reduction ratio is above ETA2. It is required that 0 < ETA1 <= ETA2
 !   < 1 and 0 < GAMMA1 < 1 < GAMMA2. Normally, ETA1 <= 0.25. It is NOT advised to set ETA1 >= 0.5.
 !
-! XHIST, FHIST, CHIST, CONHIST, MAXHIST
+! XHIST, FHIST, CHIST, NLCHIST, MAXHIST
 !   XHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
 !   FHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
 !   CHIST: Output, ALLOCATABLE rank 1 REAL(RP) array;
-!   CONHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
+!   NLCHIST: Output, ALLOCATABLE rank 2 REAL(RP) array;
 !   MAXHIST: Input, INTEGER(IK) scalar, default: MAXFUN
 !   XHIST, if present, will output the history of iterates; FHIST, if present, will output the
 !   history function values; CHIST, if present, will output the history of constraint violations;
-!   CONHIST, if present, will output the history of nonlinear constraint values; MAXHIST should be
-!   a nonnegative integer, and XHIST/FHIST/CHIST/CONHIST will output only the history of the last
-!   MAXHIST iterations. Therefore, MAXHIST= 0 means XHIST/FHIST/CONHIST/CHIST will output nothing,
-!   while setting MAXHIST = MAXFUN requests XHIST/FHIST/CHIST/CONHIST to output all the history.
+!   NLCHIST, if present, will output the history of nonlinear constraint values; MAXHIST should be
+!   a nonnegative integer, and XHIST/FHIST/CHIST/NLCHIST will output only the history of the last
+!   MAXHIST iterations. Therefore, MAXHIST= 0 means XHIST/FHIST/NLCHIST/CHIST will output nothing,
+!   while setting MAXHIST = MAXFUN requests XHIST/FHIST/CHIST/NLCHIST to output all the history.
 !   If XHIST is present, its size at exit will be (N, min(NF, MAXHIST)); if FHIST is present, its
 !   size at exit will be min(NF, MAXHIST); if CHIST is present, its size at exit will be
-!   min(NF, MAXHIST); if CONHIST is present, its size at exit will be (M_NLCON, min(NF, MAXHIST)).
+!   min(NF, MAXHIST); if NLCHIST is present, its size at exit will be (M_NLCON, min(NF, MAXHIST)).
 !
 !   IMPORTANT NOTICE:
 !   Setting MAXHIST to a large value can be costly in terms of memory for large problems.
@@ -307,8 +307,8 @@ real(RP), intent(in), optional :: xu(:)  ! XU(N)
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
 real(RP), intent(out), allocatable, optional :: chist(:)    ! CHIST(MAXCHIST)
-real(RP), intent(out), allocatable, optional :: conhist(:, :)   ! CONHIST(M_NLCON, MAXCONHIST)
-real(RP), intent(out), allocatable, optional :: constr(:)   ! CONSTR(M_NLCON)
+real(RP), intent(out), allocatable, optional :: nlchist(:, :)     ! NLCHIST(M_NLCON, MAXCONHIST)
+real(RP), intent(out), allocatable, optional :: nlconstr(:) ! NLCONSTR(M_NLCON)
 real(RP), intent(out), allocatable, optional :: fhist(:)    ! FHIST(MAXFHIST)
 real(RP), intent(out), allocatable, optional :: xhist(:, :) ! XHIST(N, MAXXHIST)
 real(RP), intent(out), optional :: cstrv
@@ -481,7 +481,7 @@ else
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
-cstrv_loc = maxval([constr_loc, ZERO])
+cstrv_loc = maxval([ZERO, constr_loc])
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
@@ -589,10 +589,10 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 
 ! Further revise MAXHIST_LOC according to MAXHISTMEM, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
-! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M_NLCON, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST =
+! CHIST = NaN(1, MAXFUN), NLCHIST = NaN(M_NLCON, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST =
 ! NaN(N, MAXFUN) if they are requested; replace MAXFUN with 0 for the history not requested.
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc, &
-    & present(chist), chist_loc, m, present(conhist), conhist_loc)
+    & present(chist), chist_loc, m, present(nlchist), conhist_loc)
 
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
@@ -608,12 +608,12 @@ deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec, xl_loc, xu_loc)
 
 ! Write the outputs.
 
-! Copy CONSTR_LOC to CONSTR if needed.
-if (present(constr)) then
+! Copy CONSTR_LOC to NLCONSTR if needed.
+if (present(nlconstr)) then
     !------------------------------------------------------!
-    call safealloc(constr, m)  ! Removable in F2003.
+    call safealloc(nlconstr, m_nlcon)  ! Removable in F2003.
     !------------------------------------------------------!
-    constr = constr_loc
+    nlconstr = constr_loc(m - m_nlcon + 1:m)
 end if
 deallocate (constr_loc)
 
@@ -672,18 +672,18 @@ if (present(chist)) then
 end if
 deallocate (chist_loc)
 
-! Copy CONHIST_LOC to CONHIST if needed.
-if (present(conhist)) then
+! Copy CONHIST_LOC to NLCHIST if needed.
+if (present(nlchist)) then
     nhist = min(nf_loc, int(size(conhist_loc, 2), IK))
     !---------------------------------------------------------------!
-    call safealloc(conhist, m, nhist)  ! Removable in F2003.
+    call safealloc(nlchist, m_nlcon, nhist)  ! Removable in F2003.
     !---------------------------------------------------------------!
-    conhist = conhist_loc(:, 1:nhist)  ! The same as XHIST, we must cap CONHIST at NF_LOC.
+    nlchist = conhist_loc(m - m_nlcon + 1:m, 1:nhist)  ! The same as XHIST, we must cap NLCHIST at NF_LOC.
 end if
 deallocate (conhist_loc)
 
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
-if ((present(xhist) .or. present(fhist) .or. present(chist) .or. present(conhist)) .and. maxhist_loc < nf_loc) then
+if ((present(xhist) .or. present(fhist) .or. present(chist) .or. present(nlchist)) .and. maxhist_loc < nf_loc) then
     call warning(solver, 'Only the history of the last '//num2str(maxhist_loc)//' iteration(s) is recorded')
 end if
 
@@ -705,9 +705,9 @@ if (DEBUGGING) then
         call assert(.not. any(chist < 0 .or. is_nan(chist) .or. is_posinf(chist)), &
             & 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
     end if
-    if (present(conhist)) then
-        call assert(size(conhist, 1) == m .and. size(conhist, 2) == nhist, 'SIZE(CONHIST) == [M_NLCON, NHIST]', srname)
-        call assert(.not. any(is_nan(conhist) .or. is_posinf(conhist)), 'CONHIST does not contain NaN/+Inf', srname)
+    if (present(nlchist)) then
+        call assert(size(nlchist, 1) == m_nlcon .and. size(nlchist, 2) == nhist, 'SIZE(NLCHIST) == [M_NLCON, NHIST]', srname)
+        call assert(.not. any(is_nan(nlchist) .or. is_posinf(nlchist)), 'NLCHIST does not contain NaN/+Inf', srname)
     end if
     if (present(fhist) .and. present(chist)) then
         call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv_loc, ctol_loc)), &

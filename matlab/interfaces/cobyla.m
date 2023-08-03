@@ -412,7 +412,7 @@ else % The problem turns out 'normal' during preprima
     % Include all the constraints into one single 'nonlinear constraint'
     funcon = @(x) cobyla_funcon(x, fun, nonlcon);
     % Detect the number of the constraints (required by the Fortran code)
-    [f_x0, constr_x0, m_nlcineq, m_nlceq] = funcon(x0);
+    [f_x0, nlconstr_x0, m_nlcineq, m_nlceq] = funcon(x0);
     % m_nlcineq: number of nonlinear inequality constraints
     % m_nlceq: number of nonlinear equality constraints
 
@@ -424,7 +424,7 @@ else % The problem turns out 'normal' during preprima
         error(sprintf('%s:ConstraintFailureAtX0', funname), '%s: The constraint evaluation fails at x0. %s cannot continue.', funname, funname);
     end
 
-    if (length(constr_x0) > maxint())
+    if sum(lb > -inf) + sum(ub < inf) + 2*length(beq) + length(bineq) + length(nlconstr_x0) > maxint()
         % Public/normal error
         error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
@@ -436,8 +436,8 @@ else % The problem turns out 'normal' during preprima
     % The mexified Fortran Function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed.
     try
-        [x, fx, constrviolation, constr, exitflag, nf, xhist, fhist, chist, conhist] = ...
-            fsolver(funcon, x0, f_x0, constr_x0, Aineq, bineq, Aeq, beq, lb, ub, rhobeg, rhoend, ...
+        [x, fx, constrviolation, nlconstr, exitflag, nf, xhist, fhist, chist, nlchist] = ...
+            fsolver(funcon, x0, f_x0, nlconstr_x0, Aineq, bineq, Aeq, beq, lb, ub, rhobeg, rhoend, ...
             eta1, eta2, gamma1, gamma2, ftarget, ctol, cweight, maxfun, iprint, maxhist, ...
             double(output_xhist), double(output_nlchist), maxfilt);
         % Fortran MEX does not provide an API for reading Boolean variables. So we convert
@@ -465,11 +465,11 @@ else % The problem turns out 'normal' during preprima
     if output_nlchist
         % N.B.: The nonlinear constraints are sent to the Fortran backend as [-nlceq; nlceq; nlcineq].
         % See the function cobyla_con for details.
-        output.nlcihist = conhist(end-m_nlcineq+1 : end, :);
+        output.nlcihist = nlchist(end-m_nlcineq+1 : end, :);
         if isempty(output.nlcihist)
             output.nlcihist = []; % We uniformly use [] to represent empty objects
         end
-        output.nlcehist = conhist(end-m_nlceq-m_nlcineq+1 : end-m_nlcineq, :);
+        output.nlcehist = nlchist(end-m_nlceq-m_nlcineq+1 : end-m_nlcineq, :);
         if isempty(output.nlcehist)
             output.nlcehist = []; % We uniformly use [] to represent empty objects
         end
@@ -480,11 +480,11 @@ else % The problem turns out 'normal' during preprima
     if ~isempty(nonlcon)
         % N.B.: The nonlinear constraints are sent to the Fortran backend as [-nlceq; nlceq; nlcineq].
         % See the function cobyla_con for details.
-        output.nlcineq = constr(end-m_nlcineq+1 : end);
+        output.nlcineq = nlconstr(end-m_nlcineq+1 : end);
         if isempty(output.nlcineq)
             output.nlcineq = []; % We uniformly use [] to represent empty objects
         end
-        output.nlceq = constr(end-m_nlceq-m_nlcineq+1 : end-m_nlcineq);
+        output.nlceq = nlconstr(end-m_nlceq-m_nlcineq+1 : end-m_nlcineq);
         if isempty(output.nlceq)
             output.nlceq = []; % We uniformly use [] to represent empty objects
         end
@@ -506,10 +506,10 @@ end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%%% Auxiliary functions %%%%%%%%%%%%%%%%%%%%%
-function [f, constr, m_nlcineq, m_nlceq] = cobyla_funcon(x, fun, nonlcon)
+function [f, nlconstr, m_nlcineq, m_nlceq] = cobyla_funcon(x, fun, nonlcon)
 % This function wraps fun and nonlcon into a single function handle, which will be passed to
 % the Fortran backend.
-% The nonlinear constraint expected by the Fortran backend: constr(x) <= 0
+% The nonlinear constraint expected by the Fortran backend: nlconstr(x) <= 0
 % m_nlcineq is the number of nonlinear inequality constraints
 % m_nlceq is the number of nonlinear equality constraints
 f = fun(x);
@@ -518,18 +518,18 @@ if ~isempty(nonlcon)
     if succ
         m_nlcineq = length(nlcineq);
         m_nlceq = length(nlceq);
-        constr = [-nlceq; nlceq; nlcineq];
+        nlconstr = [-nlceq; nlceq; nlcineq];
     else
         % Evaluation of nonlcon fails.
         % In this case, we pass a SCALAR NaN to the MEX gateway, which will handle it properly.
         % Ideally, we should return an NaN vector with proper size, but the size is unknown here.
         m_nlcineq = NaN;
         m_nlceq = NaN;
-        constr = NaN;
+        nlconstr = NaN;
     end
 else
     m_nlcineq = 0;
     m_nlceq = 0;
-    constr = [];
+    nlconstr = [];
 end
 return
