@@ -130,6 +130,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       !CALL CALCFC (N,M,X,F,CON)
       if (nfvals > 1) then
       call evaluate(calcfc, x, f, constr)
+      constr = -constr
       cstrv = maxval([ZERO, -constr])
       end if
       con(1:m) = constr !!!
