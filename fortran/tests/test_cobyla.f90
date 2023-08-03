@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, July 21, 2023 AM09:18:58
+! Last Modified: Friday, August 04, 2023 AM01:20:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,8 +79,8 @@ real(RP), allocatable :: bineq(:)
 real(RP), allocatable :: Aeq(:, :)
 real(RP), allocatable :: beq(:)
 real(RP), allocatable :: chist(:)
-real(RP), allocatable :: conhist(:, :)
-real(RP), allocatable :: constr(:)
+real(RP), allocatable :: nlchist(:, :)
+real(RP), allocatable :: nlconstr(:)
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: x0(:)
@@ -184,9 +184,9 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
            & strip(probname)//': N = ', n, ' M = ', m, ' Mineq = ', size(Aineq, 1), &
            & ' Meq = ', size(Aeq, 1), ', MAXFUN = ', maxfun, ', Random test ', irand
 
-        call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, Aineq=Aineq, bineq=bineq, &
+        call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, nlconstr=nlconstr, Aineq=Aineq, bineq=bineq, &
             & Aeq=Aeq, beq=beq, xl=xl, xu=xu, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxfilt=maxfilt,&
-            & maxhist=maxhist, fhist=fhist, xhist=xhist, chist=chist, conhist=conhist,&
+            & maxhist=maxhist, fhist=fhist, xhist=xhist, chist=chist, nlchist=nlchist,&
             & ftarget=ftarget, ctol=ctol, iprint=iprint)
 
         deallocate (x)
@@ -276,9 +276,9 @@ else
 
                 call safealloc(x, n)
                 x = x0
-                call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, constr=constr, Aineq=Aineq, bineq=bineq, &
+                call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, nlconstr=nlconstr, Aineq=Aineq, bineq=bineq, &
                     & Aeq=Aeq, beq=beq, xl=xl, xu=xu, rhobeg=rhobeg, rhoend=rhoend, &
-                    & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, conhist=conhist, chist=chist, &
+                    & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, nlchist=nlchist, chist=chist, &
                     & ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
                 if (prob % probtype == 'l') then  ! Run the test without nonlinear constraints
