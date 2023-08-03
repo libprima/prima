@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM07:44:42
+! Last Modified: Thursday, August 03, 2023 AM08:44:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -364,10 +364,6 @@ function geostep(jdrop, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamm
 ! This function calculates a geometry step so that the geometry of the interpolation set is improved
 ! when SIM(:, JDRO_GEO) is replaced with SIM(:, N+1) + D. See (15)--(17) of the COBYLA paper.
 !--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), A(N, M+1)
-! Size of local arrays: REAL(RP)*(N*(M+2))
-!--------------------------------------------------------------------------------------------------!
 
 ! Common modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING
@@ -397,15 +393,16 @@ character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: m
 integer(IK) :: m_lcon
 integer(IK) :: n
-real(RP) :: A(size(simi, 1), size(conmat, 1) + 1)
+real(RP) :: A(size(simi, 1), size(conmat, 1))
 real(RP) :: cvnd
 real(RP) :: cvpd
+real(RP) :: g(size(simi, 1))
 real(RP) :: vsigj
 
 ! Sizes
 m_lcon = int(size(bvec), kind(m_lcon))
 m = int(size(conmat, 1), kind(m))
-n = int(size(simi, 1), kind(m))
+n = int(size(simi, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -442,19 +439,18 @@ d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 ! The code below chooses the direction of D according to an approximation of the merit function.
 ! See (17) of the COBYLA paper and  line 225 of Powell's cobylb.f.
 
-! Calculate the coefficients of the linear approximations to the objective and constraint functions,
-! placing the objective function gradient after the constraint gradients in the array A.
-! N.B.: CONMAT and SIMI have been updated after the last trust-region step, but A has not. So we
-! cannot pass A from outside.
+! Calculate the coefficients of the linear approximations to the objective and constraint functions.
+! N.B.: CONMAT and SIMI have been updated after the last trust-region step, but G and A have not.
+! So we cannot pass G and A from outside.
+g = matprod(fval(1:n) - fval(n + 1), simi)
 A(:, 1:m_lcon) = amat
 A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
 !!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
-A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
 ! CVPD and CVND are the predicted constraint violation of D and -D by the linear models.
-cvpd = maxval([ZERO, conmat(:, n + 1) + matprod(d, A(:, 1:m))])
-cvnd = maxval([ZERO, conmat(:, n + 1) - matprod(d, A(:, 1:m))])
+cvpd = maxval([ZERO, conmat(:, n + 1) + matprod(d, A)])
+cvnd = maxval([ZERO, conmat(:, n + 1) - matprod(d, A)])
 ! Take -D if the linear models predict that its merit function value is lower.
-if (-TWO * inprod(d, A(:, m + 1)) < cpen * (cvpd - cvnd)) then
+if (-TWO * inprod(d, g) < cpen * (cvpd - cvnd)) then
     d = -d
 end if
 
