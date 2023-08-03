@@ -13,6 +13,7 @@ CMN_FPRINTF90="fprint.f90"
 CMN_FPRINT="$DIR/common/$CMN_FPRINTF90"
 MEX_FPRINTF90="fprint.F90"
 MEX_FPRINT="$DIR/common/$MEX_FPRINTF90"
+COBYLB="$DIR/cobyla/cobylb.f90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -75,5 +76,11 @@ for FILE in "$CMN_FPRINT" "$MEX_FPRINT" ; do
         sed -i "s|newunit|unit|g" "$FILE"
     fi
 done
+
+# g95 does not support internal subroutines as arguments.
+if [[ -f "$COBYLB" ]] ; then
+    sed -ni '1,/\s*!\s*Calculation ends\s*!/p;/end subroutine cobylb/,$p' "$COBYLB"
+    sed -i "s|calcfc_internal|calcfc|" "$COBYLB"
+fi
 
 exit 0
