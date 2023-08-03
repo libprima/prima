@@ -25,7 +25,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM07:50:01
+! Last Modified: Thursday, August 03, 2023 AM08:46:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -129,9 +129,7 @@ logical :: reduce_rho
 logical :: shortd
 logical :: trfail
 logical :: ximproved
-real(RP) :: A(size(x), size(constr) + 1)
-! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is the approximate
-! gradient for the objective function.
+real(RP) :: A(size(x), size(constr)) ! A contains the approximate gradient for the constraints
 real(RP) :: actrem
 real(RP) :: cfilt(min(max(maxfilt, 1_IK), maxfun))
 real(RP) :: confilt(size(constr), size(cfilt))
@@ -143,6 +141,7 @@ real(RP) :: delta
 real(RP) :: dnorm
 real(RP) :: ffilt(size(cfilt))
 real(RP) :: fval(size(x) + 1)
+real(RP) :: g(size(x))
 real(RP) :: gamma3
 real(RP) :: prerec  ! Predicted reduction in constraint violation
 real(RP) :: preref  ! Predicted reduction in objective Function
@@ -334,18 +333,15 @@ do tr = 1, maxtr
     ! Does the interpolation set have acceptable geometry? It affects IMPROVE_GEO and REDUCE_RHO.
     adequate_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
 
-    ! Calculate the linear approximations to the objective and constraint functions, placing the
-    ! objective function gradient after the constraint gradients in the array A.
+    ! Calculate the linear approximations to the objective and constraint functions.
     ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
+    g = matprod(fval(1:n) - fval(n + 1), simi)
     A(:, 1:m_lcon) = amat
     A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
     !!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
-    A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
-    ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
-    ! Powell's code sets it to FVAL(N + 1), but -FVAL(N+1) seems more logical.
-    d = trstlp(A, -[conmat(:, n + 1), ZERO], delta)
+    d = trstlp(A, -conmat(:, n + 1), delta, g)
     dnorm = min(delta, norm(d))
 
     ! Is the trust-region trial step short? Note that we compare DNORM with RHO, not DELTA.
@@ -357,15 +353,15 @@ do tr = 1, maxtr
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
-    ! 1. MAXVAL([CONMAT(1:M, N+1) + MATPROD(D, A(:, 1:M)), ZERO]) is the L-infinity violation of
-    ! the linearized constraints corresponding to D. When D = 0, the violation is
+    ! 1. MAXVAL([CONMAT(1:M, N+1) + MATPROD(D, A), ZERO]) is the L-infinity violation of the
+    ! linearized constraints corresponding to D. When D = 0, the violation is
     ! MAXVAL([CONMAT(1:M, N+1), ZERO]) = CVAL(N+1). PREREC is the reduction of this violation
     ! achieved by D, which is nonnegative in theory; PREREC = 0 iff CONMAT(1:M, N+1) <= 0, i.e., the
     ! trust-region center satisfies the constraints.
     ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
     ! 3. Due to 2, in theory, MAXIMUM([PREREC, PREREF]) > 0 if SHORTD is FALSE.
-    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A(:, 1:m)), ZERO])
-    preref = -inprod(d, A(:, m + 1))  ! Can be negative.
+    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A), ZERO])
+    preref = -inprod(d, g)  ! Can be negative.
 
     ! Evaluate PREREM, which is the predicted reduction in the merit function.
     ! In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true numerically.
@@ -715,18 +711,19 @@ real(RP), intent(in) :: simi_in(:, :)
 ! Outputs
 real(RP) :: cpen
 
-! Intermediate variables
+! Local variables
 character(len=*), parameter :: srname = 'getcpen'
 integer(IK) :: info
 integer(IK) :: iter
 integer(IK) :: m
 integer(IK) :: m_lcon
 integer(IK) :: n
-real(RP) :: A(size(sim_in, 1), size(conmat_in, 1) + 1)
+real(RP) :: A(size(sim_in, 1), size(conmat_in, 1))
 real(RP) :: conmat(size(conmat_in, 1), size(conmat_in, 2))
 real(RP) :: cval(size(cval_in))
 real(RP) :: d(size(sim_in, 1))
 real(RP) :: fval(size(fval_in))
+real(RP) :: g(size(sim_in, 1))
 real(RP) :: prerec
 real(RP) :: preref
 real(RP) :: sim(size(sim_in, 1), size(sim_in, 2))
@@ -795,19 +792,18 @@ do iter = 1, n + 1_IK
         exit
     end if
 
-    ! Calculate the linear approximations to the objective and constraint functions, placing the
-    ! objective function gradient after the constraint gradients in the array A.
+    ! Calculate the linear approximations to the objective and constraint functions.
+    g = matprod(fval(1:n) - fval(n + 1), simi)
     A(:, 1:m_lcon) = amat
     A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
     !!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
-    A(:, m + 1) = matprod(fval(1:n) - fval(n + 1), simi)
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
-    d = trstlp(A, -[conmat(:, n + 1), ZERO], delta)
+    d = trstlp(A, -conmat(:, n + 1), delta, g)
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
-    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A(:, 1:m)), ZERO])
-    preref = -inprod(d, A(:, m + 1))  ! Can be negative.
+    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A), ZERO])
+    preref = -inprod(d, g)  ! Can be negative.
 
     if (.not. (prerec > 0 .and. preref < 0)) then  ! PREREC <= 0 or PREREF >= 0 or either is NaN.
         exit
