@@ -14,13 +14,13 @@ contains
 
 
 subroutine cobyla(calcfc, m_nlcon, x, f, &
-    & cstrv, constr, &
+    & cstrv, nlconstr, &
     & Aineq, bineq, &
     & Aeq, beq, &
     & xl, xu, &
-    & f0, constr0, &
+    & f0, nlconstr0, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, &
-    & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, conhist, maxhist, maxfilt, info)
+    & eta1, eta2, gamma1, gamma2, xhist, fhist, chist, nlchist, maxhist, maxfilt, info)
 
 ! Common modules
 use, non_intrinsic :: consts_mod, only : DEBUGGING
@@ -28,7 +28,7 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, TENTH, EPS, REALMAX
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
+use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex, moderatec
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : trueloc, matprod
@@ -57,7 +57,7 @@ real(RP), intent(in), optional :: Aeq(:, :)  ! Aeq(Meq, N)
 real(RP), intent(in), optional :: Aineq(:, :)  ! Aineq(Mineq, N)
 real(RP), intent(in), optional :: beq(:)  ! Beq(Meq)
 real(RP), intent(in), optional :: bineq(:)  ! Bineq(Mineq)
-real(RP), intent(in), optional :: constr0(:)    ! CONSTR0(M_NLCON)
+real(RP), intent(in), optional :: nlconstr0(:)    ! NLCONSTR0(M_NLCON)
 real(RP), intent(in), optional :: ctol
 real(RP), intent(in), optional :: cweight
 real(RP), intent(in), optional :: eta1
@@ -75,8 +75,8 @@ real(RP), intent(in), optional :: xu(:)  ! XU(N)
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
 real(RP), intent(out), allocatable, optional :: chist(:)
-real(RP), intent(out), allocatable, optional :: conhist(:, :)
-real(RP), intent(out), allocatable, optional :: constr(:)
+real(RP), intent(out), allocatable, optional :: nlchist(:, :)
+real(RP), intent(out), allocatable, optional :: nlconstr(:)
 real(RP), intent(out), allocatable, optional :: fhist(:)
 real(RP), intent(out), allocatable, optional :: xhist(:, :)
 real(RP), intent(out), optional :: cstrv
@@ -163,16 +163,16 @@ if (DEBUGGING) then
             & .or. (size(Aeq, 1) == 0 .and. size(Aeq, 2) == 0 .and. meq == 0), &
             & 'SIZE(Aeq) == [Meq, N] unless Aeq and Beq are both empty', srname)
     end if
-    call assert(present(f0) .eqv. present(constr0), 'F0 and CONSTR0 are both present or both absent', srname)
+    call assert(present(f0) .eqv. present(nlconstr0), 'F0 and NLCONSTR0 are both present or both absent', srname)
 end if
 
-! Exit if the size of CONSTR0 is inconsistent with M_NLCON.
-if (present(constr0)) then
-    if (size(constr0) /= m_nlcon) then
+! Exit if the size of NLCONSTR0 is inconsistent with M_NLCON.
+if (present(nlconstr0)) then
+    if (size(nlconstr0) /= m_nlcon) then
         if (DEBUGGING) then
-            call errstop(srname, 'SIZE(CONSTR0) /= M_NLCON. Exiting')
+            call errstop(srname, 'SIZE(NLCONSTR0) /= M_NLCON. Exiting')
         else
-            call warning(srname, 'SIZE(CONSTR0) /= M_NLCON. Exiting')
+            call warning(srname, 'SIZE(NLCONSTR0) /= M_NLCON. Exiting')
             return
         end if
     end if
@@ -228,17 +228,19 @@ ixu = trueloc(xu_loc < REALMAX)
 
 ! Allocate memory for CONSTR_LOC.
 call safealloc(constr_loc, m)  ! NOT removable even in F2003!
-!! If the user provides the function & constraint value at X0, then set up F_X0 and CONSTR_X0.
-if (present(f0) .and. present(constr0) .and. all(is_finite(x))) then
+!! If the user provides the function & constraint value at X0, then set up F_X0 and NLCONSTR_X0.
+if (present(f0) .and. present(nlconstr0) .and. all(is_finite(x))) then
     f = f0
-    constr_loc = [x(ixl) - xl_loc(ixl), xu_loc(ixu) - x(ixu), &
+    constr_loc = moderatec(-[x(ixl) - xl_loc(ixl), xu_loc(ixu) - x(ixu), &
     & matprod(Aeq_loc, x) - beq_loc, beq_loc - matprod(Aeq_loc, x), &
-    & bineq_loc - matprod(Aineq_loc, x), -constr0]
+    & bineq_loc - matprod(Aineq_loc, x), -nlconstr0])
+    constr_loc = -constr_loc
     cstrv_loc = maxval([ZERO, -constr_loc])
 else
     ! Replace any NaN in X by ZERO and Inf/-Inf in X by REALMAX/-REALMAX.
     x = moderatex(x)
     call evaluate(calcfc_internal, x, f, constr_loc)
+    constr_loc = -constr_loc
     cstrv_loc = maxval([ZERO, -constr_loc])
 end if
 
@@ -348,10 +350,10 @@ call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg
 
 ! Further revise MAXHIST_LOC according to MAXMEMORY, and allocate memory for the history.
 ! In MATLAB/Python/Julia/R implementation, we should simply set MAXHIST = MAXFUN and initialize
-! CHIST = NaN(1, MAXFUN), CONHIST = NaN(M, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN)
+! CHIST = NaN(1, MAXFUN), NLCHIST = NaN(M_NLCON, MAXFUN), FHIST = NaN(1, MAXFUN), XHIST = NaN(N, MAXFUN)
 ! if they are requested; replace MAXFUN with 0 for the history that is not requested.
 call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_loc, &
-    & present(chist), chist_loc, m, present(conhist), conhist_loc)
+    & present(chist), chist_loc, m, present(nlchist), conhist_loc)
 
 !--------------------------------------------------------------------------------------------------!
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
@@ -363,12 +365,12 @@ call cobylb(calcfc_internal, iprint_loc, maxfun_loc, rhobeg_loc, rhoend_loc, con
 
 ! Write the outputs.
 
-! Copy CONSTR_LOC to CONSTR if needed.
-if (present(constr)) then
+! Copy CONSTR_LOC to NLCONSTR if needed.
+if (present(nlconstr)) then
     !--------------------------------------------------!
-    call safealloc(constr, m)  ! Removable in F2003.
+    call safealloc(nlconstr, m_nlcon)  ! Removable in F2003.
     !--------------------------------------------------!
-    constr = constr_loc
+    nlconstr = constr_loc(m - m_nlcon + 1:m)
 end if
 deallocate (constr_loc)
 
@@ -427,18 +429,18 @@ if (present(chist)) then
 end if
 deallocate (chist_loc)
 
-! Copy CONHIST_LOC to CONHIST if needed.
-if (present(conhist)) then
+! Copy CONHIST_LOC to NLCHIST if needed.
+if (present(nlchist)) then
     nhist = min(nf_loc, int(size(conhist_loc, 2), IK))
     !----------------------------------------------------------!
-    call safealloc(conhist, m, nhist)  ! Removable in F2003.
+    call safealloc(nlchist, m_nlcon, nhist)  ! Removable in F2003.
     !----------------------------------------------------------!
-    conhist = conhist_loc(:, 1:nhist)  ! The same as XHIST, we must cap CONHIST at NF_LOC.
+    nlchist = conhist_loc(m - m_nlcon + 1:m, 1:nhist)  ! The same as XHIST, we must cap NLCHIST at NF_LOC.
 end if
 deallocate (conhist_loc)
 
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
-if ((present(xhist) .or. present(fhist) .or. present(chist) .or. present(conhist)) .and. maxhist_loc < nf_loc) then
+if ((present(xhist) .or. present(fhist) .or. present(chist) .or. present(nlchist)) .and. maxhist_loc < nf_loc) then
     call warning(solver, 'Only the history of the last '//num2str(maxhist_loc)//' iteration(s) is recorded')
 end if
 
@@ -457,7 +459,7 @@ real(RP), intent(out) :: constr_internal(:)
 real(RP) :: constr_nlc(m_nlcon)
 
 call calcfc(x_internal, f_internal, constr_nlc)
-constr_internal = [x_internal(ixl) - xl_loc(ixl), xu_loc(ixu) - x_internal(ixu), &
+constr_internal = -[x_internal(ixl) - xl_loc(ixl), xu_loc(ixu) - x_internal(ixu), &
     & matprod(Aeq_loc, x_internal) - beq_loc, beq_loc - matprod(Aeq_loc, x_internal), &
     & bineq_loc - matprod(Aineq_loc, x_internal), -constr_nlc]
 
