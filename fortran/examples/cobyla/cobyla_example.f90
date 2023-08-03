@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, July 20, 2023 PM12:29:33
+! Last Modified: Friday, August 04, 2023 AM01:53:03
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -121,6 +121,6 @@ call cobyla(calcfc_hexagon, m, x_hexagon, f, cstrv)  ! This call will not print 
 ! take their default values coded in the solver. Note that CONSTR is an output, which will be set to
 ! the value of CONSTR(X_HEXAGON) when the solver returns.
 x_hexagon = 2.0_RP  ! Starting point.
-call cobyla(calcfc_hexagon, m, x_hexagon, f, cstrv, constr=constr, rhobeg=1.0_RP, rhoend=1.0D-3, iprint=1, nf=nf, info=info)
+call cobyla(calcfc_hexagon, m, x_hexagon, f, cstrv, nlconstr=constr, rhobeg=1.0_RP, rhoend=1.0D-3, iprint=1, nf=nf, info=info)
 
 end program cobyla_exmp

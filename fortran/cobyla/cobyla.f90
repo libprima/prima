@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, August 04, 2023 AM01:44:09
+! Last Modified: Friday, August 04, 2023 AM02:04:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -673,6 +673,12 @@ end if
 deallocate (chist_loc)
 
 ! Copy CONHIST_LOC to NLCHIST if needed.
+! N.B.: We need only the nonlinear part of the history. Therefore, one may modify COBYLB so that it
+! records only the history of nonlinear constraints rather than that of all constraints, which is
+! what CONHIST_LOC records in the current implementation. This will save memory and time, but will
+! complicate a bit the code of COBYLB. We prefer to keep the code simple, assuming that such a
+! difference in memory and time is not a problem in the context of derivative-free optimization.
+! A similar comment can be made on CONSTR_LOC and NLCONSTR, which are related to CONFILT in COBYLB.
 if (present(nlchist)) then
     nhist = min(nf_loc, int(size(conhist_loc, 2), IK))
     !---------------------------------------------------------------!
