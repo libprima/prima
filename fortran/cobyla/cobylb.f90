@@ -19,7 +19,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM10:36:12
+! Last Modified: Thursday, August 03, 2023 PM09:31:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -347,15 +347,13 @@ do tr = 1, maxtr
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
-    ! 1. MAXVAL([CONMAT(1:M, N+1) + MATPROD(D, A), ZERO]) is the L-infinity violation of the
-    ! linearized constraints corresponding to D. When D = 0, the violation is
-    ! MAXVAL([CONMAT(1:M, N+1), ZERO]) = CVAL(N+1). PREREC is the reduction of this violation
-    ! achieved by D, which is nonnegative in theory; PREREC = 0 iff CONMAT(1:M, N+1) <= 0, i.e., the
-    ! trust-region center satisfies the constraints.
-    ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
+    ! 1. PREREC is the reduction of the L-infinity violation of the linearized constraints achieved
+    ! by D. It is nonnegative in theory; it is 0 iff CONMAT(1:M, N+1) <= 0, namely the trust-region
+    ! center satisfies the constraints.
+    ! 2. PREREF may be negative or 0, but it should be positive when PREREC = 0 and SHORTD is FALSE.
     ! 3. Due to 2, in theory, MAXIMUM([PREREC, PREREF]) > 0 if SHORTD is FALSE.
-    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A), ZERO])
     preref = -inprod(d, g)  ! Can be negative.
+    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A), ZERO])
 
     ! Evaluate PREREM, which is the predicted reduction in the merit function.
     ! In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true numerically.
@@ -797,18 +795,17 @@ do iter = 1, n + 1_IK
     d = trstlp(A, -conmat(:, n + 1), delta, g)
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
-    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A), ZERO])
     preref = -inprod(d, g)  ! Can be negative.
+    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A), ZERO])
 
     if (.not. (prerec > 0 .and. preref < 0)) then  ! PREREC <= 0 or PREREF >= 0 or either is NaN.
         exit
     end if
 
     ! Powell's code defines BARMU = -PREREF / PREREC, and CPEN is increased to 2*BARMU if and
-    ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our
-    ! implementation, however, we set CPEN directly to the maximum between its current value and
-    ! 2*BARMU while handling possible overflow. This simplifies the scheme without worsening the
-    ! performance of COBYLA.
+    ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our implementation,
+    ! however, we set CPEN directly to the maximum between its current value and 2*BARMU while
+    ! handling possible overflow. This simplifies the scheme without worsening the performance.
     cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))
 
     if (findpole(cpen, cval, fval) == n + 1) then
