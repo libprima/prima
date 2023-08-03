@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM11:49:42
+! Last Modified: Thursday, August 03, 2023 AM09:13:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -256,9 +256,9 @@ subroutine cobyla(calcfc, m_nonlcon, x, f, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, TEN, TENTH, EPS, REALMAX, CONSTRMAX
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, TEN, TENTH, EPS, REALMAX
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex
+use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex, moderatec
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INVALID_INPUT
@@ -482,10 +482,9 @@ else
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
-constr_loc(1:m - m_nonlcon) = max(-CONSTRMAX, min(CONSTRMAX, [xl_loc(ixl) - x(ixl), x(ixu) - xu_loc(ixu), &
-& beq_loc - matprod(Aeq_loc, x), matprod(Aeq_loc, x) - beq_loc, &
-& matprod(Aineq_loc, x) - bineq_loc]))
-cstrv_loc = maxval([ZERO, constr_loc])
+constr_loc(1:m - m_nonlcon) = moderatec([xl_loc(ixl) - x(ixl), x(ixu) - xu_loc(ixu), &
+    & beq_loc - matprod(Aeq_loc, x), matprod(Aeq_loc, x) - beq_loc, matprod(Aineq_loc, x) - bineq_loc])
+cstrv_loc = maxval([constr_loc, ZERO])
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
