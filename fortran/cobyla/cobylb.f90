@@ -19,7 +19,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 PM09:31:14
+! Last Modified: Friday, August 04, 2023 PM06:07:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -656,7 +656,8 @@ contains
 subroutine calcfc_internal(x_internal, f_internal, constr_internal)
 !--------------------------------------------------------------------------------------------------!
 ! This internal subroutine evaluates the objective function and ALL the constraints.
-!--------------------------------------------------------------------------------------------------!
+! In MATLAB/Python/R/Julia, this can be implemented as a lambda function / anonymous function.
+!--------------------------------------------------------------------------------------------------!b
 implicit none
 ! Inputs
 real(RP), intent(in) :: x_internal(:)
