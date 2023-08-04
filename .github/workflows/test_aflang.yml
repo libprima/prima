@@ -22,7 +22,10 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         ikind: [i2, i8]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        # With flang in AMD clang version 14.0.6, fortran/cobyla of 54e66dd does not pass dtest.
+        # See https://github.com/libprima/prima/issues/41 . To be tested when AMD flang is updated.
+        solver: [newuoa, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
 
