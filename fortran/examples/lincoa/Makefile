@@ -23,7 +23,7 @@ SOLVER := $(shell basename $(CURDIR))
 FS ?= 18  # Set FS if it does not have a value.
 FSTD := 20$(FS)
 # Default options for all the compilers.
-FFLAGS := -O3
+FFLAGS := -O3 -g
 # Common directories.
 COMMON := ../../common
 # Headers.
