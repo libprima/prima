@@ -114,7 +114,7 @@ periodically to verify that the solvers work correctly without running into erro
 The tests are **automated** by
 [GitHub Actions](https://docs.github.com/en/actions). As of August 2023, more than
 45,000 "workflows" have been successfully run by GitHub Actions. Normally, each workflow consists of \~ 5
-([sometimes more than 150](https://github.com/primalib/prima/actions/runs/5260791888))
+([sometimes more than 200](https://github.com/primalib/prima/actions/runs/5763631681))
 **randomized** tests,
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the test will be canceled automatically). In other words,
