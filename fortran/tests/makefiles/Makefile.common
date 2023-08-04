@@ -374,7 +374,7 @@ dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d
 	FCF := $(DFORT) -ffp-exception-behavior=strict $(DFF)
 
 # Classic Flang
-# We must define FFORT as follows, because AOCC will be also provide "flang", except that it is
+# We must define FFORT as follows, because AOCC will also provide "flang", except that it is
 # located under /opt/AMD. Similar for ARM Flang.
 FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local /tmp -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
 FFORT := $(FFORT) -pedantic-errors -Werror
