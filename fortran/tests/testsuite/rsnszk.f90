@@ -19,13 +19,13 @@ prob % Delta0 = HALF
 prob % calcfc => calcfc_rsnszk
 
 n = prob % n
-call safealloc(prob % lb, n)
-prob % lb = -REALMAX
-call safealloc(prob % ub, n)
-prob % ub = REALMAX
-call safealloc(prob % Aeq, n, 0_IK)
+call safealloc(prob % xl, n)
+prob % xl = -REALMAX
+call safealloc(prob % xu, n)
+prob % xu = REALMAX
+call safealloc(prob % Aeq, 0_IK, n)
 call safealloc(prob % beq, 0_IK)
-call safealloc(prob % Aineq, n, 0_IK)
+call safealloc(prob % Aineq, 0_IK, n)
 call safealloc(prob % bineq, 0_IK)
 end subroutine construct_rsnszk
 
@@ -44,7 +44,7 @@ real(RP), intent(out) :: f
 call assert(size(x) == 4 .and. size(constr) == 3, 'SIZE(X) == 4, SIZE(CONSTR) == 3', srname)
 
 f = x(1)**2 + x(2)**2 + 2.0_RP * x(3)**2 + x(4)**2 - 5.0_RP * x(1) - 5.0_RP * x(2) - 21.0_RP * x(3) + 7.0_RP * x(4)
-constr(1) = 8.0_RP - x(1)**2 - x(2)**2 - x(3)**2 - x(4)**2 - x(1) + x(2) - x(3) + x(4)
-constr(2) = 10.0_RP - x(1)**2 - 2.0_RP * x(2)**2 - x(3)**2 - 2.0_RP * x(4)**2 + x(1) + x(4)
-constr(3) = 5.0_RP - 2.0_RP * x(1)**2 - x(2)**2 - x(3)**2 - 2.0_RP * x(1) + x(2) + x(4)
+constr(1) = -(8.0_RP - x(1)**2 - x(2)**2 - x(3)**2 - x(4)**2 - x(1) + x(2) - x(3) + x(4))
+constr(2) = -(10.0_RP - x(1)**2 - 2.0_RP * x(2)**2 - x(3)**2 - 2.0_RP * x(4)**2 + x(1) + x(4))
+constr(3) = -(5.0_RP - 2.0_RP * x(1)**2 - x(2)**2 - x(3)**2 - 2.0_RP * x(1) + x(2) + x(4))
 end subroutine calcfc_rsnszk

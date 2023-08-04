@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Friday, May 19, 2023 PM12:54:09
+! Last Modified: Wednesday, August 02, 2023 PM12:26:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -71,7 +71,8 @@ end function moderatef
 function moderatec(c) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function moderates the constraint value, the constraint demanding this value to be NONNEGATIVE.
-! It replaces NaN and any value below -CONSTRMAX by -CONSTRMAX, and any value above CONSTRMAX by CONSTRMAX.
+! It replaces any value below -CONSTRMAX by -CONSTRMAX, and any NaN or value above CONSTRMAX by
+! CONSTRMAX.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, CONSTRMAX
 use, non_intrinsic :: infnan_mod, only : is_nan
@@ -84,7 +85,7 @@ real(RP), intent(in) :: c(:)
 real(RP) :: y(size(c))
 
 y = c
-y(trueloc(is_nan(c))) = -CONSTRMAX
+y(trueloc(is_nan(c))) = CONSTRMAX
 y = max(-CONSTRMAX, min(CONSTRMAX, y))
 end function moderatec
 
@@ -147,16 +148,15 @@ end if
 end subroutine evaluatef
 
 
-subroutine evaluatefc(calcfc, x, f, constr, cstrv)
+subroutine evaluatefc(calcfc, x, f, constr)
 !--------------------------------------------------------------------------------------------------!
-! This function evaluates CALCFC at X, setting F to the objective function value, CONSTR to the
-! constraint value, and CSTRV to the constraint violation. Nan/Inf are handled by a moderated
-! extreme barrier.
+! This function evaluates CALCFC at X, setting F to the objective function value and CONSTR to the
+! constraint value. Nan/Inf are handled by a moderated extreme barrier.
 !--------------------------------------------------------------------------------------------------!
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 implicit none
 
@@ -167,7 +167,6 @@ real(RP), intent(in) :: x(:)
 ! Outputs
 real(RP), intent(out) :: f
 real(RP), intent(out) :: constr(:)
-real(RP), intent(out) :: cstrv
 
 ! Local variables
 character(len=*), parameter :: srname = 'EVALUATEFC'
@@ -188,7 +187,6 @@ if (any(is_nan(x))) then
     ! Set F, CONSTR, and CSTRV to NaN.
     f = sum(x)
     constr = f
-    cstrv = f
 else
     call calcfc(moderatex(x), f, constr)  ! Evaluate F and CONSTR; We moderate X before doing so.
 
@@ -196,9 +194,6 @@ else
     ! finite value. This is naive, and better approaches surely exist.
     f = moderatef(f)
     constr = moderatec(constr)
-
-    ! Evaluate the constraint violation for constraints CONSTR(X) >= 0.
-    cstrv = maxval([-constr, ZERO])
 end if
 
 !====================!
@@ -208,12 +203,9 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     ! With X not containing NaN, and with the moderated extreme barrier, F cannot be NaN/+Inf, and
-    ! CONSTR cannot be NaN/-Inf.
+    ! CONSTR cannot be NaN/+Inf.
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
-    call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), &
-        & 'CONSTR does not contain NaN/-Inf', srname)
-    call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
-        & 'CSTRV is nonnegative and not NaN/+Inf', srname)
+    call assert(.not. any(is_nan(constr) .or. is_posinf(constr)), 'CONSTR does not contain NaN/+Inf', srname)
 end if
 
 end subroutine evaluatefc

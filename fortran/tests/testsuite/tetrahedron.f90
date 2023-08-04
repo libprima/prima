@@ -29,7 +29,7 @@ integer(IK) :: i
 integer(IK) :: j
 integer(IK), parameter :: n = 12
 integer(IK), parameter :: np = 50
-real(RP) :: Aineq(n, 4 * np)
+real(RP) :: Aineq(4 * np, n)
 real(RP) :: ss
 real(RP) :: theta(np)
 real(RP) :: xp(np)
@@ -66,22 +66,22 @@ prob % x0(10:12) = ONE / ss
 prob % Delta0 = ONE
 prob % calfun => calfun_tetrahedron
 
-call safealloc(prob % lb, n)
-prob % lb = -REALMAX
-call safealloc(prob % ub, n)
-prob % ub = REALMAX
+call safealloc(prob % xl, n)
+prob % xl = -REALMAX
+call safealloc(prob % xu, n)
+prob % xu = REALMAX
 
-call safealloc(prob % Aeq, n, 0_IK)
+call safealloc(prob % Aeq, 0_IK, n)
 call safealloc(prob % beq, 0_IK)
-call safealloc(prob % Aineq, n, 4_IK * np)
+call safealloc(prob % Aineq, 4_IK * np, n)
 call safealloc(prob % bineq, 4_IK * np)
 
 Aineq = ZERO
 do j = 1, np
     do i = 1, 4_IK
-        Aineq(3_IK * i - 2_IK, 4_IK * j + i - 4_IK) = xp(j)
-        Aineq(3_IK * i - 1_IK, 4_IK * j + i - 4_IK) = yp(j)
-        Aineq(3_IK * i, 4_IK * j + i - 4_IK) = zp(j)
+        Aineq(4_IK * j + i - 4_IK, 3_IK * i - 2_IK) = xp(j)
+        Aineq(4_IK * j + i - 4_IK, 3_IK * i - 1_IK) = yp(j)
+        Aineq(4_IK * j + i - 4_IK, 3_IK * i) = zp(j)
     end do
 end do
 prob % Aineq = Aineq

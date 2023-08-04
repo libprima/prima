@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 28, 2023 AM11:55:26
+! Last Modified: Wednesday, August 02, 2023 AM11:22:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -138,7 +138,7 @@ subroutine savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 implicit none
 
 ! Inputs
@@ -208,7 +208,7 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
     !----------------------------------------------------------------------------------------------!
     if (present(conhist)) then
         call assert(.not. any(is_nan(conhist(:, 1:min(nf - 1_IK, maxconhist))) .or. &
-            & is_neginf(conhist(:, 1:min(nf - 1_IK, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
+            & is_posinf(conhist(:, 1:min(nf - 1_IK, maxconhist)))), 'CONHIST does not contain NaN/Inf', srname)
     end if
     ! Check the values of X, F, CSTRV, CONSTR.
     ! X does not contain NaN if X0 does not and the trust-region/geometry steps are proper.
@@ -224,8 +224,8 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
     ! !end if
     !----------------------------------------------------------------------------------------------!
     if (present(constr)) then
-        ! CONSTR cannot contain NaN/-Inf due to the moderated extreme barrier.
-        call assert(.not. any(is_nan(constr) .or. is_neginf(constr)), 'CONSTR does not contain NaN/-Inf', srname)
+        ! CONSTR cannot contain NaN/+Inf due to the moderated extreme barrier.
+        call assert(.not. any(is_nan(constr) .or. is_posinf(constr)), 'CONSTR does not contain NaN/+Inf', srname)
     end if
 end if
 
@@ -275,7 +275,7 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
         call assert(size(conhist, 1) == size(constr) .and. size(conhist, 2) == maxconhist, &
             & 'SIZE(CONHIST) == [SIZE(CONSTR), MAXCONHIST]', srname)
         call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
-            & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
+            & is_posinf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/+Inf', srname)
     end if
 end if
 
@@ -287,7 +287,7 @@ subroutine rangehist(nf, xhist, fhist, chist, conhist)
 ! This subroutine arranges FHIST, XHIST, CHIST, and CONHIST in the chronological order.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_posinf
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -351,7 +351,7 @@ if (DEBUGGING) then
     !----------------------------------------------------------------------------------------------!
     if (present(conhist)) then
         call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
-            & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
+            & is_posinf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/+Inf', srname)
     end if
 end if
 
@@ -412,7 +412,7 @@ if (DEBUGGING) then
         call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
             & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
         call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
-            & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
+            & is_posinf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/+Inf', srname)
     end if
 end if
 

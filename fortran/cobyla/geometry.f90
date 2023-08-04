@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, June 13, 2023 PM08:48:48
+! Last Modified: Thursday, August 03, 2023 AM09:51:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -359,27 +359,24 @@ end if
 end function setdrop_geo
 
 
-function geostep(jdrop, cpen, conmat, cval, delta, fval, factor_gamma, simi) result(d)
+function geostep(jdrop, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamma, simi) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a geometry step so that the geometry of the interpolation set is improved
 ! when SIM(:, JDRO_GEO) is replaced with SIM(:, N+1) + D. See (15)--(17) of the COBYLA paper.
 !--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), A(N, M+1)
-! Size of local arrays: REAL(RP)*(N*(M+2)) (TO BE REDUCED: not pass SIMI and JDROP but SIMI_JDROP
-! and A
-!--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf, is_neginf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm
 
 implicit none
 
 ! Inputs
 integer(IK), intent(in) :: jdrop
+real(RP), intent(in) :: amat(:, :)
+real(RP), intent(in) :: bvec(:)
 real(RP), intent(in) :: conmat(:, :)    ! CONMAT(M, N+1)
 real(RP), intent(in) :: cpen
 real(RP), intent(in) :: cval(:)     ! CVAL(N+1)
@@ -394,15 +391,18 @@ real(RP) :: d(size(simi, 1))  ! D(N)
 ! Local variables
 character(len=*), parameter :: srname = 'GEOSTEP'
 integer(IK) :: m
+integer(IK) :: m_lcon
 integer(IK) :: n
-real(RP) :: A(size(simi, 1), size(conmat, 1) + 1)
-real(RP) :: cvmaxn
-real(RP) :: cvmaxp
+real(RP) :: A(size(simi, 1), size(conmat, 1))
+real(RP) :: cvnd
+real(RP) :: cvpd
+real(RP) :: g(size(simi, 1))
 real(RP) :: vsigj
 
 ! Sizes
+m_lcon = int(size(bvec), kind(m_lcon))
 m = int(size(conmat, 1), kind(m))
-n = int(size(simi, 1), kind(m))
+n = int(size(simi, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -415,7 +415,7 @@ if (DEBUGGING) then
     call assert(size(fval) == n + 1 .and. .not. any(is_nan(fval) .or. is_posinf(fval)), &
         & 'SIZE(FVAL) == NPT and FVAL is not NaN/+Inf', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) == [M, N+1]', srname)
-    call assert(.not. any(is_nan(conmat) .or. is_neginf(conmat)), 'CONMAT does not contain NaN/-Inf', srname)
+    call assert(.not. any(is_nan(conmat) .or. is_posinf(conmat)), 'CONMAT does not contain NaN/+Inf', srname)
     call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
         & 'SIZE(CVAL) == NPT and CVAL does not contain negative NaN/+Inf', srname)
     call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
@@ -439,14 +439,18 @@ d = factor_gamma * delta * (vsigj * simi(jdrop, :))
 ! The code below chooses the direction of D according to an approximation of the merit function.
 ! See (17) of the COBYLA paper and  line 225 of Powell's cobylb.f.
 
-! Calculate the coefficients of the linear approximations to the objective and constraint functions,
-! placing minus the objective function gradient after the constraint gradients in the array A.
-A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
-!!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))'; % Implicit expansion for subtraction
-A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
-cvmaxp = maxval([ZERO, -matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
-cvmaxn = maxval([ZERO, matprod(d, A(:, 1:m)) - conmat(:, n + 1)])
-if (TWO * inprod(d, A(:, m + 1)) < cpen * (cvmaxp - cvmaxn)) then
+! Calculate the coefficients of the linear approximations to the objective and constraint functions.
+! N.B.: CONMAT and SIMI have been updated after the last trust-region step, but G and A have not.
+! So we cannot pass G and A from outside.
+g = matprod(fval(1:n) - fval(n + 1), simi)
+A(:, 1:m_lcon) = amat
+A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
+!!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
+! CVPD and CVND are the predicted constraint violation of D and -D by the linear models.
+cvpd = maxval([ZERO, conmat(:, n + 1) + matprod(d, A)])
+cvnd = maxval([ZERO, conmat(:, n + 1) - matprod(d, A)])
+! Take -D if the linear models predict that its merit function value is lower.
+if (-inprod(d, g) + cpen * cvnd < inprod(d, g) + cpen * cvpd) then
     d = -d
 end if
 

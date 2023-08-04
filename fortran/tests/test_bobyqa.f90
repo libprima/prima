@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, June 27, 2023 AM07:42:30
+! Last Modified: Tuesday, July 04, 2023 AM01:02:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -149,7 +149,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
 
         print '(/A, I0, A, I0, A, I0, A, I0)', &
             & strip(probname)//': N = ', n, ' NPT = ', npt, ', MAXFUN = ', maxfun, ', Random test ', irand
-        call bobyqa(noisy_calfun, x, f, xl=prob % lb, xu=prob % ub, &
+        call bobyqa(noisy_calfun, x, f, xl=prob % xl, xu=prob % xu, &
             & npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, &
             & ftarget=ftarget, iprint=iprint)
 
@@ -224,16 +224,15 @@ else
 
                 call safealloc(x, n)
                 x = x0
-                call bobyqa(noisy_calfun, x, f, xl=prob % lb, xu=prob % ub, &
+                call bobyqa(noisy_calfun, x, f, xl=prob % xl, xu=prob % xu, npt=npt, &
                     & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
                     & xhist=xhist, ftarget=ftarget, iprint=iprint)
 
                 if (prob % probtype == 'u') then  ! Run the test without constraints
                     call safealloc(x_unc, n)
                     x_unc = x0
-                    call bobyqa(noisy_calfun, x_unc, f_unc, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
-                        & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, &
-                        & iprint=iprint)
+                    call bobyqa(noisy_calfun, x_unc, f_unc, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+                        & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
                     call validate(all(abs(x - x_unc) <= 0), 'X == X_UNC', srname)
                     call validate(abs(f - f_unc) <= 0 .or. (is_neginf(f) .and. is_neginf(f_unc)), 'F == F_UNC', srname)
                 end if

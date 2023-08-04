@@ -54,6 +54,7 @@ try
 
     % Set some debugging compiler options that are not used by MEX by default.
     options.compiler_options = '-g -fimplicit-none -fbacktrace -fcheck=all -ftrapv -ffpe-trap=zero -finit-real=nan -finit-integer=-9999999';
+
     % Starting from 20230504, we do not test the classical version of the solver anymore. Indeed,
     % with `-fcheck=all`, the classical version often crashes due to memory access violation.
     options.no_classical = true;

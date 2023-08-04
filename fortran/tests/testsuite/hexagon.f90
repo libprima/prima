@@ -19,13 +19,13 @@ prob % Delta0 = HALF
 prob % calcfc => calcfc_hexagon
 
 n = prob % n
-call safealloc(prob % lb, n)
-prob % lb = -REALMAX
-call safealloc(prob % ub, n)
-prob % ub = REALMAX
-call safealloc(prob % Aeq, n, 0_IK)
+call safealloc(prob % xl, n)
+prob % xl = -REALMAX
+call safealloc(prob % xu, n)
+prob % xu = REALMAX
+call safealloc(prob % Aeq, 0_IK, n)
 call safealloc(prob % beq, 0_IK)
-call safealloc(prob % Aineq, n, 0_IK)
+call safealloc(prob % Aineq, 0_IK, n)
 call safealloc(prob % bineq, 0_IK)
 end subroutine construct_hexagon
 
@@ -58,4 +58,5 @@ constr(11) = x(3) * x(9)
 constr(12) = -x(5) * x(9)
 constr(13) = x(5) * x(8) - x(6) * x(7)
 constr(14) = x(9)
+constr = -constr
 end subroutine calcfc_hexagon

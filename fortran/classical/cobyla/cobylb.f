@@ -129,7 +129,9 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 !----------------------------------------------------------------------!
       !CALL CALCFC (N,M,X,F,CON)
       if (nfvals > 1) then
-      call evaluate(calcfc, x, f, constr, cstrv)
+      call evaluate(calcfc, x, f, constr)
+      constr = -constr
+      cstrv = maxval([ZERO, -constr])
       end if
       con(1:m) = constr !!!
       call savehist(nfvals, x, xhist, f, fhist, cstrv, chist,

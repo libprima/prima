@@ -19,13 +19,13 @@ prob % Delta0 = HALF
 prob % calcfc => calcfc_ellipsoid
 
 n = prob % n
-call safealloc(prob % lb, n)
-prob % lb = -REALMAX
-call safealloc(prob % ub, n)
-prob % ub = REALMAX
-call safealloc(prob % Aeq, n, 0_IK)
+call safealloc(prob % xl, n)
+prob % xl = -REALMAX
+call safealloc(prob % xu, n)
+prob % xu = REALMAX
+call safealloc(prob % Aeq, 0_IK, n)
 call safealloc(prob % beq, 0_IK)
-call safealloc(prob % Aineq, n, 0_IK)
+call safealloc(prob % Aineq, 0_IK, n)
 call safealloc(prob % bineq, 0_IK)
 end subroutine construct_ellipsoid
 
@@ -44,5 +44,5 @@ real(RP), intent(out) :: f
 call assert(size(x) == 3 .and. size(constr) == 1, 'SIZE(X) == 3, SIZE(CONSTR) == 1', srname)
 
 f = x(1) * x(2) * x(3)
-constr(1) = ONE - x(1)**2 - 2.0_RP * x(2)**2 - 3.0_RP * x(3)**2
+constr(1) = -ONE + x(1)**2 + 2.0_RP * x(2)**2 + 3.0_RP * x(3)**2
 end subroutine calcfc_ellipsoid

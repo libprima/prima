@@ -27,14 +27,14 @@ prob % probtype = 'n'
 prob % n = n
 prob % m = m_loc
 
-call safealloc(prob % lb, n)
-prob % lb = -TEN
-call safealloc(prob % ub, n)
-prob % ub = TEN
+call safealloc(prob % xl, n)
+prob % xl = -TEN
+call safealloc(prob % xu, n)
+prob % xu = TEN
 
-call safealloc(prob % Aeq, n, m_loc)
-do j = 1, m_loc
-    do i = 1, n
+call safealloc(prob % Aeq, m_loc, n)
+do j = 1, n
+    do i = 1, m_loc
         prob % Aeq(i, j) = ONE / real(i + j, RP)
     end do
 end do
@@ -42,15 +42,15 @@ end do
 call safealloc(prob % beq, m_loc)
 prob % beq = sin(real([(j, j=1, m_loc)], RP))
 
-call safealloc(prob % Aineq, n, m_loc)
+call safealloc(prob % Aineq, m_loc, n)
 prob % Aineq = prob % Aeq
 
 call safealloc(prob % bineq, m_loc)
-prob % bineq = prob % beq + ONE
+prob % bineq = cos(real([(j**2, j=1, m_loc)], RP))
 
 ! Problem-specific code
 prob % probname = 'bigprob'
-call safealloc(prob % x0, n)  ! Not needed if F2003 is fully supported. Needed by Absoft 22.0.
+call safealloc(prob % x0, n)
 prob % x0 = -ONE
 prob % Delta0 = HALF
 prob % calfun => calfun_bigprob

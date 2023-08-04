@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 15, 2023 PM08:12:56
+! Last Modified: Tuesday, August 01, 2023 PM05:12:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -302,10 +302,12 @@ do tr = 1, maxtr
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-    close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
+    close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
     ! Below are some alternative definitions of CLOSE_ITPSET.
+    ! N.B.: The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
     ! !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Powell's code.
-    ! !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
+    ! !close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's BOBYQA code.
+    ! !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's LINCOA code.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
     ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive in practice.
@@ -383,9 +385,11 @@ do tr = 1, maxtr
 
         ! DELBAR is the trust-region radius for the geometry improvement subproblem.
         ! Powell's UOBYQA code sets DELBAR = RHO, but NEWUOA/BOBYQA/LINCOA all take DELTA and/or
-        ! DISTSQ into consideration. The following DELBAR is copied from NEWUOA, and it seems to
-        ! improve the performance slightly according to a test on 20220720.
-        delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)
+        ! DISTSQ into consideration.
+        delbar = rho  ! Powell's code
+        !delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)  ! Powell's NEWUOA code
+        !delbar = max(TENTH * delta, rho)  ! Powell's LINCOA code
+        !delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)  ! Powell's BOBYQA code
 
         d = geostep(knew_geo, kopt, delbar, pl, xpt)
 

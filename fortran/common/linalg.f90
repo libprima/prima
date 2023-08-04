@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, June 07, 2023 PM09:08:55
+! Last Modified: Sunday, July 16, 2023 PM11:51:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1062,7 +1062,7 @@ function lsqr_Rfull(b, Q, R) result(x)
 ! This function solves the linear least squares problem min ||A*x - b||_2 by the QR factorization.
 ! This function is used in LINCOA, where,
 ! 1. The economy-size QR factorization is supplied externally (Q is called QFAC and R is called RFAC);
-! 3. R is non-singular.
+! 2. R is non-singular.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
@@ -2177,7 +2177,8 @@ end function logical_to_int
 
 function trueloc(x) result(loc)
 !--------------------------------------------------------------------------------------------------!
-! Similar to the `find` function in MATLAB, TRUELOC returns the indices where X is true.
+! Similar to the `find` function in MATLAB, TRUELOC returns the indices where X is true in
+! the ASCENDING order.
 ! The motivation for this function is the fact that Fortran does not support logical indexing. See,
 ! for example, https:
 ! 1. MATLAB, Python, Julia, and R support logical indexing, so that the Fortran code Y(TRUELOC(X))
@@ -2215,6 +2216,7 @@ if (DEBUGGING) then
     call assert(all(loc >= 1 .and. loc <= n), '1 <= LOC <= N', srname)
     call assert(size(loc) == count(x), 'SIZE(LOC) == COUNT(X)', srname)
     call assert(all(x(loc)), 'X(LOC) is all TRUE', srname)
+    call assert(all(loc(2:size(loc)) > loc(1:size(loc) - 1)), 'LOC is strictly ascending', srname)
 end if
 end function trueloc
 
@@ -2251,6 +2253,7 @@ if (DEBUGGING) then
     call assert(all(loc >= 1 .and. loc <= size(x)), '1 <= LOC <= N', srname)
     call assert(size(loc) == size(x) - count(x), 'SIZE(LOC) == SIZE(X) - COUNT(X)', srname)
     call assert(all(.not. x(loc)), 'X(LOC) is all FALSE', srname)
+    call assert(all(loc(2:size(loc)) > loc(1:size(loc) - 1)), 'LOC is strictly ascending', srname)
 end if
 end function falseloc
 

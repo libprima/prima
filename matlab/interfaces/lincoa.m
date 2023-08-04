@@ -224,7 +224,6 @@ internal_invokers = {'prima'}; % Invokers from this package; may have others in 
 % intended to pass to postprima.
 % OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation;
 % for internal solvers (solvers from prima), it should also contain fhist, chist, warnings;
-% for lincoa, it should also contain constr_modified;
 % for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq.
 output = struct();
 % N.B.: DO NOT record anything in PROBINFO. If the solver is called by prima,
@@ -318,7 +317,6 @@ if ~strcmp(invoker, 'prima') && probinfo.infeasible % The problem turned out inf
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
-    output.constr_modified = false;
 elseif ~strcmp(invoker, 'prima') && probinfo.nofreex % x was fixed by the bound constraints during preprima
     output.x = probinfo.fixedx_value;
     output.fx = fun(output.x);
@@ -330,7 +328,6 @@ elseif ~strcmp(invoker, 'prima') && probinfo.nofreex % x was fixed by the bound 
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_fixedx;
     output.chist = output.constrviolation;
-    output.constr_modified = false;
 elseif ~strcmp(invoker, 'prima') &&  probinfo.feasibility_problem
     output.x = x0;  % preprima has tried to set x0 to a feasible point (but may have failed)
     % We could set fx = [], funcCount = 0, and fhist = [] since no function evaluation
@@ -345,54 +342,15 @@ elseif ~strcmp(invoker, 'prima') &&  probinfo.feasibility_problem
     output.fhist = output.fx;
     output.constrviolation = probinfo.constrv_x0;
     output.chist = output.constrviolation;
-    output.constr_modified = false; % LINCOA requires constr_modified to exist in output
     if output.constrviolation <= eps  % Did preprima find a feasible point?
         output.exitflag = 14;
     else
         output.exitflag = 15;
     end
 else % The problem turns out 'normal' during preprima
-    % Include all the constraints into one single linear constraint
-    % (A_aug)'*x <= b_aug; note the TRANSPOSE due to the data structure of
-    % the Fortran code.
-    n = length(x0);
-    idmatrix = eye(n, n); % If we want to use sparse matrix, the mex gateway has to be modified
-    Alb = idmatrix(lb > -inf, :);
-    Aub = idmatrix(ub < inf, :);
-    lb = lb(lb > -inf); % Remove infinity bounds!
-    ub = ub(ub < inf); % Remove infinity bounds!
-    % Note that preprima has removed the 'trivial' linear constraints in
-    % [Aineq, bineq] and [Aeq, beq].
-    A_aug = [-Alb; Aub; Aineq; Aeq; -Aeq]';
-    b_aug = [-lb(:); ub(:); bineq(:); beq(:); -beq(:)];
-    if ~(isempty(A_aug) && isempty(b_aug)) && ~(size(A_aug,1) == n && size(A_aug,2) == length(b_aug))
-        % Private/unexpected error
-        error(sprintf('%s:InvalidAugLinCon', funname), '%s: UNEXPECTED ERROR: invalid augmented linear constraints.', funname);
-    end
-    if isempty(A_aug)
-        % We uniformly use [] to represent empty objects; its size is 0x0.
-        % Changing this may cause matrix dimension inconsistency.
-        A_aug = [];
-        b_aug = [];
-    end
-
-    if (length(b_aug) > maxint())
+    if (length(bineq) + 2*length(beq) + 2*length(x0) > maxint())
         % Public/normal error
         error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
-    end
-
-    % If x0 is not feasible, LINCOA will modify the constraints to make
-    % it feasible (which is a bit strange, but Powell decided to do it).
-    % preprima has tried to make find a feasible x0. Raise a warning is
-    % x0 is not 'feasible enough' so that the constraints will be modified.
-    if ~isempty(A_aug) && any(A_aug'*x0 > b_aug + 1e-10*max(1, abs(b_aug)))
-        output.constr_modified = true;
-        wid = sprintf('%s:ConstraintModified', funname);
-        wmsg = sprintf('%s will modify the right-hand sides of the constraints to make the starting point feasible.', funname);
-        warning(wid, '%s', wmsg);
-        output.warnings = [output.warnings, wmsg];
-    else
-        output.constr_modified = false;
     end
 
     % Call the Fortran code
@@ -403,8 +361,8 @@ else % The problem turns out 'normal' during preprima
     % however, public errors can occur due to, e.g., evalobj; error handling needed
     try
         [x, fx, constrviolation, exitflag, nf, xhist, fhist, chist] = ...
-            fsolver(fun, x0, A_aug, b_aug, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ...
-            ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, double(output_xhist), maxfilt);
+            fsolver(fun, x0, Aineq, bineq, Aeq, beq, lb, ub, rhobeg, rhoend, eta1, eta2, gamma1, ...
+            gamma2, ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, double(output_xhist), maxfilt);
         % Fortran MEX does not provide an API for reading Boolean variables. So we convert
         % output_xhist to a double (0 or 1) before passing it to the MEX gateway.
         % In C MEX, however, we have mxGetLogicals.

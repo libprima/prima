@@ -1,5 +1,9 @@
-! TODO: Modify the code so that calcfc_internal is not needed? If yes, modify constr, conhist etc.
-! What about defining nlconstr, lconstr, nlchist, etc?
+!TODO:
+! 1. Modify evaluate, trstlp, geostep etc so that the nonlinear constraint becomes constr(x) <= 0.
+! N.B.:  Remember to modify the definition of nlceq, nlcehist, etc in cobyla.m. Remember to modify
+! the extreme barrier in evaluate.
+! 2. Modify the code so that calcfc_internal is not needed. Modify constr, conhist etc. What about
+! defining nlconstr, lconstr, nlchist, etc?
 !
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
@@ -19,7 +23,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 PM09:31:14
+! Last Modified: Friday, July 21, 2023 PM03:24:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -43,11 +47,11 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, et
 ! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, TENTH, EPS, REALMAX, &
-    & DEBUGGING, MIN_MAXFILT
+    & DEBUGGING, MIN_MAXFILT, CONSTRMAX
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_neginf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
@@ -83,7 +87,7 @@ real(RP), intent(in) :: rhoend
 
 ! In-outputs
 ! On entry, [X, F, CONSTR] = [X0, F(X0), CONSTR(X0)]
-real(RP), intent(inout) :: constr(:)    ! CONSTR(M)
+real(RP), intent(inout) :: nlconstr(:)    ! NLCONSTR(M_NLCON)
 real(RP), intent(inout) :: f
 real(RP), intent(inout) :: x(:)     ! X(N)
 
@@ -103,7 +107,7 @@ integer(IK) :: jdrop_geo
 integer(IK) :: jdrop_tr
 integer(IK) :: kopt
 integer(IK) :: m
-integer(IK) :: m_lcon
+integer(IK) :: m_nlcon
 integer(IK) :: maxchist
 integer(IK) :: maxconhist
 integer(IK) :: maxfhist
@@ -123,11 +127,15 @@ logical :: reduce_rho
 logical :: shortd
 logical :: trfail
 logical :: ximproved
-real(RP) :: A(size(x), size(constr)) ! A contains the approximate gradient for the constraints
+real(RP) :: A(size(x), size(nlconstr) + size(bvec) + 1)
+! A(:, 1:M) contains the approximate gradient for the constraints, and A(:, M+1) is minus the
+! approximate gradient for the objective function.
 real(RP) :: actrem
+real(RP) :: b(size(A, 1))
 real(RP) :: cfilt(min(max(maxfilt, 1_IK), maxfun))
-real(RP) :: confilt(size(constr), size(cfilt))
-real(RP) :: conmat(size(constr), size(x) + 1)
+real(RP) :: confilt(size(nlconstr), size(cfilt))
+real(RP) :: conmat(size(nlconstr) + size(bvec), size(x) + 1)
+real(RP) :: constr(size(nlconstr) + size(bvec))
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
 real(RP) :: cval(size(x) + 1)
 real(RP) :: d(size(x))
@@ -135,7 +143,6 @@ real(RP) :: delta
 real(RP) :: dnorm
 real(RP) :: ffilt(size(cfilt))
 real(RP) :: fval(size(x) + 1)
-real(RP) :: g(size(x))
 real(RP) :: gamma3
 real(RP) :: prerec  ! Predicted reduction in constraint violation
 real(RP) :: preref  ! Predicted reduction in objective Function
@@ -168,8 +175,8 @@ real(RP), parameter :: factor_delta = 1.1_RP  ! The factor delta in the COBYLA p
 real(RP), parameter :: factor_gamma = HALF  ! The factor gamma in the COBYLA paper
 
 ! Sizes
-m_lcon = int(size(bvec), kind(m_lcon))
-m = int(size(constr), kind(m))
+m = int(size(b), kind(m))
+m_nlcon = int(size(nlconstr), kind(m_nlcon))
 n = int(size(x), kind(n))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
@@ -181,6 +188,7 @@ maxhist = int(max(maxxhist, maxfhist, maxconhist, maxchist), kind(maxhist))
 if (DEBUGGING) then
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
     call assert(m >= 0, 'M >= 0', srname)
+    call assert(m_nlcon >= 0, 'M_NLCON >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(maxfun >= n + 2, 'MAXFUN >= N + 2', srname)
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
@@ -195,7 +203,7 @@ if (DEBUGGING) then
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxfhist * (maxfhist - maxhist) == 0, 'SIZE(FHIST) == 0 or MAXHIST', srname)
-    call assert(size(conhist, 1) == m .and. maxconhist * (maxconhist - maxhist) == 0, &
+    call assert(size(conhist, 1) == m_nlcon .and. maxconhist * (maxconhist - maxhist) == 0, &
         & 'SIZE(CONHIST, 1) == M, SIZE(CONHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
     call assert(factor_alpha > 0 .and. factor_alpha < factor_gamma .and. factor_gamma < 1, &
@@ -212,7 +220,7 @@ end if
 ! function value (regardless of the constraint violation), and SIM(:, 1:N) holds the displacements
 ! from the other vertices to SIM(:, N+1). FVAL, CONMAT, and CVAL hold the function values,
 ! constraint values, and constraint violations on the vertices in the order corresponding to SIM.
-call initxfc(calcfc_internal, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
+call initxfc(calcfc_internal, iprint, maxfun, ctol, f, ftarget, nlconstr, rhobeg, x, nf, chist, conhist, &
    & conmat, cval, fhist, fval, sim, simi, xhist, evaluated, subinfo)
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
@@ -230,7 +238,7 @@ if (subinfo /= INFO_DFT) then
     kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
     x = xfilt(:, kopt)
     f = ffilt(kopt)
-    constr = confilt(:, kopt)
+    nlconstr = confilt(:, kopt)
     cstrv = cfilt(kopt)
     ! Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist, conhist)
@@ -247,10 +255,10 @@ if (subinfo /= INFO_DFT) then
         call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
         call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
             & 'FHIST does not contain NaN/+Inf', srname)
-        call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
-            & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
+        call assert(size(conhist, 1) == m_nlcon .and. size(conhist, 2) == maxconhist, &
+            & 'SIZE(CONHIST) == [M_NLCON, MAXCONHIST]', srname)
         call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
-            & is_posinf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/+Inf', srname)
+            & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
         call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
         call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
             & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
@@ -327,15 +335,19 @@ do tr = 1, maxtr
     ! Does the interpolation set have acceptable geometry? It affects IMPROVE_GEO and REDUCE_RHO.
     adequate_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
 
-    ! Calculate the linear approximations to the objective and constraint functions.
+    ! Calculate the linear approximations to the objective and constraint functions, placing minus
+    ! the objective function gradient after the constraint gradients in the array A.
     ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
-    g = matprod(fval(1:n) - fval(n + 1), simi)
-    A(:, 1:m_lcon) = amat
-    A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
-    !!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
+    A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    A(:, 1:size(bvec)) = -amat
+    !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
+    A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
+    ! Theoretically (but not numerically), the last entry of B does not affect the result of TRSTLP.
+    ! We set it to -FVAL(N + 1) following Powell's code.
+    b = [-conmat(:, n + 1), -fval(n + 1)]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
-    d = trstlp(A, -conmat(:, n + 1), delta, g)
+    d = trstlp(A, b, delta)
     dnorm = min(delta, norm(d))
 
     ! Is the trust-region trial step short? Note that we compare DNORM with RHO, not DELTA.
@@ -347,13 +359,15 @@ do tr = 1, maxtr
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
-    ! 1. PREREC is the reduction of the L-infinity violation of the linearized constraints achieved
-    ! by D. It is nonnegative in theory; it is 0 iff CONMAT(1:M, N+1) <= 0, namely the trust-region
-    ! center satisfies the constraints.
-    ! 2. PREREF may be negative or 0, but it should be positive when PREREC = 0 and SHORTD is FALSE.
+    ! 1. B(1:M) = -CONMAT(:, N + 1), and hence MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]) is the
+    ! L-infinity violation of the linearized constraints corresponding to D. When D = 0, the
+    ! violation is MAXVAL([B(1:M), ZERO]) = CVAL(N+1). PREREC is the reduction of this violation
+    ! achieved by D, which is nonnegative in theory; PREREC = 0 iff B(1:M) <= 0, i.e., the
+    ! trust-region center satisfies the linearized constraints.
+    ! 2. PREREF may be negative or zero, but it is positive when PREREC = 0 and SHORTD is FALSE.
     ! 3. Due to 2, in theory, MAXIMUM([PREREC, PREREF]) > 0 if SHORTD is FALSE.
-    preref = -inprod(d, g)  ! Can be negative.
-    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A), ZERO])
+    prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    preref = inprod(d, A(:, m + 1))  ! Can be negative.
 
     ! Evaluate PREREM, which is the predicted reduction in the merit function.
     ! In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true numerically.
@@ -370,8 +384,9 @@ do tr = 1, maxtr
     else
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc_internal, x, f, constr)
-        cstrv = maxval([ZERO, constr])
+        call evaluate(calcfc, x, f, nlconstr)
+        constr = -[max(-CONSTRMAX, min(CONSTRMAX, matprod(amat, x) - bvec)), nlconstr]
+        cstrv = maxval([ZERO, -constr])
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
@@ -538,8 +553,9 @@ do tr = 1, maxtr
 
         x = sim(:, n + 1) + d
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc_internal, x, f, constr)
-        cstrv = maxval([ZERO, constr])
+        call evaluate(calcfc, x, f, nlconstr)
+        constr = -[max(-CONSTRMAX, min(CONSTRMAX, matprod(amat, x) - bvec)), nlconstr]
+        cstrv = maxval([ZERO, -constr])
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
@@ -595,8 +611,9 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     ! Zaikun 20230615: UPDATEXFC or UPDATEPOLE is not called since the last trust-region step. Hence
     ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
     x = sim(:, n + 1) + d
-    call evaluate(calcfc_internal, x, f, constr)
-    cstrv = maxval([ZERO, constr])
+    call evaluate(calcfc, x, f, nlconstr)
+    constr = -[max(-CONSTRMAX, min(CONSTRMAX, matprod(amat, x) - bvec)), nlconstr]
+    cstrv = maxval([ZERO, -constr])
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
@@ -640,7 +657,7 @@ if (DEBUGGING) then
     call assert(size(conhist, 1) == m .and. size(conhist, 2) == maxconhist, &
         & 'SIZE(CONHIST) == [M, MAXCONHIST]', srname)
     call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
-        & is_posinf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/+Inf', srname)
+        & is_neginf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/-Inf', srname)
     call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
     call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
         & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
@@ -654,18 +671,18 @@ contains
 
 
 subroutine calcfc_internal(x_internal, f_internal, constr_internal)
-!--------------------------------------------------------------------------------------------------!
-! This internal subroutine evaluates the objective function and ALL the constraints.
-!--------------------------------------------------------------------------------------------------!
 implicit none
 ! Inputs
 real(RP), intent(in) :: x_internal(:)
 ! Outputs
 real(RP), intent(out) :: f_internal
 real(RP), intent(out) :: constr_internal(:)
-constr_internal(1:m_lcon) = matprod(x_internal, amat) - bvec
-call calcfc(x_internal, f_internal, constr_internal(m_lcon + 1:m))
-end subroutine calcfc_internal
+! Local variables
+real(RP) :: constr_nlc(m - size(bvec))
+call calcfc(x_internal, f_internal, constr_nlc)
+! 20230720: For the moment, COBYLB handles the constraint as constraint >= 0. So we need to change the sign.
+constr_internal = [max(-CONSTRMAX, min(CONSTRMAX, bvec - matprod(x_internal, amat))), -constr_nlc]
+end subroutine
 
 end subroutine cobylb
 
@@ -679,7 +696,7 @@ function getcpen(amat, bvec, conmat_in, cpen_in, cval_in, delta, fval_in, rho, s
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
+use, non_intrinsic :: infnan_mod, only : is_finite, is_neginf, is_posinf, is_nan
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, isinv
 
@@ -704,19 +721,18 @@ real(RP), intent(in) :: simi_in(:, :)
 ! Outputs
 real(RP) :: cpen
 
-! Local variables
+! Intermediate variables
 character(len=*), parameter :: srname = 'getcpen'
 integer(IK) :: info
 integer(IK) :: iter
 integer(IK) :: m
-integer(IK) :: m_lcon
 integer(IK) :: n
-real(RP) :: A(size(sim_in, 1), size(conmat_in, 1))
+real(RP) :: A(size(sim_in, 1), size(conmat_in, 1) + 1)
+real(RP) :: b(size(conmat_in, 1) + 1)
 real(RP) :: conmat(size(conmat_in, 1), size(conmat_in, 2))
 real(RP) :: cval(size(cval_in))
 real(RP) :: d(size(sim_in, 1))
 real(RP) :: fval(size(fval_in))
-real(RP) :: g(size(sim_in, 1))
 real(RP) :: prerec
 real(RP) :: preref
 real(RP) :: sim(size(sim_in, 1), size(sim_in, 2))
@@ -724,7 +740,6 @@ real(RP) :: simi(size(simi_in, 1), size(simi_in, 2))
 real(RP), parameter :: itol = ONE
 
 ! Sizes
-m_lcon = int(size(bvec), kind(m_lcon))
 m = int(size(conmat, 1), kind(m))
 n = int(size(sim, 1), kind(n))
 
@@ -735,11 +750,11 @@ if (DEBUGGING) then
     call assert(size(amat, 1) == n .and. size(amat, 2) == size(bvec), 'SIZE(AMAT) == [N, SIZE(BVEC)]', srname)
     call assert(cpen_in > 0, 'CPEN > 0', srname)
     call assert(size(conmat_in, 1) == m .and. size(conmat_in, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
-    call assert(.not. any(is_nan(conmat_in) .or. is_posinf(conmat_in)), 'CONMAT does not contain NaN/+Inf', srname)
+    call assert(.not. any(is_nan(conmat_in) .or. is_neginf(conmat_in)), 'CONMAT does not contain NaN/-Inf', srname)
     call assert(size(cval_in) == n + 1 .and. .not. any(cval_in < 0 .or. is_nan(cval_in) .or. is_posinf(cval_in)), &
         & 'SIZE(CVAL) == N+1 and CVAL does not contain negative values or NaN/+Inf', srname)
     call assert(size(fval_in) == n + 1 .and. .not. any(is_nan(fval_in) .or. is_posinf(fval_in)), &
-        & 'SIZE(FVAL) == N+1 and FVAL does not contain NaN/+Inf', srname)
+        & 'SIZE(FVAL) == N+1 and FVAL is not NaN/+Inf', srname)
     call assert(size(sim_in, 1) == n .and. size(sim_in, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim_in)), 'SIM is finite', srname)
     call assert(all(maxval(abs(sim_in(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
@@ -785,27 +800,30 @@ do iter = 1, n + 1_IK
         exit
     end if
 
-    ! Calculate the linear approximations to the objective and constraint functions.
-    g = matprod(fval(1:n) - fval(n + 1), simi)
-    A(:, 1:m_lcon) = amat
-    A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
-    !!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
+    ! Calculate the linear approximations to the objective and constraint functions, placing minus
+    ! the objective function gradient after the constraint gradients in the array A.
+    A(:, 1:m) = transpose(matprod(conmat(:, 1:n) - spread(conmat(:, n + 1), dim=2, ncopies=n), simi))
+    A(:, 1:size(bvec)) = -amat
+    !!MATLAB: A(:, 1:m) = simi'*(conmat(:, 1:n) - conmat(:, n+1))' % Implicit expansion for subtraction
+    A(:, m + 1) = matprod(fval(n + 1) - fval(1:n), simi)
+    b = [-conmat(:, n + 1), -fval(n + 1)]
 
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
-    d = trstlp(A, -conmat(:, n + 1), delta, g)
+    d = trstlp(A, b, delta)
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
-    preref = -inprod(d, g)  ! Can be negative.
-    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A), ZERO])
+    prerec = cval(n + 1) - maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    preref = inprod(d, A(:, m + 1))  ! Can be negative.
 
     if (.not. (prerec > 0 .and. preref < 0)) then  ! PREREC <= 0 or PREREF >= 0 or either is NaN.
         exit
     end if
 
     ! Powell's code defines BARMU = -PREREF / PREREC, and CPEN is increased to 2*BARMU if and
-    ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our implementation,
-    ! however, we set CPEN directly to the maximum between its current value and 2*BARMU while
-    ! handling possible overflow. This simplifies the scheme without worsening the performance.
+    ! only if it is currently less than 1.5*BARMU, a very "Powellful" scheme. In our
+    ! implementation, however, we set CPEN directly to the maximum between its current value and
+    ! 2*BARMU while handling possible overflow. This simplifies the scheme without worsening the
+    ! performance of COBYLA.
     cpen = max(cpen, min(-TWO * (preref / prerec), REALMAX))
 
     if (findpole(cpen, cval, fval) == n + 1) then
@@ -835,7 +853,6 @@ function fcratio(conmat, fval) result(r)
 
 use, non_intrinsic :: consts_mod, only : RP, ZERO, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 implicit none
 
 ! Inputs
@@ -857,28 +874,24 @@ character(len=*), parameter :: srname = 'FCRATIO'
 if (DEBUGGING) then
     call assert(size(fval) >= 1, 'SIZE(FVAL) >= 1', srname)
     call assert(size(conmat, 2) == size(fval), 'SIZE(CONMAT, 2) == SIZE(FVAL)', srname)
-    call assert(.not. any(is_nan(conmat) .or. is_posinf(conmat)), 'CONMAT does not contain NaN/+Inf', srname)
-    call assert(.not. any(is_nan(fval) .or. is_posinf(fval)), 'FVAL does not contain NaN/+Inf', srname)
 end if
 
 !====================!
 ! Calculation starts !
 !====================!
 
-! N.B.: In the original version of COBYLA, Powell proposed the ratio for constraints in the form of
-! CONSTR(X) >= 0, but the constraints we consider here are CONSTR(X) <= 0. Hence we need to change
-! the sign of the constraints before defining CMIN and CMAX.
-cmin = minval(-conmat, dim=2)
-cmax = maxval(-conmat, dim=2)
+cmin = minval(conmat, dim=2)
+cmax = maxval(conmat, dim=2)
 fmin = minval(fval)
 fmax = maxval(fval)
-r = ZERO
 if (any(cmin < HALF * cmax) .and. fmin < fmax) then
     denom = minval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
     ! Powell mentioned the following alternative in Section 4 of his COBYLA paper. According to a
     ! test on 20230610, it does not make much difference to the performance.
     ! !denom = maxval(max(cmax, ZERO) - cmin, mask=(cmin < HALF * cmax))
     r = (fmax - fmin) / denom
+else
+    r = ZERO
 end if
 
 !====================!

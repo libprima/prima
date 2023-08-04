@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, May 30, 2023 PM06:28:30
+! Last Modified: Monday, July 03, 2023 PM02:47:06
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -67,10 +67,10 @@ f = min(tmp / 6.0_RP, f)
 end subroutine calfun
 
 
-subroutine setup(x0, A, b)
+subroutine setup(x0, Aineq, bineq)
 implicit none
 
-real(RP), intent(out) :: x0(:), A(:, :), b(:)
+real(RP), intent(out) :: x0(:), Aineq(:, :), bineq(:)
 
 integer, parameter :: np = 50
 integer :: i, j
@@ -94,16 +94,16 @@ x0(5) = 1.0_RP / ys
 x0(9) = 1.0_RP / zs
 x0(10:12) = 1.0_RP / ss
 
-A = 0.0_RP
+Aineq = 0.0_RP
 do j = 1, np
     do i = 1, 4
-        A(3 * i - 2, 4 * j + i - 4) = xp(j)
-        A(3 * i - 1, 4 * j + i - 4) = yp(j)
-        A(3 * i, 4 * j + i - 4) = zp(j)
+        Aineq(4 * j + i - 4, 3 * i - 2) = xp(j)
+        Aineq(4 * j + i - 4, 3 * i - 1) = yp(j)
+        Aineq(4 * j + i - 4, 3 * i) = zp(j)
     end do
 end do
 
-b = 1.0_RP
+bineq = 1.0_RP
 
 end subroutine setup
 
@@ -123,19 +123,19 @@ implicit none
 
 integer, parameter :: n = 12, np = 50
 integer :: nf, info
-real(RP) :: f, cstrv, x(n), x0(n), A(n, 4 * np), b(4 * np)
+real(RP) :: f, cstrv, x(n), x0(n), Aineq(4 * np, n), bineq(4 * np)
 
-! Set up X0 (starting point), A, and b.
-call setup(x0, A, b)
+! Set up X0 (starting point), Aineq, and bineq.
+call setup(x0, Aineq, bineq)
 
 ! The following lines illustrates how to call the solver.
 x = x0
-call lincoa(calfun, x, f, cstrv, A, b)  ! This call will not print anything.
+call lincoa(calfun, x, f, cstrv, Aineq, bineq)  ! This call will not print anything.
 
 ! In addition to the compulsory arguments, the following illustration specifies also RHOBEG and
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call lincoa(calfun, x, f, cstrv, A, b, rhobeg=1.0_RP, iprint=1, nf=nf, info=info)
+call lincoa(calfun, x, f, cstrv, Aineq, bineq, rhobeg=1.0_RP, iprint=1, nf=nf, info=info)
 
 end program lincoa_exmp

@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, June 20, 2023 AM06:19:49
+! Last Modified: Tuesday, August 01, 2023 PM05:26:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -407,10 +407,12 @@ do tr = 1, maxtr
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-    close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's code.
+    close_itpset = all(distsq <= max(delta**2, (TEN * rho)**2))
     ! Below are some alternative definitions of CLOSE_ITPSET.
-    ! !close_itpset = all(distsq <= (TEN * delta)**2)  ! Does not work as well as Powell's version.
+    ! N.B.: The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
+    ! !close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's code.
     ! !close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
+    ! !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's LINCOA code.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
     ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive in practice.
@@ -460,7 +462,13 @@ do tr = 1, maxtr
     if (improve_geo) then
         ! XPT(:, KNEW_GEO) will become XOPT + D below. KNEW_GEO /= KOPT unless there is a bug.
         knew_geo = int(maxloc(distsq, dim=1), kind(knew_geo))
-        delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)
+
+        ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
+        ! scheme GEOSTEP. Note that DELTA has been updated before arriving here.
+        delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)  ! Powell's code
+        !delbar = rho  ! Powell's UOBYQA code
+        !delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)  ! Powell's NEWUOA code
+        !delbar = max(TENTH * delta, rho)  ! Powell's LINCOA code
 
         ! Find D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) becomes XOPT + D.
         d = geostep(knew_geo, kopt, bmat, delbar, sl, su, xpt, zmat)

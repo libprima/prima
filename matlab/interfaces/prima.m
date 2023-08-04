@@ -341,7 +341,6 @@ funname = callstack(1).name; % Name of the current function
 % intended to pass to postprima.
 % OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation;
 % for internal solvers (solvers from PRIMA), it should also contain fhist, chist, warnings;
-% for lincoa, it should also contain constr_modified;
 % for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq.
 output = struct();
 
@@ -417,9 +416,6 @@ if probinfo.infeasible % The problem turned out infeasible during preprima
         output.nlcihist = output.nlcineq;
         output.nlcehist = output.nlceq;
     end
-    if strcmp(options.solver, 'lincoa') % LINCOA requires constr_modified to exist in output
-        output.constr_modified = false;
-    end
 elseif probinfo.nofreex % x was fixed by the bound constraints during preprima
     output.x = probinfo.fixedx_value;
     output.fx = fun(output.x);
@@ -436,9 +432,6 @@ elseif probinfo.nofreex % x was fixed by the bound constraints during preprima
     if options.output_nlchist
         output.nlcihist = output.nlcineq;
         output.nlcehist = output.nlceq;
-    end
-    if strcmp(options.solver, 'lincoa') % LINCOA requires constr_modified to exist in output
-        output.constr_modified = false;
     end
 elseif probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinearly-constrained')
     output.x = x0;  % preprima has tried to set x0 to a feasible point (but may have failed)
@@ -464,9 +457,6 @@ elseif probinfo.feasibility_problem && ~strcmp(probinfo.refined_type, 'nonlinear
     if options.output_nlchist
         output.nlcihist = output.nlcineq;
         output.nlcehist = output.nlceq;
-    end
-    if strcmp(options.solver, 'lincoa') % LINCOA requires constr_modified to exist in output
-        output.constr_modified = false;
     end
 else
     % The problem turns out 'normal' during preprima. Solve it by

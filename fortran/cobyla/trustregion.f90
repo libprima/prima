@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, June 08, 2023 AM11:59:47
+! Last Modified: Thursday, August 03, 2023 AM09:14:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -20,21 +20,19 @@ public :: trrad
 contains
 
 
-function trstlp(A_in, b_in, delta) result(d)
+function trstlp(A, b, delta, g) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine calculates an N-component vector D by the following two stages. In the first
 ! stage, D is set to the shortest vector that minimizes the greatest violation of the constraints
-!       dot_product(A(1:N, K), D) >= B(K),  K = 1, 2, 3, ..., M,
+!       A^T * D <= B,  K = 1, 2, 3, ..., M,
 ! subject to the Euclidean length of D being at most DELTA. If its length is strictly less than
 ! DELTA, then the second stage uses the resultant freedom in D to minimize the objective function
-!       dot_product(-A(1:N, M+1), D)
-! subject to no increase in any greatest constraint violation. This notation allows the gradient of
-! the objective function to be regarded as the gradient of a constraint. Therefore the two stages
-! are distinguished by MCON == M and MCON > M respectively.
+!       G^T * D
+! subject to no increase in any greatest constraint violation.
 !
 ! It is possible but rare that a degeneracy may prevent D from attaining the target length DELTA.
 !
-! CVIOL is the largest constraint violation of the current D: MAXVAL([B(1:M)-A(:,1:M)^T*D), ZERO]).
+! CVIOL is the largest constraint violation of the current D: MAXVAL([A^T*D-B, ZERO]).
 ! ICON is the index of a most violated constraint if CVIOL is positive.
 !
 ! NACT is the number of constraints in the active set and IACT(1), ...,IACT(NACT) are their indices,
@@ -50,59 +48,61 @@ function trstlp(A_in, b_in, delta) result(d)
 ! constraint. D is the current vector of variables and here the residuals of the active constraints
 ! should be zero. Further, the active constraints have nonnegative Lagrange multipliers that are
 ! held at the beginning of VMULTC. The remainder of this vector holds the residuals of the inactive
-! constraints at d, the ordering of the components of VMULTC being in agreement with the permutation
+! constraints at D, the ordering of the components of VMULTC being in agreement with the permutation
 ! of the indices of the constraints that is in IACT. All these residuals are nonnegative, which is
 ! achieved by the shift CVIOL that makes the least residual zero.
 !
 ! N.B.:
+! 0. In Powell's implementation, the constraints are A^T * D >= B. In other words, the A and B in
+! our implementation are the negative of those in Powell's implementation.
 ! 1. The algorithm was NOT documented in the COBYLA paper. A note should be written to introduce it!
 ! 2. As a major part of the algorithm (see TRSTLP_SUB), the code maintains and updates the QR
-! factorization of A(IACT(1:NACT)), i.e., the gradients of all the active (linear) constraints. The
-! matrix Z is indeed Q, and the vector ZDOTA is the diagonal of R. The factorization is updated by
-! Givens rotations when an index is added in or removed from IACT.
-! 3. There are probably better algorithms available for this trust-region linear programming problem.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! INTEGER(IK) :: IACT(M+1)
-! REAL(RP) :: D(N), VMULTC(M+1), Z(N, N)
-! Size of local arrays: INTEGER(IK)*(M+1) + REAL(RP)*(1+M+N+N^2)
+! factorization of A(:, IACT(1:NACT)), i.e., the gradients of all the active (linear) constraints.
+! The matrix Z is indeed Q, and the vector ZDOTA is the diagonal of R. The factorization is updated
+! by Givens rotations when an index is added in or removed from IACT.
+! 3. There are probably better algorithms available for the trust-region linear programming problem.
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, REALMIN, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, REALMIN, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : norm
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: A_in(:, :) ! A_IN(N, M+1)
-real(RP), intent(in) :: b_in(:)    ! B_IN(M+1)
+real(RP), intent(in) :: A(:, :) ! A(N, M)
+real(RP), intent(in) :: b(:)    ! B(M)
 real(RP), intent(in) :: delta
+real(RP), intent(in) :: g(:)    ! G(N)
 
 ! Outputs
-real(RP) :: d(size(A_in, 1))   ! D(N)
+real(RP) :: d(size(A, 1))   ! D(N)
 
 ! Local variables
 character(len=*), parameter :: srname = 'TRSTLP'
 integer(IK) :: i
-integer(IK) :: iact(size(b_in))
+integer(IK) :: iact(size(b) + 1)
 integer(IK) :: m
+integer(IK) :: n
 integer(IK) :: nact
-real(RP) :: A(size(A_in, 1), size(A_in, 2))
-real(RP) :: b(size(b_in))
+real(RP) :: A_aug(size(A, 1), size(A, 2) + 1)
+real(RP) :: b_aug(size(b) + 1)
 real(RP) :: modscal
-real(RP) :: vmultc(size(b_in))
+real(RP) :: vmultc(size(b) + 1)
 real(RP) :: z(size(d), size(d))
 
 ! Sizes
-m = int(size(A_in, 2) - 1, kind(m))
+m = int(size(A, 2), kind(m))
+n = int(size(A, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
+    call assert(n >= 1, 'N >= 1', srname)
     call assert(m >= 0, 'M >= 0', srname)
-    call assert(size(A_in, 1) >= 1 .and. size(A_in, 2) >= 1, 'SIZE(A) >= [1, 1]', srname)
-    call assert(size(b_in) == size(A_in, 2), 'SIZE(B) == size(A, 2)', srname)
+    call assert(size(g) == n, 'SIZE(G) == N', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
+    call assert(size(b) == m, 'SIZE(B) == M', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
 end if
 
@@ -110,25 +110,28 @@ end if
 ! Calculation starts !
 !====================!
 
-! Scale the problem if A contains large values. Otherwise, floating point exceptions may occur.
+! Form A_aug and B_aug. This allows the gradient of the objective function to be regarded as the
+! gradient of a constraint in the second stage.
+A_aug = reshape([A, g], [n, m + 1_IK])  !!MATLAB: A_aug = [A, g];
+b_aug = [b, ZERO]  !!MATLAB: b_aug = [b; 0];
+
+! Scale the problem if A_aug contains large values. Otherwise, floating point exceptions may occur.
 ! Note that the trust-region step is scale invariant.
 ! N.B.: It is faster and safer to scale by multiplying a reciprocal than by division. See
 ! https://fortran-lang.discourse.group/t/ifort-ifort-2021-8-0-1-0e-37-1-0e-38-0/
-A = A_in
-b = b_in
 do i = 1, m + 1_IK  ! Note that SIZE(A, 2) = SIZE(B) = M + 1 /= M.
-    if (maxval(abs(A(:, i))) > 1.0E12) then
-        modscal = max(TWO * REALMIN, ONE / maxval(abs(A(:, i)))) ! MAX: avoid underflow.
-        A(:, i) = A(:, i) * modscal
-        b(i) = b(i) * modscal
+    if (maxval(abs(A_aug(:, i))) > 1.0E12) then
+        modscal = max(TWO * REALMIN, ONE / maxval(abs(A_aug(:, i)))) ! MAX: avoid underflow.
+        A_aug(:, i) = A_aug(:, i) * modscal
+        b_aug(i) = b_aug(i) * modscal
     end if
 end do
 
 ! Stage 1: minimize the l_infinity constraint violation of the linearized constraints.
-call trstlp_sub(iact(1:m), nact, 1_IK, A(:, 1:m), b(1:m), delta, d, vmultc(1:m), z)
+call trstlp_sub(iact(1:m), nact, 1_IK, A_aug(:, 1:m), b_aug(1:m), delta, d, vmultc(1:m), z)
 
 ! Stage 2: minimize the linearized objective without increasing the l_infinity constraint violation.
-call trstlp_sub(iact, nact, 2_IK, A, b, delta, d, vmultc, z)
+call trstlp_sub(iact, nact, 2_IK, A_aug, b_aug, delta, d, vmultc, z)
 
 !====================!
 !  Calculation ends  !
@@ -136,7 +139,7 @@ call trstlp_sub(iact, nact, 2_IK, A, b, delta, d, vmultc, z)
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(size(d) == size(A, 1), 'SIZE(D) == SIZE(A, 1)', srname)
+    call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
     ! Due to rounding, it may happen that ||D|| > DELTA, but ||D|| > 2*DELTA is highly improbable.
     call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
@@ -215,8 +218,8 @@ real(RP) :: zdasav(size(z, 2))
 real(RP) :: zdota(size(z, 2))
 
 ! Sizes
-n = int(size(A, 1), kind(n))
 mcon = int(size(A, 2), kind(mcon))
+n = int(size(A, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
@@ -251,8 +254,8 @@ if (stage == 1) then
     ! 2. In MATLAB, linspace(1, mcon, mcon) can also be written as (1:mcon).
     nact = 0
     d = ZERO
-    cviol = maxval([b, ZERO])
-    vmultc = cviol - b
+    cviol = maxval([-b, ZERO])
+    vmultc = cviol + b
     z = eye(n)
     if (mcon == 0 .or. cviol <= 0) then
         ! Check whether a quick return is possible. Make sure the In-outputs have been initialized.
@@ -262,7 +265,7 @@ if (stage == 1) then
     if (all(is_nan(b))) then
         return
     else
-        icon = int(maxloc(b, mask=(.not. is_nan(b)), dim=1), kind(icon))
+        icon = int(maxloc(-b, mask=(.not. is_nan(b)), dim=1), kind(icon))
         !!MATLAB: [~, icon] = max(b, [], 'omitnan');
     end if
     m = mcon
@@ -280,7 +283,7 @@ else
 
     ! In Powell's code, stage 2 uses the ZDOTA and CVIOL calculated by stage 1. Here we re-calculate
     ! them so that they need not be passed from stage 1 to 2, and hence the coupling is reduced.
-    cviol = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+    cviol = maxval([matprod(d, A(:, 1:m)) - b(1:m), ZERO])
 end if
 zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
 !!MATLAB: zdota(1:nact) = sum(z(:, 1:nact) .* A(:, iact(1:nact)), 1);  % Row vector
@@ -308,7 +311,7 @@ do iter = 1, maxiter
     if (stage == 1) then
         optnew = cviol
     else
-        optnew = -inprod(d, A(:, mcon))
+        optnew = inprod(d, A(:, mcon))
     end if
 
     ! End the current stage of the calculation if 3 consecutive iterations have either failed to
@@ -410,9 +413,9 @@ do iter = 1, maxiter
         ! Usually during stage 1 the vector SDIRN gives a search direction that reduces all the
         ! active constraint violations by one simultaneously.
         if (stage == 1) then
-            sdirn = sdirn - ((inprod(sdirn, A(:, iact(nact))) - ONE) / zdota(nact)) * z(:, nact)
+            sdirn = sdirn - ((inprod(sdirn, A(:, iact(nact))) + ONE) / zdota(nact)) * z(:, nact)
         else
-            sdirn = (ONE / zdota(nact)) * z(:, nact)
+            sdirn = -(ONE / zdota(nact)) * z(:, nact)
             ! SDIRN = Z(:, NACT)/(A(:,IACT(NACT))^T*Z(:, NACT))
             ! SDIRN^T*A(:, IACT(NACT)) = 1, SDIRN is orthogonal to A(:, IACT(1:NACT-1)) and is
             ! parallel to Z(:, NACT).
@@ -453,7 +456,7 @@ do iter = 1, maxiter
             sdirn = sdirn - inprod(sdirn, z(:, nact + 1)) * z(:, nact + 1)
             ! SDIRN is orthogonal to Z(:, NACT+1)
         else
-            sdirn = (ONE / zdota(nact)) * z(:, nact)
+            sdirn = -(ONE / zdota(nact)) * z(:, nact)
             ! SDIRN = Z(:, NACT)/(A(:,IACT(NACT))^T*Z(:, NACT))
             ! SDIRN^T*A(:, IACT(NACT)) = 1, SDIRN is orthogonal to A(:, IACT(1:NACT-1)) and is
             ! parallel to Z(:, NACT).
@@ -517,7 +520,7 @@ do iter = 1, maxiter
     dnew = d + step * sdirn
     if (stage == 1) then
         !cvold = cviol
-        cviol = maxval([b(iact(1:nact)) - matprod(dnew, A(:, iact(1:nact))), ZERO])
+        cviol = maxval([matprod(dnew, A(:, iact(1:nact))) - b(iact(1:nact)), ZERO])
         ! N.B.: CVIOL will be used when calculating VMULTD(NACT+1 : MCON).
     end if
 
@@ -528,12 +531,12 @@ do iter = 1, maxiter
     ! Set VMULTD to the VMULTC vector that would occur if D became DNEW. A device is included to
     ! force VMULTD(K)=ZERO if deviations from this value can be attributed to computer rounding
     ! errors. First calculate the new Lagrange multipliers.
-    vmultd(1:nact) = lsqr(A(:, iact(1:nact)), dnew, z(:, 1:nact), zdota(1:nact))
+    vmultd(1:nact) = -lsqr(A(:, iact(1:nact)), dnew, z(:, 1:nact), zdota(1:nact))
     if (stage == 2) then
         vmultd(nact) = max(ZERO, vmultd(nact))  ! This seems never activated.
     end if
     ! Complete VMULTD by finding the new constraint residuals. (Powell wrote "Complete VMULTC ...")
-    cvshift = matprod(dnew, A(:, iact)) - b(iact) + cviol  ! Only CVSHIFT(nact+1:mcon) is needed.
+    cvshift = cviol - (matprod(dnew, A(:, iact)) - b(iact))  ! Only CVSHIFT(nact+1:mcon) is needed.
     cvsabs = matprod(abs(dnew), abs(A(:, iact))) + abs(b(iact)) + cviol
     cvshift(trueloc(isminor(cvshift, cvsabs))) = ZERO
     !!MATLAB: cvshift(isminor(cvshift, cvsabs)) = 0;
@@ -560,9 +563,9 @@ do iter = 1, maxiter
     vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     if (stage == 1) then
         !cviol = (ONE - frac) * cvold + frac * cviol  ! Powell's version
-        ! In theory, CVIOL = MAXVAL([B(1:M) - MATPROD(D, A(:, 1:M)), ZERO]), yet the CVIOL updated
-        ! as above can be quite different from this value if A has huge entries (e.g., > 1E20).
-        cviol = maxval([b(1:m) - matprod(d, A(:, 1:m)), ZERO])
+        ! In theory, CVIOL = MAXVAL([MATPROD(D, A) - B, ZERO]), yet the CVIOL updated as above
+        ! can be quite different from this value if A has huge entries (e.g., > 1E20).
+        cviol = maxval([matprod(d, A) - b, ZERO])
     end if
 
     if (icon < 1 .or. icon > mcon) then

@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, June 27, 2023 AM07:43:24
+! Last Modified: Tuesday, July 18, 2023 AM11:14:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,6 @@ subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed, testdi
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
 use, non_intrinsic :: debug_mod, only : validate
 use, non_intrinsic :: infnan_mod, only : is_neginf
-use, non_intrinsic :: linalg_mod, only : eye
 use, non_intrinsic :: lincoa_mod, only : lincoa
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
@@ -74,18 +73,22 @@ integer(IK), parameter :: largen = 1000_IK
 real(RP) :: cstrv
 real(RP) :: ctol
 real(RP) :: f
-real(RP) :: f_unc
+real(RP) :: f_alt
 real(RP) :: ftarget
 real(RP) :: rhobeg
 real(RP) :: rhoend
 real(RP), allocatable :: Aineq(:, :)
 real(RP), allocatable :: bineq(:)
+real(RP), allocatable :: Aeq(:, :)
+real(RP), allocatable :: beq(:)
 real(RP), allocatable :: chist(:)
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: x0(:)
-real(RP), allocatable :: x_unc(:)
+real(RP), allocatable :: x_alt(:)
 real(RP), allocatable :: xhist(:, :)
+real(RP), allocatable :: xl(:)
+real(RP), allocatable :: xu(:)
 type(PROB_T) :: prob
 
 if (present(probs)) then
@@ -164,17 +167,26 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
         x = noisy(prob % x0)
         orig_calfun => prob % calfun
+        call safealloc(xl, n)
+        xl = prob % xl
+        call safealloc(xu, n)
+        xu = prob % xu
         call safealloc(Aineq, int(size(prob % Aineq, 1), IK), int(size(prob % Aineq, 2), IK))
         Aineq = prob % Aineq
         call safealloc(bineq, int(size(prob % bineq), IK))
         bineq = prob % bineq
+        call safealloc(Aeq, int(size(prob % Aeq, 1), IK), int(size(prob % Aeq, 2), IK))
+        Aeq = prob % Aeq
+        call safealloc(beq, int(size(prob % beq), IK))
+        beq = prob % beq
 
-        print '(/A, I0, A, I0, A, I0, A, I0, A, I0)', &
-           & strip(probname)//': N = ', n, ' NPT = ', npt, ' M = ', size(Aineq, 2), ', MAXFUN = ', maxfun, ', Random test ', irand
+        print '(/A, I0, A, I0, A, I0, A, I0, A, I0, A, I0)', &
+           & strip(probname)//': N = ', n, ' NPT = ', npt, ' Mineq = ', size(Aineq, 1), &
+           & ' Meq = ', size(Aeq, 1), ', MAXFUN = ', maxfun, ', Random test ', irand
 
-        call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=Aineq, b=bineq, &
-            & npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist,&
-            & chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+        call lincoa(noisy_calfun, x, f, cstrv=cstrv, Aineq=Aineq, bineq=bineq, Aeq=Aeq, beq=beq,&
+            & xl=xl, xu=xu, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
+            & xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
         deallocate (x)
         nullify (orig_calfun)
@@ -266,36 +278,45 @@ else
 
                 orig_calfun => prob % calfun
 
-                if (prob % probtype == 'b') then
-                    call safealloc(Aineq, n, 2_IK * n)
-                    Aineq(:, 1_IK:n) = eye(n)
-                    Aineq(:, n + 1_IK:2_IK * n) = -eye(n)
-                    call safealloc(bineq, 2_IK * n)
-                    bineq = [prob % ub, -prob % lb]
-                else
-                    call safealloc(Aineq, int(size(prob % Aineq, 1), IK), int(size(prob % Aineq, 2), IK))
-                    Aineq = prob % Aineq
-                    call safealloc(bineq, int(size(prob % bineq), IK))
-                    bineq = prob % bineq
-                end if
+                call safealloc(xl, n)
+                xl = prob % xl
+                call safealloc(xu, n)
+                xu = prob % xu
+                call safealloc(Aineq, int(size(prob % Aineq, 1), IK), int(size(prob % Aineq, 2), IK))
+                Aineq = prob % Aineq
+                call safealloc(bineq, int(size(prob % bineq), IK))
+                bineq = prob % bineq
+                call safealloc(Aeq, int(size(prob % Aeq, 1), IK), int(size(prob % Aeq, 2), IK))
+                Aeq = prob % Aeq
+                call safealloc(beq, int(size(prob % beq), IK))
+                beq = prob % beq
 
-                print '(/A, I0, A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, &
-                    & ' M = ', size(Aineq, 2), ', Random test ', irand
+                print '(/A, I0, A, I0, A, I0, A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, &
+                    & ' Mineq = ', size(Aineq, 1), ' Meq = ', size(Aeq, 1), ', Random test ', irand
 
                 call safealloc(x, n)
                 x = x0
-                call lincoa(noisy_calfun, x, f, cstrv=cstrv, A=Aineq, b=bineq, &
-                    & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
+                call lincoa(noisy_calfun, x, f, cstrv=cstrv, Aineq=Aineq, bineq=bineq, Aeq=Aeq, beq=beq, &
+                    & xl=xl, xu=xu, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
                     & xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
 
-                if (prob % probtype == 'u') then  ! Run the test without constraints
-                    call safealloc(x_unc, n)
-                    x_unc = x0
-                    call lincoa(noisy_calfun, x_unc, f_unc, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
-                        & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, &
+                if (prob % probtype == 'b') then  ! Run the test without linear constraints
+                    call safealloc(x_alt, n)
+                    x_alt = x0
+                    call lincoa(noisy_calfun, x_alt, f_alt, xl=xl, xu=xu, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+                        & maxhist=maxhist, fhist=fhist, xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, &
                         & iprint=iprint)
-                    call validate(all(abs(x - x_unc) <= 0), 'X == X_UNC', srname)
-                    call validate(abs(f - f_unc) <= 0 .or. (is_neginf(f) .and. is_neginf(f_unc)), 'F == F_UNC', srname)
+                    call validate(all(abs(x - x_alt) <= 0), 'X == X_ALT', srname)
+                    call validate(abs(f - f_alt) <= 0 .or. (is_neginf(f) .and. is_neginf(f_alt)), 'F == F_ALT', srname)
+                end if
+
+                if (prob % probtype == 'u') then  ! Run the test without constraints
+                    call safealloc(x_alt, n)
+                    x_alt = x0
+                    call lincoa(noisy_calfun, x_alt, f_alt, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+                        & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+                    call validate(all(abs(x - x_alt) <= 0), 'X == X_ALT', srname)
+                    call validate(abs(f - f_alt) <= 0 .or. (is_neginf(f) .and. is_neginf(f_alt)), 'F == F_ALT', srname)
                 end if
 
                 deallocate (x)

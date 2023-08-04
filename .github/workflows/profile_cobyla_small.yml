@@ -57,7 +57,7 @@ jobs:
         id: check_matlab
         run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
 
-      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September  
+      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
         uses: actions/cache@v3.3.1
         with:
           path: ${{ runner.tool_cache }}/MATLAB

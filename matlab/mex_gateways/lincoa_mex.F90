@@ -11,7 +11,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Tuesday, November 15, 2022 PM02:41:18
+! Last Modified: Monday, July 03, 2023 PM05:16:26
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -21,8 +21,8 @@ subroutine mexFunction(nargout, poutput, nargin, pinput)
 ! This is the entry point to the Fortran MEX function. If the compiled MEX file is named as
 ! FUNCTION_NAME.mex*** (extension depends on the platform), then in MATLAB we can call:
 ! [x, f, cstrv, info, nf, xhist, fhist, chist] = ...
-!   FUNCTION_NAME(fun, x0, A, b, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, ctol, ...
-!   cweight, maxfun, npt, iprint, maxhist, output_xhist, maxfilt)
+!   FUNCTION_NAME(fun, x0, Aineq, bineq, Aeq, beq, lb, ub, rhobeg, rhoend, eta1, eta2, ...
+!   gamma1, gamma2, ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, output_xhist, maxfilt)
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic modules
@@ -65,15 +65,19 @@ real(RP) :: gamma1
 real(RP) :: gamma2
 real(RP) :: rhobeg
 real(RP) :: rhoend
-real(RP), allocatable :: A(:, :)
-real(RP), allocatable :: b(:)
+real(RP), allocatable :: Aeq(:, :)
+real(RP), allocatable :: Aineq(:, :)
+real(RP), allocatable :: beq(:)
+real(RP), allocatable :: bineq(:)
 real(RP), allocatable :: chist(:)
 real(RP), allocatable :: fhist(:)
+real(RP), allocatable :: lb(:)
+real(RP), allocatable :: ub(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: xhist(:, :)
 
 ! Validate the number of arguments
-call fmxVerifyNArgin(nargin, 19)
+call fmxVerifyNArgin(nargin, 23)
 call fmxVerifyNArgout(nargout, 8)
 
 ! Verify that input 1 is a function handle; the other inputs will be verified when read.
@@ -82,34 +86,38 @@ call fmxVerifyClassShape(pinput(1), 'function_handle', 'rank0')
 ! Read the inputs
 fun_ptr = pinput(1)  ! FUN_PTR is a pointer to the function handle
 call fmxReadMPtr(pinput(2), x)
-call fmxReadMPtr(pinput(3), A)
-call fmxReadMPtr(pinput(4), b)
-call fmxReadMPtr(pinput(5), rhobeg)
-call fmxReadMPtr(pinput(6), rhoend)
-call fmxReadMPtr(pinput(7), eta1)
-call fmxReadMPtr(pinput(8), eta2)
-call fmxReadMPtr(pinput(9), gamma1)
-call fmxReadMPtr(pinput(10), gamma2)
-call fmxReadMPtr(pinput(11), ftarget)
-call fmxReadMPtr(pinput(12), ctol)
-call fmxReadMPtr(pinput(13), cweight)
-call fmxReadMPtr(pinput(14), maxfun)
-call fmxReadMPtr(pinput(15), npt)
-call fmxReadMPtr(pinput(16), iprint)
-call fmxReadMPtr(pinput(17), maxhist)
-call fmxReadMPtr(pinput(18), output_xhist)
-call fmxReadMPtr(pinput(19), maxfilt)
+call fmxReadMPtr(pinput(3), Aineq)
+call fmxReadMPtr(pinput(4), bineq)
+call fmxReadMPtr(pinput(5), Aeq)
+call fmxReadMPtr(pinput(6), beq)
+call fmxReadMPtr(pinput(7), lb)
+call fmxReadMPtr(pinput(8), ub)
+call fmxReadMPtr(pinput(9), rhobeg)
+call fmxReadMPtr(pinput(10), rhoend)
+call fmxReadMPtr(pinput(11), eta1)
+call fmxReadMPtr(pinput(12), eta2)
+call fmxReadMPtr(pinput(13), gamma1)
+call fmxReadMPtr(pinput(14), gamma2)
+call fmxReadMPtr(pinput(15), ftarget)
+call fmxReadMPtr(pinput(16), ctol)
+call fmxReadMPtr(pinput(17), cweight)
+call fmxReadMPtr(pinput(18), maxfun)
+call fmxReadMPtr(pinput(19), npt)
+call fmxReadMPtr(pinput(20), iprint)
+call fmxReadMPtr(pinput(21), maxhist)
+call fmxReadMPtr(pinput(22), output_xhist)
+call fmxReadMPtr(pinput(23), maxfilt)
 
 ! Call the Fortran code
 ! There are different cases because XHIST may or may not be passed to the Fortran code.
 if (output_xhist) then
-    call lincoa(calfun, x, f, cstrv, A, b, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, &
-        & iprint, eta1, eta2, gamma1, gamma2, xhist=xhist, fhist=fhist, chist=chist, maxhist=maxhist, &
-        & maxfilt=maxfilt, info=info)
+    call lincoa(calfun, x, f, cstrv, Aineq, bineq, Aeq, beq, lb, ub, nf, rhobeg, rhoend, ftarget, &
+        & ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, xhist=xhist, fhist=fhist, &
+        & chist=chist, maxhist=maxhist, maxfilt=maxfilt, info=info)
 else
-    call lincoa(calfun, x, f, cstrv, A, b, nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, &
-        & iprint, eta1, eta2, gamma1, gamma2, fhist=fhist, chist=chist, maxhist=maxhist, &
-        & maxfilt=maxfilt, info=info)
+    call lincoa(calfun, x, f, cstrv, Aineq, bineq, Aeq, beq, lb, ub, nf, rhobeg, rhoend, ftarget, &
+        & ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, fhist=fhist, chist=chist, &
+        & maxhist=maxhist, maxfilt=maxfilt, info=info)
 end if
 
 ! After the Fortran code, XHIST may not be allocated, because it may not have been passed to the
@@ -134,8 +142,12 @@ call fmxWriteMPtr(chist(1:min(int(nf), size(chist))), poutput(8), 'row')
 
 ! Free memory. Indeed, automatic deallocation would take place.
 deallocate (x) ! Allocated by fmxReadMPtr.
-deallocate (A) ! Allocated by fmxReadMPtr.
-deallocate (b) ! Allocated by fmxReadMPtr.
+deallocate (Aineq) ! Allocated by fmxReadMPtr.
+deallocate (bineq) ! Allocated by fmxReadMPtr.
+deallocate (Aeq) ! Allocated by fmxReadMPtr.
+deallocate (beq) ! Allocated by fmxReadMPtr.
+deallocate (lb) ! Allocated by fmxReadMPtr.
+deallocate (ub) ! Allocated by fmxReadMPtr.
 deallocate (xhist)  ! Allocated by the solver
 deallocate (fhist)  ! Allocated by the solver
 deallocate (chist)  ! Allocated by the solver

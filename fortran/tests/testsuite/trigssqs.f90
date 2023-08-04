@@ -20,13 +20,13 @@ real(RP) :: ystar(n)
 prob % probtype = 'u'
 prob % m = 0
 prob % n = n
-call safealloc(prob % lb, n)
-prob % lb = -REALMAX
-call safealloc(prob % ub, n)
-prob % ub = REALMAX
-call safealloc(prob % Aeq, n, 0_IK)
+call safealloc(prob % xl, n)
+prob % xl = -REALMAX
+call safealloc(prob % xu, n)
+prob % xu = REALMAX
+call safealloc(prob % Aeq, 0_IK, n)
 call safealloc(prob % beq, 0_IK)
-call safealloc(prob % Aineq, n, 0_IK)
+call safealloc(prob % Aineq, 0_IK, n)
 call safealloc(prob % bineq, 0_IK)
 
 ! Problem-specific code

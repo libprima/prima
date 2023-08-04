@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 15, 2023 PM08:11:49
+! Last Modified: Thursday, August 03, 2023 AM06:39:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -26,17 +26,17 @@ public :: lincob
 contains
 
 
-subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, A_orig, amat, b_orig, bvec, ctol, cweight, &
-    & eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, x, nf, chist, cstrv, f, fhist, xhist, info)
+subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, Aeq, Aineq, amat, beq, bineq, bvec, &
+    & ctol, cweight, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, xl, xu, x, nf, chist, &
+    & cstrv, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA.
 !
-! The arguments IPRINT, MAXFILT, MAXFUN, MAXHIST, NPT, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1,
-! GAMMA2, RHOBEG, RHOEND, X, NF, F, XHIST, FHIST, CHIST, CSTRV and INFO are identical to the
-! corresponding arguments in subroutine LINCOA.
+! The arguments IPRINT, MAXFILT, MAXFUN, MAXHIST, NPT, AEQ, AINEQ, BEQ, BINEQ, CTOL, CWEIGHT, ETA1,
+! ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG, RHOEND, X, NF, F, XHIST, FHIST, CHIST, CSTRV and INFO are
+! identical to the corresponding arguments in subroutine LINCOA.
 ! AMAT is a matrix whose columns are the constraint gradients, scaled so that they have unit length.
-! B contains on entry the right hand sides of the constraints, scaled as above, but later B is
-!   modified for variables relative to XBASE.
+! BVEC contains on entry the right hand sides of the constraints, scaled as above.
 ! XBASE holds a shift of origin that should reduce the contributions from rounding errors to values
 !   of the model and Lagrange functions.
 ! XOPT is the displacement from XBASE of the feasible vector of variables that provides the least
@@ -79,7 +79,8 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, linspace, norm
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, linspace, norm, trueloc
+use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: message_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul, updateh
@@ -102,10 +103,12 @@ integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: npt
-real(RP), intent(in) :: A_orig(:, :)  ! A_ORIG(N, M) ; Better names? necessary?
-real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M) ; Better names? necessary?
-real(RP), intent(in) :: b_orig(:) ! B_ORIG(M) ; Better names? necessary?
-real(RP), intent(in) :: bvec(:)  ! BVEC(M) ; Better names? necessary?
+real(RP), intent(in) :: Aeq(:, :)  ! Aeq(Meq, N)
+real(RP), intent(in) :: Aineq(:, :)  ! Aineq(Mineq, N)
+real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: beq(:) ! Beq(Meq)
+real(RP), intent(in) :: bineq(:) ! Bineq(Mineq)
+real(RP), intent(in) :: bvec(:)  ! BVEC(M)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: cweight
 real(RP), intent(in) :: eta1
@@ -115,6 +118,8 @@ real(RP), intent(in) :: gamma1
 real(RP), intent(in) :: gamma2
 real(RP), intent(in) :: rhobeg
 real(RP), intent(in) :: rhoend
+real(RP), intent(in) :: xl(:)
+real(RP), intent(in) :: xu(:)
 
 ! In-outputs
 real(RP), intent(inout) :: x(:)  ! X(N)
@@ -131,7 +136,7 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 ! Local variables
 character(len=*), parameter :: solver = 'LINCOA'
 character(len=*), parameter :: srname = 'LINCOB'
-integer(IK) :: iact(size(b_orig))
+integer(IK) :: iact(size(bvec))
 integer(IK) :: idz
 integer(IK) :: ij(2, max(0_IK, int(npt - 2 * size(x) - 1, IK)))
 integer(IK) :: k
@@ -151,6 +156,8 @@ integer(IK) :: ngetact
 integer(IK) :: nhist
 integer(IK) :: subinfo
 integer(IK) :: tr
+integer(IK), allocatable :: ixl(:)
+integer(IK), allocatable :: ixu(:)
 logical :: accurate_mod
 logical :: adequate_geo
 logical :: bad_trstep
@@ -164,10 +171,12 @@ logical :: shortd
 logical :: small_trrad
 logical :: trfail
 logical :: ximproved
-real(RP) :: b(size(b_orig))
+real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: cfilt(maxfilt)
-real(RP) :: constr(size(b_orig))
+real(RP) :: constr(count(xl > -REALMAX) + count(xu < REALMAX) + size(bineq) + size(beq))
+real(RP) :: constr_leq(size(beq))
+real(RP) :: constr_lineq(size(bineq))
 real(RP) :: d(size(x))
 real(RP) :: delbar
 real(RP) :: delta
@@ -187,7 +196,7 @@ real(RP) :: pqalt(npt)
 real(RP) :: qfac(size(x), size(x))
 real(RP) :: qred
 real(RP) :: ratio
-real(RP) :: rescon(size(b_orig))
+real(RP) :: rescon(size(bvec))
 real(RP) :: rfac(size(x), size(x))
 real(RP) :: rho
 real(RP) :: xbase(size(x))
@@ -198,7 +207,7 @@ real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
 
 ! Sizes.
-m = int(size(b_orig), kind(m))
+m = int(size(bvec), kind(m))
 n = int(size(x), kind(n))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
@@ -212,12 +221,13 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
     call assert(maxfun >= npt + 1, 'MAXFUN >= NPT+1', srname)
-    call assert(size(A_orig, 1) == n .and. size(A_orig, 2) == m, 'SIZE(A_ORIG) == [N, M]', srname)
-    call assert(size(bvec) == m, 'SIZE(BVEC) == M', srname)
+    call assert(size(Aeq, 1) == size(beq) .and. size(Aeq, 2) == n, 'SIZE(Aeq) == [SIZE(Beq), N]', srname)
+    call assert(size(Aineq, 1) == size(bineq) .and. size(Aineq, 2) == n, 'SIZE(Aineq) == [SIZE(Bineq), N]', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
-    call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
+    call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
+    call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
     call assert(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
         & 'MIN(MIN_MAXFILT, MAXFUN) <= MAXFILT <= MAXFUN', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
@@ -231,18 +241,26 @@ end if
 ! Calculation starts !
 !====================!
 
+! IXL and IXU are the indices of the nontrivial lower and upper bounds, respectively.
+call safealloc(ixl, int(count(xl > -REALMAX), IK))  ! Removable in F2003.
+call safealloc(ixu, int(count(xu < REALMAX), IK))   ! Removable in F2003.
+ixl = trueloc(xl > -REALMAX)
+ixu = trueloc(xu < REALMAX)
+
 ! Initialize XBASE, XPT, FVAL, and KOPT.
 b = bvec
-call initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x, b, &
-    & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
+call initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ftarget, rhobeg, xl, xu, &
+    & x, b, ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
 x = xbase + xpt(:, kopt)
 f = fval(kopt)
 
-! Evaluate the constraints using A_ORIG and B_ORIG. Should we do this in INITXF?
+! Evaluate the constraints. Should we do this in INITXF?
 ! N.B.: We must initialize CONSTR and CSTRV. Otherwise, if REDUCE_RHO is TRUE after the very first
 ! iteration due to SHORTD, then RHOMSG will be called with CONSTR and CSTRV uninitialized.
-constr = matprod(x, A_orig) - b_orig
-cstrv = maximum([ZERO, constr])
+constr_lineq = matprod(Aineq, x) - bineq
+constr_leq = matprod(Aeq, x) - beq
+constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
+cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
 ! N.B.: The filter is used only when selecting which iterate to return. It does not interfere with
@@ -265,11 +283,13 @@ if (subinfo /= INFO_DFT) then
     kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
     x = xfilt(:, kopt)
     f = ffilt(kopt)
-    constr = matprod(x, A_orig) - b_orig
-    cstrv = maximum([ZERO, constr])
+    constr_lineq = matprod(Aineq, x) - bineq
+    constr_leq = matprod(Aeq, x) - beq
+    constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
+    cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
+    call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
     ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist)
-    call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
     return
 end if
 
@@ -386,9 +406,11 @@ do tr = 1, maxtr
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
-        ! Evaluate the constraints using A_ORIG and B_ORIG.
-        constr = matprod(x, A_orig) - b_orig
-        cstrv = maximum([ZERO, constr])
+        ! Evaluate the constraints.
+        constr_lineq = matprod(Aineq, x) - bineq
+        constr_leq = matprod(Aeq, x) - beq
+        constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
+        cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, 'Trust region', iprint, nf, delta, f, x, cstrv, constr)
@@ -472,12 +494,12 @@ do tr = 1, maxtr
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
     !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
-    close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Behaves the same as Powell's version.
+    close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
     ! Below are some alternative definitions of CLOSE_ITPSET.
+    ! N.B.: The threshold for CLOSE_ITPSET is at least DELBAR, the trust region radius for GEOSTEP.
+    ! !close_itpset = all(distsq <= 4.0_RP * rho**2)  ! Powell's UOBYQA code.
     ! !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's code.
-    ! !close_itpset = all(distsq <= delta**2)  ! Does not work as well as Powell's version.
-    ! !close_itpset = all(distsq <= 10.0_RP * delta**2)  ! Does not work as well as Powell's version.
-    ! !close_itpset = all(distsq <= max((2.0_RP * delta)**2, (10.0_RP * rho)**2))  ! Powell's BOBYQA.
+    ! !close_itpset = all(distsq <= max((TWO * delta)**2, (TEN * rho)**2))  ! Powell's BOBYQA code.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
     ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive in practice.
@@ -526,7 +548,10 @@ do tr = 1, maxtr
 
         ! Set DELBAR, which will be used as the trust-region radius for the geometry-improving
         ! scheme GEOSTEP. Note that DELTA has been updated before arriving here.
-        delbar = max(TENTH * delta, rho)  ! This differs from NEWUOA/BOBYQA. Possible improvement?
+        delbar = max(TENTH * delta, rho)  ! Powell's code
+        !delbar = rho  ! Powell's UOBYQA code
+        !delbar = max(min(TENTH * sqrt(maxval(distsq)), HALF * delta), rho)  ! Powell's NEWUOA code
+        !delbar = max(min(TENTH * sqrt(maxval(distsq)), delta), rho)  ! Powell's BOBYQA code
         ! Find D so that the geometry of XPT will be improved when XPT(:, KNEW_GEO) becomes XOPT + D.
         call geostep(iact, idz, knew_geo, kopt, nact, amat, bmat, delbar, qfac, rescon, xpt, zmat, feasible, d)
 
@@ -535,9 +560,11 @@ do tr = 1, maxtr
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
 
-        ! Evaluate the constraints using A_ORIG and B_ORIG.
-        constr = matprod(x, A_orig) - b_orig
-        cstrv = maximum([ZERO, constr])
+        ! Evaluate the constraints.
+        constr_lineq = matprod(Aineq, x) - bineq
+        constr_leq = matprod(Aeq, x) - beq
+        constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
+        cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, 'Geometry', iprint, nf, delbar, f, x, cstrv, constr)
@@ -618,8 +645,10 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
-    constr = matprod(x, A_orig) - b_orig
-    cstrv = maximum([ZERO, constr])
+    constr_lineq = matprod(Aineq, x) - bineq
+    constr_leq = matprod(Aeq, x) - beq
+    constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
+    cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
     call fmsg(solver, 'Trust region', iprint, nf, rho, f, x, cstrv, constr)
@@ -633,8 +662,13 @@ end if
 kopt = selectx(ffilt(1:nfilt), cfilt(1:nfilt), cweight, ctol)
 x = xfilt(:, kopt)
 f = ffilt(kopt)
-constr = matprod(x, A_orig) - b_orig
-cstrv = maximum([ZERO, constr])
+constr_lineq = matprod(Aineq, x) - bineq
+constr_leq = matprod(Aeq, x) - beq
+constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
+cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
+
+! Deallocate IXL and IXU as they have finished their job.
+deallocate (ixl, ixu)
 
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist, chist)

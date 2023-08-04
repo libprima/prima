@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, May 12, 2023 PM06:53:07
+! Last Modified: Thursday, July 06, 2023 PM05:25:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,8 +19,8 @@ public :: initxf, inith
 contains
 
 
-subroutine initxf(calfun, iprint, maxfun, A_orig, amat, b_orig, ctol, ftarget, rhobeg, x0, b, &
-    & ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, info)
+subroutine initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ftarget, rhobeg, xl, xu,&
+    & x0, b, ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization about the interpolation points & their function values.
 !
@@ -47,7 +47,8 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye
+use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc
+use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: message_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : setij
@@ -58,12 +59,16 @@ implicit none
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
-real(RP), intent(in) :: A_orig(:, :)  ! AMAT(N, M)
+real(RP), intent(in) :: Aeq(:, :)  ! AMAT(Meq, N)
+real(RP), intent(in) :: Aineq(:, :)  ! AMAT(Mineq, N)
 real(RP), intent(in) :: amat(:, :)  ! AMAT(N, M)
-real(RP), intent(in) :: b_orig(:)  ! B_ORIG(M)
+real(RP), intent(in) :: beq(:)  ! Beq(M)
+real(RP), intent(in) :: bineq(:)  ! Bineq(M)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: ftarget
 real(RP), intent(in) :: rhobeg
+real(RP), intent(in) :: xl(:)  ! XL(N)
+real(RP), intent(in) :: xu(:)  ! XU(N)
 real(RP), intent(in) :: x0(:)  ! X0(N)
 
 ! In-outputs
@@ -95,16 +100,20 @@ integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: npt
 integer(IK) :: subinfo
+integer(IK), allocatable :: ixl(:)
+integer(IK), allocatable :: ixu(:)
 logical :: feasible(size(xpt, 2))
-real(RP) :: constr(size(b))
+real(RP) :: constr(count(xl > -REALMAX) + count(xu < REALMAX) + size(bineq) + size(beq))
+real(RP) :: constr_leq(size(beq))
+real(RP) :: constr_lineq(size(bineq))
 real(RP) :: cstrv
 real(RP) :: f
 real(RP) :: x(size(x0))
 
 ! Sizes.
 m = int(size(b), kind(m))
-n = int(size(x), kind(n))
-npt = int(size(fval), kind(npt))
+n = int(size(xpt, 1), kind(n))
+npt = int(size(xpt, 2), kind(npt))
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxchist = int(size(chist), kind(maxchist))
@@ -116,12 +125,14 @@ if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(npt >= n + 2, 'NPT >= N+2', srname)
-    call assert(size(A_orig, 1) == n .and. size(A_orig, 2) == m, 'SIZE(A_ORIG) == [N, M]', srname)
-    call assert(size(b_orig) == m, 'SIZE(B_ORIG) == M', srname)
+    call assert(size(Aeq, 1) == size(beq) .and. size(Aeq, 2) == n, 'SIZE(Aeq) == [SIZE(Beq), M]', srname)
+    call assert(size(Aineq, 1) == size(bineq) .and. size(Aineq, 2) == n, 'SIZE(Aineq) == [SIZE(Bineq), M]', srname)
     call assert(size(amat, 1) == n .and. size(amat, 2) == m, 'SIZE(AMAT) == [N, M]', srname)
     call assert(rhobeg > 0, 'RHOBEG > 0', srname)
     call assert(size(xbase) == n, 'SIZE(XBASE) == N', srname)
-    call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
+    call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
+    call assert(size(x0) == n .and. all(is_finite(x0)), 'SIZE(X0) == N, X0 is finite', srname)
+    call assert(size(fval) == npt, 'SIZE(FVAL) == NPT', srname)
     call assert(size(cval) == npt, 'SIZE(CVAL) == NPT', srname)
     call assert(size(evaluated) == npt, 'SIZE(EVALUATED) == NPT', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
@@ -180,8 +191,7 @@ b = b - matprod(xbase, amat)
 ! Define FEASIBLE, which will be used when defining KOPT.
 do k = 1, npt
     ! Internally, we use AMAT and B to evaluate the constraints.
-    constr = matprod(xpt(:, k), amat) - b
-    cval(k) = maximum([ZERO, constr])  ! CVAL will be used to define FEASIBLE.
+    cval(k) = maximum([ZERO, matprod(xpt(:, k), amat) - b])
     if (is_nan(cval(k))) then
         cval(k) = REALMAX
     end if
@@ -191,8 +201,9 @@ do k = 1, npt
     ! performance in the early stage. Thus we decided to remove it.
     !----------------------------------------------------------------------------------------------!
     !mincv = 0.2_RP * rhobeg
-    !if (all(constr < mincv) .and. any(constr > 0)) then
-    !    j = int(maxloc(constr, dim=1), kind(j))
+    !constr(1:m) = matprod(xpt(:, k), amat) - b
+    !if (cval(k) < mincv .and. cval(k) > 0) then
+    !    j = int(maxloc(constr(1:m), dim=1), kind(j))
     !    xpt(:, k) = xpt(:, k) + (mincv - constr(j)) * amat(:, j)
     !end if
     !----------------------------------------------------------------------------------------------!
@@ -200,12 +211,19 @@ end do
 feasible = (cval <= 0)
 
 ! Set FVAL by evaluating F. Totally parallelizable except for FMSG.
+! IXL and IXU are the indices of the nontrivial lower and upper bounds, respectively.
+call safealloc(ixl, int(count(xl > -REALMAX), IK))  ! Removable in F2003.
+call safealloc(ixu, int(count(xu < REALMAX), IK))   ! Removable in F2003.
+ixl = trueloc(xl > -REALMAX)
+ixu = trueloc(xu < REALMAX)
 do k = 1, npt
     x = xbase + xpt(:, k)
     call evaluate(calfun, x, f)
-    ! For the output, we use A_ORIG and B_ORIG to evaluate the constraints.
-    constr = matprod(x, A_orig) - b_orig
-    cstrv = maximum([ZERO, constr])
+    ! Evaluate the constraints.
+    constr_lineq = matprod(Aineq, x) - bineq
+    constr_leq = matprod(Aeq, x) - beq
+    constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
+    cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
 
     ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x, cstrv, constr)
@@ -223,6 +241,9 @@ do k = 1, npt
         exit
     end if
 end do
+
+! Deallocate IXL and IXU as they have finished their job.
+deallocate (ixl, ixu)
 
 nf = int(count(evaluated), kind(nf))
 ! Since the starting point is supposed to be feasible, there should be at least one feasible point.
@@ -259,9 +280,8 @@ if (DEBUGGING) then
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
     ! LINCOA always starts with a feasible point.
     if (m > 0) then
-        constr = matprod(xpt(:, 1), amat) - b
-        call assert(all(constr <= max(1.0E-12_RP, 1.0E2 * EPS) * (ONE + sum(abs(xpt(:, 1))) + sum(abs(b)))), &
-            & 'The starting point is feasible', srname)
+        call assert(all(matprod(xpt(:, 1), amat) - b <= max(1.0E-12_RP, 1.0E2 * EPS) * &
+            & (ONE + sum(abs(xpt(:, 1))) + sum(abs(b)))), 'The starting point is feasible', srname)
     end if
 end if
 

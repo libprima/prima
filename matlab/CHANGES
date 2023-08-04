@@ -78,5 +78,23 @@
         end
     ```
 
+21. constr_modified and the warning "%s:ConstraintModified" are removed. The warning is now raised
+    in the Fortran code.
+
+22. The Fortran code of LINCOA now accepts equality constraints and bound constraints. Hence the
+    MATLAB interface does not need to form A_aug and b_aug anymore.
+
+23. The Fortran code of COBYLA now accepts bound and linear constraints and bound constraints.
+    MATLAB interface does not need to wrap the bound/linear constraints into nonlinear constraints.
+    In addition, VERY IMPORTANTLY, the Fortran code now deals with constraints in the form of
+    ```
+    c(x) <= 0
+    ```
+    instead of
+    ```
+    c(x) >= 0
+    ```
+    The MATLAB interface is adapted accordingly. This concerns the definition of `funcon`, `nlcineq`,
+    `nlceq`, `nlcihist`, and `nlcehist`.
 
 Check other changes by comparing the matlab interfaces (vimdiff).

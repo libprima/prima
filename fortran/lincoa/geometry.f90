@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, May 31, 2023 AM12:56:41
+! Last Modified: Wednesday, July 19, 2023 PM04:07:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -115,7 +115,7 @@ weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA cod
 ! Other possible definitions of WEIGHT.
 ! !weight = distsq**2  ! Powell's code. WRONG.
 ! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**2.5  ! Worse than power 3
-! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! Worse than Powell 3
+! !weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3.5  ! Worse than power 3
 ! !weight = (distsq / delta**2)**2   ! Works the same as DISTSQ**2 (as it should be).
 ! !weight = (distsq / delta**2)**3  ! Not bad
 ! !weight = max(1.0_RP, 10.0_RP * distsq / rho**2)**3
@@ -123,7 +123,7 @@ weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA cod
 ! !weight = max(1.0_RP, 10.0_RP * distsq / delta**2)**3
 ! !weight = max(1.0_RP, 1.0E2_RP * distsq / delta**2)**3
 !--------------------------------------------------------------------------------------------------!
-! N.B.: If DISTSQ is the square of distances to the updated XOPT, then it is wrong to set WEIGHT to
+! N.B.: If DISTSQ is the square of distances to the updated XOPT, then it is WRONG to set WEIGHT to
 ! DISTSQ**2 or any power of DISTSQ. Why?
 !
 ! Consider a scenario where XIMPROVED is TRUE and the new interpolation point XNEW is quite close to
@@ -131,8 +131,9 @@ weight = max(ONE, distsq / max(TENTH * delta, rho)**2)**3  ! Powell's NEWUOA cod
 ! value of KNEW is J; otherwise, the new interpolation problem will be close to degenerate and its
 ! KKT system will be close to singular due to the two close points in the updated interpolation set.
 !
-! What KNEW will be generated if KNEW = MAXLOC(DISTSQ**p * ABS(DEN))? Note the following.
-! 1. DISTSQ(J) = O(E**2) and DEN(K) = O(1);
+! What KNEW will be generated if KNEW = MAXLOC(DISTSQ**p * ABS(DEN))? If ||XNEW - XPT(:, J)|| = E,
+! we have the following.
+! 1. DISTSQ(J) = O(E**2) and DEN(J) = O(1);
 ! 2. for any K /= J, DIST(K) = O(1) and DEN(K) = O(E).
 ! Therefore, for any p > 1/2, KNEW /= J when E is small. As analyzed above, this is inappropriate.
 ! In addition, small values of p (e.g., p <= 1/2) always performs poorly for all Powell's methods

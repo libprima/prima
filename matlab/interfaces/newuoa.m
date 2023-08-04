@@ -182,7 +182,6 @@ internal_invokers = {'prima'}; % Invokers from this package; may have others in 
 % intended to pass to postprima.
 % OUTPUT should contain at least x, fx, exitflag, funcCount, and constrviolation;
 % for internal solvers (solvers from prima), it should also contain fhist, chist, warnings;
-% for lincoa, it should also contain constr_modified;
 % for nonlinearly constrained internal solvers, it should also contain nlcineq and nlceq.
 output = struct();
 % N.B.: DO NOT record anything in PROBINFO. If the solver is called by prima,
