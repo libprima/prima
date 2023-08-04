@@ -1,6 +1,3 @@
-! TODO: Modify the code so that calcfc_internal is not needed? If yes, modify constr, conhist etc.
-! What about defining nlconstr, lconstr, nlchist, etc?
-!
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of COBYLA.
@@ -19,7 +16,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, August 04, 2023 PM06:07:45
+! Last Modified: Friday, August 04, 2023 PM09:54:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -207,7 +204,7 @@ end if
 ! Calculation starts !
 !====================!
 
-! Initialize SIM, FVAL, CONMAT, and CVAL, together with the history.
+! Initialize SIM, SIMI, FVAL, CONMAT, and CVAL, together with the history, NF, and EVALUATED.
 ! After the initialization, SIM(:, N+1) holds the vertex of the initial simplex with the smallest
 ! function value (regardless of the constraint violation), and SIM(:, 1:N) holds the displacements
 ! from the other vertices to SIM(:, N+1). FVAL, CONMAT, and CVAL hold the function values,

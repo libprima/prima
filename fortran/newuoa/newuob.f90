@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, August 01, 2023 PM03:46:24
+! Last Modified: Friday, August 04, 2023 PM09:55:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -172,8 +172,10 @@ end if
 ! Calculation starts !
 !====================!
 
-! Initialize XBASE, XPT, FVAL, and KOPT.
+! Initialize XBASE, XPT, FVAL, and KOPT, together with the history, NF, and IJ.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, ij, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
+
+! Initialize X and F according to KOPT.
 x = xbase + xpt(:, kopt)
 f = fval(kopt)
 
@@ -200,10 +202,11 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-! Initialize BMAT, ZMAT, and IDZ.
+! Initialize [BMAT, ZMAT, IDZ], representing the inverse of the KKT matrix of the interpolation system.
 call inith(ij, xpt, idz, bmat, zmat)
 
-! Initialize GOPT, HQ, and PQ.
+! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
+! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 call initq(ij, fval, xpt, gopt, hq, pq)
 
 ! After initializing GOPT, HQ, PQ, BMAT, ZMAT, one can also choose to return if these arrays contain

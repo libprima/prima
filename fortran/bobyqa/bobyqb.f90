@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, August 01, 2023 PM05:26:39
+! Last Modified: Friday, August 04, 2023 PM09:55:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -211,9 +211,11 @@ end if
 ! Calculation starts !
 !====================!
 
-! Initialize XBASE, XPT, FVAL, and KOPT.
+! Initialize XBASE, XPT, SL, SU, FVAL, and KOPT, together with the history, NF, and IJ.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
     & sl, su, xbase, xhist, xpt, subinfo)
+
+! Initialize X and F according to KOPT.
 x = xinbd(xbase, xpt(:, kopt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
 f = fval(kopt)
 
@@ -227,11 +229,12 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-! Initialize GOPT, HQ, and PQ.
-call initq(ij, fval, xpt, gopt, hq, pq)
-
-! Initialize BMAT and ZMAT.
+! Initialize [BMAT, ZMAT], representing the inverse of the KKT matrix of the interpolation system.
 call inith(ij, xpt, bmat, zmat)
+
+! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
+! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+call initq(ij, fval, xpt, gopt, hq, pq)
 
 ! After initializing GOPT, HQ, PQ, BMAT, ZMAT, one can also choose to return if these arrays contain
 ! NaN. We do not do it here. The code will continue to run and possibly recovers by geometry steps.

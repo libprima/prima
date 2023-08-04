@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, August 01, 2023 PM05:12:00
+! Last Modified: Friday, August 04, 2023 PM09:54:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -161,10 +161,14 @@ end if
 ! Calculation starts !
 !====================!
 
+! Initialize XBASE, XPT, FVAL, and KOPT, together with the history and NF.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
+
+! Initialize X and F according to KOPT.
 x = xbase + xpt(:, kopt)
 f = fval(kopt)
 
+! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
     ! Arrange FHIST and XHIST so that they are in the chronological order.
@@ -174,8 +178,11 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-call initq(fval, xpt, pq)
+! Initialize the Lagrange polynomials represented by PL.
 call initl(xpt, pl)
+
+! Initialize the quadratic model represented by PQ.
+call initq(fval, xpt, pq)
 
 ! Set some more initial values.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that

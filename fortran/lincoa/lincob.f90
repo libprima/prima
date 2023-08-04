@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 04, 2023 PM08:05:34
+! Last Modified: Friday, August 04, 2023 PM09:53:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -246,16 +246,16 @@ call safealloc(ixu, int(count(xu < REALMAX), IK))   ! Removable in F2003.
 ixl = trueloc(xl > -REALMAX)
 ixu = trueloc(xu < REALMAX)
 
-! Initialize XBASE, XPT, FVAL, and KOPT.
+! Initialize B, XBASE, XPT, FVAL, CVAL, and KOPT, together with the history, NF, IJ, and EVALUATED.
 b = bvec
 call initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ftarget, rhobeg, xl, xu, &
     & x, b, ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
+
+! Initialize X, F, CONSTR, and CSTRV according to KOPT.
+! N.B.: We must set CONSTR and CSTRV. Otherwise, if REDUCE_RHO is TRUE after the very first
+! iteration due to SHORTD, then RHOMSG will be called with CONSTR and CSTRV uninitialized.
 x = xbase + xpt(:, kopt)
 f = fval(kopt)
-
-! Evaluate the constraints. Should we do this in INITXF?
-! N.B.: We must initialize CONSTR and CSTRV. Otherwise, if REDUCE_RHO is TRUE after the very first
-! iteration due to SHORTD, then RHOMSG will be called with CONSTR and CSTRV uninitialized.
 constr_leq = matprod(Aeq, x) - beq
 constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), -constr_leq, constr_leq, matprod(Aineq, x) - bineq]
 cstrv = maximum([ZERO, constr])
@@ -290,7 +290,7 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-! Initialize BMAT, ZMAT, and IDZ.
+! Initialize [BMAT, ZMAT, IDZ], representing the inverse of the KKT matrix of the interpolation system.
 call inith(ij, xpt, idz, bmat, zmat)
 
 ! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
