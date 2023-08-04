@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, July 06, 2023 PM05:25:25
+! Last Modified: Friday, August 04, 2023 PM07:50:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -103,9 +103,8 @@ integer(IK) :: subinfo
 integer(IK), allocatable :: ixl(:)
 integer(IK), allocatable :: ixu(:)
 logical :: feasible(size(xpt, 2))
-real(RP) :: constr(count(xl > -REALMAX) + count(xu < REALMAX) + size(bineq) + size(beq))
+real(RP) :: constr(count(xl > -REALMAX) + count(xu < REALMAX) + 2 * size(beq) + size(bineq))
 real(RP) :: constr_leq(size(beq))
-real(RP) :: constr_lineq(size(bineq))
 real(RP) :: cstrv
 real(RP) :: f
 real(RP) :: x(size(x0))
@@ -220,10 +219,9 @@ do k = 1, npt
     x = xbase + xpt(:, k)
     call evaluate(calfun, x, f)
     ! Evaluate the constraints.
-    constr_lineq = matprod(Aineq, x) - bineq
     constr_leq = matprod(Aeq, x) - beq
-    constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, constr_leq]
-    cstrv = maximum([ZERO, xl(ixl) - x(ixl), x(ixu) - xu(ixu), constr_lineq, abs(constr_leq)])
+    constr = [xl(ixl) - x(ixl), x(ixu) - xu(ixu), -constr_leq, constr_leq, matprod(Aineq, x) - bineq]
+    cstrv = maximum([ZERO, constr])
 
     ! Print a message about the function evaluation according to IPRINT.
     call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x, cstrv, constr)

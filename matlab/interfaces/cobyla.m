@@ -411,7 +411,8 @@ elseif ~strcmp(invoker, 'prima') && probinfo.feasibility_problem && ~strcmp(prob
 else % The problem turns out 'normal' during preprima
     % Include all the constraints into one single 'nonlinear constraint'
     funcon = @(x) cobyla_funcon(x, fun, nonlcon);
-    % Detect the number of the constraints (required by the Fortran code)
+    % Evaluate the nonlinear constraint at x0, which is needed by the Fortran code to detect the
+    % number of the constraints.
     [f_x0, nlconstr_x0, m_nlcineq, m_nlceq] = funcon(x0);
     % m_nlcineq: number of nonlinear inequality constraints
     % m_nlceq: number of nonlinear equality constraints

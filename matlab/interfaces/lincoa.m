@@ -348,7 +348,7 @@ elseif ~strcmp(invoker, 'prima') &&  probinfo.feasibility_problem
         output.exitflag = 15;
     end
 else % The problem turns out 'normal' during preprima
-    if (length(bineq) + 2*length(beq) + 2*length(x0) > maxint())
+    if sum(lb > -inf) + sum(ub < inf) + 2*length(beq) + length(bineq) > maxint()
         % Public/normal error
         error(sprintf('%s:ProblemTooLarge', funname), '%s: The problem is too large; at most %d constraints are allowed.', funname, maxint());
     end
