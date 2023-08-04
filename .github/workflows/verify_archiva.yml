@@ -25,7 +25,7 @@ jobs:
         matlab: [latest]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         dim: [small, big, large]
-        version: [220208, 220227, 220513, 220531,220601,220616,220819,220926,221105,221128,230108,230305,230430,230509,230614]
+        version: [220208, 220227, 220513, 220531,220601,220616,220819,220926,221105,221128,230108,230305,230430,230509,230614,230804]
         exclude:
           - solver: lincoa
             dim: large  # very few problems but takes too much time to run
@@ -53,7 +53,7 @@ jobs:
         id: check_matlab
         run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
 
-      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September  
+      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
         uses: actions/cache@v3.3.1
         with:
           path: ${{ runner.tool_cache }}/MATLAB
