@@ -2034,3 +2034,4 @@ sqr
 cvnd
 cvpd
 nlcon
+charityware
