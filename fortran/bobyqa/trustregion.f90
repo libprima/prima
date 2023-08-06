@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, June 15, 2023 AM02:09:28
+! Last Modified: Monday, August 07, 2023 AM03:56:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -583,8 +583,6 @@ function interval_fun_trsbox(hangt, args) result(f)
 ! This function defines the objective function of the search for HANGT in TRSBOX, with HANGT being
 ! the TANGENT of HALF the angle of the "alternative iteration".
 !--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
-!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -626,8 +624,6 @@ end function interval_fun_trsbox
 function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 ! This function updates the trust region radius according to RATIO and DNORM.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic module

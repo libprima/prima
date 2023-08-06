@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, June 07, 2023 PM09:05:10
+! Last Modified: Monday, August 07, 2023 AM03:56:10
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,10 +34,6 @@ function setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result
 ! necessarily a good interpolation set. In contrast, a good interpolation set needs to include
 ! points with relatively high function values; otherwise, the interpolant will unlikely reflect the
 ! landscape of the function sufficiently.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: HDIAG(NPT), DEN(NPT), SCORE(NPT) VLAG(N+NPT), XDIST(NPT)
-! Size of local arrays: REAL(RP)*(4*NPT+N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -177,10 +173,6 @@ function geostep(idz, knew, kopt, bmat, delbar, xpt, zmat) result(d)
 ! DELBAR is the trust region bound for the geometry step
 ! D will be set to the step from X to the new point.
 !--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), DDEN, PQLAG(NPT), VLAG(N+NPT)
-! Size of local arrays: REAL(RP)*(2*NPT+3*N)
-!--------------------------------------------------------------------------------------------------!
 
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, HALF, DEBUGGING
@@ -292,10 +284,6 @@ function biglag(idz, knew, bmat, delbar, x, xpt, zmat) result(d)
 ! max |LFUNC(X + D)|, subject to ||D|| <= DELBAR,
 !
 ! where LFUNC is the KNEW-th Lagrange function. See Section 6 of the NEWUOA paper.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), CF(5), DOLD(N), GC(N), GD(N), PQLAG(NPT), S(N), W(N)
-! Size of local arrays: REAL(RP)*(5+6*N+NPT)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -504,11 +492,6 @@ function bigden(idz, knew, kopt, bmat, d0, xpt, zmat) result(d)
 ! In Powell's code, BIGDEN calculates also the VLAG and BETA for the selected D. Here, to reduce the
 ! coupling of code, we return only D but compute VLAG and BETA outside by calling VLAGBETA. It makes
 ! no difference mathematically, but the computed VLAG/BETA will change slightly due to rounding.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), DEN(9), DENEX(9), DOLD(N), DSTEMP(NPT), PQLAG(NPT), PAR(5), PROD(NPT+N, 5), &
-!     & S(N), SSTEMP(NPT), V(NPT), VLAG(NPT+N), W(NPT+N, 5), X(N), XNEW(N), XPTEMP(N, NPT)
-! Size of local arrays: REAL(RP)*(23+12*N+11*NPT+N*NPT) (TO BE REDUCED by removing XPTEMP)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -815,8 +798,6 @@ function circle_fun_biglag(theta, args) result(f)
 !--------------------------------------------------------------------------------------------------!
 ! This function defines the objective function of the 2-dimensional search on a circle in BIGLAG.
 !--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
-!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -854,10 +835,6 @@ end function circle_fun_biglag
 function circle_fun_bigden(theta, args) result(f)
 !--------------------------------------------------------------------------------------------------!
 ! This function defines the objective function of the 2-dimensional search on a circle in BIGDEN.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
-! REAL(RP) :: PAR(9)
-! Size of local arrays: REAL(RP)*9
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert

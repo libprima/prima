@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, April 08, 2023 AM12:12:25
+! Last Modified: Monday, August 07, 2023 AM03:56:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,8 +22,6 @@ contains
 subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates [XPT, FVAL, KOPT] so that XPT(:, KNEW) is updated to XNEW.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -105,8 +103,6 @@ subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zma
 ! N.B.:
 ! XNEW is encoded in [BMAT, ZMAT, IDZ] after UPDATEH being called, and it also equals XPT(:, KNEW)
 ! after UPDATEXF being called. Indeed, we only need BMAT(:, KNEW) instead of the entire matrix.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): PQINC
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules

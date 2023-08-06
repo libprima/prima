@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, June 03, 2023 PM01:30:28
+! Last Modified: Monday, August 07, 2023 AM03:55:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -43,10 +43,6 @@ subroutine trsapp(delta, gopt_in, hq_in, pq_in, tol, xpt, crvmin, s, info)
 ! - INFO = 1: the last iteration reduces Q only insignificantly;
 ! - INFO = 2: the maximal number of iterations is attained;
 ! - INFO = -1: too much rounding error to continue.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: ARGS(4), G(N), D(N) HD(N), HS(N), HX(N), SOLD(N)
-! Size of local arrays: REAL(RP)*(4+6*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -444,8 +440,6 @@ function circle_fun_trsapp(theta, args) result(f)
 !--------------------------------------------------------------------------------------------------!
 ! This function defines the objective function of the 2-dimensional search on a circle in TRSAPP.
 !--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
-!--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -483,8 +477,6 @@ end function circle_fun_trsapp
 function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 ! This function updates the trust region radius according to RATIO and DNORM.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic module

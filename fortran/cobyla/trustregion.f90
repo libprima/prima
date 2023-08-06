@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM09:14:48
+! Last Modified: Monday, August 07, 2023 AM03:53:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -157,11 +157,6 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 ! 3. SDIRN. See the definition of SDIRN in the code for details.
 ! 4. OPTNEW. The two stages have different objectives, so OPTNEW is updated differently.
 ! 5. STEP. STEP <= CVIOL in stage 1.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: D(N), CVSABA(MCON), CVSHIFT(MCON), DNEW(N), DOLD(N), FRACMULT(MCON), SDIRN(N), &
-!    & VMULTD(MCON), ZDASAV(N), ZDOTA(N)
-! Size of local arrays: REAL(RP)*(4*MCON+6*N) (MCON = M+1 or M)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -597,8 +592,6 @@ end subroutine trstlp_sub
 function trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio) result(delta)
 !--------------------------------------------------------------------------------------------------!
 ! This function updates the trust region radius according to RATIO and DNORM.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
 ! Generic module

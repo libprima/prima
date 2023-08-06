@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, July 03, 2023 PM04:54:11
+! Last Modified: Monday, August 07, 2023 AM03:57:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -432,8 +432,6 @@ subroutine inith(ij, xpt, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine initializes [BMAT, ZMAT] which represents the matrix H in (2.7) of the BOBYQA
 ! paper (see also (3.12) of the NEWUOA paper).
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules

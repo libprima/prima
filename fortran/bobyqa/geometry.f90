@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 03, 2023 PM01:31:43
+! Last Modified: Monday, August 07, 2023 AM03:57:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -35,10 +35,6 @@ function setdrop_tr(kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result(knew
 ! necessarily a good interpolation set. In contrast, a good interpolation set needs to include
 ! points with relatively high function values; otherwise, the interpolant will unlikely reflect the
 ! landscape of the function sufficiently.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: HDIAG(NPT), DENABS(NPT), SCORE(NPT) VLAG(N+NPT), XDIST(NPT)
-! Size of local arrays: REAL(RP)*(4*NPT+N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules

@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 21, 2023 AM10:38:48
+! Last Modified: Monday, August 07, 2023 AM03:53:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,11 +39,6 @@ subroutine shiftbase_lfqint(kopt, xbase, xpt, zmat, bmat, pq, hq, idz)
 ! In precise arithmetic, IDZ should be always 1; to cope with rounding errors, NEWUOA and LINCOA
 ! allow IDZ = -1 (see (4.18)--(4.20) of the NEWUOA paper); in BOBYQA, IDZ is always 1, and the
 ! rounding errors are handled by the RESCUE subroutine (Sec. 5 of the BOBYQA paper).
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: BY(N, N), SXPT(NPT), V(N), VXOPT(N, N), XPTXAV(N, NPT), YMAT(N, NPT),
-! YZMAT(N, NPT-N-1), YZMAT_C(N, NPT-N-1).
-! Size of local arrays: REAL(RP)*(4*N*NPT+NPT-N), LARGE!
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules

@@ -8,7 +8,7 @@ module initialize_mod
 !
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Friday, May 12, 2023 PM06:52:44
+! Last Modified: Monday, August 07, 2023 AM03:55:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,11 +40,6 @@ subroutine initxf(calfun, iprint, maxfun, ftarget, rhobeg, x0, ij, kopt, nf, fhi
 ! INFO = FTARGET_ACHIEVED: return because F <= FTARGET
 ! INFO = NAN_INF_X: return because X contains NaN
 ! INFO = NAN_INF_F: return because F is either NaN or +Inf
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! LOGICAL :: EVALUATED(NPT)
-! REAL(RP) :: X(N)
-! Size of local arrays: LOGICAL*NPT + REAL(RP)*N
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -259,8 +254,6 @@ subroutine initq(ij, fval, xpt, gopt, hq, pq, info)
 ! This subroutine initializes the quadratic model represented by [GOPT, HQ, PQ] so that its gradient
 ! at XBASE + XPT(:,KOPT) is GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
 !--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
-!--------------------------------------------------------------------------------------------------!
 
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, DEBUGGING
@@ -396,8 +389,6 @@ subroutine inith(ij, xpt, idz, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine initializes [IDZ, BMAT, ZMAT] which represents the matrix H in (3.12) of the
 ! NEWUOA paper (see also (2.7) of the BOBYQA paper).
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules

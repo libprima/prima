@@ -8,7 +8,7 @@ module update_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, April 07, 2023 PM11:44:13
+! Last Modified: Monday, August 07, 2023 AM03:55:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,8 +22,6 @@ contains
 subroutine updatexf(knew, ximproved, f, xnew, kopt, fval, xpt)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates [XPT, FVAL, KOPT] so that XPT(:, KNEW) is updated to XNEW.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): NONE
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -114,8 +112,6 @@ subroutine updateq(idz, knew, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zma
 ! GQ is the gradient of the quadratic model at XBASE. However, Powell implemented BOBYQA and LINCOA
 ! without GQ but with GOPT, which is the gradient at XBASE + XOPT. In our implementation, we also
 ! use GOPT instead of GQ.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack): PQINC
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules

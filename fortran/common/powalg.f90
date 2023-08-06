@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, June 02, 2023 PM03:42:01
+! Last Modified: Monday, August 07, 2023 AM03:52:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1100,10 +1100,6 @@ subroutine updateh(knew, kref, d, xpt, idz, bmat, zmat, info)
 ! Theoretically (but not numerically), they should return the same VLAG and BETA as the calls below.
 ! However, as observed on 20220412, such an implementation can lead to significant errors in H!
 !--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: GROT(2, 2), V1(N), V2(N), VLAG(NPT+N), HCOL(NPT+N)
-! Size of local arrays: REAL(RP)*(4+4*N+2*NPT)
-!--------------------------------------------------------------------------------------------------!
 
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
@@ -1489,10 +1485,6 @@ function calvlag_lfqint(kref, bmat, d, xpt, zmat, idz) result(vlag)
 ! subroutine is usually invoked with KREF = KOPT, which correspond to the current best interpolation
 ! point as well as the center of the trust region. See (4.25) of the NEWUOA paper.
 !--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: VLAG(NPT+N), WCHECK(NPT), XREF(N)
-! Size of local arrays: REAL(RP)*(2*NPT+2*N)
-!--------------------------------------------------------------------------------------------------!
 
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, EPS, DEBUGGING
@@ -1584,10 +1576,6 @@ function calbeta(kref, bmat, d, xpt, zmat, idz) result(beta)
 ! This function calculates BETA for a given step D with respect to XREF = XPT(:, KREF). This
 ! subroutine is usually invoked with KREF = KOPT, which correspond to the current best interpolation
 ! point as well as the center of the trust region. See (4.12) and (4.26) of the NEWUOA paper.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: BW(N), BD(N), WCHECK(NPT), XREF(N)
-! Size of local arrays: REAL(RP)*(3*NPT+4*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules

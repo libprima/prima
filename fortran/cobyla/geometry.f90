@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, August 03, 2023 AM09:51:43
+! Last Modified: Monday, August 07, 2023 AM03:54:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,10 +22,6 @@ contains
 function assess_geo(delta, factor_alpha, factor_beta, sim, simi) result(adequate_geo)
 !--------------------------------------------------------------------------------------------------!
 ! This function checks if an interpolation set has acceptable geometry as (14) of the COBYLA paper.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: VETA(N), VSIG(N)
-! Size of local arrays: REAL(RP)*(2*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -272,10 +268,6 @@ function setdrop_geo(delta, factor_alpha, factor_beta, sim, simi) result(jdrop)
 ! This subroutine finds (the index) of a current interpolation point to be replaced with a
 ! geometry-improving point. See (15)--(16) of the COBYLA paper.
 ! N.B.: COBYLA never sets JDROP = N + 1.
-!--------------------------------------------------------------------------------------------------!
-! List of local arrays (including function-output arrays; likely to be stored on the stack):
-! REAL(RP) :: VETA(N), VSIG(N)
-! Size of local arrays: REAL(RP)*(2*N)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
