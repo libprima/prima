@@ -12,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 06, 2023 PM02:49:27
+! Last Modified: Sunday, August 06, 2023 PM03:16:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -203,7 +203,7 @@ ddsav = TWO * gg  ! By Powell. This value is used at iteration 1 to test whether
 ! this part is essentially a `DO WHILE (NACT < N) ... END DO` loop. We enforce the following maximal
 ! number of iterations, which is never reached in our tests (indeed, even 2*N cannot be reached).
 ! N.B.: 1. The MAX below is a precaution against overflow, which will make 2*(m+n) < 0, which can
-! happen if the integer being used is 2-byte. This precaution is UNNEEDED in MALTAB/Python/Julia/R.
+! happen if the integer being used is 2-byte. This precaution is UNNEEDED in MATLAB/Python/Julia/R.
 ! 2. The iteration counter ITER never appears in the code of the iterations, as its purpose is
 ! merely to impose an upper bound on the number of iterations.
 maxiter = max(2_IK * (m + n), m)
