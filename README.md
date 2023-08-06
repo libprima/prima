@@ -15,11 +15,12 @@
 - [A "fun" fact](#a-fun-fact)
 - [Acknowledgment](#acknowledgment)
 - [Citing PRIMA](#citing-prima)
+- [Charityware](#charityware)
+- [Contact](#contact)
 - [Mirrors](#mirrors)
     - [Gitee](https://gitee.com/libprima/prima)
     - [GitHub](https://github.com/libprima/prima)
     - [GitLab](https://gitlab.com/libprima/prima)
-- [Contact](#contact)
 - [Star history](#star-history)
 
 
@@ -415,6 +416,23 @@ function. Powell did not publish a paper to introduce the algorithm.
 rather than PRIMA. Nevertheless, it provides a good introduction to Powell's methods.
 
 
+### Charityware
+
+PRIMA is [charityware](https://en.wikipedia.org/wiki/Careware), distributed for free under its 
+[license](https://github.com/libprima/prima/blob/main/LICENCE.txt). 
+If you appreciate it, you may consider making a donation to a charity that you trust
+(in addition to [citing \& acknowledging PRIMA](https://github.com/libprima/prima#citing-prima)).
+This is only a suggestion, not an obligation. 
+
+The inspiration comes from [Vim](https://www.vim.org/), with which Zaikun Zhang typed all his PRIMA code. 
+
+
+### Contact
+
+In case of problems, [open a GitHub issue](https://github.com/libprima/prima/issues) or [contact
+Zaikun Zhang](https://www.zhangzk.net).
+
+
 ### Mirrors
 
 - Gitee: [https://gitee.com/libprima/prima](https://gitee.com/libprima/prima)
@@ -422,12 +440,6 @@ rather than PRIMA. Nevertheless, it provides a good introduction to Powell's met
 - GitHub: [https://github.com/libprima/prima](https://github.com/libprima/prima)
 
 - GitLab: [https://gitlab.com/libprima/prima](https://gitlab.com/libprima/prima)
-
-
-### Contact
-
-In case of problems, [open a GitHub issue](https://github.com/libprima/prima/issues) or [contact
-Zaikun Zhang](https://www.zhangzk.net).
 
 
 ### <a href="https://star-history.com/#libprima/prima&Date">Star history</a>
