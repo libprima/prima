@@ -12,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, February 14, 2023 AM12:13:14
+! Last Modified: Sunday, August 06, 2023 PM02:49:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -202,9 +202,11 @@ ddsav = TWO * gg  ! By Powell. This value is used at iteration 1 to test whether
 ! What is the theoretical maximal number of iterations in the following procedure? Powell's code for
 ! this part is essentially a `DO WHILE (NACT < N) ... END DO` loop. We enforce the following maximal
 ! number of iterations, which is never reached in our tests (indeed, even 2*N cannot be reached).
-! The iteration counter ITER never appears in the code of the iterations, as its purpose is merely
-! to impose an upper bound on the number of iterations.
-maxiter = 2_IK * (m + n)
+! N.B.: 1. The MAX below is a precaution against overflow, which will make 2*(m+n) < 0, which can
+! happen if the integer being used is 2-byte. This precaution is UNNEEDED in MALTAB/Python/Julia/R.
+! 2. The iteration counter ITER never appears in the code of the iterations, as its purpose is
+! merely to impose an upper bound on the number of iterations.
+maxiter = max(2_IK * (m + n), m)
 do iter = 1, maxiter
     ! When NACT == N, exit with PSD = 0. Indeed, with a correctly implemented matrix product, the
     ! lines below this IF should render DD = 0 and trigger an exit. We make it explicit for clarity.
