@@ -115,7 +115,6 @@ copyfile(header_file, header_file_bak);
 
 fprintf('Compiling the common files ... ');
 for idbg = 1 : length(debug_flags)
-    %mex_options = {verbose_option, ['-', dbgstr(debug_flags{idbg})]};
     mex_options = {verbose_option, ['-', dbgstr(debug_flags{idbg})], compiler_options};
     for iprc = 1 : length(precisions)
         prepare_header(header_file, precisions{iprc}, debug_flags{idbg});
@@ -156,7 +155,6 @@ for isol = 1 : length(solvers)
                 % The support for the classical variant is limited. No debugging version.
                 continue
             end
-            %mex_options = {verbose_option, ['-', dbgstr(debug_flags{idbg})]};
             mex_options = {verbose_option, ['-', dbgstr(debug_flags{idbg})], compiler_options};
             for iprc = 1 : length(precisions)
                 work_dir = fullfile(soldir, pdstr(precisions{iprc}, debug_flags{idbg}));
@@ -180,7 +178,7 @@ for isol = 1 : length(solvers)
                 if verbose
                     mex(mex_options{:}, obj_files{:}, gateway, '-output', mexname, '-outdir', mexdir);
                 else
-                    evalc('mex(mex_options{:}, obj_files{:}, gateway, ''-output'', mexname, ''-outdir'', mexdir)'); % Suppress the output.
+                    evalc('mex(mex_options{:}, obj_files{:}, gateway, ''-output'', mexname, ''-outdir'', mexdir)');  % Suppress the output.
                 end
             end
         end
