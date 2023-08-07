@@ -41,7 +41,7 @@ jobs:
           NVDIR="/opt/nvidia/hpc_sdk/Linux_aarch64/"
           if [[ -d "$NVDIR" ]] ; then NVBIN=$(find "$NVDIR" -wholename "*compilers/bin" -type d -print | sort | tail -n 1) ; fi
           if [[ -n "$NVBIN" ]] ; then export PATH=$PATH:"$NVBIN" ; fi
-          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint -v && bash ./mlint -v
           # As of nvfortran 23.1, date_and_time() and random_number are not supported on Raspberry Pi
           # 4B. Thus we have to disable the extensive tests, trying only the simple example.
           #cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make vtest_${{ matrix.ikind }}.${{ matrix.solver }}
