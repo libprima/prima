@@ -1,3 +1,4 @@
+! TODO: Implement GETMODEL to get the model of the objective function and constraints, i.e., g and A.
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the major calculations of COBYLA.
@@ -16,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, August 04, 2023 PM09:54:23
+! Last Modified: Monday, August 07, 2023 PM02:53:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -366,6 +367,7 @@ do tr = 1, maxtr
         end if
     else
         x = sim(:, n + 1) + d
+
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc_internal, x, f, constr)
         cstrv = maxval([ZERO, constr])
@@ -532,8 +534,8 @@ do tr = 1, maxtr
         ! the simplex when SIM(:, JDROP) is replaced with D; the quality of the geometry is defined
         ! by DELTA instead of DELBAR as in (14) of the COBYLA paper. See GEOSTEP for more detail.
         d = geostep(jdrop_geo, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamma, simi)
-
         x = sim(:, n + 1) + d
+
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc_internal, x, f, constr)
         cstrv = maxval([ZERO, constr])
