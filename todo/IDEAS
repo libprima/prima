@@ -67,25 +67,23 @@ most a multiple of the stack size calculated above.
 use, non_intrinsic :: prima_mod, only : newuoa
 use, non_intrinsic :: prima_mod, only : RP, IK
 
-2. Let COBYLA receive bounds and linear constraints directly. Offer an option to respect bound.
+2. Let COBYLA and LINCOA offer an option to respect bounds.
 
-3. Let LINCOA receive bounds directly. Offer an option to respect bounds.
-
-4. Offer a subroutine called `prima`, which behaves similarly as the function `prima` in
+3. Offer a subroutine called `prima`, which behaves similarly as the function `prima` in
 MATLAB/Python. It should be accessible by
 
 use, non_intrinsic :: prima_mod, only : prima
 
-5. Make subroutines trstep (maybe others) available to users by
+4. Make subroutines trstep (maybe others) available to users by
 
 use, non_intrinsic :: prima_mod, only : trstep
 
 It should solve unconstrained/bound-constrained/linearly-constrained trust region subproblems.
 
-6. Create a module called powalg_mod. It should contain the Powell-style linear algebra subroutines,
+5. Create a module called powalg_mod. It should contain the Powell-style linear algebra subroutines,
    examples including calquad, shiftbase, updateq, updateh, maybe also trstep.
 
-7. In the implementation of trstep, do not pass the Hessian but pass a function hmul that
+6. In the implementation of trstep, do not pass the Hessian but pass a function hmul that
 calculates the Hessian vector product. This will make the subroutine independent of the Powell-style
 Hessian triplet (HQ, PQ, XPT). In Fortran, the function hmul should have the following signature:
 !----------------------------!
@@ -107,5 +105,8 @@ not need to be passed.
 
 C++
 
-Use Eigen ( https://eigen.tuxfamily.org ) to get support for matrices, vectors, and basic linear
-algebra.
+See Eigen ( https://eigen.tuxfamily.org ) to get support for matrices, vectors, and basic linear
+algebra. See also
+https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p1673r12.html.
+https://fortran-lang.discourse.group/t/c-standard-library-dense-linear-algebra-interface/6286/6
+Will BLAS be incorporated in standard C++?
