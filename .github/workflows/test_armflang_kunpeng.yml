@@ -24,6 +24,10 @@ jobs:
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
+        exclude:
+          - solver: lincoa  # As of armflang 22.1, rtest often get canceled in the following cases.
+            fflags: [-O2, -O3]
+            testdim: big
 
     steps:
       - name: Checkout repository

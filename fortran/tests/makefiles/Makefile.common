@@ -345,6 +345,9 @@ atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
+AFINC := $(shell dirname $$(dirname $(AFLANG)))/include
+AFLIB := $(shell dirname $$(dirname $(AFLANG)))/lib
+AFLANG := $(AFLANG) -I$(AFINC) -L$(AFLIB)
 AFLANG := $(AFLANG) -pedantic-errors -Werror
 ifeq ($(TESTDIM),small)
 	AFLANG := $(AFLANG) -Mstack_arrays
