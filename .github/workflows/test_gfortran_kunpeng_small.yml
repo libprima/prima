@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 12 1-31/2 * *'
+    - cron: '0 12 1-31/5 * *'
   # Trigger the workflow manually
   workflow_dispatch:
 
@@ -38,7 +38,7 @@ jobs:
       - name: Conduct the test
         shell: bash
         run: |
-            cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all  # On Kunpeng, perform lintering only for small tests of gfortran
+            cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint -g && bash ./mlint -g  # On Kunpeng, perform lintering only for small tests of gfortran
             export FFLAGS=${{ matrix.fflags }}
             export TESTDIM=${{ matrix.testdim }}
             cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_r4_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r4_d1_tst.${{ matrix.solver }}

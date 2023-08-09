@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 16 2-31/3 * *'
+    - cron: '0 16 4-31/5 * *'
   # Trigger the workflow manually
   workflow_dispatch:
 
@@ -47,7 +47,7 @@ jobs:
             ARMLD_DIR=${ARMLD//$'\n'/:}
             export PATH=$PATH:"$ARMLD_DIR"  # For some reason, flang also needs this ld. The system ld does not work.
           fi
-          #cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint -f && bash ./mlint -f
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
           cd "$ROOT_DIR"/fortran/tests && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}

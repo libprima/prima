@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 16 3-31/3 * *'
+    - cron: '0 16 3-31/5 * *'
   # Trigger the workflow manually
   workflow_dispatch:
 
@@ -37,7 +37,7 @@ jobs:
 
       - name: Conduct the test
         run: |
-          #cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint -v && bash ./mlint -v
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
           cd "$ROOT_DIR"/fortran/tests && make vtest_${{ matrix.ikind }}.${{ matrix.solver }}
