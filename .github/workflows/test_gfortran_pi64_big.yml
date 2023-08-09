@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 16 2-31/2 * *'
+    - cron: '0 16 2-31/5 * *'
   # Trigger the workflow manually
   workflow_dispatch:
 
@@ -39,7 +39,7 @@ jobs:
       - name: Conduct the test
         shell: bash
         run: |
-            #cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
+            cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint -g && bash ./mlint -g
             export FFLAGS=${{ matrix.fflags }}
             export TESTDIM=${{ matrix.testdim }}
             cd "$ROOT_DIR"/fortran/tests
@@ -57,7 +57,7 @@ jobs:
       #     path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
-        shell: bash  # Important; otherwise, `rm -rf` will not work on Windows.
+        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         run: rm -rf ${{ env.TEST_DIR }}
 
   # The following job check whether the tests were successful or cancelled due to timeout.

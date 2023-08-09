@@ -53,6 +53,7 @@ jobs:
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
+        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         run: rm -rf ${{ env.TEST_DIR }}
 
   # The following job check whether the tests were successful or cancelled due to timeout.

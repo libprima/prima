@@ -44,6 +44,10 @@ jobs:
               bash ./mlint -n --all
           fi
 
+      - name: Remove the test data
+        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
+        run: rm -rf ${{ env.TEST_DIR }}
+
   # The following job check whether the tests were successful or cancelled due to timeout.
   # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.
   check_success_timeout:

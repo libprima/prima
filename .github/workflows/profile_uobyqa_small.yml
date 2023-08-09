@@ -92,4 +92,5 @@ jobs:
             /tmp/${{ matrix.solver }}_profile_prima/*end*
 
       - name: Remove the test data
+        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/${{ matrix.solver }}_profile_prima

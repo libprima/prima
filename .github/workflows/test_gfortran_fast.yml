@@ -85,5 +85,6 @@ jobs:
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
+        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         shell: bash  # Important; otherwise, `rm -rf` will not work on Windows.
         run: rm -rf ${{ env.TEST_DIR }}
