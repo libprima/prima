@@ -84,7 +84,7 @@ endif
 
 # Define the compiler-dependent "fast flags", which will be used when FFLAGS is -fast.
 AFF := -O4
-DFF := -O4 -Ofast -ffast-math  # As of AOCC 4.4.0, -Ofast implies -O3, but it is not clear whether it implies -ffast-math
+DFF := -O4 -Ofast -ffast-math  # As of AOCC 4.1.0, -Ofast implies -O3, but it is not clear whether it implies -ffast-math
 FFF := -O3 -Ofast -ffast-math  # No documentation found about the relation between -Ofast, -O3, and -ffast-math
 GFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 NFF := -O4
@@ -964,7 +964,7 @@ source_%: $(SRC_DIRS)
 		-o -name "*.out" \
 		-o -name "*__genmod.f90" \
 		\) -exec rm {} \;  # Cleaning up; important!!!
-	# Flang 15.0.3, Arm Fortran Compiler version 22.1, and AOCC 4.0.0 are buggy
+	# Flang 15.0.3, Arm Fortran Compiler version 22.1, and AOCC 4.1.0 are buggy
 	# concerning 0-dimensional arrays, and they report false positive out-bound indices. Thus
 	# preprocessing by frdsrc is needed. See
 	# https://github.com/flang-compiler/flang/issues/1238
