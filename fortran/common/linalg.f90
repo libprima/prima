@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, July 16, 2023 PM11:51:27
+! Last Modified: Thursday, August 10, 2023 AM12:33:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -900,8 +900,7 @@ do j = 1, n
     end if
     do i = m, j + 1_IK, -1_IK
         G = transpose(planerot(T(j, [j, i])))
-        T(j, [j, i]) = [hypotenuse(T(j, j), T(j, i)), ZERO]
-        !T(j, [j, i]) = [sqrt(T(j, j)**2 + T(j, i)**2), ZERO]
+        T(j, [j, i]) = [hypotenuse(T(j, j), T(j, i)), ZERO]  !T(j, [j, i]) = [sqrt(T(j, j)**2 + T(j, i)**2), ZERO]
         T(j + 1:n, [j, i]) = matprod(T(j + 1:n, [j, i]), G)
         Q_loc(:, [j, i]) = matprod(Q_loc(:, [j, i]), G)
     end do
@@ -1510,7 +1509,7 @@ function hypotenuse(x1, x2) result(r)
 !--------------------------------------------------------------------------------------------------!
 ! HYPOTENUSE(X1, X2) returns SQRT(X1^2 + X2^2), handling over/underflow.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, REALMIN, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 implicit none
@@ -1535,18 +1534,11 @@ elseif (.not. is_finite(x2)) then
 else
     y = abs([x1, x2])
     y = [minval(y), maxval(y)]
-    !if (y(1) > sqrt(REALMIN) .and. y(2) < sqrt(REALMAX / 2.1_RP)) then
-    !    r = sqrt(sum(y**2))
-    !elseif (y(2) > 0) then
-    !    r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
-    !    ! Without MAX, R < Y(2) may happen due to rounding errors.
-    !else
-    !    r = ZERO
-    !end if
-    ! Scaling seems to be good in general.
-    if (y(2) > 0) then
-        r = maxval([abs(y(1)), y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE)])
-        ! Without MAXVAL, R < Y(2) may happen due to rounding errors.
+    if (y(1) >= sqrt(REALMIN) .and. y(2) <= sqrt(REALMAX / 2.1_RP)) then
+        r = sqrt(sum(y**2))
+    elseif (y(2) > 0) then
+        r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
+        ! Without MAX, R < Y(2) may happen due to rounding errors.
     else
         r = ZERO
     end if
@@ -1625,14 +1617,14 @@ elseif (abs(x(2)) <= EPS * abs(x(1))) then
     ! to avoid the confusing SIGN(., 0) (see 1).
     ! 1. SIGN(A, 0) = ABS(A) in Fortran but sign(0) = 0 in MATLAB, Python, Julia, and R!
     ! 2. Taking SIGN(X(1)) into account ensures the continuity of G with respect to X except at 0.
-    c = sign(ONE, x(1)) !!MATLAB: c = sign(x(1))
+    c = sign(ONE, x(1))  !!MATLAB: c = sign(x(1))
     s = ZERO
 elseif (abs(x(1)) <= EPS * abs(x(2))) then
     ! N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X ! Therefore, it is WRONG to define G
     ! as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). This mistake was committed on
     ! 20211206 and took a whole day to debug! NEVER use SIGN on arrays unless you are really sure.
     c = ZERO
-    s = sign(ONE, x(2)) !!MATLAB: s = sign(x(2))
+    s = sign(ONE, x(2))  !!MATLAB: s = sign(x(2))
 else
     ! Here is the normal case. It implements the Givens rotation in a stable & continuous way as in:
     ! Bindel, D., Demmel, J., Kahan, W., and Marques, O. (2002). On computing Givens rotations
@@ -1647,19 +1639,19 @@ else
     elseif (abs(x(1)) > abs(x(2))) then
         t = x(2) / x(1)
         u = maxval([ONE, abs(t), sqrt(ONE + t**2)])  ! MAXVAL: precaution against rounding error.
-        u = sign(u, x(1)) !!MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
+        u = sign(u, x(1))  !!MATLAB: u = sign(x(1))*sqrt(ONE + t**2)
         c = ONE / u
         s = t / u
     else
         t = x(1) / x(2)
         u = maxval([ONE, abs(t), sqrt(ONE + t**2)])  ! MAXVAL: precaution against rounding error.
-        u = sign(u, x(2)) !!MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
+        u = sign(u, x(2))  !!MATLAB: u = sign(x(2))*sqrt(ONE + t**2)
         c = t / u
         s = ONE / u
     end if
 end if
 
-G = reshape([c, -s, s, c], [2, 2]) !!MATLAB: G = [c, s; -s, c]
+G = reshape([c, -s, s, c], [2, 2])  !!MATLAB: G = [c, s; -s, c]
 
 !====================!
 !  Calculation ends  !
@@ -1914,8 +1906,8 @@ else
         y = maxval([abs(x), ZERO])
     elseif (.not. present(p) .or. abs(p_loc - TWO) <= 0) then
         ! N.B.: We may use the intrinsic NORM2. Here, we use the following naive implementation to
-        ! get full control on the computation, in a way similar to MATPROD and INPROD. A
-        ! disadvantage is the possibility of over/underflow.
+        ! get full control on the computation in a way similar to MATPROD and INPROD. A disadvantage
+        ! is the possibility of over/underflow.
         y = sqrt(sum(x**2))
     else
         y = sum(abs(x)**p_loc)**(ONE / p_loc)
