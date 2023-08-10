@@ -12,7 +12,7 @@ module message_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, May 21, 2023 AM01:54:53
+! Last Modified: Friday, August 11, 2023 AM12:22:47
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,7 +105,7 @@ select case (info)
 case (FTARGET_ACHIEVED)
     reason = 'the target function value is achieved.'
 case (MAXFUN_REACHED)
-    reason = 'the objective function has been evaluated MAXFUN times.'
+    reason = 'the maximal number of function evaluations has been reached.'
 case (MAXTR_REACHED)
     reason = 'the maximal number of trust region iterations has been reached.'
 case (SMALL_TR_RADIUS)
@@ -115,7 +115,7 @@ case (TRSUBP_FAILED)
 case (NAN_INF_X)
     reason = 'NaN or Inf occurs in x.'
 case (NAN_INF_F)
-    reason = 'the objective function returns NaN/+Inf.'
+    reason = 'the objective or constraint functions return NaN or +Inf.'
 case (NAN_INF_MODEL)
     reason = 'NaN or Inf occurs in the models.'
 case (DAMAGING_ROUNDING)
