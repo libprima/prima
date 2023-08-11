@@ -74,9 +74,9 @@ real(RP), intent(in), optional :: xu(:)  ! XU(N)
 ! Optional outputs
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
+real(RP), intent(out), optional :: nlconstr(:)
 real(RP), intent(out), allocatable, optional :: chist(:)
 real(RP), intent(out), allocatable, optional :: nlchist(:, :)
-real(RP), intent(out), allocatable, optional :: nlconstr(:)
 real(RP), intent(out), allocatable, optional :: fhist(:)
 real(RP), intent(out), allocatable, optional :: xhist(:, :)
 real(RP), intent(out), optional :: cstrv
@@ -367,9 +367,6 @@ call cobylb(calcfc_internal, iprint_loc, maxfun_loc, rhobeg_loc, rhoend_loc, con
 
 ! Copy CONSTR_LOC to NLCONSTR if needed.
 if (present(nlconstr)) then
-    !--------------------------------------------------!
-    call safealloc(nlconstr, m_nlcon)  ! Removable in F2003.
-    !--------------------------------------------------!
     nlconstr = constr_loc(m - m_nlcon + 1:m)
 end if
 deallocate (constr_loc)

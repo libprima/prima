@@ -6,7 +6,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, August 04, 2023 AM01:20:06
+! Last Modified: Friday, August 11, 2023 PM06:43:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -184,12 +184,14 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
            & strip(probname)//': N = ', n, ' M = ', m, ' Mineq = ', size(Aineq, 1), &
            & ' Meq = ', size(Aeq, 1), ', MAXFUN = ', maxfun, ', Random test ', irand
 
+        call safealloc(nlconstr, m)
         call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, nlconstr=nlconstr, Aineq=Aineq, bineq=bineq, &
             & Aeq=Aeq, beq=beq, xl=xl, xu=xu, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxfilt=maxfilt,&
             & maxhist=maxhist, fhist=fhist, xhist=xhist, chist=chist, nlchist=nlchist,&
             & ftarget=ftarget, ctol=ctol, iprint=iprint)
 
         deallocate (x)
+        deallocate (nlconstr)
         nullify (orig_calcfc)
         ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
         call destruct(prob)  ! Destruct the testing problem.
@@ -276,6 +278,7 @@ else
 
                 call safealloc(x, n)
                 x = x0
+                call safealloc(nlconstr, m)
                 call cobyla(noisy_calcfc, m, x, f, cstrv=cstrv, nlconstr=nlconstr, Aineq=Aineq, bineq=bineq, &
                     & Aeq=Aeq, beq=beq, xl=xl, xu=xu, rhobeg=rhobeg, rhoend=rhoend, &
                     & maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, nlchist=nlchist, chist=chist, &
@@ -310,6 +313,7 @@ else
                 end if
 
                 deallocate (x)
+                deallocate (nlconstr)
                 nullify (orig_calcfc)
             end do
 
