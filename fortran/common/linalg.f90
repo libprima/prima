@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, August 13, 2023 AM12:26:12
+! Last Modified: Sunday, August 13, 2023 AM02:28:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1509,7 +1509,7 @@ function hypotenuse(x1, x2) result(r)
 !--------------------------------------------------------------------------------------------------!
 ! HYPOTENUSE(X1, X2) returns SQRT(X1^2 + X2^2), handling over/underflow.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, DEBUGGING!, REALMIN, REALMAX, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ZERO, DEBUGGING!, ONE, REALMIN, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 implicit none
