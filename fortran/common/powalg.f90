@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, August 07, 2023 AM03:52:58
+! Last Modified: Monday, August 14, 2023 AM01:11:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -420,7 +420,7 @@ subroutine qrexc_Rfull(Q, R, i)  ! Used in LINCOA
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : matprod, planerot, isorth, istriu
+use, non_intrinsic :: linalg_mod, only : matprod, planerot, isorth, istriu, hypotenuse
 implicit none
 
 ! Inputs
@@ -484,9 +484,8 @@ end if
 ! R are all positive if it is the case for the original R.
 do k = i, n - 1_IK
     G = planerot(R([k + 1_IK, k], k + 1))  ! G = [c, -s; s, c]. It improves the performance of LINCOA
-    hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)  ! HYPT must be calculated before R is updated
-    ! !HYPT = G(1, 1) * R(K + 1, K + 1) + G(1, 2) * R(K, K + 1)  ! Does not perform well on 20220312
-    ! !HYPT = HYPOTENUSE(R(K + 1, K + 1), R(K, K + 1))  ! Does not perform well on 20220312
+    ! HYPT must be calculated before R is updated.
+    hypt = hypotenuse(R(k + 1, k + 1), R(k, k + 1)) !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
 
     ! Update Q(:, [K, K+1]).
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
