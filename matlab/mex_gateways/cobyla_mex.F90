@@ -11,7 +11,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Friday, August 04, 2023 AM01:12:50
+! Last Modified: Friday, August 11, 2023 PM05:55:38
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -119,6 +119,9 @@ call fmxReadMPtr(pinput(25), maxfilt)
 ! Get the sizes
 m_nlcon = int(size(nlconstr0), kind(m_nlcon))  ! M_NLCON is a compulsory input of the Fortran code.
 
+! Allocate memory for nlconstr
+call safealloc(nlconstr, m_nlcon)
+
 ! Call the Fortran code
 ! There are different cases because XHIST/CONHIST may or may not be passed to the Fortran code.
 if (output_xhist .and. output_nlchist) then
@@ -176,7 +179,7 @@ deallocate (Aeq) ! Allocated by fmxReadMPtr.
 deallocate (beq) ! Allocated by fmxReadMPtr.
 deallocate (lb) ! Allocated by fmxReadMPtr.
 deallocate (ub) ! Allocated by fmxReadMPtr.
-deallocate (nlconstr)  ! Allocated by the solver
+deallocate (nlconstr)  ! Allocated manually
 deallocate (xhist)  ! Allocated by the solver
 deallocate (fhist)  ! Allocated by the solver
 deallocate (chist)  ! Allocated by the solver

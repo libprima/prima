@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, August 04, 2023 PM08:27:54
+! Last Modified: Friday, August 11, 2023 PM06:41:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -306,9 +306,9 @@ real(RP), intent(in), optional :: xu(:)  ! XU(N)
 ! Optional outputs
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
+real(RP), intent(out), optional :: nlconstr(:) ! NLCONSTR(M_NLCON)
 real(RP), intent(out), allocatable, optional :: chist(:)    ! CHIST(MAXCHIST)
 real(RP), intent(out), allocatable, optional :: nlchist(:, :)     ! NLCHIST(M_NLCON, MAXCONHIST)
-real(RP), intent(out), allocatable, optional :: nlconstr(:) ! NLCONSTR(M_NLCON)
 real(RP), intent(out), allocatable, optional :: fhist(:)    ! FHIST(MAXFHIST)
 real(RP), intent(out), allocatable, optional :: xhist(:, :) ! XHIST(N, MAXXHIST)
 real(RP), intent(out), optional :: cstrv
@@ -379,10 +379,14 @@ end if
 m = mxu + mxl + 2_IK * meq + mineq + m_nlcon
 n = int(size(x), kind(n))
 
+
 ! Preconditions
 if (DEBUGGING) then
-    call assert(mineq >= 0, 'Mineq >= 0', srname)
+    call assert(m_nlcon >= 0, 'M_NLCON >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
+    if (present(nlconstr)) then
+        call assert(size(nlconstr) == m_nlcon, 'SIZE(NLCONSTR) == M_NLCON', srname)
+    end if
     call assert(present(Aineq) .eqv. present(bineq), 'Aineq and Bineq are both present or both absent', srname)
     if (present(Aineq)) then
         call assert((size(Aineq, 1) == mineq .and. size(Aineq, 2) == n) &
@@ -610,9 +614,6 @@ deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec, xl_loc, xu_loc)
 
 ! Copy CONSTR_LOC to NLCONSTR if needed.
 if (present(nlconstr)) then
-    !------------------------------------------------------!
-    call safealloc(nlconstr, m_nlcon)  ! Removable in F2003.
-    !------------------------------------------------------!
     nlconstr = constr_loc(m - m_nlcon + 1:m)
 end if
 deallocate (constr_loc)
