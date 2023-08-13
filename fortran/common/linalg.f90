@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, July 16, 2023 PM11:51:27
+! Last Modified: Monday, August 14, 2023 AM01:02:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1535,21 +1535,15 @@ elseif (.not. is_finite(x2)) then
 else
     y = abs([x1, x2])
     y = [minval(y), maxval(y)]
-    !if (y(1) > sqrt(REALMIN) .and. y(2) < sqrt(REALMAX / 2.1_RP)) then
-    !    r = sqrt(sum(y**2))
-    !elseif (y(2) > 0) then
-    !    r = max(y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE))
-    !    ! Without MAX, R < Y(2) may happen due to rounding errors.
-    !else
-    !    r = ZERO
-    !end if
-    ! Scaling seems to be good in general.
-    if (y(2) > 0) then
-        r = maxval([abs(y(1)), y(2), y(2) * sqrt((y(1) / y(2))**2 + ONE)])
-        ! Without MAXVAL, R < Y(2) may happen due to rounding errors.
+    if (y(1) > sqrt(REALMIN) .and. y(2) < sqrt(REALMAX / 2.1_RP)) then
+        r = sqrt(sum(y**2))
+    elseif (y(2) > 0) then
+        r = y(2) * sqrt((y(1) / y(2))**2 + ONE)
     else
         r = ZERO
     end if
+    ! Without the following line, R > Y(1) + Y(2) or R < Y(2) may happen due to rounding errors.
+    r = min(sum(y), max(y(2), r))
 end if
 
 !====================!
