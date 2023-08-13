@@ -719,12 +719,12 @@ return
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function f = evalf(f, x, options)
 
-% Save the current random number generator settings
-orig_rng_state = rng();
-
 if isfield(options, 'noise')
     noise = options.noise;
     if isstruct(noise) && isfield(noise, 'level') && noise.level > 0
+        % Save the current random number generator settings
+        orig_rng_state = rng();
+
         % Set the random seed
         rseed = 0.3*sin(1e8*abs(f))+0.3*cos(1e8*norm(x,9)) + 0.3*sin(100*norm(x,1))*cos(100*norm(x,Inf)) + 0.1*cos(norm(x));
         rng(min(options.ir*ceil(abs(10e6*rseed)), 2^31));  % rng accepts integers between 0 and 2^32 - 1.
