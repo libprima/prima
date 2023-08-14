@@ -722,8 +722,12 @@ function f = evalf(f, x, options)
 if isfield(options, 'noise')
     noise = options.noise;
     if isstruct(noise) && isfield(noise, 'level') && noise.level > 0
-        seed = 0.3*sin(1e8*abs(f))+0.3*cos(1e8*norm(x,9)) + 0.3*sin(100*norm(x,1))*cos(100*norm(x,Inf)) + 0.1*cos(norm(x));
-        rng(min(options.ir*ceil(abs(10e6*seed)), 2^31));  % rng accepts integers between 0 and 2^32 - 1.
+        % Save the current random number generator settings
+        orig_rng_state = rng();
+
+        % Set the random seed
+        rseed = 0.3*sin(1e8*abs(f))+0.3*cos(1e8*norm(x,9)) + 0.3*sin(100*norm(x,1))*cos(100*norm(x,Inf)) + 0.1*cos(norm(x));
+        rng(min(options.ir*ceil(abs(10e6*rseed)), 2^31));  % rng accepts integers between 0 and 2^32 - 1.
 
         switch lower(noise.nature)
         case {'uniform', 'u'}
@@ -738,6 +742,9 @@ if isfield(options, 'noise')
         otherwise
             f = f * (1 + noise.level*r);
         end
+
+        % Restore the random number generator state
+        rng(orig_rng_state);
     end
 end
 
