@@ -1,5 +1,5 @@
 function copy_shared_tools(setup_dir, runtime_dir)
-%COPY_SHARED_TOOLS copies some tools from the setup directory to he runtime directory. These tools
+%COPY_SHARED_TOOLS copies some tools from the setup directory to the runtime directory. These tools
 % are shared between the setup and the runtime of the package. Their source code is maintained in
 % the setup directory, and they need to be copied to the runtime directory during the setup.
 %

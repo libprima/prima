@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, August 13, 2023 AM11:14:56
+! Last Modified: Monday, August 14, 2023 PM10:46:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -484,8 +484,7 @@ end if
 do k = i, n - 1_IK
     G = planerot(R([k + 1_IK, k], k + 1))  ! G = [c, -s; s, c]. It improves the performance of LINCOA
     ! HYPT must be calculated before R is updated.
-    !hypt = hypotenuse(R(k + 1, k + 1), R(k, k + 1)) !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
-    hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
+    hypt = hypotenuse(R(k + 1, k + 1), R(k, k + 1)) !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
 
     ! Update Q(:, [K, K+1]).
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))

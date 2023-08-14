@@ -78,6 +78,8 @@ interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests
 tools = fullfile(matd, 'setup_tools'); % Directory containing some tools, e.g., interform.m
+fortd_interform = fullfile(fortd, '.interform'); % Directory of the intersection-form Fortran code
+gateways_interform = fullfile(gateways, '.interform'); % Directory of the intersection-form MEX gateways
 
 % We need write access to `setup_dir` (and its subdirectories). Return if we do not have it.
 % N.B.: This checking is NOT perfect because of the following --- but it is better than nothing.
@@ -102,9 +104,10 @@ if wrong_input
     error('prima:InvalidInput', 'setup: The input is invalid.');
 end
 
-% Remove the compiled MEX files if requested.
+% Remove the compiled MEX files (and the files generated along side) if requested.
 if strcmp(action, 'clean')
     clean_mex(mexdir, 'verbose');
+    clean_generated_files(fortd_interform, gateways_interform, tools, mexdir);
     rmpath(tools);
     return
 end
@@ -136,7 +139,9 @@ end
 %%%%%%%%%%%%%%% If we arrive here, then the user requests us to compile the solvers. %%%%%%%%%%%%%%%
 
 
-clean_mex(mexdir);   % All previously compiled solvers are removed by this line.
+% All previously compiled solvers are removed by the following lines.
+clean_mex(mexdir);
+clean_generated_files(fortd_interform, gateways_interform, tools, mexdir);
 
 
 % Create `all_precisions.m` and `all_variants.m` under `tools` according to `options`.
@@ -169,9 +174,7 @@ end
 % Intersection-form Fortran code can be compiled both as free form and as fixed form.
 fprintf('Refactoring the Fortran code ... ');
 interform(fortd);
-fortd_interform = fullfile(fortd, '.interform'); % Directory of the intersection-form Fortran code
 interform(gateways);
-gateways_interform = fullfile(gateways, '.interform'); % Directory of the intersection-form MEX gateways
 fprintf('Done.\n\n');
 
 % Compilation starts

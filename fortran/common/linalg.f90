@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, August 13, 2023 AM02:28:26
+! Last Modified: Monday, August 14, 2023 PM10:42:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1509,7 +1509,7 @@ function hypotenuse(x1, x2) result(r)
 !--------------------------------------------------------------------------------------------------!
 ! HYPOTENUSE(X1, X2) returns SQRT(X1^2 + X2^2), handling over/underflow.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ZERO, DEBUGGING!, ONE, REALMIN, REALMAX, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, REALMIN, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 implicit none
@@ -1533,21 +1533,17 @@ elseif (.not. is_finite(x2)) then
     r = abs(x2)
 else
     y = abs([x1, x2])
-    r = sqrt(sum(y**2))
-    r = min(sum(y), maxval([y, r]))
-!
-!    y = [minval(y), maxval(y)]
-!    if (y(1) >= sqrt(REALMIN) .and. y(2) <= sqrt(REALMAX / 2.1_RP)) then
-!        r = sqrt(sum(y**2))
-!    elseif (y(2) > 0) then
-!        r = y(2) * sqrt((y(1) / y(2))**2 + ONE)
-!    else
-!        r = ZERO
-!    end if
-!    ! Without the following line, R > Y(1) + Y(2) or R < Y(2) may happen due to rounding errors.
-!    r = min(sum(y), max(y(2), r))
+    y = [minval(y), maxval(y)]
+    if (y(1) > sqrt(REALMIN) .and. y(2) < sqrt(REALMAX / 2.1_RP)) then
+        r = sqrt(sum(y**2))
+    elseif (y(2) > 0) then
+        r = y(2) * sqrt((y(1) / y(2))**2 + ONE)
+    else
+        r = ZERO
+    end if
+    ! Without the following line, R > Y(1) + Y(2) or R < Y(2) may happen due to rounding errors.
+    r = min(sum(y), max(y(2), r))
 end if
-
 
 !====================!
 !  Calculation ends  !
