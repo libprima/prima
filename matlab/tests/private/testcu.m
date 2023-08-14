@@ -167,6 +167,9 @@ if isfield(eval_options, 'dnoise')
     display(eval_options.dnoise);
 end
 
+% Save the current random number generator settings
+orig_rng_state = rng();
+
 if sequential
     for ip = minip : maxip
 
@@ -307,6 +310,8 @@ else
     end
 end
 
+% Restore the random number generator state
+rng(orig_rng_state);
 
 % For uniformity of the code, we define fref, cref, and mref by the first random test if use_ref is false.
 if ~use_ref
