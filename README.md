@@ -72,8 +72,8 @@ but it is a job that must be done.
 
 PRIMA aims to provide the reference implementation of Powell's methods in modern languages,
 including [**modern** Fortran](https://fortran-lang.org) (F2008 or newer), MATLAB, Python, C++,
-Julia, and R. It will be a faithful implementation, in the sense that the code will be
-mathematically equivalent to Powell’s, except for the
+Julia, and R. It will be a **faithful** implementation, in the sense that the code will be
+mathematically equivalent to Powell’s, **except for** the
 [bug fixes](#bug-fixes) and [improvements](#improvements) made intentionally.
 
 The focus is to implement these methods in a **structured** and **modularized** way so that they
@@ -418,13 +418,13 @@ rather than PRIMA. Nevertheless, it provides a good introduction to Powell's met
 
 ### Charityware
 
-PRIMA is [charityware](https://en.wikipedia.org/wiki/Careware), distributed for free under its 
-[license](https://github.com/libprima/prima/blob/main/LICENCE.txt). 
+PRIMA is [charityware](https://en.wikipedia.org/wiki/Careware), distributed for free under its
+[license](https://github.com/libprima/prima/blob/main/LICENCE.txt).
 If you appreciate it, you may consider making a donation to a charity that you trust
 (in addition to [citing \& acknowledging PRIMA](https://github.com/libprima/prima#citing-prima)).
-This is only a suggestion, not an obligation. 
+This is only a suggestion, not an obligation.
 
-The inspiration comes from [Vim](https://www.vim.org/), with which Zaikun Zhang typed all his PRIMA code. 
+The inspiration comes from [Vim](https://www.vim.org/), with which Zaikun Zhang typed all his PRIMA code.
 
 
 ### Contact
