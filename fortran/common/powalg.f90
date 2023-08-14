@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, August 14, 2023 AM01:11:09
+! Last Modified: Monday, August 14, 2023 PM10:46:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -147,8 +147,7 @@ do k = m - 1_IK, n + 1_IK, -1
         ! If we apply the rotation below when CQ(K+1) = 0, then CQ(K) will get updated to |CQ(K)|.
         G = planerot(cq([k, k + 1_IK]))
         Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
-        cq(k) = hypotenuse(cq(k), cq(k + 1))
-        !cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
+        cq(k) = hypotenuse(cq(k), cq(k + 1))  !cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
     end if
 end do
 
@@ -506,10 +505,8 @@ do k = i, n - 1_IK
     ! updated ones become negative.
     !
     ! !G = planerot(R([k, k + 1_IK], k + 1))
-    ! !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
-    ! !!HYPT = G(1, 1) * R(K, K + 1) + G(1, 2) * R(K+1, K + 1)  ! Does not perform well on 20220312
-    ! !!HYPT = HYPOTENUSE(R(K, K + 1), R(K + 1, K + 1))  ! Does not perform well on 20220312
-    !
+    ! !hypt = hypotenuse(R(k + 1, k + 1), R(k, k + 1)) !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
+    ! !
     ! !Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
     ! !
     ! !R([k, k + 1_IK], k:n) = matprod(G, R([k, k + 1_IK], k:n))

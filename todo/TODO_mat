@@ -10,6 +10,11 @@ githuge is used only in preprima and maxint, the latter again only used in prepr
 cobyla(macup('LHAIFAM'))
 The classical version works well, but not the new one.
 Update: cobylb.f90 has been updated to improve the modernized COBYLA on this problem. Yet its
-performance is still inferior compared to the classical one.
+performance is still inferior compared with the classical one.
+Update 20230810: The two solvers differ significantly at the 102th function evaluation, the problem
+dimension being 99. The difference is because the new implementation allows the trust-region radius
+to increase. The first trust-region step is very successful (ratio > 1.5), and hence the new version
+increases the trust-region radius, leading to a very different iterate compared with the classical
+version.
 
 4. The infos (exitflags) should be returned from a function, not to hard code them.
