@@ -9,6 +9,10 @@ on:
   #   - cron: '0 2,6,10,14,18,22 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
 
 env:
   GFORTRAN_VERSION: 12

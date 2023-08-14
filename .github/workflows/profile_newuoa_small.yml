@@ -9,6 +9,10 @@ on:
   #   - cron: '0 2,6,10,14,18,22 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
 
 env:
   GFORTRAN_VERSION: 12
@@ -26,9 +30,17 @@ jobs:
         solver: [newuoa]
         competitor: [classical, archiva]
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3.5.3
+      - name: Clone Repository (Latest)
+        uses: actions/checkout@v2
+        if: github.event.inputs.git-ref == ''
         with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+      - name: Clone Repository (Custom Ref)
+        uses: actions/checkout@v2
+        if: github.event.inputs.git-ref != ''
+        with:
+          ref: ${{ github.event.inputs.git-ref }}
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
@@ -51,7 +63,7 @@ jobs:
         id: check_matlab
         run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
 
-      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September  
+      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
         uses: actions/cache@v3.3.1
         with:
           path: ${{ runner.tool_cache }}/MATLAB

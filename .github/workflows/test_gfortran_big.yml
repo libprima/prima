@@ -9,6 +9,10 @@ on:
     - cron: '0 16 1-31/4 * *'
   # Trigger the workflow manually
   workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
 
 
 jobs:

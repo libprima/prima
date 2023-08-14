@@ -53,6 +53,10 @@ on:
     - 'created'
   # Trigger the workflow manually
   workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
 
 jobs:
   spelling:
