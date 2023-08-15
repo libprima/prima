@@ -14,7 +14,7 @@ on:
         description: Git Ref (Optional)
         required: false
 
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manually invoked on {0}', inputs.git-ref) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
 
 
 jobs:
