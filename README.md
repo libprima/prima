@@ -27,7 +27,7 @@
 ### What
 
 PRIMA is a package for **solving general nonlinear optimization problems without using derivatives**.
-It provides the reference implementation of Powell's renowned derivative-free optimization methods, i.e., COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
+It provides the reference implementation for Powell's renowned derivative-free optimization methods, i.e., COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
 The "P" in the name stands for [**P**owell](https://www.zhangzk.net/powell.html),
 and "RIMA" is an acronym for "**R**eference **I**mplementation with **M**odernization and **A**melioration".
 
@@ -65,7 +65,7 @@ and then providing native and modernized implementations, which is the mission o
 Before he passed, Professor Powell had asked me and
 [Professor Nick Gould](https://www.numerical.rl.ac.uk/people/nimg) to maintain his solvers.
 This is an honorable mission. To make the solvers more accessible, I started PRIMA.
-It is a project somehow similar to the translation, interpretation, and annotation of Euclid’s
+It is a project similar to the translation, interpretation, and annotation of Euclid’s
 *Elements*. It will make Powell's solvers easily understandable to everyone, not only the experts.
 Few people remember [who translated *Elements*](https://en.wikipedia.org/wiki/Euclid%27s_Elements#Translations),
 but it is a job that must be done.
@@ -84,7 +84,7 @@ In doing so, PRIMA codes the algorithms **in a way that we would present them on
 Such an implementation will enable us to get a deeper understanding of Powell's methods and
 pave the way for new developments based on them.
 
-There do exist "translations" of Powell's Fortran 77 code into other languages. For example,
+There do exist "translations" of Powell's Fortran 77 code in other languages. For example,
 [NLopt](https://github.com/stevengj/nlopt) contains a C version of COBYLA, NEWUOA, and BOBYQA,
 but the C code in NLopt is translated from the Fortran 77 code straightforwardly, if
 not automatically by [f2c](https://netlib.org/f2c/f2c.pdf), and hence inherits the style, structure,
@@ -101,7 +101,7 @@ of his code. To ensure the faithfulness of PRIMA,
 the **modern** Fortran version was started by refactoring Powell's code into the free form via a small
 [MATLAB tool](./matlab/setup_tools/freeform.m).
 However, such refactored code is far from what is desired, because it inherits completely
-the structure and style of Powell's code except for the layout. Extensive modifications are needed
+the structure and style of Powell's code except for the layout. Significant modifications are needed
 to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of the
 reference implementation, extensive tests are conducted after each and every tiny modification,
 using the [CUTEst](https://github.com/ralna/CUTEst) problems via [MatCUTEst](https://github.com/equipez/matcutest).
@@ -123,7 +123,7 @@ PRIMA has been verified by more than 200,000 hours (or **more than 20 years**) o
 **Code must be battle-tested before becoming software.**
 
 Since each GitHub Team account can only run at most 60 GitHub Actions workflows concurrently, I have
-to distribute this large amount of tests to several different Team accounts as follows.
+to distribute this large amount of tests to multiple Team accounts as follows.
 
 - [Tests](https://github.com/libprima/prima/actions) at [libprima/prima](https://github.com/libprima/prima)
 
