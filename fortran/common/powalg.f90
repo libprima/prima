@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, August 14, 2023 PM10:46:45
+! Last Modified: Friday, August 25, 2023 AM01:06:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -119,6 +119,7 @@ if (DEBUGGING) then
     call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)  ! N = 0 is possible.
     call assert(size(c) == m, 'SIZE(C) == M', srname)
     call assert(size(Rdiag) >= min(m, n + 1_IK) .and. size(Rdiag) <= m, 'MIN(M, N+1) <= SIZE(Rdiag) <= M', srname)
+    !call assert(all(Rdiag(1:n) > 0), 'Rdiag(1:N) > 0', srname)  ! Cannot pass. Why?
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E12_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
@@ -173,6 +174,7 @@ end if
 if (DEBUGGING) then
     call assert(n >= nsave .and. n <= min(nsave + 1_IK, m), 'NSAV <= N <= MIN(NSAV + 1, M)', srname)
     call assert(size(Rdiag) >= n .and. size(Rdiag) <= m, 'N <= SIZE(Rdiag) <= M', srname)
+    !call assert(all(Rdiag(1:n) > 0), 'Rdiag(1:N) > 0', srname)  ! Cannot pass. Why?
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
 
@@ -203,7 +205,7 @@ subroutine qradd_Rfull(c, Q, R, n)  ! Used in LINCOA
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : matprod, planerot, isorth, istriu
+use, non_intrinsic :: linalg_mod, only : matprod, planerot, isorth, istriu, diag
 implicit none
 
 ! Inputs
@@ -239,6 +241,7 @@ if (DEBUGGING) then
     tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
+    call assert(all(diag(R(:, 1:n)) > 0), 'DIAG(R(:, 1:N)) > 0', srname)
     Anew = reshape([matprod(Q, R(:, 1:n)), c], shape(Anew))
     Qsave = Q(:, 1:n)  ! For debugging only.
     Rsave = R(:, 1:n)  ! For debugging only.
@@ -274,6 +277,7 @@ if (DEBUGGING) then
     call assert(size(R, 2) >= n .and. size(R, 2) <= m, 'N <= SIZE(R, 2) <= M', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
+    call assert(all(diag(R(:, 1:n)) > 0), 'DIAG(R(:, 1:N)) > 0', srname)
 
     ! !call assert(.not. any(abs(Q(:, 1:n - 1) - Qsave(:, 1:n - 1)) > 0), 'Q(:, 1:N-1) is unchanged', srname)
     ! !call assert(.not. any(abs(R(:, 1:n - 1) - Rsave(:, 1:n - 1)) > 0), 'R(:, 1:N-1) is unchanged', srname)
@@ -335,6 +339,7 @@ if (DEBUGGING) then
     call assert(n >= 1 .and. n <= m, '1 <= N <= M', srname)
     call assert(i >= 1 .and. i <= n, '1 <= i <= N', srname)
     call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
+    !call assert(all(Rdiag > 0), 'Rdiag > 0', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
         & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
     tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
@@ -387,6 +392,7 @@ Rdiag(n) = inprod(Q(:, n), A(:, i))  ! Calculate RDIAG(N) from scratch. See the 
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
+    !call assert(all(Rdiag > 0), 'Rdiag > 0', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
         & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
@@ -419,7 +425,7 @@ subroutine qrexc_Rfull(Q, R, i)  ! Used in LINCOA
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: linalg_mod, only : matprod, planerot, isorth, istriu, hypotenuse
+use, non_intrinsic :: linalg_mod, only : matprod, planerot, isorth, istriu, hypotenuse, diag
 implicit none
 
 ! Inputs
@@ -457,6 +463,7 @@ if (DEBUGGING) then
     tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
+    call assert(all(diag(R(:, 1:n)) > 0), 'DIAG(R(:, 1:N)) > 0', srname)
     Anew = matprod(Q, R)
     Anew = reshape([Anew(:, 1:i - 1), Anew(:, i + 1:n), Anew(:, i)], shape(Anew))
     Qsave = Q  ! For debugging only.
@@ -526,6 +533,7 @@ if (DEBUGGING) then
     call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
+    call assert(all(diag(R(:, 1:n)) > 0), 'DIAG(R(:, 1:N)) > 0', srname)
 
     Qsave(:, i:n) = Q(:, i:n)
     ! !call assert(.not. any(abs(Q - Qsave) > 0), 'Q is unchanged except Q(:, I:N)', srname)

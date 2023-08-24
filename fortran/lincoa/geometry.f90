@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, July 19, 2023 PM04:07:52
+! Last Modified: Thursday, August 24, 2023 PM11:05:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -399,9 +399,9 @@ end if
 ! RSTAT identifies the constraints that need evaluation. RSTAT(J) is -1, 0, or 1 respectively means
 ! constraint J is irrelevant, active, or inactive and relevant. Do NOT change the order of the lines
 ! that set RSTAT, as the later lines override the earlier.
-rstat = 1
-rstat(trueloc(abs(rescon) >= delbar)) = -1
-rstat(iact(1:nact)) = 0
+rstat = 1  ! Inactive and relevant
+rstat(trueloc(abs(rescon) >= delbar)) = -1  ! Irrelevant
+rstat(iact(1:nact)) = 0  ! Active
 
 ! Set FEASIBLE for the calculated S.
 cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
@@ -423,11 +423,16 @@ if (nact > 0 .and. gnorm > EPS .and. is_finite(gnorm)) then
         pgstp = -pgstp
     end if
 
-    ! Decide whether to replace S with PGSTP and set FEASIBLE accordingly.
+    ! Decide whether to replace S with PGSTP and set FEASIBLE accordingly. CSTRV is the constraint
+    ! violation of XOPT+PGSTP. Note that we only need to check the constraints that are inactive and
+    ! relevant, as the value of the active constraints is not changed by moving along PGSTP.
     cstrv = maximum([ZERO, matprod(pgstp, amat(:, trueloc(rstat == 1))) - rescon(trueloc(rstat == 1))])
     ! The purpose of CVTOL below is to provide a check on feasibility that includes a tolerance for
-    ! contributions from computer rounding errors. Note that CVTOL equals 0 in precise arithmetic.
-    cvtol = min(0.01_RP * norm(pgstp), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
+    ! contributions from computer rounding errors.
+    ! Powell's code is as follows. Note that MATPROD(PGSTP, AMAT(:, IACT(1:NACT))) is 0 in theory.
+    ! !cvtol = min(0.01_RP * norm(pgstp), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
+    ! The following code works the same as Powell's code.
+    cvtol = max(EPS * norm(pgstp), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
     take_pgstp = .false.
     if (cstrv <= cvtol) then
         den = calden(kopt, bmat, pgstp, xpt, zmat, idz)  ! Indeed, only DEN(KNEW) is needed.

@@ -12,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 06, 2023 PM03:16:41
+! Last Modified: Friday, August 25, 2023 AM12:27:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -236,7 +236,7 @@ do iter = 1, maxiter
     dd = inprod(psd, psd)
     dnorm = sqrt(dd)
 
-    if (dd <= 0) then
+    if (.not. dnorm > EPS) then
         exit
     end if
 
@@ -279,20 +279,23 @@ do iter = 1, maxiter
         l = 0
         violmx = -REALMAX
     end if
-    !!MATLAB: apsd(mask) = -Inf; [violmx , l] = max(apsd);
+    !!MATLAB: apsd(mask) = -Inf; [violmx, l] = max(apsd);
     ! N.B.: the value of L will differ from the Fortran version if MASK is all FALSE, but this is OK
     ! because VIOLMX will be -Inf, which will trigger the `exit` below. This is tricky. Be cautious!
     !----------------------------------------------------------------------------------------------!
 
     ! Terminate if VIOLMX <= 0 (when MASK contains only FALSE) or a positive value of VIOLMX may be
     ! due to computer rounding errors.
-    ! N.B.: 0. `L <= 0` makes no difference in the condition below. Added for robustness.
-    ! 1. Powell wrote VIOLMX < 0.01*DNORM instead of VIOLMX <= 0.01*DNORM.
-    ! 2. Theoretically (but not numerically), APSD(IACT(1:NACT)) = 0 or empty.
-    ! 3. CAUTION: the Inf-norm of APSD(IACT(1:NACT)) is NOT always MAXVAL(ABS(APSD(IACT(1:NACT)))),
+    ! N.B.: 1. Theoretically (but not numerically), APSD(IACT(1:NACT)) = 0 or empty.
+    ! 2. CAUTION: the Inf-norm of APSD(IACT(1:NACT)) is NOT always MAXVAL(ABS(APSD(IACT(1:NACT)))),
     ! as the latter returns -HUGE(APSD) instead of 0 when NACT = 0! In MATLAB, max([]) = []; in
     ! Python, R, and Julia, the maximum of an empty array raises errors/warnings (as of 20220318).
-    if (all(.not. mask) .or. violmx <= min(0.01_RP * dnorm, TEN * norm(apsd(iact(1:nact)), 'inf'))) then
+    ! Powell's condition for the IF is as follows. Very often, the threshold is almost zero.
+    ! !if (all(.not. mask) .or. violmx <= min(0.01_RP * dnorm, TEN * norm(apsd(iact(1:nact)), 'inf'))) then
+    ! The following condition works essentially the same as Powell's. However, it ensures that
+    ! VIOLMX > EPS * DNORM when the EXIT is not triggered, which implies that AMAT(:, L) is not
+    ! in the range of QFAC(:, 1:NACT), and hence ADDACT will increase NACT by 1.
+    if (all(.not. mask) .or. violmx <= max(EPS * dnorm, TEN * norm(apsd(iact(1:nact)), 'inf'))) then
         exit
     end if
 
