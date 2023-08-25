@@ -13,9 +13,12 @@ on:
       git-ref:
         description: Git Ref (Optional)
         required: false
+      random-seed:
+        description: Random Seed (Optional)
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}', inputs.git-ref, inputs.random-seed) || '' }}
 
 env:
   GFORTRAN_VERSION: 12
@@ -87,6 +90,12 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
             options.verbose = true;
+            if ~isempty('${{ inputs.random-seed }}')
+                options.seed = ${{ inputs.random-seed }};
+            else
+                options.seed = yw = year_week('Asia/Shanghai');
+            end
+            options
             verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 

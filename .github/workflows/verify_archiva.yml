@@ -19,7 +19,7 @@ on:
         required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}  | {1}', inputs.git-ref, inputs.random-seed) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}', inputs.git-ref, inputs.random-seed) || '' }}
 
 env:
   GFORTRAN_VERSION: 12
