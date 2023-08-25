@@ -12,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 25, 2023 AM12:27:01
+! Last Modified: Friday, August 25, 2023 AM08:28:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -79,7 +79,7 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 ! Common modules
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm, lsqr, solve, trueloc
 
 implicit none
@@ -236,7 +236,7 @@ do iter = 1, maxiter
     dd = inprod(psd, psd)
     dnorm = sqrt(dd)
 
-    if (.not. dnorm > EPS) then
+    if (dnorm <= EPS .or. is_nan(dnorm)) then
         exit
     end if
 
@@ -293,8 +293,8 @@ do iter = 1, maxiter
     ! Powell's condition for the IF is as follows. Very often, the threshold is almost zero.
     ! !if (all(.not. mask) .or. violmx <= min(0.01_RP * dnorm, TEN * norm(apsd(iact(1:nact)), 'inf'))) then
     ! The following condition works essentially the same as Powell's. However, it ensures that
-    ! VIOLMX > EPS * DNORM when the EXIT is not triggered, which implies that AMAT(:, L) is not
-    ! in the range of QFAC(:, 1:NACT), and hence ADDACT will increase NACT by 1.
+    ! VIOLMX > EPS * DNORM when the EXIT is not triggered, which implies that AMAT(:, L) is not in
+    ! the range of QFAC(:, 1:NACT).
     if (all(.not. mask) .or. violmx <= max(EPS * dnorm, TEN * norm(apsd(iact(1:nact)), 'inf'))) then
         exit
     end if

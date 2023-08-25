@@ -8,7 +8,7 @@ module geometry_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, August 24, 2023 PM11:05:49
+! Last Modified: Friday, August 25, 2023 AM08:26:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -431,7 +431,7 @@ if (nact > 0 .and. gnorm > EPS .and. is_finite(gnorm)) then
     ! contributions from computer rounding errors.
     ! Powell's code is as follows. Note that MATPROD(PGSTP, AMAT(:, IACT(1:NACT))) is 0 in theory.
     ! !cvtol = min(0.01_RP * norm(pgstp), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
-    ! The following code works the same as Powell's code.
+    ! The following code works essentially the same as Powell's code.
     cvtol = max(EPS * norm(pgstp), TEN * norm(matprod(pgstp, amat(:, iact(1:nact))), 'inf'))
     take_pgstp = .false.
     if (cstrv <= cvtol) then
