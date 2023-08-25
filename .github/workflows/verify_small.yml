@@ -93,7 +93,7 @@ jobs:
             if ~isempty('${{ inputs.random-seed }}')
                 options.seed = ${{ inputs.random-seed }};
             else
-                options.seed = yw = year_week('Asia/Shanghai');
+                options.seed = year_week('Asia/Shanghai');
             end
             options
             verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
