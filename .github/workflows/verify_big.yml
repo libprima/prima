@@ -91,7 +91,7 @@ jobs:
             options = struct();
             options.verbose = true;
             if ~isempty('${{ inputs.random-seed }}')
-                options.seed = ${{ inputs.random-seed }};
+                options.seed = str2num('${{ inputs.random-seed }}');
             else
                 options.seed = year_week('Asia/Shanghai');
             end

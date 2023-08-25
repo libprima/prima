@@ -101,7 +101,7 @@ jobs:
             options = struct();
             options.verbose = true;
             if ~isempty('${{ inputs.random-seed }}')
-                options.seed = ${{ inputs.random-seed }};
+                options.seed = str2num('${{ inputs.random-seed }}');
             else
                 options.seed = 10000*mod(year(dt), 100) + 100*week(dt) + hour(dt);
             end
