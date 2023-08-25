@@ -14,9 +14,12 @@ on:
       git-ref:
         description: Git Ref (Optional)
         required: false
+      random-seed:
+        description: Random Seed (Optional)
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}  | {1}', inputs.git-ref, inputs.random-seed) || '' }}
 
 env:
   GFORTRAN_VERSION: 12
@@ -97,7 +100,11 @@ jobs:
             DayMonth = day(dt);
             options = struct();
             options.verbose = true;
-            options.seed = 10000*mod(year(dt), 100) + 100*week(dt) + hour(dt);
+            if ~isempty('${{ inputs.random-seed }}')
+                options.seed = ${{ inputs.random-seed }};
+            else
+                options.seed = 10000*mod(year(dt), 100) + 100*week(dt) + hour(dt);
+            end
             options.nr = 1; % Since the code will not change along the time, big nr is not needed.
             options.no_classical = true;  % Starting from 20230212, we do not verify the classical version for the archiva.
             options
