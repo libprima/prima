@@ -90,6 +90,9 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
             options.verbose = true;
+            cd
+            ls
+            ls private
             if ~isempty('${{ inputs.random-seed }}')
                 options.seed = str2num('${{ inputs.random-seed }}');
             else
