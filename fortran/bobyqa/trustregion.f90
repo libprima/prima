@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, August 07, 2023 AM03:56:57
+! Last Modified: Sunday, August 27, 2023 PM09:00:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ contains
 subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, xopt, xpt, crvmin, d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine approximately solves
-! minimize Q(XOPT + D) subject to ||D|| <= DELTA, SL <= D <= SU.
+! minimize Q(XOPT + D) subject to ||D|| <= DELTA, SL <= XOPT + D <= SU.
 ! See Section 3 of the BOBYQA paper.
 !
 ! A version of the truncated conjugate gradient is applied. If a line search is restricted by
@@ -97,7 +97,6 @@ real(RP) :: cth
 real(RP) :: delsq
 real(RP) :: dhd
 real(RP) :: dhs
-real(RP) :: diact
 real(RP) :: dredg
 real(RP) :: dredsq
 real(RP) :: ds
@@ -179,10 +178,9 @@ else
     scaled = .false.
 end if
 
-! The initial values of IACT, DIACT, DREDSQ, and GGSAV are unused but to entertain Fortran compilers.
+! The initial values of IACT, DREDSQ, and GGSAV are unused but to entertain Fortran compilers.
 ! TODO: Check that GGSAV has been initialized before used.
 iact = 0
-diact = ZERO
 dredsq = ZERO
 ggsav = ZERO
 
@@ -517,8 +515,11 @@ do iter = 1, maxiter
     if (any(is_nan(args))) then
         exit
     end if
+    ! Defile the grid size of the search for HANGT. Powell defined the size to be 4 if hangt_bd is
+    ! nearly zero and 20 if it is nearly one, with a linear interpolation in between. We double this
+    ! size, which improves the performance of BOBYQA in general according to a test on 20230827.
     !grid_size = nint(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))  ! Powell's version
-    grid_size = 2_IK * nint(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))  ! It doubles the value in Powell's code
+    grid_size = 2_IK * nint(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))
     !!MATLAB: grid_size = 2 * round(17 * hangt_bd + 4.1_RP)
     hangt = interval_max(interval_fun_trsbox, ZERO, hangt_bd, args, grid_size)
     sdec = interval_fun_trsbox(hangt, args)
@@ -531,14 +532,12 @@ do iter = 1, maxiter
     cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
     sth = (hangt + hangt) / (ONE + hangt * hangt)
     gnew = gnew + (cth - ONE) * hdred + sth * hs
-    if (iact >= 1 .and. iact <= n) then  ! IACT == 0 is possible, but IACT > N should never happen.
-        diact = d(iact)
-    end if
     d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
     hdred = cth * hdred + sth * hs
     qred = qred + sdec
     if (iact >= 1 .and. iact <= n .and. hangt >= hangt_bd) then  ! D(IACT) reaches lower/upper bound.
-        xbdi(iact) = nint(sign(ONE, d(iact) - diact), kind(xbdi))  !!MATLAB: xbdi(iact) = sign(d(iact) - diact)
+        xbdi(iact) = nint(sign(ONE, xopt(iact) + d(iact) - HALF * (sl(iact) + su(iact))), kind(xbdi))
+        !!MATLAB: xbdi(iact) = sign(xopt(iact)+d(iact) - (sl+su)/2);
     elseif (.not. sdec > ctest * qred) then
         exit
     end if

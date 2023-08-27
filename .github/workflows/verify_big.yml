@@ -93,7 +93,7 @@ jobs:
             if ~isempty('${{ inputs.random-seed }}')
                 options.seed = str2num('${{ inputs.random-seed }}');
             else
-                copyfile('private/year_week.m', cd);
+                copyfile('private/year_week.m', cd());
                 options.seed = year_week('Asia/Shanghai');
             end
             if strcmp('${{ matrix.solver }}', 'bobyqa') || strcmp('${{ matrix.solver }}', 'lincoa'), options.nr = 4; end;
