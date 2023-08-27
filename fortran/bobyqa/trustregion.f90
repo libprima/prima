@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 27, 2023 PM09:00:04
+! Last Modified: Sunday, August 27, 2023 PM09:42:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,7 @@ subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, xopt, xpt, crvmin, d)
 ! a constraint, then the procedure is restarted, the values of the variables that are at their
 ! bounds being fixed. If the trust region boundary is reached, then further changes may be made to
 ! D, each one being in the two dimensional space that is spanned by the current D and the gradient
-! of Q at XOPT+D, staying on the trust  region boundary. Termination occurs when the reduction in
+! of Q at XOPT+D, staying on the trust region boundary. Termination occurs when the reduction in
 ! Q seems to be close to the greatest reduction that can be achieved.
 !
 ! CRVMIN is set to zero if D reaches the trust region boundary. Otherwise it is set to the least
@@ -164,7 +164,7 @@ end if
 ! Note that CRVMIN must be scaled back if it is nonzero, but step is scale invariant.
 ! N.B.: It is faster and safer to scale by multiplying a reciprocal than by division. See
 ! https://fortran-lang.discourse.group/t/ifort-ifort-2021-8-0-1-0e-37-1-0e-38-0/
-if (maxval(abs(gopt_in)) > 1.0E12) then   ! The threshold is empirical.
+if (maxval(abs(gopt_in)) > 1.0E12) then  ! The threshold is empirical.
     modscal = max(TWO * REALMIN, ONE / maxval(abs(gopt_in)))  ! MAX: precaution against underflow.
     gopt = gopt_in * modscal
     pq = pq_in * modscal
@@ -333,7 +333,7 @@ do iter = 1, maxiter
     ! as mentioned above.
     !----------------------------------------------------------------------------------------------!
 
-    ! Update CRVMIN, GNEW and D. Set SDEC to the decrease that occurs in Q.
+    ! Update CRVMIN, GNEW, and D. Set SDEC to the decrease that occurs in Q.
     sdec = ZERO
     if (stplen > 0) then
         itercg = itercg + 1_IK
@@ -440,7 +440,7 @@ do iter = 1, maxiter
     ! Zaikun 20210926:
     ! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that ||S|| = ||D||?? Namely:
     ! S = something, then S = (norm(D)/norm(S))*S
-    ! Also, should exit if the orthogonality of S and D is damaged, or S is  not finite.
+    ! Also, should exit if the orthogonality of S and D is damaged, or S is not finite.
     ! See the corresponding part of TRSAPP.
     temp = gredsq * dredsq - dredg * dredg
     if (temp <= ctest**2 * qred * qred .or. is_nan(temp) .or. is_nan(qred)) then
