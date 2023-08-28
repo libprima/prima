@@ -180,7 +180,7 @@ end do
 
 ! Remove any constraints from the initial active set whose Lagrange multipliers are nonnegative,
 ! and set the surviving multipliers.
-! The following loop will run for at most NACT times, since each call of DEL_ACT reduces NACT by 1.
+! The following loop will run for at most NACT times, since each call of DELACT reduces NACT by 1.
 do while (nact > 0)
     vlam(1:nact) = lsqr(g, qfac(:, 1:nact), rfac(1:nact, 1:nact))
     if (.not. any(vlam(1:nact) >= 0)) then
@@ -299,14 +299,14 @@ do iter = 1, maxiter
         exit
     end if
 
-    ! Add constraint L to the active set. ADD_ACT sets NACT = NACT + 1 and VLAM(NACT) = 0.
+    ! Add constraint L to the active set. ADDACT sets NACT = NACT + 1 and VLAM(NACT) = 0.
     call addact(l, amat(:, l), iact, nact, qfac, resact, resnew, rfac, vlam)
 
     ! Set the components of the vector VMU if VIOLMX is positive.
     ! N.B.: 1. In theory, NACT > 0 is not needed in the condition below, because VIOLMX must be 0
     ! when NACT is 0. We keep NACT > 0 for security: when NACT <= 0, RFAC(NACT, NACT) is invalid.
     ! 2. The loop will run for at most NACT <= N times: if VIOLMX > 0, then ICON > 0, and hence
-    ! VLAM(ICON) = 0, which implies that DEL_ACT will be called to reduce NACT by 1.
+    ! VLAM(ICON) = 0, which implies that DELACT will be called to reduce NACT by 1.
     do while (violmx > 0 .and. nact > 0)
         v(1:nact - 1) = ZERO
         v(nact) = ONE / rfac(nact, nact) ! This is why we must ensure NACT > 0.
@@ -332,7 +332,7 @@ do iter = 1, maxiter
         ! first implementation will render ICON = [] as `find` (the MATLAB version of TRUELOC)
         ! returns [].
         ! 1. The BACK argument in MINLOC is available in F2008. Not supported by Absoft as of 2022.
-        ! 2. A motivation for backward MINLOC is to save computation in DEL_ACT below (what else?).
+        ! 2. A motivation for backward MINLOC is to save computation in DELACT below (what else?).
 
         violmx = max(violmx - vmult, ZERO)
         vlam(1:nact) = vlam(1:nact) - vmult * vmu(1:nact)
@@ -351,7 +351,7 @@ do iter = 1, maxiter
     end do  ! End of DO WHILE (VIOLMX > 0 .AND. NACT > 0)
 
     !----------------------------------------------------------------------------------------------!
-    ! NACT can become 0 at this point iff VLAM(1:NACT) >= 0 before calling DEL_ACT, which is true
+    ! NACT can become 0 at this point iff VLAM(1:NACT) >= 0 before calling DELACT, which is true
     ! if NACT happens to be 1 when the WHILE loop starts. However, we have never observed a failure
     ! of the assertion below as of 20220329. Why?
     !-----------------------------------------!
@@ -460,7 +460,7 @@ end if
 ! columns of QFAC are the ones required for the addition of the L-th constraint, and add the
 ! appropriate column to RFAC.
 ! N.B.: QRADD always augment NACT by 1, which differs from the corresponding subroutine in COBYLA.
-! Is it ensured that C cannot be represented by the gradients of the existing active constraints?
+! It is ensured that C cannot be represented by the gradients of the existing active constraints.
 call qradd(c, qfac, rfac, nact)  ! NACT is increased by 1!
 ! Indeed, it suffices to pass RFAC(:, 1:NACT+1) to QRADD as follows.
 ! !call qradd(c, qfac, rfac(:, 1:nact + 1), nact)  ! NACT is increased by 1!
@@ -516,7 +516,7 @@ real(RP), intent(inout) :: rfac(:, :)  ! RFAC(N, N)
 real(RP), intent(inout) :: vlam(:)  ! VLAM(N)
 
 ! Local variables (debugging only)
-character(len=*), parameter :: srname = 'DEL_ACT'
+character(len=*), parameter :: srname = 'DELACT'
 integer(IK) :: l
 integer(IK) :: m
 integer(IK) :: n

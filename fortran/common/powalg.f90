@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, August 25, 2023 AM01:06:08
+! Last Modified: Monday, August 28, 2023 PM11:52:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -197,9 +197,8 @@ subroutine qradd_Rfull(c, Q, R, n)  ! Used in LINCOA
 ! This subroutine updates the QR factorization of an MxN matrix A = Q*R(:, 1:N) when a new column C
 ! is appended to this matrix A as the LAST column.
 ! N.B.:
-! 0. Different from QRADD_RDIAG, it seems that QRADD_RFULL does not try to maintain that A is of
-! full column rank after the update; QRADD_RFULL always append C to A, and always increase N by 1,
-! but QRADD_RDIAG does so only if C is not in the column space of A.
+! 0. Different from QRADD_RDIAG, QRADD_RFULL always append C to A, and always increase N by 1. This
+! is because it is for sure that C is not in the column space of A in LINCOA.
 ! 1. At entry, Q is a MxM orthonormal matrix, and R is a MxL upper triangular matrix with N < L <= M.
 ! 2. The subroutine changes only Q(:, N+1:M) and R(:, N+1) with N taking the original value.
 !--------------------------------------------------------------------------------------------------!
