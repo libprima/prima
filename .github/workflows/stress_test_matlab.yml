@@ -13,9 +13,12 @@ on:
       git-ref:
         description: Git Ref (Optional)
         required: false
+      random-seed:
+        description: Random Seed (Optional)
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}', inputs.git-ref, inputs.random-seed) || '' }}
 
 jobs:
   test:
@@ -129,6 +132,11 @@ jobs:
             root_dir = pwd();
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
+            if ~isempty('${{ inputs.random-seed }}')
+                options.seed = str2num('${{ inputs.random-seed }}');
+            else
+                options.seed = 10000*mod(year(dt), 100) + 100*week(dt) + hour(dt);
+            end
             options.tough = strcmp('${{ matrix.test }}', 'tough');
             daynum = day(datetime('now', 'TimeZone', 'Asia/Shanghai'));
             if mod(daynum, 3) == 0
