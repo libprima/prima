@@ -147,6 +147,7 @@ jobs:
             else
                 options.precision = 'quadruple';
             end
+            options
             stress('${{ matrix.solver }}', options);
 
 
