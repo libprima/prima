@@ -135,7 +135,8 @@ jobs:
             if ~isempty('${{ inputs.random-seed }}')
                 options.seed = str2num('${{ inputs.random-seed }}');
             else
-                options.seed = 10000*mod(year(dt), 100) + 100*week(dt) + hour(dt);
+                copyfile('private/year_week.m', cd());
+                options.seed = year_week('Asia/Shanghai');
             end
             options.tough = strcmp('${{ matrix.test }}', 'tough');
             daynum = day(datetime('now', 'TimeZone', 'Asia/Shanghai'));
