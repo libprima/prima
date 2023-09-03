@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, September 03, 2023 PM06:24:27
+! Last Modified: Sunday, September 03, 2023 PM06:30:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -162,7 +162,7 @@ if (n < m) then
 end if
 
 ! Update RDIAG so that RDIAG(N) = CQ(N) = INPROD(C, Q(:, N)). Note that N may have been augmented.
-! Zaikun 20230903: Different from QRADD_RFULL, Powell did not try to maintain the positiveness of CQ.
+! Zaikun 20230903: Different from QRADD_RFULL, Powell did not maintain the positiveness of RDIAG.
 if (n >= 1 .and. n <= m) then  ! Indeed, N > M should not happen unless the input is wrong.
     Rdiag(n) = cq(n)  ! Indeed, RDIAG(N) = INPROD(C, Q(:, N))
 end if
