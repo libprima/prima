@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, August 28, 2023 PM11:52:34
+! Last Modified: Sunday, September 03, 2023 PM06:24:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -68,6 +68,13 @@ subroutine qradd_Rdiag(c, Q, Rdiag, n)  ! Used in COBYLA
 ! add a new column C is to this matrix as the LAST column while maintaining the full-rankness.
 ! Case 1. If C is not in range(A) (theoretically, it implies N < M), then the new matrix is [A, C];
 ! Case 2. If C is in range(A), then the new matrix is [A(:, 1:N-1), C].
+! Zaikun 2023903: It may happen in the second case that C is in the range of A(:, 1:N-1), and the
+! new matrix does not have full column rank any more. Indeed, Powell wrote in comments that "set
+! IOUT to the index of the constraint (here, column of A --- Zaikun) to be deleted, but branch if no
+! suitable index can be found". The idea is to replace a column of A by C so that the new matrix
+! still has full rank (such a column must exist unless C = 0). But his code sets IOUT = N always.
+! Maybe he found this worked well enough in practice. Meanwhile, Powell's code includes a snippet
+! that can never be reached, which was probably intended to deal with the case with IOUT =/= N.
 ! N.B.:
 ! 0. Instead of R, this subroutine updates RDIAG, which is diag(R), with a size at most M and at
 ! least MIN(M, N+1). The number is MIN(M, N+1) rather than MIN(M, N) as N may be augmented by 1 in
@@ -75,12 +82,6 @@ subroutine qradd_Rdiag(c, Q, Rdiag, n)  ! Used in COBYLA
 ! 1. With the two cases specified as above, this function does not need A as an input.
 ! 2. The subroutine changes only Q(:, NSAVE+1:M) (NSAVE is the original value of N)
 ! and R(:, N) (N takes the updated value).
-! 3. Indeed, when C is in range(A), Powell wrote in comments that "set IOUT to the index of the
-! constraint (here, column of A --- Zaikun) to be deleted, but branch if no suitable index can be
-! found". The idea is to replace a column of A by C so that the new matrix still has full rank
-! (such a column must exist unless C = 0). But his code essentially sets IOUT = N always. Maybe he
-! found this worked well enough in practice. Meanwhile, Powell's code includes a snippet that can
-! never be reached, which was probably intended to deal with the case with IOUT =/= N.
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
@@ -119,7 +120,6 @@ if (DEBUGGING) then
     call assert(n >= 0 .and. n <= m, '0 <= N <= M', srname)  ! N = 0 is possible.
     call assert(size(c) == m, 'SIZE(C) == M', srname)
     call assert(size(Rdiag) >= min(m, n + 1_IK) .and. size(Rdiag) <= m, 'MIN(M, N+1) <= SIZE(Rdiag) <= M', srname)
-    !call assert(all(Rdiag(1:n) > 0), 'Rdiag(1:N) > 0', srname)  ! Cannot pass. Why?
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E12_RP * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
@@ -140,8 +140,8 @@ cqa = matprod(abs(c), abs(Q))
 cq(trueloc(isminor(cq, cqa))) = ZERO  !!MATLAB: cq(isminor(cq, cqa)) = zero
 
 ! Update Q so that the columns of Q(:, N+2:M) are orthogonal to C. This is done by applying a 2D
-! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1.
-! Nothing will be done if N >= M-1.
+! Givens rotation to Q(:, [K, K+1]) from the right to zero C'*Q(:, K+1) out for K = N+1, ..., M-1
+! in the reverse order. Nothing will be done if N >= M-1.
 do k = m - 1_IK, n + 1_IK, -1
     if (abs(cq(k + 1)) > 0) then
         ! Powell wrote CQ(K+1) /= 0 instead of ABS(CQ(K+1)) > 0. The two differ if CQ(K+1) is NaN.
@@ -162,6 +162,7 @@ if (n < m) then
 end if
 
 ! Update RDIAG so that RDIAG(N) = CQ(N) = INPROD(C, Q(:, N)). Note that N may have been augmented.
+! Zaikun 20230903: Different from QRADD_RFULL, Powell did not try to maintain the positiveness of CQ.
 if (n >= 1 .and. n <= m) then  ! Indeed, N > M should not happen unless the input is wrong.
     Rdiag(n) = cq(n)  ! Indeed, RDIAG(N) = INPROD(C, Q(:, N))
 end if
@@ -174,7 +175,6 @@ end if
 if (DEBUGGING) then
     call assert(n >= nsave .and. n <= min(nsave + 1_IK, m), 'NSAV <= N <= MIN(NSAV + 1, M)', srname)
     call assert(size(Rdiag) >= n .and. size(Rdiag) <= m, 'N <= SIZE(Rdiag) <= M', srname)
-    !call assert(all(Rdiag(1:n) > 0), 'Rdiag(1:N) > 0', srname)  ! Cannot pass. Why?
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
 
@@ -338,7 +338,6 @@ if (DEBUGGING) then
     call assert(n >= 1 .and. n <= m, '1 <= N <= M', srname)
     call assert(i >= 1 .and. i <= n, '1 <= i <= N', srname)
     call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
-    !call assert(all(Rdiag > 0), 'Rdiag > 0', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
         & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
     tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(m + 1_IK, RP)))
@@ -367,6 +366,8 @@ end if
 ! Powell's code, however, is slightly different: before everything, he first exchanged columns K and
 ! K+1 of Q (as well as rows K and K+1 of R). This makes sure that the entires of the update RDIAG
 ! are all positive if it is the case for the original RDIAG.
+! Zaikun 20230903: It turns out that Powell's code does not ensure that the original RDIAG is
+! positive (see QRADD_RDIAG), and hence the updated RDIAG may contain negative values.
 do k = i, n - 1_IK
     G = planerot([Rdiag(k + 1), inprod(Q(:, k), A(:, k + 1))])
     Q(:, [k, k + 1_IK]) = matprod(Q(:, [k + 1_IK, k]), transpose(G))
@@ -391,7 +392,6 @@ Rdiag(n) = inprod(Q(:, n), A(:, i))  ! Calculate RDIAG(N) from scratch. See the 
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
-    !call assert(all(Rdiag > 0), 'Rdiag > 0', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
         & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!

@@ -8,7 +8,7 @@ module trustregion_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Monday, August 07, 2023 AM03:53:16
+! Last Modified: Sunday, September 03, 2023 PM06:19:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -325,14 +325,11 @@ do iter = 1, maxiter
     end if
 
     ! If ICON exceeds NACT, then we add the constraint with index IACT(ICON) to the active set.
-    ! Apply Givens rotations so that the last N-NACT-1 columns of Z are orthogonal to the gradient
-    ! of the new constraint, a scalar product being set to zero if its nonzero value could be due to
-    ! computer rounding errors, which is tested by ISMINOR.
     if (icon > nact) then
         zdasav(1:nact) = zdota(1:nact)
         nactsav = nact
-        call qradd(A(:, iact(icon)), z, zdota, nact)  ! QRADD may update NACT tp NACT + 1.
-        ! Indeed, it suffices to pass ZDOTA(1:MIN(N, NACT+_1)) to QRADD as follows.
+        call qradd(A(:, iact(icon)), z, zdota, nact)  ! QRADD may update NACT to NACT + 1.
+        ! Indeed, it suffices to pass ZDOTA(1:MIN(N, NACT+1)) to QRADD as follows.
         ! !call qradd(A(:, iact(icon)), z, zdota(1:min(n, nact + 1_IK)), nact)
 
         if (nact == nactsav + 1) then
@@ -386,7 +383,10 @@ do iter = 1, maxiter
         ! IACT(NACT) /= MCON??? If not, then how does the following procedure ensure that MCON is
         ! the last of IACT(1:NACT)?
         if (stage == 2 .and. iact(nact) /= mcon) then
-            call validate(nact > 1, 'NACT > 1', srname)  ! NACT must be at least 2.
+            if (nact <= 1) then
+                ! We must exit, as NACT-1 is used as an index below. Powell's code does not have this.
+                exit
+            end if
             call qrexc(A(:, iact(1:nact)), z, zdota(1:nact), nact - 1_IK)
             ! Indeed, it suffices to pass Z(:, 1:NACT) to QREXC as follows.
             ! !call qrexc(A(:, iact(1:nact)), z(:, 1:nact), zdota(1:nact), nact - 1_IK)
@@ -435,7 +435,6 @@ do iter = 1, maxiter
         ! above. It did happen in stage 1 that NACT became 0 after the reduction --- this is
         ! extremely rare, and it was never observed until 20221212, after almost one year of
         ! random tests. Maybe NACT is theoretically positive even in stage 1?
-        call validate(stage == 1 .or. nact > 0, 'NACT > 0 in stage 2', srname)
         if (stage == 2 .and. nact <= 0) then
             exit  ! If this case ever occurs, we have to exit, as NACT is used as an index below.
         end if
