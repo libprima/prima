@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, September 03, 2023 PM06:30:56
+! Last Modified: Monday, September 04, 2023 AM12:36:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -253,7 +253,7 @@ cq = matprod(c, Q)
 ! Nothing will be done if N >= M-1.
 do k = m - 1_IK, n + 1_IK, -1
     if (abs(cq(k + 1)) > 0) then  ! Powell: IF (ABS(CQ(K + 1)) > 1.0D-20 * ABS(CQ(K))) THEN
-        G = planerot(cq([k, k + 1_IK]))  ! G = [c, -s; s, c]. It improves the performance of LINCOA
+        G = planerot(cq([k, k + 1_IK]))  ! G = [c, -s; s, c].
         Q(:, [k, k + 1_IK]) = matprod(Q(:, [k, k + 1_IK]), transpose(G))
         cq(k) = sqrt(cq(k)**2 + cq(k + 1)**2)
     end if
@@ -294,9 +294,9 @@ subroutine qrexc_Rdiag(A, Q, Rdiag, i)  ! Used in COBYLA
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates the QR factorization for an MxN matrix A = Q*R so that the updated Q and
 ! R form a QR factorization of [A_1, ..., A_{I-1}, A_{I+1}, ..., A_N, A_I], which is the matrix
-! obtained by rearranging columns [I, I+1, ..., N] of A to [I+1, ..., N, I]. Here, A is ASSUMED TO
-! BE OF FULL COLUMN RANK, Q is a matrix whose columns are orthogonal, and R, which is not present,
-! is an upper triangular matrix whose diagonal entries are nonzero. Q and R need not to be square.
+! obtained by rearranging columns [I, I+1, ..., N] of A to [I+1, ..., N, I]. Here, Q is a matrix
+! whose columns are orthogonal, and R, which is not present, is an upper triangular matrix whose
+! diagonal entries are nonzero. Q and R need not to be square.
 ! N.B.:
 ! 0. Instead of R, this subroutine updates RDIAG, which is diag(R), the size being N.
 ! 1. With L = SIZE(Q, 2) = SIZE(R, 1), we have M >= L >= N. Most often, L = M or N.
@@ -415,9 +415,9 @@ subroutine qrexc_Rfull(Q, R, i)  ! Used in LINCOA
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine updates the QR factorization for an MxN matrix A = Q*R so that the updated Q and
 ! R form a QR factorization of [A_1, ..., A_{I-1}, A_{I+1}, ..., A_N, A_I], which is the matrix
-! obtained by rearranging columns [I, I+1, ..., N] of A to [I+1, ..., N, I]. At entry, A = Q*R
-! is ASSUMED TO BE OF FULL COLUMN RANK, Q is a matrix whose columns are orthogonal, and R is an
-! upper triangular matrix whose diagonal entries are all nonzero. Q and R need not to be square.
+! obtained by rearranging columns [I, I+1, ..., N] of A to [I+1, ..., N, I]. At entry, A = Q*R,
+! Q is a matrix whose columns are orthogonal, and R is an upper triangular matrix whose diagonal
+! entries are all nonzero. Q and R need not to be square.
 ! N.B.:
 ! 1. With L = SIZE(Q, 2) = SIZE(R, 1), we have M >= L >= N. Most often, L = M or N.
 ! 2. The subroutine changes only Q(:, I:N) and R(:, I:N).
@@ -488,7 +488,7 @@ end if
 ! K+1 of Q as well as rows K and K+1 of R. This makes sure that the diagonal entries of the updated
 ! R are all positive if it is the case for the original R.
 do k = i, n - 1_IK
-    G = planerot(R([k + 1_IK, k], k + 1))  ! G = [c, -s; s, c]. It improves the performance of LINCOA
+    G = planerot(R([k + 1_IK, k], k + 1))  ! G = [c, -s; s, c].
     ! HYPT must be calculated before R is updated.
     hypt = hypotenuse(R(k + 1, k + 1), R(k, k + 1)) !hypt = sqrt(R(k, k + 1)**2 + R(k + 1, k + 1)**2)
 
