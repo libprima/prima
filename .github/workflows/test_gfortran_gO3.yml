@@ -34,7 +34,7 @@ jobs:
         testdim: [small]
         exclude:
           - os: windows-latest
-            version: 9
+            version: 13  # gfortran-13 is not available on Windows as of 20230904
 
     steps:
 
