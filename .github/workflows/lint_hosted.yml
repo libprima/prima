@@ -89,7 +89,7 @@ jobs:
         id: setup-fortran
         with:
           compiler: gcc
-          version: latest
+          version: 13
 
       - name: Install Intel oneAPI
         run: bash .github/scripts/install_oneapi_linux.sh
