@@ -690,7 +690,7 @@ if options.debug && ~options.classical
             fhistx = zeros(1, nhist);  % When the objective is empty, the objective function used in computation was 0.
             if ~isempty(objective)
                 for k = 1 : nhist
-                    fhistx(k) = objective(xhist(:, k));
+                    fhistx(k) = feval(objective, xhist(:, k));
                 end
             end
             % Due to the moderated extreme barrier (implemented when options.classical is false),
