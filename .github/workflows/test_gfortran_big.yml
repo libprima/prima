@@ -29,7 +29,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         compiler: [gcc]
-        version: [12]
+        version: [13]
         ikind: [i2, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, O3, -g, -fast]
@@ -46,7 +46,7 @@ jobs:
         uses: actions/checkout@v2
         if: github.event.inputs.git-ref != ''
         with:
-          ref: ${{ github.event.inputs.git-ref }} 
+          ref: ${{ github.event.inputs.git-ref }}
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
