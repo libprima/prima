@@ -44,7 +44,7 @@ cd(old_directory);
 solver_name = solver;
 solver = str2func(solver);
 
-% Set the random seed using solver name. We ALTER THE SEED weekly to test the solvers as much as possible.
+% Set the random seed. We ALTER THE SEED WEEKLY to test the solvers as much as possible.
 if isfield(options, 'yw')
     yw = options.yw;
 elseif isfield(options, 'seed')
