@@ -9,6 +9,7 @@ matd = fileparts(mfiledir); % Matlab directory
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests
+tools = fullfile(matd, 'setup_tools'); % Directory containing some tools
 
 % Remove the compiled MEX files.
 clean_mex(mexdir);
@@ -17,7 +18,7 @@ clean_mex(mexdir);
 orig_warning_state = warning;
 warning('off', 'MATLAB:rmpath:DirNotFound'); % Maybe the paths were not added. We do not want to see this warning.
 warning('off', 'MATLAB:SavePath:PathNotSaved'); % Maybe we do not have the permission to save path.
-rmpath(interfaces, tests);
+rmpath(interfaces, tests, tools);
 savepath;
 warning(orig_warning_state); % Restore the behavior of displaying warnings
 
