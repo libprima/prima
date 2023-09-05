@@ -39,13 +39,13 @@ jobs:
     steps:
 
       - name: Clone Repository (Latest)
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.0.0
         if: github.event.inputs.git-ref == ''
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
       - name: Clone Repository (Custom Ref)
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.0.0
         if: github.event.inputs.git-ref != ''
         with:
           ref: ${{ github.event.inputs.git-ref }}
@@ -89,7 +89,7 @@ jobs:
     needs: test
     steps:
       - name: Clone the GitHub actions scripts
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.0.0
         with:
           repository: equipez/github_actions_scripts
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
