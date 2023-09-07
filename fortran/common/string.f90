@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, May 21, 2023 PM12:52:27
+! Last Modified: Thursday, September 07, 2023 PM10:47:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

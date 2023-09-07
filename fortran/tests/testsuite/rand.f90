@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Saturday, June 17, 2023 AM11:21:58
+! Last Modified: Thursday, September 07, 2023 PM06:44:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -105,7 +105,7 @@ end if
 
 ! Some compilers cannot guarantee ABS(COS) <= 1 when the variable is huge. This may cause overflow.
 ! Note that 1.0_DP cannot be written as ONE, because KIND(ONE) = RP, which may not be DP.
-cos_seed = min(max(cos(real([(i, i=seed - n + 1, seed)], DP)), -1.0_DP), 1.0_DP)
+cos_seed = min(max(cos(real([(i, i=seed - (n - 1), seed)], DP)), -1.0_DP), 1.0_DP)
 seed_to_put = ceiling(0.9_DP * real(huge(0), DP) * cos_seed)
 deallocate (cos_seed)
 ! P takes a `+1` at the end, so that it is guarantee to be positive.

@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, April 11, 2023 AM11:53:36
+! Last Modified: Thursday, September 07, 2023 PM06:45:43
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: pintrf_mod, only : OBJ, OBJCON
@@ -221,10 +221,10 @@ end if
 ! Many compilers have difficulties in handling COS of huge variables. They may return invalid
 ! results (NaN or numbers with absolute values much larger than 1, observed on Absoft 21.0 and NAG
 ! Fortran 7.0) or even encounter segmentation faults (Absoft 21.0).
-seedx = sum(cos(x * TEN**(-int(log10(abs(x) + EPS))))) / real(size(x), RP)
-seedf = cos(f * TEN**(-int(log10(abs(f) + EPS))))
-seed = ceiling(real(10**range(0), RP) * seedx * seedf)
-seed = max(abs(seed), 1)
+seedx = sum(cos(x / TEN**(int(log10(abs(x) + EPS))))) / real(size(x), RP)
+seedf = cos(f / TEN**(int(log10(abs(f) + EPS))))
+seed = max(-huge(seed), ceiling(real(10**range(0), RP) * seedx * seedf))
+seed = max(min(abs(seed), huge(seed) - size(x)), 1)
 
 ! Define NOISY_F.
 noisy_f = noisy(f, noise_level_loc, noise_type_loc, seed)

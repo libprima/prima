@@ -12,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 25, 2023 AM08:28:13
+! Last Modified: Thursday, September 07, 2023 PM12:01:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -39,16 +39,16 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 ! The solution is PSD, which is a projected steepest descent direction PSD for a linearly
 ! constrained trust-region subproblem (LCTRS)
 !
-! min Q(X_k + D)  subject to ||D|| <= Delta_k and AMAT^T*(X_k + D) <= B,
+! min Q(X_k + D)  subject to ||D|| <= Delta and AMAT^T*(X_k + D) <= B,
 !
 ! where X_k is in R^N, B is in R^M, and AMAT is in R^{NxM}.
 !
 ! In (LCPP), JJ is the index set defined in (3.3) of Powell (2015) as
 !
-! JJ = {j : B_j - A_j^T*Y <= 0.2*Delta_k*||A_j||, 1 <= j <= M} with A_j = AMAT(:, j),
+! JJ = {j : B_j - A_j^T*Y <= 0.2*Delta*||A_j||, 1 <= j <= M} with A_j = AMAT(:, j),
 !
 ! i.e., the index set of the nearly active constraints of (LCTRS) (Powell wrote that j is in JJ if
-! and only if the distance from Y to the boundary of the j-th constraint is at most 0.2*Delta_k).
+! and only if the distance from Y to the boundary of the j-th constraint is at most 0.2*Delta).
 ! Here, Y is the point where G is taken, namely G = nabla Q(Y). Y is not necessarily X_k, but an
 ! iterate of the algorithm (e.g., truncated conjugate gradient) that solves (LCTRS). In LINCOA,
 ! ||A_j|| is 1 as the gradients of the linear constraints are normalized before LINCOA starts.
@@ -248,7 +248,9 @@ do iter = 1, maxiter
 
     !---------------------------------------------------------------------------------------!
     ! Powell's code does not handle the following pathological cases.
+    write (*, *) 251, inprod(psd, g), sum(abs(psd)), psd, psdsav, is_finite(sum(abs(psd)))
     if (inprod(psd, g) > 0 .or. .not. is_finite(sum(abs(psd)))) then
+        write (*, *) 253
         psd = psdsav
         exit
     end if
@@ -390,6 +392,8 @@ if (DEBUGGING) then
     call assert(all(is_finite(psd)) .or. nact == 0, 'PSD is finite unless NACT == 0', srname)
     ! In theory, ||PSD||^2 <= GG and -GG <= PSD^T*G <= 0.
     ! N.B. 1. Do not use DD, which may not be up to date. 2. PSD^T*G can be NaN if G is huge.
+    write (*, *) 'GG = ', GG, 'PSD*PSD = ', inprod(psd, psd), 'PSD*G = ', inprod(psd, g)
+    write (*, *) 'PSD = ', psd
     call assert(inprod(psd, psd) <= TWO * gg, '||PSD||^2 <= 2*GG', srname)
     call assert(.not. (inprod(psd, g) > 1.0E2_RP * EPS * gg .or. inprod(psd, g) < -TWO * gg), '-2*GG <= PSD^T*G <= 0', srname)
 end if
