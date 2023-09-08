@@ -12,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 07, 2023 PM12:01:27
+! Last Modified: Friday, September 08, 2023 AM10:09:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -392,8 +392,6 @@ if (DEBUGGING) then
     call assert(all(is_finite(psd)) .or. nact == 0, 'PSD is finite unless NACT == 0', srname)
     ! In theory, ||PSD||^2 <= GG and -GG <= PSD^T*G <= 0.
     ! N.B. 1. Do not use DD, which may not be up to date. 2. PSD^T*G can be NaN if G is huge.
-    write (*, *) 'GG = ', GG, 'PSD*PSD = ', inprod(psd, psd), 'PSD*G = ', inprod(psd, g)
-    write (*, *) 'PSD = ', psd
     call assert(inprod(psd, psd) <= TWO * gg, '||PSD||^2 <= 2*GG', srname)
     call assert(.not. (inprod(psd, g) > 1.0E2_RP * EPS * gg .or. inprod(psd, g) < -TWO * gg), '-2*GG <= PSD^T*G <= 0', srname)
 end if

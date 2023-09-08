@@ -8,6 +8,8 @@ if nargin < 1 || isempty(files) || (ischarstr(files) && strcmpi(files, 'ALL'))
     files = {listing.name};
 elseif ischarstr(files)
     files = {files};
+else
+    error('Invalid input.')
 end
 
 for ifile = 1 : length(files)
