@@ -12,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 08, 2023 AM10:09:46
+! Last Modified: Friday, September 08, 2023 PM07:25:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -248,9 +248,7 @@ do iter = 1, maxiter
 
     !---------------------------------------------------------------------------------------!
     ! Powell's code does not handle the following pathological cases.
-    write (*, *) 251, inprod(psd, g), sum(abs(psd)), psd, psdsav, is_finite(sum(abs(psd)))
     if (inprod(psd, g) > 0 .or. .not. is_finite(sum(abs(psd)))) then
-        write (*, *) 253
         psd = psdsav
         exit
     end if
