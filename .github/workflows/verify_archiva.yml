@@ -45,6 +45,17 @@ jobs:
 
     steps:
 
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # all of these default to true, but feel free to set to "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Clone Repository (Latest)
         uses: actions/checkout@v4.0.0
         if: github.event.inputs.git-ref == ''
