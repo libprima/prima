@@ -101,7 +101,7 @@ jobs:
             movefile(fullfile(cd(), 'testdata', '*.txt'), '/tmp/${{ matrix.solver }}_profile_prima/');
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v3.1.3
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           path: |
