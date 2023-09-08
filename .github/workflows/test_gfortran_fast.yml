@@ -39,14 +39,14 @@ jobs:
     steps:
 
       - name: Clone Repository (Latest)
-        uses: actions/checkout@v4.0.0
+        uses: actions/checkout@v4
         if: github.event.inputs.git-ref == ''
         with:
           submodules: recursive
         #   ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
         # As of 230425, checkout with ssh fails frequently on Windows runners.
       - name: Clone Repository (Custom Ref)
-        uses: actions/checkout@v4.0.0
+        uses: actions/checkout@v4
         if: github.event.inputs.git-ref != ''
         with:
           ref: ${{ github.event.inputs.git-ref }}
