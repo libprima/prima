@@ -61,7 +61,7 @@ jobs:
           # to problems like un-found modules. Not yet observed for other tests.
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v3.1.3
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log

@@ -62,7 +62,7 @@ jobs:
           # cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make atest
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v3.1.3
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
