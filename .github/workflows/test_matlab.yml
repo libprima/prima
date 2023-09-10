@@ -91,7 +91,7 @@ jobs:
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          GFVER=12
+          GFVER=13
           if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
               GFVER=11
           fi
