@@ -6,7 +6,7 @@ on:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 1, * * *'
+    - cron: '0 1 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
     inputs:
@@ -16,6 +16,9 @@ on:
 
 # Show the git ref in the workflow name if it is invoked manually.
 run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+
+env:
+  GFORTRAN_VERSION: 13
 
 jobs:
   test:
@@ -91,7 +94,7 @@ jobs:
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          GFVER=13
+          GFVER=${{ env.GFORTRAN_VERSION }}
           if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
               GFVER=11
           fi
