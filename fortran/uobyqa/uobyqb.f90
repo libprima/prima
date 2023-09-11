@@ -46,11 +46,11 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
 ! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, EPS, REALMAX, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, errstop
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, MEMORY_ALLOCATION_FAILS
 use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec, norm
 use, non_intrinsic :: message_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
@@ -92,6 +92,7 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 ! Local variables
 character(len=*), parameter :: solver = 'UOBYQA'
 character(len=*), parameter :: srname = 'UOBYQB'
+integer(IK) :: alloc_status
 integer(IK) :: knew_geo
 integer(IK) :: knew_tr
 integer(IK) :: kopt
@@ -127,7 +128,7 @@ real(RP) :: gamma3
 real(RP) :: h(size(x), size(x))
 real(RP) :: moderr
 real(RP) :: moderr_rec(size(dnorm_rec))
-real(RP) :: pl(size(distsq) - 1, size(distsq))
+real(RP), allocatable :: pl(:, :)
 real(RP) :: pq(size(distsq) - 1)
 real(RP) :: qred
 real(RP) :: ratio
@@ -179,6 +180,11 @@ if (subinfo /= INFO_DFT) then
 end if
 
 ! Initialize the Lagrange polynomials represented by PL.
+allocate(pl(size(distsq) - 1, size(distsq)), stat=alloc_status)
+if (.not. (alloc_status == 0 .and. allocated(pl))) then
+    call errstop(srname, 'Memory allocation fails', MEMORY_ALLOCATION_FAILS)
+end if
+
 call initl(xpt, pl)
 
 ! Initialize the quadratic model represented by PQ.
@@ -478,6 +484,9 @@ call rangehist(nf, xhist, fhist)
 
 ! Print a return message according to IPRINT.
 call retmsg(solver, info, iprint, nf, f, x)
+
+! Deallocate memory
+deallocate(pl)
 
 !====================!
 !  Calculation ends  !
