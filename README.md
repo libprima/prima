@@ -211,11 +211,11 @@ cd prima
 cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=OFF
 cmake --build build --target install
 ```
-This should create the **`primaf`** library for Fortran usage, located in the `install/lib` directory
-to be used with the module files in `install/include/prima/mod`.
+This should create the `primaf library for Fortran usage, located in the `install/lib/` directory
+to be used with the module files in `install/include/prima/mod/`.
 
 
-Examples on how to use the library from an external code are available in [`fortran/examples`](https://github.com/libprima/prima/tree/main/fortran/examples).
+Examples on how to use the library from an external code are available in [`fortran/examples/`](https://github.com/libprima/prima/tree/main/fortran/examples).
 Below is an illustration with COBYLA.
 ```bash
 cd fortran/examples/cobyla
@@ -226,11 +226,11 @@ cmake --build build --target install
 
 #### C
 
-A C binding to the Fortran library is available in the [`c` folder](https://github.com/libprima/prima/tree/main/c).
+A C binding to the Fortran library is available in the [`c/` folder](https://github.com/libprima/prima/tree/main/c).
 In the same way as the Fortran library, it can be [compiled using CMake](#cmake),
-which should also create the **`primac`** library for C compilation, located in `install/lib` to be used with the **`prima.h`** header in `install/include/prima`.
+which should also create the `primac` library for C compilation, located in `install/lib/` to be used with the `prima.h` header in `install/include/prima/`.
 
-Examples on how to use the library from an external code are available in [`c/examples`](https://github.com/libprima/prima/tree/main/c/examples).
+Examples on how to use the library from an external code are available in [`c/examples/`](https://github.com/libprima/prima/tree/main/c/examples).
 Below is an illustration with COBYLA.
 ```bash
 cd c/examples/cobyla
