@@ -1,0 +1,157 @@
+name: Test MATLAB
+
+on:
+  # Trigger the workflow on push or pull request
+  push:
+  pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 1 * * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
+
+# Show the git ref in the workflow name if it is invoked manually.
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+
+env:
+  GFORTRAN_VERSION: 13
+
+jobs:
+  test:
+    name: Test MATLAB
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, ubuntu-latest, windows-2019, windows-latest, macos-11, macos-latest]
+        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, latest]
+
+        exclude:
+
+        # Below R2022a, MEX is extremely slow on macOS
+          - os: macos-11
+            matlab: R2020b
+          - os: macos-11
+            matlab: R2021a
+          - os: macos-11
+            matlab: R2021b
+
+          - os: macos-latest
+            matlab: R2020b
+          - os: macos-latest
+            matlab: R2021a
+          - os: macos-latest
+            matlab: R2021b
+
+        # Only R2021a/b and R2022a are available on Windows 2019.
+          - os: windows-2019
+            matlab: R2020b
+          - os: windows-2019
+            matlab: R2022b
+          - os: windows-2019
+            matlab: R2023a
+          - os: windows-2019
+            matlab: latest
+
+        # Below R2022a, MEX does not work on windows-latest due to the version of MS Visual Studio;
+        # R2022a/b should work according to the documentation of MathWorks and GitHub Actions, but
+        # they do not as of March 2022
+          - os: windows-latest
+            matlab: R2020a
+          - os: windows-latest
+            matlab: R2020b
+          - os: windows-latest
+            matlab: R2021a
+          - os: windows-latest
+            matlab: R2021b
+          - os: windows-latest
+            matlab: R2022a
+          - os: windows-latest
+            matlab: R2022b
+
+    steps:
+
+      - name: Clone Repository (Latest)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref == ''
+        with:
+          submodules: recursive
+        #   ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+        # As of 230425, checkout with ssh fails frequently on Windows runners.
+      - name: Clone Repository (Custom Ref)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref != ''
+        with:
+          ref: ${{ github.event.inputs.git-ref }}
+          submodules: recursive
+        #   ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+        # As of 230425, checkout with ssh fails frequently on Windows runners.
+
+      - name: Link gfortran for MATLAB on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          GFVER=${{ env.GFORTRAN_VERSION }}
+          if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
+              GFVER=11
+          fi
+          if [[ "${{ matrix.matlab }}" = "R2020b" || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" = "R2021b" ]] ; then
+              GFVER=9
+          fi
+          bash .github/scripts/link_gfortran "$GFVER"
+
+      - name: Install Intel oneAPI on macOS
+        if: startsWith(matrix.os, 'macos')
+        run: bash .github/scripts/install_oneapi_macos.sh
+
+      - name: Install Intel oneAPI on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'
+
+      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
+        uses: actions/cache@v3.3.2
+        with:
+          path: ${{ runner.tool_cache }}/MATLAB
+          key: ${{ matrix.os }}-${{ matrix.matlab }}
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2-beta
+        with:
+          release: ${{ matrix.matlab }}
+
+      - name: Conduct the test
+        uses: matlab-actions/run-command@v1.2.1
+        with:
+          command: |
+              ver;
+              root_dir = pwd();
+              cd(root_dir);
+              options = struct();
+              options.debug=true;
+              setup(options);
+              prima('info')
+              testprima(false, 1.0e-10, 100);
+              setup
+              setup path
+              prima('info')
+              testprima(false, 1.0e-10, 100);
+              setup cobyla
+              setup uobyqa
+              setup newuoa
+              setup bobyqa
+              setup lincoa
+              setup prima
+              setup path
+              setup clean
+              setup path
+              setup uninstall
+              setup path
+              setup uninstall
+              cd(fullfile(root_dir, 'matlab', 'tests')); pdv
+              cd(root_dir);
+              setup
+              prima('info')
+              cd(fullfile(root_dir, 'matlab', 'examples')); rosenbrock_example

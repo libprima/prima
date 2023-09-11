@@ -1,0 +1,170 @@
+name: Test RESCUE and IDZ, classical
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 20 * * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
+
+# Show the git ref in the workflow name if it is invoked manually.
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+
+env:
+  GFORTRAN_VERSION: 13
+  BENCHMARK: rescue_idz
+
+jobs:
+  test:
+    name: Profile PRIMA.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        matlab: [latest]
+        dim: [small, all]
+        solver: [newuoa, bobyqa, lincoa]
+
+    steps:
+      - name: Get the solver name
+        run:  echo "SOLNAME=$(echo ${{ matrix.solver }} | cut -c1-6)" >> $GITHUB_ENV
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # all of these default to true, but feel free to set to "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false  # Important, or the runner may be shut down due to memory starvation.
+
+      - name: Clone Repository (Latest)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref == ''
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+      - name: Clone Repository (Custom Ref)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref != ''
+        with:
+          ref: ${{ github.event.inputs.git-ref }}
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+
+      - name: Clone MatCUTEst
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          repository: matcutest/matcutest_compiled
+          path: matcutest
+
+      - name: Link gfortran for MATLAB on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
+
+      - name: Install epstopdf and ghostscript
+        if: startsWith(matrix.os, 'ubuntu')
+        run: bash .github/scripts/install_epstopdf && bash .github/scripts/install_ghostscript
+
+      - name: Check MATLAB
+        id: check_matlab
+        run: if type 'matlab' &> /dev/null ; then echo "::set-output name=has_matlab::true" ; fi
+
+      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
+        uses: actions/cache@v3.3.2
+        with:
+          path: ${{ runner.tool_cache }}/MATLAB
+          key: ${{ matrix.os }}-${{ matrix.matlab }}-yes  # "yes" means that the Optimization_Toolbox is included in the cache
+
+      - name: Set up MATLAB with optimization toolbox
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
+        uses: matlab-actions/setup-matlab@v2-beta
+        with:
+          release: ${{ matrix.matlab }}
+          products: Optimization_Toolbox
+
+      - name: Conduct the test
+        uses: matlab-actions/run-command@v1.2.1
+        with:
+          command: |
+            ver;
+            root_dir = pwd();
+
+            % Install MatCUTEst.
+            cd(fullfile(root_dir, 'matcutest')); install(); which macup
+
+            % Remove unnecessary files to make sure that we are testing the correct version.
+            files = {'.development/archiva', 'fortran', '.development/norma', 'matlab'};
+            for ifile = 1 : length(files)
+                rmdir(fullfile(root_dir, files{ifile}), 's');
+            end
+            delete(fullfile(root_dir, 'setup.m'));
+            movefile(fullfile(root_dir, 'benchmark/${{ env.BENCHMARK }}'), root_dir);
+            rmdir(fullfile(root_dir, 'benchmark'), 's');
+
+
+            % Conduct the test.
+
+            cd(fullfile(root_dir, '${{ env.BENCHMARK }}/matlab/tests'));
+            options = struct();
+            options.classical = true;
+            options.rhoend = 1.0e-8;
+            options.maxfun_dim = 500;
+            options.strict = 0;
+            options.nr = 3;  % 3 random runs for each problem
+
+            % N.B.: Parallel profiling does not work. The worker will be shut down due to the resource
+            % requested by some problem. Worse, we do not know which problem it is due to the parallelism.
+            if strcmp('${{ matrix.dim }}', 'small') || strcmp('${{ matrix.solver }}', 'newuoa')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'norma', options, 'seq');
+            elseif strcmp('${{ matrix.solver }}', 'lincoa')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', 'norma', options, 'seq');
+            elseif strcmp('${{ matrix.solver }}', 'bobyqa')
+                prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', 'norma', options, 'seq');
+            end
+
+
+            % Move the files to prepare for uploading artifacts
+
+            solver = '${{ env.SOLNAME }}';
+            cd(fullfile(cd(), 'testdata'));
+            files = dir([solver, '*.summary.*.pdf'])
+            for ifile = 1 : length(files)
+                file = fullfile(files(ifile).folder, files(ifile).name)
+                newfile = fullfile(files(ifile).folder, ['classical_', files(ifile).name])
+                movefile(file, newfile);
+            end
+            movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/']);
+            movefile(fullfile(cd(), '*.txt'), ['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/']);
+
+            files = [dir(['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/*start*']); dir(['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/*end*'])]
+            for ifile = 1 : length(files)
+                file = fullfile(files(ifile).folder, files(ifile).name)
+                newfile = fullfile(files(ifile).folder, ['classical_', files(ifile).name])
+                movefile(file, newfile);
+            end
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3.1.3
+        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
+        with:
+          path: |
+            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*summary*.pdf
+            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*.txt
+            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*start*
+            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*end*
+
+      - name: Remove the test data
+        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
+        run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}
