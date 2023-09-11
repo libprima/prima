@@ -104,7 +104,7 @@ However, such refactored code is far from what is desired, because it inherits c
 the structure and style of Powell's code except for the layout. Significant modifications are needed
 to reorganize (indeed, to **rewrite**) the code. To maintain the faithfulness and quality of the
 reference implementation, extensive tests are conducted after each and every tiny modification,
-using the [CUTEst](https://github.com/ralna/CUTEst) problems via [MatCUTEst](https://github.com/equipez/matcutest).
+using the [CUTEst](https://github.com/ralna/CUTEst) problems via [MatCUTEst](https://github.com/matcutest/matcutest).
 The tests do not only verify the faithfulness of the implementation but also check that **the solvers
 behave properly even if they are invoked with improper inputs or [encounter failures of function
 evaluations](https://github.com/libprima/prima/blob/main/matlab/tests/private/tough.m)**.
