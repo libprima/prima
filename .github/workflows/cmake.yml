@@ -61,10 +61,10 @@ jobs:
 
       - name: Install Ninja / Ubuntu
         if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: sudo apt update && sudo apt install ninja-build
+        run: sudo apt update && sudo apt install ninja-build python3-scipy
       - name: Install Ninja / MacOS
         if: ${{ matrix.os == 'macos-latest' }}
-        run: brew install ninja
+        run: brew install ninja scipy
       - uses: awvwgk/setup-fortran@main
         id: setup-fortran
         with:

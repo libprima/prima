@@ -40,7 +40,6 @@ add_dependencies(tests examples)
 add_subdirectory(fortran)
 
 option (PRIMA_ENABLE_C "C binding" ON)
-
 if (PRIMA_ENABLE_C)
   enable_language(C)
   add_subdirectory(c)
@@ -48,6 +47,11 @@ if (PRIMA_ENABLE_C)
 endif ()
 
 file (STRINGS VERSION.txt PRIMA_VERSION)
+
+option (PRIMA_ENABLE_PYTHON "Python binding" ON)
+if (PRIMA_ENABLE_PYTHON)
+  add_subdirectory(python)
+endif ()
 
 install(
     TARGETS primaf ${primac_target}
