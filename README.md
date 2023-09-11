@@ -211,7 +211,7 @@ cd prima
 cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=OFF
 cmake --build build --target install
 ```
-This should create the `primaf library for Fortran usage, located in the `install/lib/` directory
+This should create the `primaf` library for Fortran usage, located in the `install/lib/` directory
 to be used with the module files in `install/include/prima/mod/`.
 
 
