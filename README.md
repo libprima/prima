@@ -220,6 +220,7 @@ cd fortran/examples/cobyla
 cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DPRIMA_DIR=$PWD/../../../install/lib/cmake/prima/
 cmake --build build --target install
 ./install/bin/cobyla_example
+```
 
 #### C
 
