@@ -204,28 +204,36 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
 PRIMA has been finished by December 2022.**
+It can be compiled using CMake as follows.
+```bash <a name="cmake"></a>
+git clone --depth 1 https://github.com/libprima/prima.git
+cd prima
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=OFF
+cmake --build build --target install
+```
+This should create the **`primaf`** library for Fortran use, located in the `build/fortran` directory.
+
+Examples on how to use the library from an external code are available in [`fortran/examples`](https://github.com/libprima/prima/tree/main/fortran/examples).
+Below is an illustration with COBYLA.
+```bash
+cd fortran/examples/cobyla
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DPRIMA_DIR=$PWD/../../../install/lib/cmake/prima/
+cmake --build build --target install
+./install/bin/cobyla_example
 
 #### C
 
 A C binding to the Fortran library is available in the [`c` folder](https://github.com/libprima/prima/tree/main/c).
-It can be compiled using CMake as follows:
-```bash
-    git clone --depth 1 https://github.com/libprima/prima.git
-    cd prima
-    cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=OFF
-    cmake --build build --target install
-```
-
-It should create the **primaf** library for Fortran use, located in the build/fortran directory,
-and the **primac** library for C compilation, located in build/c to be used with the **prima.h** header in c/include/prima.
+In the same way as the Fortran library, it can be [compiled using CMake](#cmake),
+which should also create the **`primac`** library for C compilation, located in `build/c` to be used with the **`prima.h`** header in `c/include/prima`.
 
 Examples on how to use the library from an external code are available in [`c/examples`](https://github.com/libprima/prima/tree/main/c/examples).
-Below is an illustration with COBYLA. 
+Below is an illustration with COBYLA.
 ```bash
-    cd c/examples/cobyla
-    cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DPRIMA_DIR=$PWD/../../../install/lib/cmake/prima/
-    cmake --build build --target install
-    ./install/bin/cobyla_example
+cd c/examples/cobyla
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DPRIMA_DIR=$PWD/../../../install/lib/cmake/prima/
+cmake --build build --target install
+./install/bin/cobyla_example
 ```
 
 #### MATLAB
