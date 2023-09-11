@@ -204,8 +204,8 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
 PRIMA has been finished by December 2022.**
-It can be compiled using CMake as follows.
-```bash <a name="cmake"></a>
+It can be compiled using CMake as follows.<a name="cmake"></a>
+```bash
 git clone --depth 1 https://github.com/libprima/prima.git
 cd prima
 cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=OFF
