@@ -6,6 +6,7 @@
 - [How](#how)
 - [Current status](#current-status)
     - [Modern Fortran](#modern-fortran)
+    - [C](#c)
     - [MATLAB](#matlab)
     - [Python](#python)
     - [Other languages](#other-languages)
@@ -204,6 +205,29 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
 PRIMA has been finished by December 2022.**
 
+#### C
+
+A C binding to the Fortran library is available in the [`c` folder](https://github.com/libprima/prima/tree/main/c).
+It can be compiled using CMake as follows:
+```bash
+    git clone --depth 1 https://github.com/libprima/prima.git
+    cd prima
+    cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=OFF
+    cmake --build build --target install
+```
+
+It should create the **primaf** library for Fortran use, located in the build/fortran directory,
+and the **primac** library for C compilation, located in build/c to be used with the **prima.h** header in c/include/prima.
+
+Examples on how to use the library from an external code are available in [`c/examples`](https://github.com/libprima/prima/tree/main/c/examples).
+Below is an illustration with COBYLA. 
+```bash
+    cd c/examples/cobyla
+    cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DPRIMA_DIR=$PWD/../../../install/lib/cmake/prima/
+    cmake --build build --target install
+    ./install/bin/cobyla_example
+```
+
 #### MATLAB
 
 - An [interface](./matlab/interfaces/prima.m) is provided for [using the **modern** Fortran implementation in MATLAB](./README_mat.md).
@@ -216,25 +240,6 @@ PRIMA has been finished by December 2022.**
 
 - The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
 - My ultimate objective is to have a native Python implementation of PRIMA **independent of Fortran**, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
-
-#### C
-
-A C binding to the Fortran library is written in the c folder. It can be compiled using CMake:
-
-    git clone --depth 1 https://github.com/libprima/prima.git
-    cd prima
-    cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=OFF
-    cmake --build build --target install
-
-It should create the **primaf** library for Fortran use, located in the build/fortran directory,
-and the **primac** library for C compilation, located in build/c to be used with the **prima.h** header in c/include/prima.
-
-Examples on how to use the library from an external code are available in c/examples and fortran/examples:
-
-    cd c/examples/cobyla
-    cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DPRIMA_DIR=$PWD/../../../install/lib/cmake/prima/
-    cmake --build build --target install
-    ./install/bin/cobyla_example
 
 #### Other languages
 
