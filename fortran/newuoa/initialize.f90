@@ -1,4 +1,4 @@
-module initialize_mod
+module initialize_newuoa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the initialization of NEWUOA, described in Section 3 of the NEWUOA paper.
 !
@@ -514,4 +514,4 @@ end if
 end subroutine inith
 
 
-end module initialize_mod
+end module initialize_newuoa_mod

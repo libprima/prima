@@ -1,4 +1,4 @@
-module trustregion_mod
+module trustregion_bobyqa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the trust-region calculations of BOBYQA.
 !
@@ -696,4 +696,4 @@ end if
 end function trrad
 
 
-end module trustregion_mod
+end module trustregion_bobyqa_mod

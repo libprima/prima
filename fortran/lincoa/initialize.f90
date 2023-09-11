@@ -1,4 +1,4 @@
-module initialize_mod
+module initialize_lincoa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the initialization of LINCOA.
 !
@@ -414,4 +414,4 @@ end if
 end subroutine inith
 
 
-end module initialize_mod
+end module initialize_lincoa_mod

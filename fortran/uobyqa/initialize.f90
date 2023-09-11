@@ -1,4 +1,4 @@
-module initialize_mod
+module initialize_uobyqa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module performs the initialization of UOBYQA, described in Section 4 of the UOBYQA paper.
 !
@@ -456,4 +456,4 @@ end if
 end subroutine initl
 
 
-end module initialize_mod
+end module initialize_uobyqa_mod

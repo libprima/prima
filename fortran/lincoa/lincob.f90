@@ -90,10 +90,10 @@ use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
-use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
-use, non_intrinsic :: initialize_mod, only : initxf, inith
-use, non_intrinsic :: trustregion_mod, only : trstep, trrad
-use, non_intrinsic :: update_mod, only : updatexf, updateq, tryqalt, updateres
+use, non_intrinsic :: geometry_lincoa_mod, only : geostep, setdrop_tr
+use, non_intrinsic :: initialize_lincoa_mod, only : initxf, inith
+use, non_intrinsic :: trustregion_lincoa_mod, only : trstep, trrad
+use, non_intrinsic :: update_lincoa_mod, only : updatexf, updateq, tryqalt, updateres
 
 implicit none
 

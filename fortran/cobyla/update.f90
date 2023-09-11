@@ -1,4 +1,4 @@
-module update_mod
+module update_cobyla_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines concerning the update of the interpolation set.
 !
@@ -403,4 +403,4 @@ end if
 end function findpole
 
 
-end module update_mod
+end module update_cobyla_mod

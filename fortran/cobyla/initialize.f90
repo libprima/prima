@@ -1,4 +1,4 @@
-module initialize_mod
+module initialize_cobyla_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines for initialization.
 !
@@ -339,4 +339,4 @@ end if
 end subroutine initfilt
 
 
-end module initialize_mod
+end module initialize_cobyla_mod

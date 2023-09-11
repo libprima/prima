@@ -1,4 +1,4 @@
-module geometry_mod
+module geometry_cobyla_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module contains subroutines concerning the geometry-improving of the interpolation set.
 !
@@ -461,4 +461,4 @@ end if
 end function geostep
 
 
-end module geometry_mod
+end module geometry_cobyla_mod

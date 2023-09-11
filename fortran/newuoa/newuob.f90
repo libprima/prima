@@ -67,10 +67,10 @@ use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
-use, non_intrinsic :: geometry_mod, only : setdrop_tr, geostep
-use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
-use, non_intrinsic :: trustregion_mod, only : trsapp, trrad
-use, non_intrinsic :: update_mod, only : updatexf, updateq, tryqalt
+use, non_intrinsic :: geometry_newuoa_mod, only : setdrop_tr, geostep
+use, non_intrinsic :: initialize_newuoa_mod, only : initxf, initq, inith
+use, non_intrinsic :: trustregion_newuoa_mod, only : trsapp, trrad
+use, non_intrinsic :: update_newuoa_mod, only : updatexf, updateq, tryqalt
 
 implicit none
 

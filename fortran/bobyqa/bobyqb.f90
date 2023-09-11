@@ -93,11 +93,11 @@ use, non_intrinsic :: shiftbase_mod, only : shiftbase
 use, non_intrinsic :: xinbd_mod, only : xinbd
 
 ! Solver-specific modules
-use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
-use, non_intrinsic :: initialize_mod, only : initxf, initq, inith
+use, non_intrinsic :: geometry_bobyqa_mod, only : geostep, setdrop_tr
+use, non_intrinsic :: initialize_bobyqa_mod, only : initxf, initq, inith
 use, non_intrinsic :: rescue_mod, only : rescue
-use, non_intrinsic :: trustregion_mod, only : trsbox, trrad
-use, non_intrinsic :: update_mod, only : updatexf, updateq, tryqalt, updateh
+use, non_intrinsic :: trustregion_bobyqa_mod, only : trsbox, trrad
+use, non_intrinsic :: update_bobyqa_mod, only : updatexf, updateq, tryqalt, updateh
 
 implicit none
 

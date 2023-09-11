@@ -1,0 +1,12 @@
+add_executable(t_large EXCLUDE_FROM_ALL t_large.c)
+if (PRIMA_ENABLE_TESTING)
+    set_target_properties (t_large PROPERTIES EXCLUDE_FROM_ALL FALSE)
+  endif ()
+add_dependencies(tests t_large)
+
+add_test(NAME bobyqa_large_c COMMAND t_large bobyqa)
+add_test(NAME cobyla_large_c COMMAND t_large cobyla)
+add_test(NAME lincoa_large_c COMMAND t_large lincoa)
+add_test(NAME newuoa_large_c COMMAND t_large newuoa)
+add_test(NAME uobyqa_large_c COMMAND t_large uobyqa)
+target_link_libraries(t_large PRIVATE primac)

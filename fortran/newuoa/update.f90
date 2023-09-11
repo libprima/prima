@@ -1,4 +1,4 @@
-module update_mod
+module update_newuoa_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides subroutines concerning the updates when XPT(:, KNEW) becomes XNEW = XOPT + D.
 !
@@ -313,4 +313,4 @@ end if
 end subroutine tryqalt
 
 
-end module update_mod
+end module update_newuoa_mod

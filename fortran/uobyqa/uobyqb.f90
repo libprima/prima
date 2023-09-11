@@ -60,10 +60,10 @@ use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: shiftbase_mod, only : shiftbase
 
 ! Solver-specific modules
-use, non_intrinsic :: geometry_mod, only : geostep, setdrop_tr
-use, non_intrinsic :: initialize_mod, only : initxf, initq, initl
-use, non_intrinsic :: trustregion_mod, only : trstep, trrad
-use, non_intrinsic :: update_mod, only : update
+use, non_intrinsic :: geometry_uobyqa_mod, only : geostep, setdrop_tr
+use, non_intrinsic :: initialize_uobyqa_mod, only : initxf, initq, initl
+use, non_intrinsic :: trustregion_uobyqa_mod, only : trstep, trrad
+use, non_intrinsic :: update_uobyqa_mod, only : update
 
 implicit none
 
