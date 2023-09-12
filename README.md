@@ -216,7 +216,7 @@ This should create the `primaf` library for Fortran usage, located in the `insta
 to be used with the module files in `install/include/prima/mod/`.
 In case CMake fails to find your Fortran compiler,
 you can indicate it by specifying `-DCMAKE_Fortran_COMPILER=/path/to/your/Fortran/compiler`.
-Similarly, set `-DCMAKE_C_COMPILER=/path/to/your/Fortran/compiler` for your C compiler if needed.
+Similarly, set `-DCMAKE_C_COMPILER=/path/to/your/C/compiler` for your C compiler if needed.
 
 Examples on how to use the library from an external code are available in [`fortran/examples/`](https://github.com/libprima/prima/tree/main/fortran/examples).
 Below is an illustration with COBYLA.
