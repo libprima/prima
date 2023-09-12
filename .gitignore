@@ -1,5 +1,13 @@
 README*.pdf
 
+# Directories created by the CMake building process
+install/
+build/
+include/
+!c/include/
+lib/
+mod/
+
 # Byte-compiled / optimized / DLL files
 trash/
 __pycache__/
