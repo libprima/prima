@@ -19,6 +19,7 @@ permissions:
   contents: read
 
 jobs:
+
   cmake-main:
     runs-on: ${{ matrix.os }}
     continue-on-error: true
@@ -143,7 +144,7 @@ jobs:
   check_success_timeout:
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
-    needs: test
+    needs: [cmake-main, cmake-other]
     steps:
       - name: Clone the GitHub actions scripts
         uses: actions/checkout@v4
