@@ -2053,6 +2053,8 @@ evalcobjcon
 execstack
 FUNPTR
 PROCPOINTER
+PYTHONPATH
+ctypeslib
 cfun
 cobj
 NVHPC
