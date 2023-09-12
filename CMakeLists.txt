@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.13)
 
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type")
 
-project (prima C Fortran)
+project (prima Fortran)
 
 option (BUILD_SHARED_LIBS "shared/static" ON)
 if (WIN32)
@@ -46,6 +46,7 @@ add_subdirectory(fortran)
 option (PRIMA_ENABLE_C "C binding" ON)
 
 if (PRIMA_ENABLE_C)
+  enable_language(C)
   add_subdirectory(c)
   set(primac_target "primac")
 endif ()
