@@ -46,7 +46,7 @@ jobs:
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
           cmake --build . --target install --parallel 4
           cmake --build . --target examples --parallel 4
-          ctest --output-on-failure -V -j4 -R examples
+          ctest --output-on-failure -V -j4 -R example
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
       - name: Test
@@ -83,7 +83,7 @@ jobs:
           cmake --build . --target install --parallel 4
           cmake --build . --target examples --parallel 4
           # cobyla test does not pass on AOCC: https://github.com/libprima/prima/issues/41
-          ctest --output-on-failure -V -j4 -R examples -E cobyla
+          ctest --output-on-failure -V -j4 -R example -E cobyla
         env:
           FC: ${{ matrix.toolchain.compiler }}
       - name: Stress test
