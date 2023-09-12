@@ -50,7 +50,7 @@ if (PRIMA_ENABLE_C)
   set(primac_target "primac")
 endif ()
 
-file (READ VERSION.txt Prima_VERSION)
+file (READ VERSION.txt PRIMA_VERSION)
 
 
 install(
@@ -76,7 +76,7 @@ configure_package_config_file(
 
 write_basic_package_version_file(
     ${CMAKE_BINARY_DIR}/prima-config-version.cmake
-    VERSION ${Prima_VERSION}
+    VERSION ${PRIMA_VERSION}
     COMPATIBILITY AnyNewerVersion
 )
 
