@@ -128,7 +128,8 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 - [Tests](https://github.com/libprima/prima/actions) at [libprima/prima](https://github.com/libprima/prima)
 
-    - [![Check Spelling](https://github.com/libprima/prima/actions/workflows/spelling.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/spelling.yml)
+    - [![CMake build](https://github.com/libprima/prima/actions/workflows/cmake.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake.yml)
+    - [![CMake build / nagfor](https://github.com/libprima/prima/actions/workflows/cmake_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake_nagfor.yml)
     - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.yml)
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
     - [![Plot performance profiles for PRIMA, small](https://github.com/libprima/prima/actions/workflows/profile_prima_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_prima_small.yml)
