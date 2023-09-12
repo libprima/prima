@@ -61,8 +61,8 @@ if [[ -f "$MEMORY" ]] ; then
 fi
 
 # message.f90 does not work due to the changes to string.f90, especially to real2str_vector.
-cd "$DIR" && grep -R 'call .*msg' | sed 's|:.*$||' | grep -v 'debug.F90\|fmxapi.F90' | xargs sed -i "s|call .*msg.*$|write(*,*) solver|" && cd - || exit 1
-cd "$DIR" && grep -R 'use.*message_mod' | sed 's|:.*$||' | xargs sed -i "/use.*message_mod/d" && cd - || exit 1
+(cd "$DIR" && grep -R 'call .*msg' | sed 's|:.*$||' | grep -v 'debug.F90\|fmxapi.F90' | xargs sed -i "s|call .*msg.*$|write(*,*) solver|" && cd - || exit 1) > /dev/null
+(cd "$DIR" && grep -R 'use.*message_mod' | sed 's|:.*$||' | xargs sed -i "/use.*message_mod/d" && cd - || exit 1) > /dev/null
 printf "module message_mod \n end module message_mod" > "$MESSAGE"
 
 if [[ -f "$DEBUG" ]] ; then
@@ -70,8 +70,21 @@ if [[ -f "$DEBUG" ]] ; then
 fi
 
 for SOL in cobyla uobyqa newuoa bobyqa lincoa ; do
-    sed -i "s|character(len=:), allocatable|character(len=1024)|g" "$DIR/test_$SOL.f90"
-    sed -i "/safealloc(testdim.*$/d" "$DIR/test_$SOL.f90"
+    FILE="$DIR/test_$SOL.f90"
+    if [[ -f $FILE ]] ; then
+        sed -i "s|character(len=:), allocatable|character(len=1024)|g" "$FILE"
+        sed -i "/safealloc(testdim.*$/d" "$FILE"
+    fi
 done
+
+if [[ -d "$DIR"/lincoa ]] ; then
+    for FILE in "$DIR"/lincoa/* ; do
+        if [[ -f "$FILE" ]] ; then
+            sed -i "s|count(xl > -REALMAX)|size(xl)|" "$FILE"
+            sed -i "s|count(xu < REALMAX)|size(xu)|" "$FILE"
+        fi
+    done
+fi
+
 
 exit 0

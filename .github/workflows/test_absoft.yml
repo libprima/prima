@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         ikind: [i2]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        solver: [newuoa, lincoa, bobyqa, uobyqa]  # COBYLA cannot pass the test due to internal subroutines used as arguments
 
     steps:
 
