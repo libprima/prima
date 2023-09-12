@@ -20,7 +20,7 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}
 
 jobs:
 
-  cmake-nagfor
+  cmake-nagfor:
     name: CMake build with nagfor
     runs-on: [self-hosted, nagfor]
     continue-on-error: true
