@@ -20,7 +20,7 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}
 
 jobs:
 
-  test:
+  cmake-nagfor
     name: CMake build with nagfor
     runs-on: [self-hosted, nagfor]
     continue-on-error: true
@@ -65,7 +65,7 @@ jobs:
   check_success_timeout:
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
-    needs: test
+    needs: cmake-nagfor
     steps:
       - name: Clone the GitHub actions scripts
         uses: actions/checkout@v4
