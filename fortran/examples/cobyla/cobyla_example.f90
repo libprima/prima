@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, August 14, 2023 PM10:47:46
+! Last Modified: Tuesday, September 12, 2023 AM10:52:56
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -122,7 +122,7 @@ call cobyla(calcfc_hexagon, m, x_hexagon, f, cstrv)  ! This call will not print 
 ! the value of CONSTR(X_HEXAGON) when the solver returns.
 x_hexagon = 2.0_RP  ! Starting point.
 allocate (constr(m))
-call cobyla(calcfc_hexagon, m, x_hexagon, f, cstrv, nlconstr=constr, rhobeg=1.0_RP, rhoend=1.0D-3, iprint=1, nf=nf, info=info)
+call cobyla(calcfc_hexagon, m, x_hexagon, f, cstrv, nlconstr=constr, rhobeg=1.0_RP, rhoend=1.0E-3_RP, iprint=1, nf=nf, info=info)
 deallocate (constr) ! Deallocate the array CONSTR, which is allocated by the solver. Otherwise, memory leaks.
 
 end program cobyla_exmp

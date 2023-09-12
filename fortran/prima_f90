@@ -1,8 +1,9 @@
+N.B.:
+1. This file is not ready for any use before it is re-named to "prima.f90".
+2. The current version of the package does not need this file.
+
 !--------------------------------------------------------------------------------------------------!
 ! PRIMA: Reference Implementation for Powell's methods with Modernization and Amelioration
-! N.B.:
-! 1. This file is not ready for any use before it is re-named to "prima.f90".
-  2. The current version of the package does not need this file.
 !--------------------------------------------------------------------------------------------------!
 
 module prima

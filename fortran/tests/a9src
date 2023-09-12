@@ -84,6 +84,7 @@ if [[ -d "$DIR"/lincoa ]] ; then
             sed -i "s|count(xu < REALMAX)|size(xu)|" "$FILE"
         fi
     done
+    sed -i -e '/amat = reshape(shape=shape(amat)/,+3d' "$DIR"/lincoa/lincoa.f90
 fi
 
 
