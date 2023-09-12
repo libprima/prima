@@ -4,8 +4,16 @@ on:
   push:
   pull_request:
   schedule:
-    # 0h mondays
-    - cron: '0 0 * * 1'
+    - cron: '0 0 * * 1'  # 0h mondays
+  workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
+
+# Show the git ref in the workflow name if it is invoked manually.
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+
 
 permissions:
   contents: read
@@ -13,6 +21,7 @@ permissions:
 jobs:
   cmake-main:
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -27,8 +36,23 @@ jobs:
             toolchain: {compiler: intel, version: '2023.1', cflags: '', fflags: '/warn:all /debug:extended /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /fimplicit-none /standard-semantics /assume:recursion'}
+
     steps:
-      - uses: actions/checkout@v3
+
+      - name: Clone Repository (Latest)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref == ''
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+      - name: Clone Repository (Custom Ref)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref != ''
+        with:
+          ref: ${{ github.event.inputs.git-ref }}
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+
       - name: Install Ninja / Ubuntu
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: sudo apt-get update && sudo apt-get install ninja-build
@@ -40,6 +64,7 @@ jobs:
         with:
           compiler: ${{ matrix.toolchain.compiler }}
           version: ${{ matrix.toolchain.version }}
+
       - name: Build
         run: |
           cmake --version
@@ -49,14 +74,17 @@ jobs:
           ctest --output-on-failure -V -j4 -R example
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
-      - name: Test
+
+      - name: Stress test
         if: ${{ github.event_name == 'schedule' }}
         run: |
           cmake --build . --target tests --parallel 4
           ctest --output-on-failure -V -j4 -R large
 
+
   cmake-other:
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -64,19 +92,35 @@ jobs:
           - {compiler: aflang, cflags: '-Wall', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
           - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk -Mchkptr'}
           - {compiler: flang, cflags: '-Wall', fflags: '-pedantic -Weverything -Wall -Wextra'}
+
     steps:
-      - uses: actions/checkout@v3
+
+      - name: Clone Repository (Latest)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref == ''
         with:
-          submodules: true
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+      - name: Clone Repository (Custom Ref)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref != ''
+        with:
+          ref: ${{ github.event.inputs.git-ref }}
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+
       - name: Install AOCC
         if: ${{ matrix.toolchain.compiler == 'aflang' }}
         run: bash .github/scripts/install_aocc
+
       - name: Install nvfortran
         if: ${{ matrix.toolchain.compiler == 'nvfortran' }}
         run: bash .github/scripts/install_nvfortran
+
       - name: Install Flang
         if: ${{ matrix.toolchain.compiler == 'flang' }}
         run: bash .github/scripts/install_flang
+
       - name: Build
         run: |
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" -DBUILD_SHARED_LIBS=ON .
@@ -86,8 +130,27 @@ jobs:
           ctest --output-on-failure -V -j4 -R example -E cobyla
         env:
           FC: ${{ matrix.toolchain.compiler }}
+
       - name: Stress test
         if: ${{ github.event_name == 'schedule' }}
         run: |
           cmake --build . --target tests --parallel 4
           ctest --output-on-failure -V -j4 -R large -E cobyla
+
+
+  # The following job check whether the tests were successful or cancelled due to timeout.
+  # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.
+  check_success_timeout:
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() }}
+    needs: test
+    steps:
+      - name: Clone the GitHub actions scripts
+        uses: actions/checkout@v4
+        with:
+          repository: equipez/github_actions_scripts
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          path: scripts
+
+      - name: Check whether the tests were successful or cancelled due to timeout
+        run: bash scripts/check_success_timeout_big_test ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
