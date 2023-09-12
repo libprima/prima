@@ -85,6 +85,7 @@ if [[ -d "$DIR"/lincoa ]] ; then
         fi
     done
     sed -i -e '/amat = reshape(shape=shape(amat)/,+3d' "$DIR"/lincoa/lincoa.f90
+    sed -i '/idmat/d' "$DIR"/lincoa/lincoa.f90
 fi
 
 
