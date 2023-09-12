@@ -86,7 +86,7 @@ jobs:
           ctest --output-on-failure -V -j4 -R examples -E cobyla
         env:
           FC: ${{ matrix.toolchain.compiler }}
-      - name: Test
+      - name: Stress test
         if: ${{ github.event_name == 'schedule' }}
         run: |
           cmake --build . --target tests --parallel 4
