@@ -36,7 +36,7 @@ PRIMA is part of a research project funded by the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
 the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at the
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
-The current version is ready to be [used in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md).
+The current version is ready to be used [in Fortran](#modern-fortran), [in C](#c), and [in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md).
 If you want to use the above-mentioned methods in Python, see the [website](https://www.pdfo.net)
 and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead.
 
