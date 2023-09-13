@@ -474,10 +474,10 @@ if (DEBUGGING) then
 
     if (present(xl)) then
         if (size(xl) == size(x)) then
-            call assert(.not. any(x < xl), 'X >= XL', srname)
+            call assert(all(x >= xl), 'X >= XL', srname)
             if (present(xhist)) then
                 do k = 1, nhist
-                    call assert(.not. any(xhist(:, k) < xl), 'XHIST >= XL', srname)
+                    call assert(all(xhist(:, k) >= xl), 'XHIST >= XL', srname)
                 end do
             end if
         end if
@@ -485,10 +485,10 @@ if (DEBUGGING) then
 
     if (present(xu)) then
         if (size(xu) == size(x)) then
-            call assert(.not. any(x > xu), 'X <= XU', srname)
+            call assert(all(x <= xu), 'X <= XU', srname)
             if (present(xhist)) then
                 do k = 1, nhist
-                    call assert(.not. any(xhist(:, k) > xu), 'XHIST <= XU', srname)
+                    call assert(all(xhist(:, k) <= xu), 'XHIST <= XU', srname)
                 end do
             end if
         end if
