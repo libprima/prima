@@ -48,6 +48,9 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
+
       - name: Clone MatCUTEst
         uses: actions/checkout@v4
         with:
