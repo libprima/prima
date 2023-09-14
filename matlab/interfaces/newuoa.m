@@ -234,7 +234,7 @@ end
 
 % Extract the options
 npt = options.npt;
-maxfun = options.maxfun
+maxfun = options.maxfun;
 rhobeg = options.rhobeg;
 rhoend = options.rhoend;
 eta1 = options.eta1;
