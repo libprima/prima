@@ -7,6 +7,22 @@
 extern "C" {
 #endif
 
+#ifdef _WIN32
+# define PRIMAC_HELPER_DLL_IMPORT __declspec(dllimport)
+# define PRIMAC_HELPER_DLL_EXPORT __declspec(dllexport)
+#else
+# define PRIMAC_HELPER_DLL_IMPORT
+# define PRIMAC_HELPER_DLL_EXPORT
+#endif
+
+#ifdef PRIMAC_STATIC
+# define PRIMAC_API
+#elif defined primac_EXPORTS
+# define PRIMAC_API PRIMAC_HELPER_DLL_EXPORT
+#else
+# define PRIMAC_API PRIMAC_HELPER_DLL_IMPORT
+#endif
+
 /*
  * Verbosity level
  */
@@ -42,6 +58,7 @@ typedef enum
 /*
  * Return code string
  */
+PRIMAC_API
 const char *prima_get_rc_string(int rc);
 
 /*
@@ -81,19 +98,28 @@ typedef void (*prima_objcon)(const double x[], double *f, double constr[]);
  * return    : see prima_rc enum for return codes
  */
 
+PRIMAC_API
 int prima_bobyqa(const prima_obj calfun, const int n, double x[n], double *f,
                  const double xl[n], const double xu[n],
                  int *nf, const double rhobeg, const double rhoend, const int maxfun, const int iprint);
+
+PRIMAC_API
 int prima_newuoa(const prima_obj calfun, const int n, double x[n], double *f,
                  int *nf, const double rhobeg, const double rhoend, const int maxfun, const int iprint);
+
+PRIMAC_API
 int prima_uobyqa(const prima_obj calfun, const int n, double x[n], double *f,
                  int *nf, const double rhobeg, const double rhoend, const int maxfun, const int iprint);
+
+PRIMAC_API
 int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, double x[n], double *f,
                  double *cstrv, double nlconstr[m_nlcon],
                  const int m_ineq, const double Aineq[m_ineq*n], const double bineq[m_ineq],
                  const int m_eq, const double Aeq[m_eq*n], const double beq[m_eq],
                  const double xl[n], const double xu[n],
                  int *nf, const double rhobeg, const double rhoend, const int maxfun, const int iprint);
+
+PRIMAC_API
 int prima_lincoa(const prima_obj calfun, const int n, double x[n], double *f,
                  double *cstrv,
                  const int m_ineq, const double Aineq[m_ineq*n], const double bineq[m_ineq],

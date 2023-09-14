@@ -36,7 +36,7 @@ jobs:
           - os: windows-latest
             toolchain: {compiler: intel, version: '2023.1', cflags: '', fflags: '/warn:all /debug:extended /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /fimplicit-none /standard-semantics /assume:recursion'}
 
     steps:
 
@@ -124,7 +124,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" -DBUILD_SHARED_LIBS=ON .
+          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
           cmake --build . --target install --parallel 4
           cmake --build . --target examples --parallel 4
           # cobyla test does not pass on AOCC: https://github.com/libprima/prima/issues/41
