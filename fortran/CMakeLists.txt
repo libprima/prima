@@ -1,6 +1,5 @@
 
-add_library (primaf 
-  common/old/ieee_4dev.f90
+add_library (primaf
   common/linalg.f90
   common/pintrf.f90
   common/string.f90
