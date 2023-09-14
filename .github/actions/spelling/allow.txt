@@ -2060,3 +2060,5 @@ objcon
 cobjcon
 FEVL
 Qdiag
+phimeca
+schueller
