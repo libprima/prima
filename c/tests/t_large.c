@@ -106,7 +106,7 @@ int main(int argc, char * argv[])
   if(strcmp(algo, "bobyqa") == 0)
   {
     n = 1600;
-    rc = prima_bobyqa(&fun, n, x, &f, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    rc = prima_bobyqa(&fun, n, x, &f, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
@@ -118,12 +118,12 @@ int main(int argc, char * argv[])
   {
     n = 1000;
     m_ineq = 1000;
-    rc = prima_lincoa(&fun, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    rc = prima_lincoa(&fun, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
   }
   else if(strcmp(algo, "newuoa") == 0)
   {
     n = 1600;
-    rc = prima_newuoa(&fun, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    rc = prima_newuoa(&fun, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
   }
   else if(strcmp(algo, "uobyqa") == 0)
   {

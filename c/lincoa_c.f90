@@ -14,7 +14,7 @@ contains
 
 
 subroutine lincoa_c(cobj_ptr, n, x, f, cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &
-    & nf, rhobeg, rhoend, ftarget, maxfun, iprint, info) bind(C)
+    & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, info) bind(C)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR
 use, non_intrinsic :: cintrf_mod, only : COBJ
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -44,6 +44,7 @@ real(C_DOUBLE), intent(in), value :: rhobeg
 real(C_DOUBLE), intent(in), value :: rhoend
 real(C_DOUBLE), intent(in), value :: ftarget
 integer(C_INT), intent(in), value :: maxfun
+integer(C_INT), intent(in), value :: npt
 integer(C_INT), intent(in), value :: iprint
 integer(C_INT), intent(out) :: info
 
@@ -51,6 +52,7 @@ integer(C_INT), intent(out) :: info
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: maxfun_loc
+integer(IK) :: npt_loc
 integer(IK) :: nf_loc
 real(RP) :: Aineq_loc(m_ineq, n)
 real(RP) :: bineq_loc(m_ineq)
@@ -79,6 +81,7 @@ rhobeg_loc = real(rhobeg, kind(rhobeg))
 rhoend_loc = real(rhoend, kind(rhoend))
 ftarget_loc = real(ftarget, kind(ftarget))
 maxfun_loc = int(maxfun, kind(maxfun_loc))
+npt_loc = int(npt, kind(npt_loc))
 iprint_loc = int(iprint, kind(iprint_loc))
 
 ! Call the Fortran code
@@ -86,7 +89,7 @@ call lincoa(calfun, x_loc, f_loc, cstrv=cstrv_loc, &
     & Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, &
     & xl=xl_loc, xu=xu_loc, nf=nf_loc, &
     & rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
-    & ftarget=ftarget_loc, maxfun=maxfun_loc, iprint=iprint_loc, info=info_loc)
+    & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, info=info_loc)
 
 ! Write the outputs
 x = real(x_loc, kind(x))

@@ -84,6 +84,7 @@ typedef void (*prima_objcon)(const double x[], double *f, double constr[]);
  * ftarget   : target function value; optimization stops when the value <= ftarget
  *             can be set to -INFINITY to disable
  * maxfun    : maximum number of function evaluations
+ * npt       : number of interpolation conditions, recommended: 2*n+1
  * iprint    : verbosity level, see the prima_message enum
  * m_nlcon   : number of non-linear constraints (>=0)
  * calcfc    : function to minimize and constraints (see prima_objcon)
@@ -103,11 +104,11 @@ typedef void (*prima_objcon)(const double x[], double *f, double constr[]);
 PRIMAC_API
 int prima_bobyqa(const prima_obj calfun, const int n, double x[n], double *f,
                  const double xl[n], const double xu[n],
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, int npt, const int iprint);
 
 PRIMAC_API
 int prima_newuoa(const prima_obj calfun, const int n, double x[n], double *f,
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, int npt, const int iprint);
 
 PRIMAC_API
 int prima_uobyqa(const prima_obj calfun, const int n, double x[n], double *f,
@@ -127,7 +128,7 @@ int prima_lincoa(const prima_obj calfun, const int n, double x[n], double *f,
                  const int m_ineq, const double Aineq[m_ineq*n], const double bineq[m_ineq],
                  const int m_eq, const double Aeq[m_eq*n], const double beq[m_eq],
                  const double xl[n], const double xu[n],
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, int npt, const int iprint);
 
 #ifdef __cplusplus
 }
