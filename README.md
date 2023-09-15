@@ -9,6 +9,7 @@
     - [C](#c)
     - [MATLAB](#matlab)
     - [Python](#python)
+    - [Julia](#julia)
     - [Other languages](#other-languages)
 - [Bug fixes](#bug-fixes)
 - [Improvements](#improvements)
@@ -73,7 +74,7 @@ Few people remember [who translated *Elements*](https://en.wikipedia.org/wiki/Eu
 but it is a job that must be done.
 
 PRIMA aims to provide the reference implementation of Powell's methods in modern languages,
-including [**modern** Fortran](https://fortran-lang.org) (F2008 or newer), MATLAB, Python, C++,
+including [**modern** Fortran](https://fortran-lang.org) (F2008 or newer), MATLAB, Python, C/C++,
 Julia, and R. It will be a **faithful** implementation, in the sense that the code will be
 mathematically equivalent to Powell’s, **except for** the
 [bug fixes](#bug-fixes) and [improvements](#improvements) made intentionally.
@@ -255,6 +256,10 @@ cmake --build build --target install
 
 - The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
 - My ultimate objective is to have a native Python implementation of PRIMA **independent of Fortran**, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
+
+### Julia
+- [Binaries for Julia](https://github.com/JuliaPackaging/Yggdrasil/pull/7332) have been built.
+- [A Julia interface](https://github.com/libprima/prima/pull/62) will be available soon.
 
 #### Other languages
 
