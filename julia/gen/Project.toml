@@ -1,0 +1,7 @@
+[deps]
+Clang = "40e3b903-d033-50b4-a0cc-940c62c95e31"
+JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
+PRIMA_jll = "eead6e0c-2d5b-5641-a95c-b722de96d551"
+
+[compat]
+julia = "1.6"
