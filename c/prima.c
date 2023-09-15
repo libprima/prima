@@ -9,9 +9,9 @@ int cobyla_c(const int m_nlcon, const prima_objcon calcfc, const int n, double x
              const double xl[n], const double xu[n],
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, int *info);
 int bobyqa_c(prima_obj calfun, const int n, double x[n], double *f, const double xl[n], const double xu[n],
-             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, int *info);
+             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, int npt, const int iprint, int *info);
 int newuoa_c(prima_obj calfun, const int n, double x[n], double *f,
-             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, int *info);
+             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, int npt, const int iprint, int *info);
 int uobyqa_c(prima_obj calfun, const int n, double x[n], double *f,
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, int *info);
 int lincoa_c(prima_obj calfun, const int n, double x[n], double *f,
@@ -19,7 +19,7 @@ int lincoa_c(prima_obj calfun, const int n, double x[n], double *f,
              const int m_ineq, const double Aineq[m_ineq*n], const double bineq[m_ineq],
              const int m_eq, const double Aeq[m_eq*n], const double beq[m_eq],
              const double xl[n], const double xu[n],
-             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, int *info);
+             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, int npt, const int iprint, int *info);
 
 /* these functions just call the fortran compatibility layer and return the status code */
 int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, double x[n], double *f, double *cstrv, double nlconstr[m_nlcon],
@@ -34,18 +34,18 @@ int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, doub
 }
 
 int prima_bobyqa(const prima_obj calfun, const int n, double x[n], double *f, const double xl[n], const double xu[n],
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint)
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, int npt, const int iprint)
 {
   int info = 0;
-  bobyqa_c(calfun, n, x, f, xl, xu, nf, rhobeg, rhoend, ftarget, maxfun, iprint, &info);
+  bobyqa_c(calfun, n, x, f, xl, xu, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &info);
   return info;
 }
 
 int prima_newuoa(const prima_obj calfun, const int n, double x[n], double *f,
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint)
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, int npt, const int iprint)
 {
   int info = 0;
-  newuoa_c(calfun, n, x, f, nf, rhobeg, rhoend, ftarget, maxfun, iprint, &info);
+  newuoa_c(calfun, n, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &info);
   return info;
 }
 
@@ -61,10 +61,10 @@ int prima_lincoa(const prima_obj calfun, const int n, double x[n], double *f, do
                  const int m_ineq, const double Aineq[m_ineq*n], const double bineq[m_ineq],
                  const int m_eq, const double Aeq[m_eq*n], const double beq[m_eq],
                  const double xl[n], const double xu[n],
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint)
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, int npt, const int iprint)
 {
   int info = 0;
-  lincoa_c(calfun, n, x, f, cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, nf, rhobeg, rhoend, ftarget, maxfun, iprint, &info);
+  lincoa_c(calfun, n, x, f, cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &info);
   return info;
 }
 
