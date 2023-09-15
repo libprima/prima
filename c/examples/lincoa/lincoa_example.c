@@ -38,6 +38,7 @@ int main(int argc, char * argv[])
   const int iprint = PRIMA_MSG_EXIT;
   const int maxfun = 200*n;
   const int npt = 2*n+1;
+  int nf = 0;
   const int rc = prima_lincoa(&fun, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint);
   const char *msg = prima_get_rc_string(rc);
   printf("x*={%g, %g} f*=%g cstrv=%g rc=%d msg='%s' evals=%d\n", x[0], x[1], f, cstrv, rc, msg, nf);
