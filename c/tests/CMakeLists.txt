@@ -1,7 +1,10 @@
 add_executable(t_large EXCLUDE_FROM_ALL t_large.c)
 if (PRIMA_ENABLE_TESTING)
-    set_target_properties (t_large PROPERTIES EXCLUDE_FROM_ALL FALSE)
-  endif ()
+  set_target_properties (t_large PROPERTIES EXCLUDE_FROM_ALL FALSE)
+endif ()
+if (WIN32)
+  set_target_properties(t_large PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+endif()
 add_dependencies(tests t_large)
 
 add_test(NAME bobyqa_large_c COMMAND t_large bobyqa)

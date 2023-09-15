@@ -5,10 +5,6 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type")
 project (prima Fortran)
 
 option (BUILD_SHARED_LIBS "shared/static" ON)
-if (WIN32)
-  # symbols are not exported on windows
-  set (BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-endif ()
 
 include (GNUInstallDirs)
 

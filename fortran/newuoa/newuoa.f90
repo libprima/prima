@@ -178,6 +178,9 @@ use, non_intrinsic :: newuob_mod, only : newuob
 
 implicit none
 
+!GCC$ attributes dllexport :: newuoa
+!DEC$ attributes dllexport :: newuoa
+
 ! Arguments
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)
