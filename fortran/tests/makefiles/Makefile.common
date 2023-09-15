@@ -426,7 +426,7 @@ GFSTD := $(shell  [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\
 # allocatable characters. See
 # https://fortran-lang.discourse.group/t/warning-str-may-be-used-uninitialized
 WE := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 11 || $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 8 && -z '$(FFLAGSG)' ]] ; then echo "-Werror"; else echo ""; fi)
-GFORT := $(GFORT) $(WE) -pedantic-errors -fmax-errors=1
+GFORT := $(GFORT) $(WE) -pedantic-errors -fmax-errors=1 -Wno-attributes  # -Wno-attributes is to avoid complaints about `attributes dllexport`
 # `-fautomatic` (the default) tells `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
 # We enable them for small problems to verify that we will not have stack overflows.
@@ -479,6 +479,7 @@ gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d
 # protect_parens, realloc_lhs1, recursion, std_intent_in, std_minus0_rounding1, std_mod_proc_name,
 # and std_value1.
 IFORT := ifort
+IFORT := $(IFORT) -diag-disable:7841  # avoid complaints about `attributes dllexport`
 IFORT := $(IFORT) -warn all -debug extended -warn errors -traceback -debug-parameters all #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
@@ -644,6 +645,7 @@ stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d
 
 # Intel ifx
 XFORT := ifx
+XFORT := $(XFORT) -diag-disable:7841  # avoid complaints about `attributes dllexport`
 XFORT := $(XFORT) -warn all -debug extended -warn errors -traceback -debug-parameters all #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
