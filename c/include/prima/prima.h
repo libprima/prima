@@ -81,10 +81,10 @@ typedef void (*prima_objcon)(const double x[], double *f, double constr[]);
  * nf        : number of objective function calls (output)
  * rhobeg    : a reasonable initial change to the variables
  * rhoend    : required accuracy for the variables
- * ftarget   : target function value; optimization stops when the value <= ftarget
+ * ftarget   : target function value; optimization stops when f <= ftarget for a feasible point,
  *             can be set to -INFINITY to disable
  * maxfun    : maximum number of function evaluations
- * npt       : number of interpolation conditions, recommended: 2*n+1
+ * npt       : number of points in the interpolation set, n+2<=npt<=(n+1)(n+2)/2, recommended: 2*n+1
  * iprint    : verbosity level, see the prima_message enum
  * m_nlcon   : number of non-linear constraints (>=0)
  * calcfc    : function to minimize and constraints (see prima_objcon)
