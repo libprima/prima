@@ -257,7 +257,7 @@ cmake --build build --target install
 - The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
 - My ultimate objective is to have a native Python implementation of PRIMA **independent of Fortran**, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
 
-### Julia
+#### Julia
 - [Binaries for Julia](https://github.com/JuliaPackaging/Yggdrasil/pull/7332) have been built.
 - [A Julia interface](https://github.com/libprima/prima/pull/62) will be available soon.
 
