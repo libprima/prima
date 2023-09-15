@@ -38,7 +38,7 @@ contains
 
 subroutine bobyqa(calfun, x, f, &
     & xl, xu, &
-    & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
+    & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, callbck, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, maxhist, honour_x0, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
@@ -198,7 +198,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : NO_SPACE_BETWEEN_BOUNDS
 use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
 use, non_intrinsic :: preproc_mod, only : preproc
 use, non_intrinsic :: string_mod, only : num2str
 
@@ -213,6 +213,7 @@ real(RP), intent(inout) :: x(:)  ! X(N)
 real(RP), intent(out) :: f
 
 ! Optional inputs
+procedure(CALLBACK), optional :: callbck
 integer(IK), intent(in), optional :: iprint
 integer(IK), intent(in), optional :: maxfun
 integer(IK), intent(in), optional :: maxhist
@@ -414,7 +415,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 
 !-------------------- Call BOBYQB, which performs the real calculations. --------------------------!
-call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
+call bobyqb(calfun, iprint_loc, callbck, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
     & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, f, &
     & fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!

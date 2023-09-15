@@ -13,7 +13,7 @@ public :: lincoa_c
 contains
 
 
-subroutine lincoa_c(cobj_ptr, data_ptr, n, x, f, cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &
+subroutine lincoa_c(cobj_ptr, data_ptr, callback_ptr, n, x, f, cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &
     & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, info) bind(C)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR
 use, non_intrinsic :: cintrf_mod, only : COBJ
@@ -24,6 +24,7 @@ implicit none
 ! Compulsory arguments
 type(C_FUNPTR), intent(IN), value :: cobj_ptr
 type(C_PTR), intent(in), value :: data_ptr
+type(C_FUNPTR), intent(in), value :: callback_ptr
 integer(C_INT), intent(in), value :: n
 ! We cannot use assumed-shape arrays for C interoperability
 real(C_DOUBLE), intent(inout) :: x(n)
@@ -87,7 +88,8 @@ call lincoa(calfun, x_loc, f_loc, cstrv=cstrv_loc, &
     & Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, &
     & xl=xl_loc, xu=xu_loc, nf=nf_loc, &
     & rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
-    & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, info=info_loc)
+    & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, &
+    & iprint=iprint_loc, callbck=calcb, info=info_loc)
 
 ! Write the outputs
 x = real(x_loc, kind(x))
@@ -111,6 +113,26 @@ real(RP), intent(in) :: x_sub(:)
 real(RP), intent(out) :: f_sub
 call evalcobj(cobj_ptr, data_ptr, x_sub, f_sub)
 end subroutine calfun
+
+
+subroutine calcb(x_sub, f_sub, nf_sub, tr_sub, cstrv_sub, nlconstr_sub, terminate_sub)
+use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: cintrf_mod, only : evalcallback
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_ASSOCIATED
+implicit none
+real(RP), intent(in) :: x_sub(:)
+real(RP), intent(in) :: f_sub
+real(RP), intent(in) :: cstrv_sub
+real(RP), intent(in) :: nlconstr_sub(:)
+integer(IK), intent(in) :: nf_sub
+integer(IK), intent(in) :: tr_sub
+logical, intent(out) :: terminate_sub
+terminate_sub = .false.
+if (C_ASSOCIATED(callback_ptr)) then
+    call evalcallback(callback_ptr, x_sub, f_sub, nf_sub, tr_sub, cstrv_sub, nlconstr_sub, terminate_sub)
+end if
+end subroutine calcb
+
 
 end subroutine lincoa_c
 

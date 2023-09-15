@@ -59,7 +59,7 @@ subroutine cobyla(calcfc, m_nlcon, x, f, &
     & Aeq, beq, &
     & xl, xu, &
     & f0, nlconstr0, &
-    & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
+    & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, callbck, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, nlchist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALCFC, M_NLCON, X, and F are obligatory. The others are
@@ -198,6 +198,9 @@ subroutine cobyla(calcfc, m_nlcon, x, f, &
 !      be appended to the end of this file if it already exists.
 !   Note that IPRINT = +/-3 can be costly in terms of time and/or space.
 !
+! CALLBCK
+!   Input, function to report progress and request termination.
+!
 ! ETA1, ETA2, GAMMA1, GAMMA2
 !   Input, REAL(RP) scalars, default: ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5, and GAMMA2 = 2.
 !   ETA1, ETA2, GAMMA1, and GAMMA2 are parameters in the updating scheme of the trust-region radius
@@ -250,6 +253,7 @@ subroutine cobyla(calcfc, m_nlcon, x, f, &
 !   NAN_INF_MODEL: NaN or Inf occurs in the model;
 !   TRSUBP_FAILED: a trust region step failed to reduce the model
 !   !--------------------------------------------------------------------------!
+!
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
@@ -264,7 +268,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INVALID_INPUT
 use, non_intrinsic :: linalg_mod, only : trueloc, matprod
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: pintrf_mod, only : OBJCON
+use, non_intrinsic :: pintrf_mod, only : OBJCON, CALLBACK
 use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
 use, non_intrinsic :: string_mod, only : num2str
@@ -281,6 +285,7 @@ real(RP), intent(out) :: f
 integer(IK), intent(in) :: m_nlcon
 
 ! Optional inputs
+procedure(CALLBACK), optional :: callbck
 integer(IK), intent(in), optional :: iprint
 integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
@@ -601,7 +606,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
 !call cobylb(calcfc_internal, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, cweight_loc, eta1_loc, eta2_loc, &
-call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
+call cobylb(calcfc, iprint_loc, callbck, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
     & eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, &
     & f, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!

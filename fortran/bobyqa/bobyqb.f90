@@ -43,7 +43,7 @@ public :: bobyqb
 contains
 
 
-subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
+subroutine bobyqb(calfun, iprint, callbck, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
     & xl, xu, x, nf, f, fhist, xhist, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the major calculations of BOBYQA.
@@ -82,10 +82,10 @@ use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, USER_STOP
 use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
-use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag!, errquad
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
@@ -103,6 +103,7 @@ implicit none
 
 ! Inputs
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
+procedure(CALLBACK), optional :: callbck
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: npt
@@ -150,6 +151,7 @@ logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
 logical :: small_trrad
+logical :: terminate
 logical :: trfail
 logical :: ximproved
 real(RP) :: bmat(size(x), npt + size(x))
@@ -168,6 +170,7 @@ real(RP) :: gopt(size(x))
 real(RP) :: hq(size(x), size(x))
 real(RP) :: moderr
 real(RP) :: moderr_rec(size(dnorm_rec))
+real(RP) :: nlconstr(0)
 real(RP) :: pq(npt)
 real(RP) :: qred
 real(RP) :: ratio
@@ -271,6 +274,7 @@ gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
 ! model but the geometry step is not invoked. Thus the following MAXTR is unlikely to be reached.
 maxtr = max(maxfun, 2_IK * maxfun)  ! MAX: precaution against overflow, which will make 2*MAXFUN < 0.
 info = MAXTR_REACHED
+terminate = .false.
 
 ! Begin the iterative procedure.
 ! After solving a trust-region subproblem, we use three boolean variables to control the workflow.
@@ -570,6 +574,16 @@ do tr = 1, maxtr
         call shiftbase(kopt, xbase, xpt, zmat, bmat, pq, hq)
         xbase = max(xl, min(xu, xbase))
     end if
+    
+    ! report progress, and ask early exit
+    if (present(callbck)) then
+        call callbck(x, f, nf, tr, 0.0_RP, nlconstr, terminate)
+        if (terminate) then
+            info = USER_STOP
+            exit
+        end if
+    end if
+    
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.

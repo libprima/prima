@@ -12,6 +12,15 @@ static void fun(const double x[], double *f, const void *data)
   (void)data;
 }
 
+static void callback(int n, const double x[], double f, int nf, int tr, double cstrv, int m_nlcon, const double nlconstr[], _Bool *terminate)
+{
+  (void)n;
+  printf("progress: x=[%g;%g] f=%g cstrv=%g nf=%d tr=%d\n", x[0], x[1], f, cstrv, nf, tr);
+  (void)m_nlcon;
+  (void)nlconstr;
+  *terminate = 0;
+}
+
 int main(int argc, char * argv[])
 {
   (void)argc;
@@ -41,7 +50,7 @@ int main(int argc, char * argv[])
   const int npt = 2*n+1;
   int nf = 0;
   void *data = NULL;
-  const int rc = prima_lincoa(&fun, data, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint);
+  const int rc = prima_lincoa(&fun, data, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &callback);
   const char *msg = prima_get_rc_string(rc);
   printf("x*={%g, %g} f*=%g cstrv=%g rc=%d msg='%s' evals=%d\n", x[0], x[1], f, cstrv, rc, msg, nf);
   return (fabs(x[0]-3)>2e-2 || fabs(x[1]-2)>2e-2);

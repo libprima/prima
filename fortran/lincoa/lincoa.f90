@@ -52,7 +52,7 @@ subroutine lincoa(calfun, x, f, &
     & Aineq, bineq, &
     & Aeq, beq, &
     & xl, xu, &
-    & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
+    & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, callbck, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
@@ -168,6 +168,9 @@ subroutine lincoa(calfun, x, f, &
 !      be appended to the end of this file if it already exists.
 !   Note that IPRINT = +/-3 can be costly in terms of time and/or space.
 !
+! CALLBCK
+!   Input, function to report progress and request termination.
+!
 ! ETA1, ETA2, GAMMA1, GAMMA2
 !   Input, REAL(RP) scalars, default: ETA1 = 0.1, ETA2 = 0.7, GAMMA1 = 0.5, and GAMMA2 = 2.
 !   ETA1, ETA2, GAMMA1, and GAMMA2 are parameters in the updating scheme of the trust-region radius
@@ -224,7 +227,7 @@ use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
 use, non_intrinsic :: preproc_mod, only : preproc
 use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: string_mod, only : num2str
@@ -240,6 +243,7 @@ real(RP), intent(inout) :: x(:)  ! X(N)
 real(RP), intent(out) :: f
 
 ! Optional inputs
+procedure(CALLBACK), optional :: callbck
 integer(IK), intent(in), optional :: iprint
 integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
@@ -508,7 +512,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, rhoend_loc, xl_loc, xu_loc, x, amat, bvec)
 
 !-------------------- Call LINCOB, which performs the real calculations. --------------------------!
-call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
+call lincob(calfun, iprint_loc, callbck, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
     & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
     & gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, chist_loc, cstrv_loc, &
     & f, fhist_loc, xhist_loc, info_loc)
