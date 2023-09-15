@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 04, 2023 PM09:54:51
+! Last Modified: Friday, September 15, 2023 PM03:12:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,6 +52,7 @@ use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED
 use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec, norm
+use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: message_mod, only : fmsg, rhomsg, retmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : quadinc
@@ -127,13 +128,13 @@ real(RP) :: gamma3
 real(RP) :: h(size(x), size(x))
 real(RP) :: moderr
 real(RP) :: moderr_rec(size(dnorm_rec))
-real(RP) :: pl(size(distsq) - 1, size(distsq))
 real(RP) :: pq(size(distsq) - 1)
 real(RP) :: qred
 real(RP) :: ratio
 real(RP) :: rho
 real(RP) :: xbase(size(x))
 real(RP) :: xpt(size(x), size(distsq))
+real(RP), allocatable :: pl(:, :)
 real(RP), parameter :: trtol = 1.0E-2_RP  ! Tolerance used in TRSTEP.
 
 ! Sizes.
@@ -178,7 +179,11 @@ if (subinfo /= INFO_DFT) then
     return
 end if
 
-! Initialize the Lagrange polynomials represented by PL.
+! Initialize the Lagrange polynomials represented by PL. Allocate memory for it first. In general,
+! to make the implementation simple and straightforward, we use automatic arrays rather than
+! allocable ones whenever possible. However, PL is an exception, as its size is O(N^4). If SAFEALLOC
+! fails, an informative error will be raised, which is preferred to a silent or ambiguous failure.
+call safealloc(pl, npt - 1_IK, npt)
 call initl(xpt, pl)
 
 ! Initialize the quadratic model represented by PQ.
@@ -454,6 +459,10 @@ do tr = 1, maxtr
         call shiftbase(kopt, pl, pq, xbase, xpt)
     end if
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
+
+! Deallocate PL. F2003 automatically deallocate local ALLOCATABLE variables at exit, yet we prefer
+! to deallocate them immediately when they finish their jobs.
+deallocate (pl)
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
 if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
