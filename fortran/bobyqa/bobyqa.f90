@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 15, 2023 PM09:40:44
+! Last Modified: Friday, September 15, 2023 PM09:46:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -118,7 +118,8 @@ subroutine bobyqa(calfun, x, f, &
 !   for a start ... much larger values tend to be inefficient, because the amount of routine work of
 !   each iteration is of magnitude NPT**2, and because the achievement of adequate accuracy in some
 !   matrix calculations becomes more difficult. Some excellent numerical results have been found in
-!   the case NPT=N+6 even with more than 100 variables."
+!   the case NPT=N+6 even with more than 100 variables." And "choices that exceed 2*N+1 are not
+!   recommended" by Powell.
 !
 ! IPRINT
 !   Input, INTEGER(IK) scalar, default: 0.
