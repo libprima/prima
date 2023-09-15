@@ -32,6 +32,9 @@ jobs:
 
     steps:
 
+      - name: Run `sudo apt update`. Otherwise, free-disk-space or other actions relying on `apt` may fail
+        run: sudo apt update
+
       - name: Free disk space
         uses: jlumbroso/free-disk-space@main
         with:
