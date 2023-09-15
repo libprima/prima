@@ -85,6 +85,7 @@ int main(int argc, char * argv[])
   double *beq = NULL;
   const double rhobeg = 1.0;
   const double rhoend = 1e-7;
+  const double ftarget = -INFINITY;
   const int iprint = PRIMA_MSG_RHO;
   const int maxfun = 500*n_max;
 
@@ -105,29 +106,29 @@ int main(int argc, char * argv[])
   if(strcmp(algo, "bobyqa") == 0)
   {
     n = 1600;
-    rc = prima_bobyqa(&fun, n, x, &f, xl, xu, &nf, rhobeg, rhoend, maxfun, iprint);
+    rc = prima_bobyqa(&fun, n, x, &f, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
     n = 800;
     m_ineq = 800;
-    rc = prima_cobyla(m_nlcon, &fun_con, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, 8000, iprint);
+    rc = prima_cobyla(m_nlcon, &fun_con, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, 8000, iprint);
   }
   else if(strcmp(algo, "lincoa") == 0)
   {
     n = 1000;
     m_ineq = 1000;
-    rc = prima_lincoa(&fun, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, maxfun, iprint);
+    rc = prima_lincoa(&fun, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
   }
   else if(strcmp(algo, "newuoa") == 0)
   {
     n = 1600;
-    rc = prima_newuoa(&fun, n, x, &f, &nf, rhobeg, rhoend, maxfun, iprint);
+    rc = prima_newuoa(&fun, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
   }
   else if(strcmp(algo, "uobyqa") == 0)
   {
     n = 160;
-    rc = prima_uobyqa(&fun, n, x, &f, &nf, rhobeg, rhoend, maxfun, iprint);
+    rc = prima_uobyqa(&fun, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
   }
   else
   {

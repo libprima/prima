@@ -12,7 +12,7 @@ public :: newuoa_c
 contains
 
 
-subroutine newuoa_c(cobj_ptr, n, x, f, nf, rhobeg, rhoend, maxfun, iprint, info) bind(C)
+subroutine newuoa_c(cobj_ptr, n, x, f, nf, rhobeg, rhoend, ftarget, maxfun, iprint, info) bind(C)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR
 use, non_intrinsic :: cintrf_mod, only : COBJ
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -31,6 +31,7 @@ real(C_DOUBLE), intent(out) :: f
 integer(C_INT), intent(out) :: nf
 real(C_DOUBLE), intent(in), value :: rhobeg
 real(C_DOUBLE), intent(in), value :: rhoend
+real(C_DOUBLE), intent(in), value :: ftarget
 integer(C_INT), intent(in), value :: maxfun
 integer(C_INT), intent(in), value :: iprint
 integer(C_INT), intent(out) :: info
@@ -43,17 +44,19 @@ integer(IK) :: nf_loc
 real(RP) :: f_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
+real(RP) :: ftarget_loc
 real(RP) :: x_loc(n)
 
 ! Read the inputs and convert them to the Fortran side types
 x_loc = real(x, kind(x_loc))
 rhobeg_loc = real(rhobeg, kind(rhobeg))
 rhoend_loc = real(rhoend, kind(rhoend))
+ftarget_loc = real(ftarget, kind(ftarget))
 maxfun_loc = int(maxfun, kind(maxfun_loc))
 iprint_loc = int(iprint, kind(iprint_loc))
 
 ! Call the Fortran code
-call newuoa(calfun, x_loc, f_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
+call newuoa(calfun, x_loc, f_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, &
     & maxfun=maxfun_loc, iprint=iprint_loc, info=info_loc)
 
 ! Write the outputs
