@@ -1,3 +1,5 @@
+// A stress test on excessively large problems.
+
 #include "prima/prima.h"
 #include <stdio.h>
 #include <math.h>
@@ -60,7 +62,7 @@ int main(int argc, char * argv[])
   if (argc > 2)
     debug = (strcmp(argv[2], "debug") == 0);
   printf("debug=%d\n", debug);
-  
+
   // set seed to year/week
   char buf[10] = {0};
   time_t t = time(NULL);
@@ -112,7 +114,7 @@ int main(int argc, char * argv[])
   {
     n = 800;
     m_ineq = 800;
-    rc = prima_cobyla(m_nlcon, &fun_con, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, 8000, iprint);
+    rc = prima_cobyla(m_nlcon, &fun_con, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
   }
   else if(strcmp(algo, "lincoa") == 0)
   {

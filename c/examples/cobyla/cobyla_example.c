@@ -1,3 +1,5 @@
+// An example to illustrate the use of COBYLA.
+
 #include "prima/prima.h"
 #include <stdio.h>
 #include <math.h>
@@ -37,8 +39,7 @@ int main(int argc, char * argv[])
   const double rhoend = 1e-3;
   const double ftarget = -INFINITY;
   const int iprint = PRIMA_MSG_EXIT;
-  const int maxfun = 1000;
-  int nf = 0;
+  const int maxfun = 200*n;
   const int rc = prima_cobyla(m_nlcon, &fun, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
   const char *msg = prima_get_rc_string(rc);
   printf("x*={%g, %g} f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", x[0], x[1], f, cstrv, nlconstr[0], rc, msg, nf);
