@@ -81,6 +81,8 @@ typedef void (*prima_objcon)(const double x[], double *f, double constr[]);
  * nf        : number of objective function calls (output)
  * rhobeg    : a reasonable initial change to the variables
  * rhoend    : required accuracy for the variables
+ * ftarget   : target function value; optimization stops when the value <= ftarget
+ *             can be set to -INFINITY to disable
  * maxfun    : maximum number of function evaluations
  * iprint    : verbosity level, see the prima_message enum
  * m_nlcon   : number of non-linear constraints (>=0)
@@ -101,15 +103,15 @@ typedef void (*prima_objcon)(const double x[], double *f, double constr[]);
 PRIMAC_API
 int prima_bobyqa(const prima_obj calfun, const int n, double x[n], double *f,
                  const double xl[n], const double xu[n],
-                 int *nf, const double rhobeg, const double rhoend, const int maxfun, const int iprint);
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
 
 PRIMAC_API
 int prima_newuoa(const prima_obj calfun, const int n, double x[n], double *f,
-                 int *nf, const double rhobeg, const double rhoend, const int maxfun, const int iprint);
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
 
 PRIMAC_API
 int prima_uobyqa(const prima_obj calfun, const int n, double x[n], double *f,
-                 int *nf, const double rhobeg, const double rhoend, const int maxfun, const int iprint);
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
 
 PRIMAC_API
 int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, double x[n], double *f,
@@ -117,7 +119,7 @@ int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, doub
                  const int m_ineq, const double Aineq[m_ineq*n], const double bineq[m_ineq],
                  const int m_eq, const double Aeq[m_eq*n], const double beq[m_eq],
                  const double xl[n], const double xu[n],
-                 int *nf, const double rhobeg, const double rhoend, const int maxfun, const int iprint);
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
 
 PRIMAC_API
 int prima_lincoa(const prima_obj calfun, const int n, double x[n], double *f,
@@ -125,7 +127,7 @@ int prima_lincoa(const prima_obj calfun, const int n, double x[n], double *f,
                  const int m_ineq, const double Aineq[m_ineq*n], const double bineq[m_ineq],
                  const int m_eq, const double Aeq[m_eq*n], const double beq[m_eq],
                  const double xl[n], const double xu[n],
-                 int *nf, const double rhobeg, const double rhoend, const int maxfun, const int iprint);
+                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
 
 #ifdef __cplusplus
 }
