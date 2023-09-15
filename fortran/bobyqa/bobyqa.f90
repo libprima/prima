@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, July 03, 2023 AM12:01:01
+! Last Modified: Friday, September 15, 2023 PM09:40:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -114,7 +114,11 @@ subroutine bobyqa(calfun, x, f, &
 ! NPT
 !   Input, INTEGER(IK) scalar, default: 2N + 1.
 !   NPT is the number of interpolation conditions for each trust region model. Its value must be in
-!   the interval [N+2, (N+1)(N+2)/2]. Powell wrote "choices that exceed 2*N+1 are not recommended."
+!   the interval [N+2, (N+1)(N+2)/2]. Powell commented that "the value NPT = 2*N+1 being recommended
+!   for a start ... much larger values tend to be inefficient, because the amount of routine work of
+!   each iteration is of magnitude NPT**2, and because the achievement of adequate accuracy in some
+!   matrix calculations becomes more difficult. Some excellent numerical results have been found in
+!   the case NPT=N+6 even with more than 100 variables."
 !
 ! IPRINT
 !   Input, INTEGER(IK) scalar, default: 0.

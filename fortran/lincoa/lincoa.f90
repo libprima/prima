@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, August 02, 2023 AM11:36:40
+! Last Modified: Friday, September 15, 2023 PM09:40:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -150,9 +150,8 @@ subroutine lincoa(calfun, x, f, &
 !   Input, INTEGER(IK) scalar, default: 2N + 1.
 !   NPT is the number of interpolation conditions for each trust region model. Its value must be in
 !   the interval [N+2, (N+1)(N+2)/2]. Typical choices of Powell were NPT=N+6 and NPT=2*N+1. Powell
-!   commented in his code that "larger values tend to be highly inefficient when the number of
-!   variables is substantial, due to the amount of work and extra difficulty of adjusting more
-!   points."
+!   commented that "larger values tend to be highly inefficient when the number of variables is
+!   substantial, due to the amount of work and extra difficulty of adjusting more points."
 !
 ! IPRINT
 !   Input, INTEGER(IK) scalar, default: 0.
