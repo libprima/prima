@@ -102,32 +102,32 @@ typedef void (*prima_objcon)(const double x[], double *f, double constr[]);
  */
 
 PRIMAC_API
-int prima_bobyqa(const prima_obj calfun, const int n, double x[n], double *f,
-                 const double xl[n], const double xu[n],
+int prima_bobyqa(const prima_obj calfun, const int n, double x[], double *f,
+                 const double xl[], const double xu[],
                  int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint);
 
 PRIMAC_API
-int prima_newuoa(const prima_obj calfun, const int n, double x[n], double *f,
+int prima_newuoa(const prima_obj calfun, const int n, double x[], double *f,
                  int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint);
 
 PRIMAC_API
-int prima_uobyqa(const prima_obj calfun, const int n, double x[n], double *f,
+int prima_uobyqa(const prima_obj calfun, const int n, double x[], double *f,
                  int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
 
 PRIMAC_API
-int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, double x[n], double *f,
-                 double *cstrv, double nlconstr[m_nlcon],
-                 const int m_ineq, const double Aineq[m_ineq*n], const double bineq[m_ineq],
-                 const int m_eq, const double Aeq[m_eq*n], const double beq[m_eq],
-                 const double xl[n], const double xu[n],
+int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, double x[], double *f,
+                 double *cstrv, double nlconstr[],
+                 const int m_ineq, const double Aineq[], const double bineq[],
+                 const int m_eq, const double Aeq[], const double beq[],
+                 const double xl[], const double xu[],
                  int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
 
 PRIMAC_API
-int prima_lincoa(const prima_obj calfun, const int n, double x[n], double *f,
+int prima_lincoa(const prima_obj calfun, const int n, double x[], double *f,
                  double *cstrv,
-                 const int m_ineq, const double Aineq[m_ineq*n], const double bineq[m_ineq],
-                 const int m_eq, const double Aeq[m_eq*n], const double beq[m_eq],
-                 const double xl[n], const double xu[n],
+                 const int m_ineq, const double Aineq[], const double bineq[],
+                 const int m_eq, const double Aeq[], const double beq[],
+                 const double xl[], const double xu[],
                  int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint);
 
 #ifdef __cplusplus
