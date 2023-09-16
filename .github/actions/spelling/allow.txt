@@ -2064,3 +2064,6 @@ phimeca
 schueller
 julia
 libclang
+dumpbin
+objdump
+
