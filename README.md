@@ -134,9 +134,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![CMake build / nagfor](https://github.com/libprima/prima/actions/workflows/cmake_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake_nagfor.yml)
     - [![Test Absoft](https://github.com/libprima/prima/actions/workflows/test_absoft.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_absoft.yml)
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
-    - [![Plot performance profiles for PRIMA, small](https://github.com/libprima/prima/actions/workflows/profile_prima_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/profile_prima_small.yml)
     - [![Lint the Fortran code and the MEX gateways with nagfor](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml)
-    - [![Lint the Fortran code and the MEX gateways on GitHub hosted runners](https://github.com/libprima/prima/actions/workflows/lint_hosted.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint_hosted.yml)
 
 - [Tests](https://github.com/libsprima/prima/actions) at [libsprima/prima](https://github.com/libsprima/prima)
     - [![Verification, small](https://github.com/libsprima/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_small.yml)
@@ -150,6 +148,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Plot performance profiles for uobyqa](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml)
     - [![Plot performance profiles for newuoa](https://github.com/primapack/prima/actions/workflows/profile_newuoa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_newuoa_small.yml)
     - [![Plot performance profiles for bobyqa](https://github.com/primapack/prima/actions/workflows/profile_bobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_bobyqa_small.yml)
+    - [![Plot performance profiles for PRIMA, small](https://github.com/primapack/prima/actions/workflows/profile_prima_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_prima_small.yml)
 
 - [Tests](https://github.com/primalib/prima/actions) at [primalib/prima](https://github.com/primalib/prima)
 
@@ -190,6 +189,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 - [Tests](https://github.com/s-prima/prima/actions) at [s-prima/prima](https://github.com/s-prima/prima)
 
+    - [![Lint the Fortran code and the MEX gateways on GitHub hosted runners](https://github.com/s-prima/prima/actions/workflows/lint_hosted.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/lint_hosted.yml)
     - [![Test gfortran, O1, O2](https://github.com/s-prima/prima/actions/workflows/test_gfortran_O12.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_O12.yml)
     - [![Test gfortran, g, O3](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml)
     - [![Test gfortran, fast](https://github.com/s-prima/prima/actions/workflows/test_gfortran_fast.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_fast.yml)

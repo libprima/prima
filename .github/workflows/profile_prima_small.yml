@@ -2,8 +2,8 @@ name: Plot performance profiles for PRIMA, small
 
 on:
   # Trigger the workflow on push or pull request
-  push:
-  pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  #push:
+  #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   # schedule:
   #   - cron: '0 2,6,10,14,18,22 * * *'
