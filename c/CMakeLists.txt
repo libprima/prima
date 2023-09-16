@@ -6,11 +6,6 @@ if (WIN32)
   set_target_properties(primac PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 endif()
 
-# because of dllexport
-if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-  set_source_files_properties (cintrf.f90 cobyla_c.f90 lincoa_c.f90 bobyqa_c.f90 newuoa_c.f90 uobyqa_c.f90 PROPERTIES COMPILE_FLAGS "-Wno-attributes")
-endif ()
-
 target_include_directories (primac PUBLIC
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -20,6 +15,11 @@ set_target_properties(primac PROPERTIES POSITION_INDEPENDENT_CODE ON C_STANDARD 
 
 if (NOT BUILD_SHARED_LIBS)
   target_compile_definitions(primac PUBLIC PRIMAC_STATIC)
+endif ()
+
+# export symbols
+if (WIN32 AND BUILD_SHARED_LIBS)
+  target_sources(primac PRIVATE primac.def)
 endif ()
 
 install (FILES include/prima/prima.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/prima)

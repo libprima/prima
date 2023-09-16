@@ -19,9 +19,6 @@ use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: uobyqa_mod, only : uobyqa
 implicit none
 
-!GCC$ attributes dllexport :: uobyqa_c
-!DEC$ attributes dllexport :: uobyqa_c
-
 ! Compulsory arguments
 type(C_FUNPTR), intent(IN), value :: cobj_ptr
 integer(C_INT), intent(in), value :: n

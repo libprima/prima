@@ -274,9 +274,6 @@ use, non_intrinsic :: cobylb_mod, only : cobylb
 
 implicit none
 
-!GCC$ attributes dllexport :: cobyla
-!DEC$ attributes dllexport :: cobyla
-
 ! Compulsory arguments
 procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)     ! X(N)

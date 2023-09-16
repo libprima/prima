@@ -207,9 +207,6 @@ use, non_intrinsic :: bobyqb_mod, only : bobyqb
 
 implicit none
 
-!GCC$ attributes dllexport :: bobyqa
-!DEC$ attributes dllexport :: bobyqa
-
 ! Compulsory arguments
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)  ! X(N)

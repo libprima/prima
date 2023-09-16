@@ -19,9 +19,6 @@ use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: newuoa_mod, only : newuoa
 implicit none
 
-!GCC$ attributes dllexport :: newuoa_c
-!DEC$ attributes dllexport :: newuoa_c
-
 ! Compulsory arguments
 type(C_FUNPTR), intent(IN), value :: cobj_ptr
 integer(C_INT), intent(in), value :: n

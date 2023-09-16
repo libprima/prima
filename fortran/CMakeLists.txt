@@ -72,9 +72,26 @@ if (HAVE_WARN_EXECSTACK)
   target_link_options (primaf PUBLIC "-Wl,--no-warn-execstack")
 endif ()
 
-# because of dllexport
-if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-  target_compile_options (primaf PUBLIC "-Wno-attributes")
+# On Windows, when building shared libs, visible functions must be explicitly listed.
+# Unlike C there are no standard keywords to do this in Fortran but only compiler-specific pragmas:
+# !GCC$ attributes dllexport :: bobyqa_c
+# !DEC$ attributes dllexport :: bobyqa_c
+# the downside is unwanted -Wattribute warnings.
+# Another option is to use .def files referencing exported symbols:
+# https://learn.microsoft.com/en-us/cpp/build/exporting-from-a-dll-using-def-files?view=msvc-170
+# Mangling is different between GNU and Intel/LLVM compiler families so we use a dedicated file for each.
+# Symbol names can be seen in object files with the dumpbin tool (or objdump) to write a new .def:
+# dumpbin /symbols cobyla.f90.obj
+# 017 00000000 UNDEF  no_type       External     | COBYLA_MOD_mp_COBYLA
+# x86_64-w64-mingw32-objdump -t cobyla.f90.obj
+# [  4](sec  1)(fl 0x00)(ty   20)(scl   2) (nx 0) 0x000000000000218b __cobyla_mod_MOD_cobyla
+if (WIN32 AND BUILD_SHARED_LIBS)
+  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/primaf-${CMAKE_Fortran_COMPILER_ID}.def)
+    target_sources (primaf PRIVATE primaf-${CMAKE_Fortran_COMPILER_ID}.def)
+  else ()
+    message (STATUS "Assuming Intel symbol mangling")
+    target_sources (primaf PRIVATE primaf-Intel.def)
+  endif ()
 endif ()
 
 if (WIN32)

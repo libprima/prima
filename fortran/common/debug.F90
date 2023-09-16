@@ -34,8 +34,6 @@ subroutine assert(condition, description, srname)
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: infos_mod, only : ASSERTION_FAILS
 implicit none
-!GCC$ attributes dllexport :: assert
-!DEC$ attributes dllexport :: assert
 logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure

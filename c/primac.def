@@ -1,0 +1,6 @@
+EXPORTS
+  bobyqa_c
+  cobyla_c
+  lincoa_c
+  newuoa_c
+  uobyqa_c
