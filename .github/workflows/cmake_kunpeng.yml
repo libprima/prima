@@ -1,9 +1,9 @@
-name: CMake build on Raspberry Pi
+name: CMake build on Kunpeng
 
 on:
   #push:
   schedule:
-    - cron: '0 16 * * 6'  # 16h Saturday
+    - cron: '0 18 * * 6'  # 16h Saturday
   workflow_dispatch:
     inputs:
       git-ref:
@@ -20,7 +20,7 @@ permissions:
 jobs:
 
   cmake-main:
-    runs-on: [self-hosted, pi]
+    runs-on: [self-hosted, kp]
     strategy:
       fail-fast: false
       matrix:
@@ -55,7 +55,7 @@ jobs:
 
 
   cmake-other:
-    runs-on: [self-hosted, ARM64, pi64]
+    runs-on: [self-hosted, kp]
     strategy:
       fail-fast: false
       matrix:
