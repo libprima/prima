@@ -234,9 +234,6 @@ use, non_intrinsic :: lincob_mod, only : lincob
 
 implicit none
 
-!GCC$ attributes dllexport :: lincoa
-!DEC$ attributes dllexport :: lincoa
-
 ! Compulsory arguments
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)  ! X(N)

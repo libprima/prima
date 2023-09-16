@@ -1,0 +1,7 @@
+EXPORTS
+  __bobyqa_mod_MOD_bobyqa
+  __cobyla_mod_MOD_cobyla
+  __lincoa_mod_MOD_lincoa
+  __newuoa_mod_MOD_newuoa
+  __uobyqa_mod_MOD_uobyqa
+  __debug_mod_MOD_assert

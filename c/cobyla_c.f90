@@ -20,9 +20,6 @@ use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: cobyla_mod, only : cobyla
 implicit none
 
-!GCC$ attributes dllexport :: cobyla_c
-!DEC$ attributes dllexport :: cobyla_c
-
 ! Compulsory arguments
 integer(C_INT), intent(in), value :: m_nlcon
 type(C_FUNPTR), intent(in), value :: cobjcon_ptr

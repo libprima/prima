@@ -21,9 +21,6 @@ use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: lincoa_mod, only : lincoa
 implicit none
 
-!GCC$ attributes dllexport :: lincoa_c
-!DEC$ attributes dllexport :: lincoa_c
-
 ! Compulsory arguments
 type(C_FUNPTR), intent(IN), value :: cobj_ptr
 integer(C_INT), intent(in), value :: n
