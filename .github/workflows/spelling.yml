@@ -34,7 +34,7 @@ name: Check Spelling
 #   For background, see: https://github.com/check-spelling/check-spelling/wiki/Feature:-Update-with-deploy-key
 
 on:
-  push:
+#  PUSH:
     branches:
     - "**"
     tags-ignore:

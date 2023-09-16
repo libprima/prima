@@ -49,7 +49,7 @@ jobs:
           submodules: recursive
 
       - name: Install LLVM
-        uses: KyleMayes/install-llvm-action@v1
+        uses: KyleMayes/install-llvm-action@v1.8.3
         with:
           version: "16.0.6"
 
