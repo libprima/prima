@@ -94,7 +94,7 @@ macro (prima_add_f_test name)
   if (PRIMA_ENABLE_EXAMPLES)
     set_target_properties (example_${name}_fortran_exe PROPERTIES EXCLUDE_FROM_ALL FALSE)
   endif ()
-  add_test (NAME ex_${name}_f COMMAND example_${name}_fortran_exe)
+  add_test (NAME example_${name}_fortran COMMAND example_${name}_fortran_exe)
   add_dependencies(examples example_${name}_fortran_exe)
 endmacro ()
 
