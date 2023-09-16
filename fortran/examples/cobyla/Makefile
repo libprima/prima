@@ -55,10 +55,9 @@ ftest: FC := flang -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # GNU gfortran: due to `error stop` and `backtrace`, we must either compile wit no `-std` or
 # use `-std=f20xy -fall-intrinsics` with xy >= 18.
-gtest: FC := gfortran -Wall -Wextra -Wno-attributes -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
+gtest: FC := gfortran -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
 
 # Intel ifort
-#itest: FC := ifort -warn all -diag-disable:7025,7841 -stand f$(FS)
 itest: FC := ifort -warn all -stand f$(FS)
 
 # NAG nagfor
@@ -73,7 +72,6 @@ RFORT := $(shell find -L /opt/arm -type f -executable -name armflang -print 2> /
 rtest: FC := $(RFORT) -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # Intel ifx
-#xtest: FC := ifx -warn all -diag-disable:7025,7841 -stand f$(FS)
 xtest: FC := ifx -warn all -stand f$(FS)
 
 ####################################################################################################

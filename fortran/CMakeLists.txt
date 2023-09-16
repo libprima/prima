@@ -76,7 +76,8 @@ endif ()
 # Unlike C there are no standard keywords to do this in Fortran but only compiler-specific pragmas:
 # !GCC$ attributes dllexport :: bobyqa_c
 # !DEC$ attributes dllexport :: bobyqa_c
-# the downside is unwanted -Wattribute warnings.
+# the downside is that gfortran will raise -Wattributes warnings, and Intel compilers will complain
+# that the directives are not standard conforming. See https://github.com/libprima/prima/issues/70.
 # Another option is to use .def files referencing exported symbols:
 # https://learn.microsoft.com/en-us/cpp/build/exporting-from-a-dll-using-def-files?view=msvc-170
 # Mangling is different between GNU and Intel/LLVM compiler families so we use a dedicated file for each.

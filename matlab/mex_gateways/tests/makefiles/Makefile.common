@@ -274,7 +274,6 @@ ftest_i2_r16_d1_tst ftest_i4_r16_d1_tst ftest_i8_r16_d1_tst ftest_i2_r16_d0_tst 
 # makes the code not standard-conforming. So -std=f$(FSTD) is excluded for the following options.
 # As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
 GFORT := gfortran
-GFORT := $(GFORT) -Wno-attributes   # avoid complaints about `attributes dllexport`
 GFORT := $(GFORT) -Wall -Wextra -pedantic -fmax-errors=1 -Wampersand -Wconversion  -Wuninitialized \
 	-Wmaybe-uninitialized -Wsurprising -Waliasing  -Wimplicit-interface -Wimplicit-procedure \
 	-Wintrinsics-std -Wunderflow -Wuse-without-only -Wunused-parameter \
@@ -311,8 +310,7 @@ gtest_i2_r16_d1_tst gtest_i4_r16_d1_tst gtest_i8_r16_d1_tst gtest_i2_r16_d0_tst 
 #  will cause a warning; due to -warn errors, the compilation will abort. See
 #  https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/language-reference/a-to-z-reference/q-to-r/recursive-and-non-recursive.html
 IFORT := ifort
-IFORT := $(IFORT) -diag-disable:5180,7025,7841  # avoid complaints about `attributes dllexport`
-#IFORT := $(IFORT)  -diag-error-limit 1
+#IFORT := $(IFORT) -diag-error-limit 1
 IFORT := $(IFORT) -stand f95 -standard-semantics -assume norecursion -warn all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all
 
@@ -406,7 +404,7 @@ stest_i2_r16_d1_tst stest_i4_r16_d1_tst stest_i8_r16_d1_tst stest_i2_r16_d0_tst 
 
 # Intel ifx
 XFORT := ifx
-XFORT := $(XFORT) -diag-disable:5180,7025,7841  # avoid complaints about `attributes dllexport`
+#XFORT := $(XFORT) -diag-error-limit 1
 XFORT := $(XFORT) -stand f$(FS) -warn all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all
 

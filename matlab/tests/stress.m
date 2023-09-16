@@ -134,7 +134,7 @@ redo = true;
 while redo
     exception = [];
     try
-        solver(problem);
+        [a, b, c, d] = solver(problem)
     catch exception
     end
     if isempty(exception) || ~tough_test || ~strcmp(solver_name, 'cobyla')
