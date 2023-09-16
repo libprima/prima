@@ -1,4 +1,4 @@
-name: CMake build
+name: CMake build on Raspberry Pi
 
 on:
   push:
@@ -21,24 +21,13 @@ permissions:
 jobs:
 
   cmake-main:
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, pi]
     continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
         toolchain:
-          - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: intel-classic, version: '2021.9', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
-        include:
-          - os: ubuntu-latest
-            toolchain: {compiler: intel, version: '2023.1', cflags: '', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
-          - os: windows-latest
-            toolchain: {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
-          - os: windows-latest
-            toolchain: {compiler: intel, version: '2023.1', cflags: '', fflags: '/warn:all /debug:extended /fimplicit-none /standard-semantics /assume:recursion'}
-          - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /fimplicit-none /standard-semantics /assume:recursion'}
+          - {compiler: gcc, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
 
     steps:
 
@@ -56,18 +45,6 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
-      - name: Install Ninja / Ubuntu
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: sudo apt update && sudo apt install ninja-build
-      - name: Install Ninja / MacOS
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: brew install ninja
-      - uses: awvwgk/setup-fortran@main
-        id: setup-fortran
-        with:
-          compiler: ${{ matrix.toolchain.compiler }}
-          version: ${{ matrix.toolchain.version }}
-
       - name: Build
         run: |
           cmake --version
@@ -78,21 +55,14 @@ jobs:
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
 
-      - name: Stress test
-        if: ${{ github.event_name == 'schedule' }}
-        run: |
-          cmake --build . --target tests --parallel 4
-          ctest --output-on-failure -V -j4 -R large
-
 
   cmake-other:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ARM64, pi64]
     continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
         toolchain:
-          - {compiler: aflang, cflags: '-Wall', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
           - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk -Mchkptr'}
           - {compiler: flang, cflags: '-Wall', fflags: '-pedantic -Weverything -Wall -Wextra'}
 
@@ -112,18 +82,6 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
-      - name: Install AOCC
-        if: ${{ matrix.toolchain.compiler == 'aflang' }}
-        run: bash .github/scripts/install_aocc
-
-      - name: Install nvfortran
-        if: ${{ matrix.toolchain.compiler == 'nvfortran' }}
-        run: bash .github/scripts/install_nvfortran
-
-      - name: Install Flang
-        if: ${{ matrix.toolchain.compiler == 'flang' }}
-        run: bash .github/scripts/install_flang
-
       - name: Build
         run: |
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
@@ -133,12 +91,6 @@ jobs:
           ctest --output-on-failure -V -j4 -R example -E cobyla
         env:
           FC: ${{ matrix.toolchain.compiler }}
-
-      - name: Stress test
-        if: ${{ github.event_name == 'schedule' }}
-        run: |
-          cmake --build . --target tests --parallel 4
-          ctest --output-on-failure -V -j4 -R large -E cobyla
 
 
   # The following job check whether the tests were successful or cancelled due to timeout.
