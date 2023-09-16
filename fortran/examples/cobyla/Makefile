@@ -58,7 +58,8 @@ ftest: FC := flang -Wall -Wextra -std=f$(FSTD) -Mstandard
 gtest: FC := gfortran -Wall -Wextra -Wno-attributes -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
 
 # Intel ifort
-itest: FC := ifort -warn all -diag-disable:7025,7841 -stand f$(FS)
+#itest: FC := ifort -warn all -diag-disable:7025,7841 -stand f$(FS)
+itest: FC := ifort -warn all -stand f$(FS)
 
 # NAG nagfor
 ntest: FC := nagfor -C -f$(FSTD)
@@ -72,7 +73,8 @@ RFORT := $(shell find -L /opt/arm -type f -executable -name armflang -print 2> /
 rtest: FC := $(RFORT) -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # Intel ifx
-xtest: FC := ifx -warn all -diag-disable:7025,7841 -stand f$(FS)
+#xtest: FC := ifx -warn all -diag-disable:7025,7841 -stand f$(FS)
+xtest: FC := ifx -warn all -stand f$(FS)
 
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test

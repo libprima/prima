@@ -161,7 +161,7 @@ for COMP in $COMP_LIST; do
                     | grep -v "binary\ file\ matches" \
                     | grep -i "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity" \
                     | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|infos.f90\|information\|xhist, info)\|zmat, info)\|--warning\|--error" \
-                    | grep -vi "pedantic-errors\|Werror\|warn\ errors\|diag-error-limit\|colour=error\|rounding\ error\|constraint violation" \
+                    | grep -vi "pedantic-errors\|Werror\|warn\ errors\|diag-error-limit\|colour=error\|rounding\ error\|constraint violation\|default" \
                     | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
                     )"
                 echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity"

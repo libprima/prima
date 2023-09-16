@@ -478,8 +478,8 @@ gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d
 # noold_ldout_format, noold_ldout_zero, noold_maxminloc, noold_unit_star, noold_xor,
 # protect_parens, realloc_lhs1, recursion, std_intent_in, std_minus0_rounding1, std_mod_proc_name,
 # and std_value1.
-IFORT := ifort
-IFORT := $(IFORT) -diag-disable:7025,7841  # avoid complaints about `attributes dllexport`
+IFORT := ifort #-stand f$(FS)
+IFORT := $(IFORT) -diag-disable:5180,7025,7841  # avoid complaints about `attributes dllexport`
 IFORT := $(IFORT) -warn all -debug extended -warn errors -traceback -debug-parameters all #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
@@ -644,8 +644,8 @@ stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d
 	FCF := $(SFORT) -fnonstd $(SFF16) -ftrap=overflow,division
 
 # Intel ifx
-XFORT := ifx
-XFORT := $(XFORT) -diag-disable:7025,7841  # avoid complaints about `attributes dllexport`
+XFORT := ifx #-stand f$(FS)
+XFORT := $(XFORT) -diag-disable:5180,7025,7841  # avoid complaints about `attributes dllexport`
 XFORT := $(XFORT) -warn all -debug extended -warn errors -traceback -debug-parameters all #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
