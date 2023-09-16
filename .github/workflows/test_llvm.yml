@@ -50,7 +50,8 @@ jobs:
 
       - name: Install LLVM
         uses: KyleMayes/install-llvm-action@v1
-        version: "16.0.6"
+        with:
+          version: "16.0.6"
 
       - name: Check Flang
         run: which flang && flang --version
