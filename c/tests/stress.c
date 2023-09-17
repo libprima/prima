@@ -7,11 +7,14 @@
 #include <string.h>
 #include <time.h>
 
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 const int n_max = 2000;
 int n = 0;
 const int m_ineq_max = 1000;
 int m_ineq = 0;
-const int m_nlcon = 10;
+const int m_nlcon = n_max;
+const double alpha = 4.0;
 int debug = 0;
 
 static double random_gen(double a, double b)
@@ -21,10 +24,10 @@ static double random_gen(double a, double b)
 
 static void fun(const double x[], double *f)
 {
-  // min x^T*x
+  // Rosenbrock function
   *f = 0.0;
-  for (int i = 0; i < n; ++ i)
-    *f += x[i]*x[i];
+  for (int i = 0; i < n-1; ++ i)
+    *f += (x[i] - 1.0)^2 + alpha*(x[i+1] - x[i]^2)^2;
 
   static int count = 0;
   if (debug)
@@ -36,13 +39,13 @@ static void fun(const double x[], double *f)
 
 static void fun_con(const double x[], double *f, double constr[])
 {
-  // min x^T*x
+  // Rosenbrock function
   *f = 0.0;
-  for (int i = 0; i < n; ++ i)
-    *f += x[i]*x[i];
-  // x_j^2-x_j<=1
-  for (int j = 0; j < m_nlcon; ++ j)
-    constr[j] = x[j]*x[j] - x[j] - 1.0;
+  for (int i = 0; i < n-1; ++ i)
+    *f += (x[i] - 1.0)^2 + alpha*(x[i+1] - x[i]^2)^2;
+  // x_{i+1} <= x_i^2
+  for (int i = 0; i < MIN(m_nlcon, n-1); ++ i)
+    constr[i] = x[i+1] - x[i]^2;
 
   static int count = 0;
   if (debug)
@@ -100,8 +103,8 @@ int main(int argc, char * argv[])
   {
     for (int j = 0; j < m_ineq; ++ j)
       Aineq[j*n_max+i] = random_gen(-1.0, 1.0);
-    x[i] = 0.0;
-    xl[i] = 0.0;
+    x[i] = random_gen(-1.0, 1.0);
+    xl[i] = -1.0;
     xu[i] = 1.0;
   }
   int nf = 0;

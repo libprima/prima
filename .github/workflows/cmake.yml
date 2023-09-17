@@ -15,7 +15,7 @@ on:
         required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , stress test {1}', inputs.git-ref, inputs.stress-test) || '' }}
 
 
 permissions:
