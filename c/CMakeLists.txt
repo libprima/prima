@@ -17,7 +17,7 @@ if (NOT BUILD_SHARED_LIBS)
   target_compile_definitions(primac PUBLIC PRIMAC_STATIC)
 endif ()
 
-# export symbols
+# Export symbols on Windows. See more comments in fortran/CMakeLists.txt.
 if (WIN32 AND BUILD_SHARED_LIBS)
   target_sources(primac PRIVATE primac.def)
 endif ()
