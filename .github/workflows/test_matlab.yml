@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-latest, windows-2019, windows-latest, macos-11, macos-latest]
-        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, latest]
+        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, latest]
 
         exclude:
 
