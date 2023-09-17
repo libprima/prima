@@ -13,7 +13,7 @@ const int n_max = 2000;
 int n = 0;
 const int m_ineq_max = 1000;
 int m_ineq = 0;
-const int m_nlcon = 2000;
+const int m_nlcon = 200;
 const double alpha = 4.0;
 int debug = 0;
 
@@ -89,7 +89,7 @@ int main(int argc, char * argv[])
   double *Aeq = NULL;
   double *beq = NULL;
   const double rhobeg = 1.0;
-  const double rhoend = 1e-7;
+  const double rhoend = 1e-6;
   const double ftarget = -INFINITY;
   const int iprint = PRIMA_MSG_RHO;
   const int maxfun = 500*n_max;
@@ -116,7 +116,7 @@ int main(int argc, char * argv[])
   else if(strcmp(algo, "cobyla") == 0)
   {
     n = 800;
-    m_ineq = 800;
+    m_ineq = 600;
     rc = prima_cobyla(m_nlcon, &fun_con, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
   }
   else if(strcmp(algo, "lincoa") == 0)
@@ -132,7 +132,7 @@ int main(int argc, char * argv[])
   }
   else if(strcmp(algo, "uobyqa") == 0)
   {
-    n = 160;
+    n = 120;
     rc = prima_uobyqa(&fun, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
   }
   else
