@@ -1,5 +1,5 @@
 function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, probinfo] = preprima(fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options)
-%PREPRIMA preprocesses the input to prima and its solvers.
+%PREPRIMA preprocesses the input to prima.
 %
 %   ***********************************************************************
 %   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)

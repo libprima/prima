@@ -10,6 +10,9 @@ on:
       git-ref:
         description: Git Ref (Optional)
         required: false
+      stress-test:
+        description: Stress Test (Optional, true or false)
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
 run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
@@ -79,7 +82,7 @@ jobs:
           FC: ${{ steps.setup-fortran.outputs.fc }}
 
       - name: Stress test
-        if: ${{ github.event_name == 'schedule' }}
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.stress-test == 'true' }}
         run: |
           cmake --build . --target tests --parallel 4
           ctest --output-on-failure -V -j4 -R large
@@ -135,7 +138,7 @@ jobs:
           FC: ${{ matrix.toolchain.compiler }}
 
       - name: Stress test
-        if: ${{ github.event_name == 'schedule' }}
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.stress-test == 'true' }}
         run: |
           cmake --build . --target tests --parallel 4
           ctest --output-on-failure -V -j4 -R large -E cobyla
