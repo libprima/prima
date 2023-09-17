@@ -13,7 +13,7 @@ const int n_max = 2000;
 int n = 0;
 const int m_ineq_max = 1000;
 int m_ineq = 0;
-const int m_nlcon = n_max;
+const int m_nlcon = 2000;
 const double alpha = 4.0;
 int debug = 0;
 
