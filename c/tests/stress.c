@@ -27,7 +27,7 @@ static void fun(const double x[], double *f)
   // Rosenbrock function
   *f = 0.0;
   for (int i = 0; i < n-1; ++ i)
-    *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]^2) * (x[i+1] - x[i]^2);
+    *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]*x[i]) * (x[i+1] - x[i]*x[i]);
 
   static int count = 0;
   if (debug)
@@ -42,7 +42,7 @@ static void fun_con(const double x[], double *f, double constr[])
   // Rosenbrock function
   *f = 0.0;
   for (int i = 0; i < n-1; ++ i)
-    *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]^2) * (x[i+1] - x[i]^2);
+    *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]*x[i]) * (x[i+1] - x[i]*x[i]);
   // x_{i+1} <= x_i^2
   for (int i = 0; i < MIN(m_nlcon, n-1); ++ i)
     constr[i] = x[i+1] - x[i] * x[i];
