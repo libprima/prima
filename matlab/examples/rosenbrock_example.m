@@ -1,8 +1,12 @@
 function rosenbrock_example()
 %ROSENBROCK_EXAMPLE illustrates how to use prima.
 %
+% N.B.: Make sure that you have installed the package by running the
+% `startup.m` script in the root directory before trying the examples.
+% You only need to do the installation once.
+%
 %   ***********************************************************************
-%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk) 
+%   Authors:    Tom M. RAGONNEAU (tom.ragonneau@connect.polyu.hk)
 %               and Zaikun ZHANG (zaikun.zhang@polyu.edu.hk)
 %               Department of Applied Mathematics,
 %               The Hong Kong Polytechnic University
@@ -10,11 +14,11 @@ function rosenbrock_example()
 %   Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 %   ***********************************************************************
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can be called directly by users)
-% 
+%
 % TODO: None
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 fprintf('\nMinimize the chained Rosenbrock function with three variables subject to various constraints:\n');
 x0 = [0; 0; 0];  % starting point
