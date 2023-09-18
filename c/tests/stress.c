@@ -132,7 +132,7 @@ int main(int argc, char * argv[])
   }
   else if(strcmp(algo, "uobyqa") == 0)
   {
-    n = 120;
+    n = 100;
     rc = prima_uobyqa(&fun, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
   }
   else
