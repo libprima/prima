@@ -47,8 +47,7 @@ if (PRIMA_ENABLE_C)
   set(primac_target "primac")
 endif ()
 
-file (READ VERSION.txt PRIMA_VERSION)
-
+file (STRINGS VERSION.txt PRIMA_VERSION)
 
 install(
     TARGETS primaf ${primac_target}
