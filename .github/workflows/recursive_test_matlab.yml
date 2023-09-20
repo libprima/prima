@@ -16,9 +16,15 @@ on:
       random-seed:
         description: Random Seed (Optional)
         required: false
+      dimension:
+        description: Dimension (Optional)
+        required: false
+      recursion-depth:
+        description: Depth of recursion (Optional)
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}', inputs.git-ref, inputs.random-seed) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}, dimension {3}, recursion depth {4}', inputs.git-ref, inputs.random-seed, inputs.dimension, inputs.recursion-depth) || '' }}
 
 jobs:
   test:
@@ -137,8 +143,16 @@ jobs:
                 copyfile('private/year_week.m', cd());
                 options.seed = year_week('Asia/Shanghai');
             end
-            options.n = 2;
-            options.nr = 1;
+            if ~isempty('${{ inputs.dimension }}')
+                options.n = str2num('${{ inputs.dimension }}');
+            else
+                options.n = 2;
+            end
+            if ~isempty('${{ inputs.recursion-depth }}')
+                options.nr = str2num('${{ inputs.recursion-depth }}');
+            else
+                options.nr = 3;
+            end
             options
             recursive('${{ matrix.solver }}', options);
 
