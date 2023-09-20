@@ -66,6 +66,7 @@ const char *prima_get_rc_string(int rc);
  *
  * x     : on input, then vector of variables (should not be modified)
  * f     : on output, the value of the function
+ *         a NaN value can be passed to signal an evaluation error
  * constr : on output, the value of the constraints (of size m_nlcon)
  *         only for cobyla
 */
