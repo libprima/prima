@@ -138,7 +138,7 @@ jobs:
                 options.seed = year_week('Asia/Shanghai');
             end
             options.n = 2;
-            options.nr = 4;
+            options.nr = 3;
             options
             recursive('${{ matrix.solver }}', options);
 
