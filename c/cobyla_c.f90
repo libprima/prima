@@ -104,14 +104,15 @@ contains
 ! This allows to avoid passing the C function pointer by a module variable, which is thread-unsafe.
 ! A possible security downside is that the compiler must allow for an executable stack.
 !--------------------------------------------------------------------------------------------------!
-subroutine calcfc(x_sub, f_sub, constr_sub)
+subroutine calcfc(x_sub, f_sub, terminate_sub, constr_sub)
 use, non_intrinsic :: consts_mod, only : RP
 use, non_intrinsic :: cintrf_mod, only : evalcobjcon
 implicit none
 real(RP), intent(in) :: x_sub(:)
 real(RP), intent(out) :: f_sub
+logical, intent(out) :: terminate_sub
 real(RP), intent(out) :: constr_sub(:)
-call evalcobjcon(cobjcon_ptr, x_sub, f_sub, constr_sub)
+call evalcobjcon(cobjcon_ptr, x_sub, f_sub, terminate_sub, constr_sub)
 end subroutine calcfc
 
 end subroutine cobyla_c

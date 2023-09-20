@@ -77,6 +77,7 @@ integer(IK) :: maxhist
 integer(IK) :: maxxhist
 integer(IK) :: n
 integer(IK) :: subinfo
+logical :: terminate
 real(RP) :: constr(size(conmat, 1))
 real(RP) :: cstrv
 real(RP) :: f
@@ -132,6 +133,8 @@ simi = eye(n) / rhobeg
 ! EVALUATED(J) = TRUE iff the function/constraint of SIM(:, J) has been evaluated.
 evaluated = .false.
 
+terminate= .false.
+
 ! Initialize XHIST, FHIST, CHIST, CONHIST, FVAL, CVAL, and CONMAT. Otherwise, compilers may complain
 !that they are not (completely) initialized if the initialization aborts due to abnormality (see
 !CHECKEXIT). Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
@@ -153,7 +156,7 @@ do k = 1, n + 1_IK
     else
         j = k - 1_IK
         x(j) = x(j) + rhobeg
-        call evaluate(calcfc, x, f, constr)
+        call evaluate(calcfc, x, f, terminate, constr)
     end if
     cstrv = maxval([ZERO, constr])
 

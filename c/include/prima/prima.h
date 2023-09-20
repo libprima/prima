@@ -70,7 +70,7 @@ const char *prima_get_rc_string(int rc);
  *         only for cobyla
 */
 typedef void (*prima_obj)(const double x[], double *f);
-typedef void (*prima_objcon)(const double x[], double *f, double constr[]);
+typedef void (*prima_objcon)(const double x[], double *f, _Bool *terminate, double constr[]);
 
 /*
  * calfun    : function to minimize (see prima_obj)

@@ -19,17 +19,19 @@ integer, parameter :: RP = kind(0.0D0)
 
 contains
 
-subroutine calcfc_chebyquad(x, f, constr)
+subroutine calcfc_chebyquad(x, f, terminate, constr)
 ! The Chebyquad test problem (Fletcher, 1965)
 implicit none
 
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
+logical, intent(out) :: terminate
 real(RP), intent(out) :: constr(:)
 
 integer :: i, n
 real(RP) :: y(size(x) + 1, size(x) + 1), tmp
 
+terminate = .false.
 n = size(x)
 
 y(1:n, 1) = 1.0_RP
@@ -49,7 +51,7 @@ end do
 constr = 0.0_RP  ! Without this line, compilers may complain that CONSTR is not set.
 end subroutine calcfc_chebyquad
 
-subroutine calcfc_hexagon(x, f, constr)
+subroutine calcfc_hexagon(x, f, terminate, constr)
 ! Test problem 10 (Hexagon area) in Powell's original package.
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
@@ -58,8 +60,10 @@ character(len=*), parameter :: srname = 'CALCFC_HEXAGON'
 real(kind(1.0_RP)), intent(in) :: x(:)
 real(kind(1.0_RP)), intent(out) :: constr(:)
 real(kind(1.0_RP)), intent(out) :: f
+logical, intent(out) :: terminate
 
 call assert(size(x) == 9 .and. size(constr) == 14, 'SIZE(X) == 9, SIZE(CONSTR) == 14', srname)
+terminate = .false.
 
 f = -0.5_RP * (x(1) * x(4) - x(2) * x(3) + x(3) * x(9) - x(5) * x(9) + x(5) * x(8) - x(6) * x(7))
 constr(1) = -1.0_RP + x(3)**2 + x(4)**2

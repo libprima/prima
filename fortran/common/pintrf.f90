@@ -28,11 +28,12 @@ abstract interface
     end subroutine OBJ
 
 
-    subroutine OBJCON(x, f, constr)
+    subroutine OBJCON(x, f, terminate, constr)
     use consts_mod, only : RP
     implicit none
     real(RP), intent(in) :: x(:)
     real(RP), intent(out) :: f
+    logical, intent(out) :: terminate
     real(RP), intent(out) :: constr(:)
     end subroutine OBJCON
 

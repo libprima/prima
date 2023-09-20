@@ -20,12 +20,13 @@ abstract interface
     real(C_DOUBLE), intent(out) :: f
     end subroutine COBJ
 
-    subroutine COBJCON(x, f, constr) bind(c)
-    use, intrinsic :: iso_c_binding, only : C_DOUBLE
+    subroutine COBJCON(x, f, terminate, constr) bind(c)
+    use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_BOOL
     implicit none
     ! We cannot use assumed-shape arrays for C interoperability
     real(C_DOUBLE), intent(in) :: x(*)
     real(C_DOUBLE), intent(out) :: f
+    logical(C_BOOL), intent(out) :: terminate
     real(C_DOUBLE), intent(out) :: constr(*)
     end subroutine COBJCON
 
@@ -61,19 +62,21 @@ f = real(f_loc, kind(f))
 end subroutine evalcobj
 
 
-subroutine evalcobjcon(cobjcon_ptr, x, f, constr)
+subroutine evalcobjcon(cobjcon_ptr, x, f, terminate, constr)
 use, non_intrinsic :: consts_mod, only : RP
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_FUNPTR, C_F_PROCPOINTER
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_FUNPTR, C_F_PROCPOINTER, C_BOOL
 implicit none
 type(C_FUNPTR), intent(in) :: cobjcon_ptr
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
+logical, intent(out) :: terminate
 real(RP), intent(out) :: constr(:)
 
 ! Local variables
 procedure(COBJCON), pointer :: objcon_ptr
 real(C_DOUBLE) :: x_loc(size(x))
 real(C_DOUBLE) :: f_loc
+logical(C_BOOL) :: terminate_loc = .false.
 real(C_DOUBLE) :: constr_loc(size(constr))
 
 ! Read the inputs and convert them to the types specified in COBJCON
@@ -81,10 +84,11 @@ x_loc = real(x, kind(x_loc))
 call C_F_PROCPOINTER(cobjcon_ptr, objcon_ptr)
 
 ! Call the C objective function
-call objcon_ptr(x_loc, f_loc, constr_loc)
+call objcon_ptr(x_loc, f_loc, terminate_loc, constr_loc)
 
 ! Write the output
 f = real(f_loc, kind(f))
+terminate = logical(terminate_loc, kind(terminate))
 constr = real(constr_loc, kind(constr))
 
 end subroutine evalcobjcon

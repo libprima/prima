@@ -37,7 +37,7 @@ static void fun(const double x[], double *f)
   }
 }
 
-static void fun_con(const double x[], double *f, double constr[])
+static void fun_con(const double x[], double *f, _Bool *terminate, double constr[])
 {
   // Rosenbrock function
   *f = 0.0;
@@ -46,6 +46,8 @@ static void fun_con(const double x[], double *f, double constr[])
   // x_{i+1} <= x_i^2
   for (int i = 0; i < MIN(m_nlcon, n-1); ++ i)
     constr[i] = x[i+1] - x[i] * x[i];
+
+  *terminate = 0;
 
   static int count = 0;
   if (debug)

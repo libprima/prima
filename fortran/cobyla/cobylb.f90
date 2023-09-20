@@ -46,7 +46,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING
+use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING, EVALUATION_ERROR
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
@@ -119,6 +119,7 @@ logical :: evaluated(size(x) + 1)
 logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
+logical :: terminate = .false.
 logical :: trfail
 logical :: ximproved
 real(RP) :: A(size(x), size(constr)) ! A contains the approximate gradient for the constraints
@@ -369,7 +370,13 @@ do tr = 1, maxtr
         x = sim(:, n + 1) + d
 
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc_internal, x, f, constr)
+        call evaluate(calcfc_internal, x, f, terminate, constr)
+        
+        if (terminate) then
+            info = EVALUATION_ERROR
+            exit
+        end if
+        
         cstrv = maxval([ZERO, constr])
         nf = nf + 1_IK
 
@@ -537,7 +544,11 @@ do tr = 1, maxtr
         x = sim(:, n + 1) + d
 
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc_internal, x, f, constr)
+        call evaluate(calcfc_internal, x, f, terminate, constr)
+        if (terminate) then
+            info = EVALUATION_ERROR
+            exit
+        end if
         cstrv = maxval([ZERO, constr])
         nf = nf + 1_IK
 
@@ -594,17 +605,21 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     ! Zaikun 20230615: UPDATEXFC or UPDATEPOLE is not called since the last trust-region step. Hence
     ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
     x = sim(:, n + 1) + d
-    call evaluate(calcfc_internal, x, f, constr)
-    cstrv = maxval([ZERO, constr])
-    nf = nf + 1_IK
-    ! Print a message about the function evaluation according to IPRINT.
-    ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
-    ! Print a message about the function/constraint evaluation according to IPRINT.
-    call fmsg(solver, 'Trust region', iprint, nf, rho, f, x, cstrv, constr)
-    ! Save X, F, CONSTR, CSTRV into the history.
-    call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
-    ! Save X, F, CONSTR, CSTRV into the filter.
-    call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
+    call evaluate(calcfc_internal, x, f, terminate, constr)
+    if (terminate) then
+        info = EVALUATION_ERROR
+    else
+        cstrv = maxval([ZERO, constr])
+        nf = nf + 1_IK
+        ! Print a message about the function evaluation according to IPRINT.
+        ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
+        ! Print a message about the function/constraint evaluation according to IPRINT.
+        call fmsg(solver, 'Trust region', iprint, nf, rho, f, x, cstrv, constr)
+        ! Save X, F, CONSTR, CSTRV into the history.
+        call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
+        ! Save X, F, CONSTR, CSTRV into the filter.
+        call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
+    end if
 end if
 
 ! Return the best calculated values of the variables.
@@ -652,7 +667,7 @@ end if
 contains
 
 
-subroutine calcfc_internal(x_internal, f_internal, constr_internal)
+subroutine calcfc_internal(x_internal, f_internal, terminate_internal, constr_internal)
 !--------------------------------------------------------------------------------------------------!
 ! This internal subroutine evaluates the objective function and ALL the constraints.
 ! In MATLAB/Python/R/Julia, this can be implemented as a lambda function / anonymous function.
@@ -662,9 +677,10 @@ implicit none
 real(RP), intent(in) :: x_internal(:)
 ! Outputs
 real(RP), intent(out) :: f_internal
+logical, intent(out) :: terminate_internal
 real(RP), intent(out) :: constr_internal(:)
 constr_internal(1:m_lcon) = matprod(x_internal, amat) - bvec
-call calcfc(x_internal, f_internal, constr_internal(m_lcon + 1:m))
+call calcfc(x_internal, f_internal, terminate_internal, constr_internal(m_lcon + 1:m))
 end subroutine calcfc_internal
 
 end subroutine cobylb

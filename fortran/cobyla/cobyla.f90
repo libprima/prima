@@ -331,6 +331,7 @@ integer(IK) :: nf_loc
 integer(IK) :: nhist
 integer(IK), allocatable :: ixl(:)
 integer(IK), allocatable :: ixu(:)
+logical :: terminate = .false.
 real(RP) :: cstrv_loc
 real(RP) :: ctol_loc
 real(RP) :: cweight_loc
@@ -481,7 +482,7 @@ if (present(f0) .and. present(nlconstr0) .and. all(is_finite(x))) then
     constr_loc(m - m_nlcon + 1:m) = nlconstr0
 else
     x = moderatex(x)
-    call evaluate(calcfc, x, f, constr_loc(m - m_nlcon + 1:m))
+    call evaluate(calcfc, x, f, terminate, constr_loc(m - m_nlcon + 1:m))
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if

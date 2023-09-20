@@ -4,11 +4,12 @@
 #include <stdio.h>
 #include <math.h>
 
-static void fun(const double x[], double *f, double constr[])
+static void fun(const double x[], double *f, _Bool *terminate, double constr[])
 {
   const double x1 = x[0];
   const double x2 = x[1];
   *f = 5*(x1-3)*(x1-3)+7*(x2-2)*(x2-2)+0.1*(x1+x2)-10;
+  *terminate = 0;
   constr[0] = x1*x1 + x2*x2 - 13;// ||x||^2<=13
 }
 

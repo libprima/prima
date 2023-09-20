@@ -148,7 +148,7 @@ end if
 end subroutine evaluatef
 
 
-subroutine evaluatefc(calcfc, x, f, constr)
+subroutine evaluatefc(calcfc, x, f, terminate, constr)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates CALCFC at X, setting F to the objective function value and CONSTR to the
 ! constraint value. Nan/Inf are handled by a moderated extreme barrier.
@@ -166,6 +166,7 @@ real(RP), intent(in) :: x(:)
 
 ! Outputs
 real(RP), intent(out) :: f
+logical, intent(out) :: terminate
 real(RP), intent(out) :: constr(:)
 
 ! Local variables
@@ -188,7 +189,7 @@ if (any(is_nan(x))) then
     f = sum(x)
     constr = f
 else
-    call calcfc(moderatex(x), f, constr)  ! Evaluate F and CONSTR; We moderate X before doing so.
+    call calcfc(moderatex(x), f, terminate, constr)  ! Evaluate F and CONSTR; We moderate X before doing so.
 
     ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
     ! finite value. This is naive, and better approaches surely exist.
