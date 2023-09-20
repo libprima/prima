@@ -6,7 +6,7 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Wednesday, August 02, 2023 PM12:26:13
+! Last Modified: Wednesday, September 20, 2023 PM04:05:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -59,7 +59,7 @@ real(RP), intent(in) :: f
 real(RP) :: y
 
 y = f
-if (is_nan(f)) then
+if (is_nan(y)) then
     y = FUNCMAX
 end if
 y = max(-REALMAX, min(FUNCMAX, y))
