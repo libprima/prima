@@ -22,7 +22,7 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}
 
 jobs:
   test:
-    name: Recursive test of PRIMA on large problems
+    name: Recursive test of PRIMA
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     strategy:
