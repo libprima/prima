@@ -161,8 +161,9 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 - [Tests](https://github.com/sprimalib/prima/actions) at [sprimalib/prima](https://github.com/sprimalib/prima)<a name="stress-tests"></a>
 
-    - [![Stress test on large problems, Fortran](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml)
+    - [![Recursive test, MATLAB](https://github.com/sprimalib/prima/actions/workflows/recursive_test_matlab.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/recursive_test_matlab.yml)
     - [![Stress test on large problems, MATLAB](https://github.com/sprimalib/prima/actions/workflows/stress_test_matlab.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/stress_test_matlab.yml)
+    - [![Stress test on large problems, Fortran](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml)
 
 - [Tests](https://github.com/zequipe/prima/actions) at [zequipe/prima](https://github.com/zequipe/prima)
     - [![Test Flang](https://github.com/zequipe/prima/actions/workflows/test_flang.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_flang.yml)
@@ -300,6 +301,8 @@ of Powell's solver. Inevitably, they suffer from the bugs in the Fortran 77 code
 
      - [BOBYQA gets stuck in infinite loop. #7](https://github.com/cureos/csnumerics/issues/7)
 
+     - [Cobyla turns into infinite loop and never finishes #8](https://github.com/cureos/csnumerics/issues/8)
+
      - [Algorithm turns into infinite loop and never finishes #3](https://github.com/xypron/jcobyla/issues/3)
 
 - The Fortran 77 solvers may **crash** with [segmentation faults](https://en.wikipedia.org/wiki/Segmentation_fault)
@@ -332,7 +335,7 @@ large constraint violation even though the starting point is feasible.
 
 ### Improvements
 
-Due to the improvements introduced into the new implementation, PRIMA outperforms Powell's
+Thanks to the improvements introduced into the new implementation, PRIMA outperforms Powell's
 original code in terms of the **number of function evaluations**, which is the standard performance
 indicator in derivative-free optimization.
 Below are the [performance profiles](https://arxiv.org/pdf/cs/0102001.pdf)

@@ -33,14 +33,16 @@ else
 end
 
 % Set up the solver
-old_directory = pwd();
-cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
-opt.verbose = true;
-opt.debug = true;
-opt.single = strcmpi(precision, 'single');
-opt.quadruple = strcmpi(precision, 'quadruple');
-setup(solver, opt);
-cd(old_directory);
+if ~isfield(options, 'compile') || options.compile
+    old_directory = pwd();
+    cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
+    opt.verbose = true;
+    opt.debug = true;
+    opt.single = strcmpi(precision, 'single');
+    opt.quadruple = strcmpi(precision, 'quadruple');
+    setup(solver, opt);
+    cd(old_directory);
+end
 solver_name = solver;
 solver = str2func(solver);
 
@@ -122,9 +124,9 @@ end
 
 % Conduct the test
 if tough_test
-    fprintf('\n>>>>>> TOUGH test starts <<<<<<\n');
+    fprintf('\n>>>>>> TOUGH test for %s starts <<<<<<\n', solver_name);
 else
-    fprintf('\n>>>>>> Test starts <<<<<<\n');
+    fprintf('\n>>>>>> Test for %s starts <<<<<<\n', solver_name);
 end
 
 tic;
@@ -134,7 +136,7 @@ redo = true;
 while redo
     exception = [];
     try
-        [a, b, c, d] = solver(problem)
+        [x, fx, exitflag, output] = solver(problem)
     catch exception
     end
     if isempty(exception) || ~tough_test || ~strcmp(solver_name, 'cobyla')
@@ -157,9 +159,9 @@ if ~isempty(exception)
 end
 
 if tough_test
-    fprintf('\n>>>>>> TOUGH test ends <<<<<<\n\n');
+    fprintf('\n>>>>>> TOUGH test for %s ends <<<<<<\n', solver_name);
 else
-    fprintf('\n>>>>>> Test ends <<<<<<\n\n');
+    fprintf('\n>>>>>> Test for %s ends <<<<<<\n', solver_name);
 end
 
 

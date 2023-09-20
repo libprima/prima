@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script checks the Fortran code of the solver corresponding to this directory.
-# Usage: mlint [--compiler_name [-all]] or mlint -c|--clean
+# Usage: mlint [--compiler_name [-all]] or mlint --clean
 
 # This test needs the MathWorks fintrf.h. Exit if the file cannot be found.
 FINTRFH=$(locate '/extern/include/fintrf.h' 2>/dev/null | head -n 1)
@@ -13,7 +13,7 @@ fi
 
 # Parse inputs.
 if [[ $# -gt 2 ]] ; then
-    printf "Usage: mlint [--compiler_name [-all]] or mlint -c|--clean\n"
+    printf "Usage: mlint [--compiler_name [-all]] or mlint --clean\n"
     exit 2
 fi
 
