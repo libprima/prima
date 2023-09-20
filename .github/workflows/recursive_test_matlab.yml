@@ -19,12 +19,12 @@ on:
       dimension:
         description: Dimension (Optional)
         required: false
-      recursion-depth:
+      depth:
         description: Depth of recursion (Optional)
         required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}, dimension {2}, recursion depth {3}', inputs.git-ref, inputs.random-seed, inputs.dimension, inputs.recursion-depth) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}, dimension {2}, recursion depth {3}', inputs.git-ref, inputs.random-seed, inputs.dimension, inputs.depth) || '' }}
 
 jobs:
   test:
@@ -148,10 +148,10 @@ jobs:
             else
                 options.n = 2;
             end
-            if ~isempty('${{ inputs.recursion-depth }}')
-                options.nr = str2num('${{ inputs.recursion-depth }}');
+            if ~isempty('${{ inputs.depth }}')
+                options.depth = str2num('${{ inputs.depth }}');
             else
-                options.nr = 3;
+                options.depth = 3;
             end
             options
             recursive('${{ matrix.solver }}', options);

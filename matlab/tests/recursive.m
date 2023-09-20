@@ -12,11 +12,11 @@ else
     n = 2;
 end
 
-% Set the number of recursive calls
-if isfield(options, 'nr')
-    nr = options.nr;
+% Set the recursion depth
+if isfield(options, 'depth')
+    depth = options.depth;
 else
-    nr = 3;
+    depth = 3;
 end
 
 % Set up the solver
@@ -35,7 +35,7 @@ solver = str2func(solver);
 % Define the objective function, which is based on the Rosenbrock function and recursive calls of
 % the solver.
 fun = @chrosen;
-for i = 1 : nr
+for i = 1 : depth
     fun = @(x) rfun(x, fun, solver, n);
 end
 
