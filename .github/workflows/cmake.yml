@@ -76,16 +76,15 @@ jobs:
           cmake --version
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
           cmake --build . --target install --parallel 4
-          cmake --build . --target examples --parallel 4
-          ctest --output-on-failure -V -j4 -R example
+          cmake --build . --target tests --parallel 4
+          ctest --output-on-failure -V -j4 -E stress
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
 
       - name: Stress test
         if: ${{ github.event_name == 'schedule' || github.event.inputs.stress-test == 'true' }}
         run: |
-          cmake --build . --target tests --parallel 4
-          ctest --output-on-failure -V -j4 -R large
+          ctest --output-on-failure -V -j4 -R stress
 
 
   cmake-other:
@@ -131,17 +130,16 @@ jobs:
         run: |
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
           cmake --build . --target install --parallel 4
-          cmake --build . --target examples --parallel 4
+          cmake --build . --target tests --parallel 4
           # cobyla test does not pass on AOCC: https://github.com/libprima/prima/issues/41
-          ctest --output-on-failure -V -j4 -R example -E cobyla
+          ctest --output-on-failure -V -j4 -E "stress|cobyla"
         env:
           FC: ${{ matrix.toolchain.compiler }}
 
       - name: Stress test
         if: ${{ github.event_name == 'schedule' || github.event.inputs.stress-test == 'true' }}
         run: |
-          cmake --build . --target tests --parallel 4
-          ctest --output-on-failure -V -j4 -R large -E cobyla
+          ctest --output-on-failure -V -j4 -R stress -E cobyla
 
 
   # The following job check whether the tests were successful or cancelled due to timeout.

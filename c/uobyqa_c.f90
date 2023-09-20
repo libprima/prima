@@ -12,8 +12,8 @@ public :: uobyqa_c
 contains
 
 
-subroutine uobyqa_c(cobj_ptr, n, x, f, nf, rhobeg, rhoend, ftarget, maxfun, iprint, info) bind(C)
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR
+subroutine uobyqa_c(cobj_ptr, data_ptr, n, x, f, nf, rhobeg, rhoend, ftarget, maxfun, iprint, info) bind(C)
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR
 use, non_intrinsic :: cintrf_mod, only : COBJ
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: uobyqa_mod, only : uobyqa
@@ -21,6 +21,7 @@ implicit none
 
 ! Compulsory arguments
 type(C_FUNPTR), intent(IN), value :: cobj_ptr
+type(C_PTR), intent(in), value :: data_ptr
 integer(C_INT), intent(in), value :: n
 ! We cannot use assumed-shape arrays for C interoperability
 real(C_DOUBLE), intent(inout) :: x(n)
@@ -75,7 +76,7 @@ use, non_intrinsic :: cintrf_mod, only : evalcobj
 implicit none
 real(RP), intent(in) :: x_sub(:)
 real(RP), intent(out) :: f_sub
-call evalcobj(cobj_ptr, x_sub, f_sub)
+call evalcobj(cobj_ptr, data_ptr, x_sub, f_sub)
 end subroutine calfun
 
 end subroutine uobyqa_c

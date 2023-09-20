@@ -4,11 +4,12 @@
 #include <stdio.h>
 #include <math.h>
 
-static void fun(const double x[], double *f)
+static void fun(const double x[], double *f, const void *data)
 {
   const double x1 = x[0];
   const double x2 = x[1];
   *f = 5*(x1-3)*(x1-3)+7*(x2-2)*(x2-2)+0.1*(x1+x2)-10;
+  (void)data;
 }
 
 int main(int argc, char * argv[])
@@ -39,7 +40,8 @@ int main(int argc, char * argv[])
   const int maxfun = 200*n;
   const int npt = 2*n+1;
   int nf = 0;
-  const int rc = prima_lincoa(&fun, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint);
+  void *data = NULL;
+  const int rc = prima_lincoa(&fun, data, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint);
   const char *msg = prima_get_rc_string(rc);
   printf("x*={%g, %g} f*=%g cstrv=%g rc=%d msg='%s' evals=%d\n", x[0], x[1], f, cstrv, rc, msg, nf);
   return (fabs(x[0]-3)>2e-2 || fabs(x[1]-2)>2e-2);
