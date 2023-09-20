@@ -68,7 +68,7 @@ const char *prima_get_rc_string(int rc);
  * f     : on output, the value of the function
  *         a NaN value can be passed to signal an evaluation error
  * constr : on output, the value of the constraints (of size m_nlcon)
- *          a NaN vector can be passed to signal an evaluation error
+ *          NaN values can be passed to signal an evaluation error
  *          only for cobyla
 */
 typedef void (*prima_obj)(const double x[], double *f);
