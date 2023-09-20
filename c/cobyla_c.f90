@@ -12,9 +12,9 @@ public :: cobyla_c
 contains
 
 
-subroutine cobyla_c(m_nlcon, cobjcon_ptr, n, x, f, cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &
+subroutine cobyla_c(m_nlcon, cobjcon_ptr, data_ptr, n, x, f, cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &
     & nf, rhobeg, rhoend, ftarget, maxfun, iprint, info) bind(C)
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR
 use, non_intrinsic :: cintrf_mod, only : COBJCON
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: cobyla_mod, only : cobyla
@@ -23,6 +23,7 @@ implicit none
 ! Compulsory arguments
 integer(C_INT), intent(in), value :: m_nlcon
 type(C_FUNPTR), intent(in), value :: cobjcon_ptr
+type(C_PTR), intent(in), value :: data_ptr
 integer(C_INT), intent(in), value :: n
 ! We cannot use assumed-shape arrays for C interoperability
 real(C_DOUBLE), intent(inout) :: x(n)
@@ -111,7 +112,7 @@ implicit none
 real(RP), intent(in) :: x_sub(:)
 real(RP), intent(out) :: f_sub
 real(RP), intent(out) :: constr_sub(:)
-call evalcobjcon(cobjcon_ptr, x_sub, f_sub, constr_sub)
+call evalcobjcon(cobjcon_ptr, data_ptr, x_sub, f_sub, constr_sub)
 end subroutine calcfc
 
 end subroutine cobyla_c

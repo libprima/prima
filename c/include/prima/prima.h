@@ -67,15 +67,17 @@ const char *prima_get_rc_string(int rc);
  * x     : on input, then vector of variables (should not be modified)
  * f     : on output, the value of the function
  *         a NaN value can be passed to signal an evaluation error
+ * data  : user-data
  * constr : on output, the value of the constraints (of size m_nlcon)
  *          NaN values can be passed to signal evaluation errors
  *          only for cobyla
 */
-typedef void (*prima_obj)(const double x[], double *f);
-typedef void (*prima_objcon)(const double x[], double *f, double constr[]);
+typedef void (*prima_obj)(const double x[], double *f, const void *data);
+typedef void (*prima_objcon)(const double x[], double *f, double constr[], const void *data);
 
 /*
  * calfun    : function to minimize (see prima_obj)
+ * data      : user-data, will be passed through the objective function callback
  * n         : number of variables (>=0)
  * x         : on input, initial estimate
  *             on output, the solution
@@ -104,20 +106,20 @@ typedef void (*prima_objcon)(const double x[], double *f, double constr[]);
  */
 
 PRIMAC_API
-int prima_bobyqa(const prima_obj calfun, const int n, double x[], double *f,
+int prima_bobyqa(const prima_obj calfun, const void *data, const int n, double x[], double *f,
                  const double xl[], const double xu[],
                  int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint);
 
 PRIMAC_API
-int prima_newuoa(const prima_obj calfun, const int n, double x[], double *f,
+int prima_newuoa(const prima_obj calfun, const void *data, const int n, double x[], double *f,
                  int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint);
 
 PRIMAC_API
-int prima_uobyqa(const prima_obj calfun, const int n, double x[], double *f,
+int prima_uobyqa(const prima_obj calfun, const void *data, const int n, double x[], double *f,
                  int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
 
 PRIMAC_API
-int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, double x[], double *f,
+int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const void *data, const int n, double x[], double *f,
                  double *cstrv, double nlconstr[],
                  const int m_ineq, const double Aineq[], const double bineq[],
                  const int m_eq, const double Aeq[], const double beq[],
@@ -125,7 +127,7 @@ int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, doub
                  int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
 
 PRIMAC_API
-int prima_lincoa(const prima_obj calfun, const int n, double x[], double *f,
+int prima_lincoa(const prima_obj calfun, const void *data, const int n, double x[], double *f,
                  double *cstrv,
                  const int m_ineq, const double Aineq[], const double bineq[],
                  const int m_eq, const double Aeq[], const double beq[],

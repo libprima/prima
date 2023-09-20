@@ -12,21 +12,23 @@ public :: COBJ, COBJCON, evalcobj, evalcobjcon
 
 abstract interface
 
-    subroutine COBJ(x, f) bind(c)
-    use, intrinsic :: iso_c_binding, only : C_DOUBLE
+    subroutine COBJ(x, f, data_ptr) bind(c)
+    use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_PTR
     implicit none
     ! We cannot use assumed-shape arrays for C interoperability
     real(C_DOUBLE), intent(in) :: x(*)
     real(C_DOUBLE), intent(out) :: f
+    type(C_PTR), intent(in), value :: data_ptr
     end subroutine COBJ
 
-    subroutine COBJCON(x, f, constr) bind(c)
-    use, intrinsic :: iso_c_binding, only : C_DOUBLE
+    subroutine COBJCON(x, f, constr, data_ptr) bind(c)
+    use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_PTR
     implicit none
     ! We cannot use assumed-shape arrays for C interoperability
     real(C_DOUBLE), intent(in) :: x(*)
     real(C_DOUBLE), intent(out) :: f
     real(C_DOUBLE), intent(out) :: constr(*)
+    type(C_PTR), intent(in), value :: data_ptr
     end subroutine COBJCON
 
 end interface
@@ -35,11 +37,12 @@ end interface
 contains
 
 
-subroutine evalcobj(cobj_ptr, x, f)
+subroutine evalcobj(cobj_ptr, data_ptr, x, f)
 use, non_intrinsic :: consts_mod, only : RP
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_FUNPTR, C_F_PROCPOINTER
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_FUNPTR, C_F_PROCPOINTER, C_PTR
 implicit none
 type(C_FUNPTR), intent(in) :: cobj_ptr
+type(C_PTR), intent(in), value :: data_ptr
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
 
@@ -53,7 +56,7 @@ x_loc = real(x, kind(x_loc))
 call C_F_PROCPOINTER(cobj_ptr, obj_ptr)
 
 ! Call the C objective function
-call obj_ptr(x_loc, f_loc)
+call obj_ptr(x_loc, f_loc, data_ptr)
 
 ! Write the output
 f = real(f_loc, kind(f))
@@ -61,11 +64,12 @@ f = real(f_loc, kind(f))
 end subroutine evalcobj
 
 
-subroutine evalcobjcon(cobjcon_ptr, x, f, constr)
+subroutine evalcobjcon(cobjcon_ptr, data_ptr, x, f, constr)
 use, non_intrinsic :: consts_mod, only : RP
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_FUNPTR, C_F_PROCPOINTER
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_FUNPTR, C_F_PROCPOINTER, C_PTR
 implicit none
 type(C_FUNPTR), intent(in) :: cobjcon_ptr
+type(C_PTR), intent(in), value :: data_ptr
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
 real(RP), intent(out) :: constr(:)
@@ -81,7 +85,7 @@ x_loc = real(x, kind(x_loc))
 call C_F_PROCPOINTER(cobjcon_ptr, objcon_ptr)
 
 ! Call the C objective function
-call objcon_ptr(x_loc, f_loc, constr_loc)
+call objcon_ptr(x_loc, f_loc, constr_loc, data_ptr)
 
 ! Write the output
 f = real(f_loc, kind(f))
