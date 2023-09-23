@@ -63,6 +63,7 @@ target_compile_definitions (primaf PUBLIC "PRIMA_INTEGER_KIND=${PRIMA_INTEGER_KI
 set_target_properties(primaf PROPERTIES
   POSITION_INDEPENDENT_CODE ON
   Fortran_MODULE_DIRECTORY mod)
+target_include_directories (primaf PRIVATE common)
 target_include_directories (primaf PUBLIC
   $<INSTALL_INTERFACE:include/prima/mod>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
