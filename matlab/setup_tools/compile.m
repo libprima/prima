@@ -180,6 +180,8 @@ for isol = 1 : length(solvers)
                 else
                     evalc('mex(mex_options{:}, obj_files{:}, gateway, ''-output'', mexname, ''-outdir'', mexdir)');  % Suppress the output.
                 end
+                % On macOS, .o files are produced in `mexdir`. Remove them.
+                cellfun(@(filename) delete(filename), list_modo_files(mexdir));
             end
         end
     end

@@ -24,8 +24,11 @@ if ~isfield(options, 'compile') || options.compile
     old_directory = pwd();
     cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
     opt = struct();
-    opt.verbose = true;
+    opt.verbose = false;
     opt.debug = true;
+    opt.debug_only = true;
+    opt.classical = false;
+    opt.single = false;
     setup(solver, opt);
     cd(old_directory);
 end
