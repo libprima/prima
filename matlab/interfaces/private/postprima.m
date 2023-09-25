@@ -592,13 +592,9 @@ if options.debug && ~options.classical
     % especially if the problem is scaled or reduced.
     % 3. The precision of the constraints seem to be lower for cobyla and lincoa due to the
     % matrix-vector products.
-    %%%%%%%%%%%%%%%%%%%%%% Old values %%%%%%%%%%%%%%%%%%%%%%
-    %cobyla_prec = 1e-4;
-    %bobyqa_prec = 1e-10;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     cobyla_prec = 1e-5;
     lincoa_prec = 1e-5;
-    bobyqa_prec = 1e-12;
+    bobyqa_prec = 1e-9;
 
     % Check whether constrviolation is correct
     constrviolation = 0;

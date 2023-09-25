@@ -1,3 +1,65 @@
+module hilbert_mod
+implicit none
+private
+public :: hilbert
+
+contains
+
+function hilbert(m, n) result(H)
+use, non_intrinsic :: consts_mod, only : RP, IK
+implicit none
+integer(IK), intent(in) :: m
+integer(IK), intent(in) :: n
+real(RP) :: H(m, n)
+integer(IK) :: i, j
+do j = 1, n
+    do i = 1, m
+        H(i, j) = 1.0_RP / (i + j - 1.0_RP)
+    end do
+end do
+end function hilbert
+
+end module hilbert_mod
+
+
+module recursive_mod
+implicit none
+private
+public :: recursive_fun1
+
+contains
+
+subroutine chrosen(x, f)
+use, non_intrinsic :: consts_mod, only : RP
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+integer :: n
+real(RP), parameter :: alpha = 4.0_RP
+n = size(x)
+f = sum((x(1:n - 1) - 1.0_RP)**2 + alpha * (x(2:n) - x(1:n - 1)**2)**2); 
+end subroutine chrosen
+
+subroutine recursive_fun1(x, f)
+use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: hilbert_mod, only : hilbert
+use, non_intrinsic :: lincoa_mod, only : lincoa
+use, non_intrinsic :: rand_mod, only : randn
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+real(RP) :: Aineq(2 * size(x), size(x))
+real(RP) :: bineq(2 * size(x))
+real(RP) :: x_loc(size(x))
+Aineq = hilbert(int(size(Aineq, 1), IK), int(size(Aineq, 2), IK))
+bineq = 1.0_RP
+x_loc = x
+call lincoa(chrosen, x_loc, f, Aineq=Aineq, bineq=bineq)
+end subroutine recursive_fun1
+
+end module recursive_mod
+
+
 module test_solver_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module tests LINCOA on a few simple problems.
@@ -6,7 +68,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, July 18, 2023 AM11:14:27
+! Last Modified: Monday, September 25, 2023 PM10:26:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -21,6 +83,7 @@ subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed, testdi
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
 use, non_intrinsic :: debug_mod, only : validate
+use, non_intrinsic :: hilbert_mod, only : hilbert
 use, non_intrinsic :: infnan_mod, only : is_neginf
 use, non_intrinsic :: lincoa_mod, only : lincoa
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -329,6 +392,33 @@ else
     end do
 end if
 
+
+! The depth of the recursion is 2. The first recursion is in RECURSIVE_FUN1, and the second is in
+! RECURSIVE_FUN2. RECURSIVE_FUN1(Y) is defined by minimizing the CHROSEN function subject to
+! Aineq * X <= Bineq with Y being the starting point. RECURSIVE_FUN2(Y) is defined by
+! RECURSIVE_FUN1 in a similar way. Note that RECURSIVE_FUN1 is essentially a constant function.
+n = 3_IK
+print'(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
+call safealloc(Aineq, 2_IK * n, n)
+Aineq = hilbert(int(size(Aineq, 1), IK), int(size(Aineq, 2), IK))
+call safealloc(bineq, 2_IK * n)
+bineq = 1.0_RP
+call safealloc(x, n)
+x = randn(n)
+call lincoa(recursive_fun2, x, f, Aineq=Aineq, bineq=bineq, iprint=2_IK)
+deallocate (Aineq, bineq, x)
+
+contains
+
+subroutine recursive_fun2(x_internal, f_internal)
+use recursive_mod, only : recursive_fun1
+implicit none
+real(RP), intent(in) :: x_internal(:)
+real(RP), intent(out) :: f_internal
+real(RP) :: x_loc(size(x_internal))
+x_loc = x_internal
+call lincoa(recursive_fun1, x_loc, f_internal, Aineq=Aineq, bineq=bineq)
+end subroutine recursive_fun2
 
 end subroutine test_solver
 
