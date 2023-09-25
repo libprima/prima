@@ -76,17 +76,15 @@ class Result:
     n_fev: int
 
 
-def _convert_bounds(bounds, n):
+def _convert_bounds(xl, xu, n):
     """
     xl, xu : sequence or float
     n : int
     """
-    if bounds is None:
+    if xl is None:
         xl = [-sys.float_info.max] * n
+    if xu is None:
         xu = [sys.float_info.max] * n
-    else:
-        xl = bounds.lb
-        xu = bounds.ub
     assert len(xl) == n
     assert len(xu) == n
     c_xl = (ct.c_double * n)(*xl)
@@ -94,7 +92,7 @@ def _convert_bounds(bounds, n):
     return c_xl, c_xu
 
 
-def bobyqa(fun, x0, args=(), bounds=None,
+def bobyqa(fun, x0, args=(), xl=None, xu=None,
            rhobeg=1.0, rhoend=1e-3,
            ftarget=float('-inf'), maxfun=1000, iprint=0):
     """
@@ -108,8 +106,8 @@ def bobyqa(fun, x0, args=(), bounds=None,
         starting point
     args : tuple, optional
         Extra arguments passed to the objective function
-    bounds, scipy.optimize.Bounds
-        Bounds on variables
+    xl, xu : sequence of float
+        Lower/upper x bounds
     rhobeg, rhoend : float, optional
         trust region radius
     ftarget : float, optional
@@ -130,7 +128,7 @@ def bobyqa(fun, x0, args=(), bounds=None,
     cn = ct.c_int(n)
     c_x = (ct.c_double * n)(*x0)
     c_f = ct.pointer(ct.c_double())
-    c_xl, c_xu = _convert_bounds(bounds, n)
+    c_xl, c_xu = _convert_bounds(xl, xu, n)
     c_nf = ct.pointer(ct.c_int())
     c_rhobeg = ct.c_double(rhobeg)
     c_rhoend = ct.c_double(rhoend)
@@ -157,7 +155,7 @@ def bobyqa(fun, x0, args=(), bounds=None,
 
 
 def cobyla(fun, x0, f_con, m_nlcon, args=(),
-           Aineq=[], bineq=[], Aeq=[], beq=[], bounds=None,
+           Aineq=[], bineq=[], Aeq=[], beq=[], xl=None, xu=None,
            rhobeg=1.0, rhoend=1e-3,
            ftarget=float('-inf'), maxfun=1000, iprint=0):
     """
@@ -179,8 +177,8 @@ def cobyla(fun, x0, f_con, m_nlcon, args=(),
         Inequality constraints Aineq*x<=bineq
     Aeq, beq : 2-d/1-d arrays of float
         Equality constraints Aeq*x=beq
-    bounds, scipy.optimize.Bounds
-        Bounds on variables
+    xl, xu : sequence of float
+        Lower/upper x bounds
     rhobeg, rhoend : float, optional
         trust region radius
     ftarget : float, optional
@@ -221,7 +219,7 @@ def cobyla(fun, x0, f_con, m_nlcon, args=(),
     assert len(Aeq) == n * m_eq
     c_Aeq = (ct.c_double * (m_eq * n))(*Aeq)
     c_beq = (ct.c_double * n)(*beq)
-    c_xl, c_xu = _convert_bounds(bounds, n)
+    c_xl, c_xu = _convert_bounds(xl, xu, n)
     c_nf = ct.pointer(ct.c_int())
     c_rhobeg = ct.c_double(rhobeg)
     c_rhoend = ct.c_double(rhoend)
@@ -361,7 +359,7 @@ def uobyqa(fun, x0, args=(), rhobeg=1.0, rhoend=1e-3,
 
 
 def lincoa(fun, x0, args=(), Aineq=[], bineq=[], Aeq=[], beq=[],
-           bounds=None, rhobeg=1.0, rhoend=1e-3,
+           xl=None, xu=None, rhobeg=1.0, rhoend=1e-3,
            ftarget=float('-inf'), maxfun=1000, iprint=0):
     """
     LINCOA solver.
@@ -378,8 +376,8 @@ def lincoa(fun, x0, args=(), Aineq=[], bineq=[], Aeq=[], beq=[],
         Inequality constraints Aineq*x<=bineq
     Aeq, beq : 2-d/1-d arrays of float
         Equality constraints Aeq*x=beq
-    bounds, scipy.optimize.Bounds
-        Bounds on variables
+    xl, xu : sequence of float
+        Lower/upper x bounds
     rhobeg, rhoend : float, optional
         trust region radius
     ftarget : float, optional
@@ -415,7 +413,7 @@ def lincoa(fun, x0, args=(), Aineq=[], bineq=[], Aeq=[], beq=[],
     assert len(Aeq) == n * m_eq
     c_Aeq = (ct.c_double * (m_eq * n))(*Aeq)
     c_beq = (ct.c_double * n)(*beq)
-    c_xl, c_xu = _convert_bounds(bounds, n)
+    c_xl, c_xu = _convert_bounds(xl, xu, n)
     c_nf = ct.pointer(ct.c_int())
     c_rhobeg = ct.c_double(rhobeg)
     c_rhoend = ct.c_double(rhoend)

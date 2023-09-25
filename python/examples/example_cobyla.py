@@ -1,5 +1,4 @@
 import prima
-from scipy.optimize import Bounds
 
 def fun(x):
     x1, x2 = x
@@ -17,7 +16,7 @@ def f_con(x):
 x0 = [0.0] * 2
 xl = [-6.0] * 2
 xu = [6.0] * 2
-bounds = Bounds(xl, xu)
-res = prima.cobyla(fun, x0, f_con, 1, bounds=bounds)
+
+res = prima.cobyla(fun, x0, f_con, 1, xl=xl, xu=xu)
 print(res)
 assert abs(res.x[0] - 3.0) < 2e-1 and abs(res.x[1] - 2.0) < 2e-1

@@ -1,12 +1,12 @@
 
 find_package (Python 3.6 COMPONENTS Interpreter)
 
-execute_process(COMMAND ${Python_EXECUTABLE} -c "import scipy" RESULT_VARIABLE _IMPORT_SCIPY ERROR_QUIET)
-if (NOT _IMPORT_SCIPY EQUAL 0)
-  message(STATUS "scipy: NOT FOUND, not installing/testing Python bindings")
+execute_process(COMMAND ${Python_EXECUTABLE} -c "import numpy" RESULT_VARIABLE _IMPORT_NUMPY ERROR_QUIET)
+if (NOT _IMPORT_NUMPY EQUAL 0)
+  message(STATUS "numpy: NOT FOUND, not installing/testing Python bindings")
 endif ()
 
-if (Python_FOUND AND BUILD_SHARED_LIBS AND PRIMA_ENABLE_C AND (_IMPORT_SCIPY EQUAL 0))
+if (Python_FOUND AND BUILD_SHARED_LIBS AND PRIMA_ENABLE_C AND (_IMPORT_NUMPY EQUAL 0))
 
   if (WIN32)
     set (PYTHON_SITE_PACKAGES Lib/site-packages)
