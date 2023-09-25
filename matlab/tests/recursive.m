@@ -63,6 +63,7 @@ fprintf('\n>>>>>> Recursive test for %s starts <<<<<<\n', solver_name);
 % Call the solver
 opt = struct();
 opt.iprint = 3;
+opt.debug = true;
 [x, fx, exitflag, output] = solver(fun, randn(n, 1), opt)
 
 fprintf('\n>>>>>> Recursive test for %s ends <<<<<<\n', solver_name);
@@ -77,5 +78,6 @@ return
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function f = rfun(x, fun, solver, n)
 %RFUN defines a function of x by minimizing fun([x; y]) with respect to y in R^n using a solver.
-[~, f] = solver(@(y) fun([x; y]), randn(n, 1));
+opt.debug = true;
+[~, f] = solver(@(y) fun([x; y]), randn(n, 1), opt);
 return
