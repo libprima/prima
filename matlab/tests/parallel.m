@@ -58,15 +58,19 @@ opt = struct();
 opt.iprint = 1;
 opt.debug = true;
 opt.rhoend = 1.0e-6;
-opt.maxeval = 500*n;
+opt.maxfun = 500*n;
 
 parfor i = 1:np
     fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
     rng(random_seed + i);
     shift = randn(n, 1);
     fun = @(x) chrosen(x + shift);
-    [x, fx, exitflag, output] = solver(fun, randn(n, 1), opt)
-    assert(fx < 1.0e-5, 'The objective value is not small enough.')
+    x0 = randn(n, 1);
+    [~, g0] = chrosen(x0 + shift);
+    [x, fx, exitflag, output] = solver(fun, x0, opt)
+    [~, gx] = chrosen(x + shift);
+    norm(gx) / norm(g0)
+    assert(norm(gx) < 1.0e-5 * norm(g0), 'X is close to stationary.')
 end
 
 fprintf('\n>>>>>> Parallel test for %s ends <<<<<<\n', solver_name);
