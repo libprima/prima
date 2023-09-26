@@ -57,11 +57,16 @@ fprintf('\n>>>>>> Parallel test for %s starts <<<<<<\n', solver_name);
 opt = struct();
 opt.iprint = 1;
 opt.debug = true;
+opt.rhoend = 1.0e-6;
+opt.maxeval = 500*n;
 
 parfor i = 1:np
     fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
     rng(random_seed + i);
-    [x, fx, exitflag, output] = solver(@chrosen, randn(n, 1), opt)
+    shift = randn(n, 1);
+    fun = @(x) chrosen(x + shift);
+    [x, fx, exitflag, output] = solver(fun, randn(n, 1), opt)
+    assert(fx < 1.0e-5, 'The objective value is not small enough.')
 end
 
 fprintf('\n>>>>>> Parallel test for %s ends <<<<<<\n', solver_name);
