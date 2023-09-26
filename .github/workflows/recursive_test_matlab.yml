@@ -154,6 +154,10 @@ jobs:
                 options.depth = 3;
             end
             options
+            % Conduct the test multiple times, in case some errors occur not during the first time but later.
+            recursive('${{ matrix.solver }}', options);
+            options.compile = false
+            recursive('${{ matrix.solver }}', options);
             recursive('${{ matrix.solver }}', options);
 
 

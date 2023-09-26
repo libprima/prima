@@ -154,6 +154,10 @@ jobs:
                 options.np = 100;
             end
             options
+            % Conduct the test multiple times. Some errors may not occur during the first test.
+            parallel('${{ matrix.solver }}', options);
+            options.compile = false;
+            parallel('${{ matrix.solver }}', options);
             parallel('${{ matrix.solver }}', options);
 
 

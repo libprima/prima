@@ -64,6 +64,9 @@ fprintf('\n>>>>>> Recursive test for %s starts <<<<<<\n', solver_name);
 opt = struct();
 opt.iprint = 3;
 opt.debug = true;
+
+% We call the solver two times, in case something does not finish correctly during the first run.
+[x, fx, exitflag, output] = solver(fun, randn(n, 1), opt)
 [x, fx, exitflag, output] = solver(fun, randn(n, 1), opt)
 
 fprintf('\n>>>>>> Recursive test for %s ends <<<<<<\n', solver_name);

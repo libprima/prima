@@ -60,17 +60,20 @@ opt.debug = true;
 opt.rhoend = 1.0e-6;
 opt.maxfun = 500*n;
 
-parfor i = 1:np
-    fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
-    rng(random_seed + i);
-    shift = randn(n, 1);
-    fun = @(x) chrosen(x + shift);
-    x0 = randn(n, 1);
-    [~, g0] = chrosen(x0 + shift);
-    [x, fx, exitflag, output] = solver(fun, x0, opt)
-    [~, gx] = chrosen(x + shift);
-    norm(gx) / norm(g0)
-    assert(norm(gx) < 1.0e-5 * norm(g0), 'X is close to stationary.')
+% We conduct two parallel tests, in case something does not finish correctly during the first run.
+for i = 1 : 2
+    parfor i = 1:np
+        fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
+        rng(random_seed + i);
+        shift = randn(n, 1);
+        fun = @(x) chrosen(x + shift);
+        x0 = randn(n, 1);
+        [~, g0] = chrosen(x0 + shift);
+        [x, fx, exitflag, output] = solver(fun, x0, opt)
+        [~, gx] = chrosen(x + shift);
+        norm(gx) / norm(g0)
+        assert(norm(gx) < 1.0e-5 * norm(g0), 'X is close to stationary.')
+    end
 end
 
 fprintf('\n>>>>>> Parallel test for %s ends <<<<<<\n', solver_name);
