@@ -6,7 +6,7 @@ on:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 12 * * *'
+    - cron: '0 16 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
     inputs:

@@ -48,7 +48,6 @@ fprintf('\nYW = %d\n', yw);
 % Define the random seed by yw
 random_seed = yw;
 orig_rng_state = rng();  % Save the current random number generator settings
-rng(random_seed);
 
 % Conduct the test
 tic;
@@ -56,11 +55,12 @@ fprintf('\n>>>>>> Parallel test for %s starts <<<<<<\n', solver_name);
 
 % Call the solver
 opt = struct();
-opt.iprint = 2;
+opt.iprint = 1;
 opt.debug = true;
 
 parfor i = 1:np
     fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
+    rng(random_seed + i);
     [x, fx, exitflag, output] = solver(@chrosen, randn(n, 1), opt)
 end
 
