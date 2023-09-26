@@ -26,6 +26,8 @@ warnings = {}; % A cell that records all the warnings, will be recorded in probi
 
 % Who is calling this function? Is it a correct invoker?
 invoker_list = [all_solvers(), 'prima'];
+% Sometimes a .m is appended to the invoker name. Observed 20230926 on macOS with MATLAB R2022b.
+invoker_list = [invoker_list, strcat(invoker_list, '.m')];
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
@@ -380,6 +382,8 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, options, warnings] =
 
 % Possible invokers
 invoker_list = [all_solvers(), 'prima'];
+% Sometimes a .m is appended to the invoker name. Observed 20230926 on macOS with MATLAB R2022b.
+invoker_list = [invoker_list, strcat(invoker_list, '.m')];
 
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
@@ -877,6 +881,8 @@ solver_list = all_solvers();
 
 % Possible invokers
 invoker_list = [solver_list, 'prima'];
+% Sometimes a .m is appended to the invoker name. Observed 20230926 on macOS with MATLAB R2022b.
+invoker_list = [invoker_list, strcat(invoker_list, '.m')];
 
 callstack = dbstack;
 funname = callstack(1).name;
@@ -1763,6 +1769,8 @@ return
 function [options, warnings] = select_solver(invoker, options, probinfo, warnings)
 
 invoker_list = {'prima'};
+% Sometimes a .m is appended to the invoker name. Observed 20230926 on macOS with MATLAB R2022b.
+invoker_list = [invoker_list, strcat(invoker_list, '.m')];
 % Only prima needs select_solver. We may have other invokers in the future!
 solver_list = all_solvers();
 % We may add other solvers in the future!

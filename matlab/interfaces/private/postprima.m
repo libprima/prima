@@ -44,7 +44,9 @@ obligatory_probinfo_fields = {'raw_data', 'refined_data', 'fixedx', 'fixedx_valu
 obligatory_options_fields = {'classical', 'debug', 'chkfunval', 'precision'};
 
 % Who is calling this function? Is it a correct invoker?
-invoker_list = ['prima', all_solvers()];
+invoker_list = [all_solvers(), 'prima'];
+% Sometimes a .m is appended to the invoker name. Observed 20230926 on macOS with MATLAB R2022b.
+invoker_list = [invoker_list, strcat(invoker_list, '.m')];
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 if (length(callstack) == 1) || ~ismember(callstack(2).name, invoker_list)
