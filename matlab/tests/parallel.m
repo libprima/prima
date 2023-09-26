@@ -59,8 +59,8 @@ opt = struct();
 opt.iprint = 2;
 opt.debug = true;
 
-for i = 1:np
-    fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i)
+parfor i = 1:np
+    fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
     [x, fx, exitflag, output] = solver(@chrosen, randn(n, 1), opt)
 end
 
