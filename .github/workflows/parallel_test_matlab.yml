@@ -1,0 +1,175 @@
+name: Parallel test, MATLAB
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 12 * * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
+      random-seed:
+        description: Random Seed (Optional)
+        required: false
+      dimension:
+        description: Dimension (Optional)
+        required: false
+      np:
+        description: Number of Parallel Calls (Optional)
+        required: false
+
+# Show the git ref in the workflow name if it is invoked manually.
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}, dimension {2}, {3} parallel calls', inputs.git-ref, inputs.random-seed, inputs.dimension, inputs.np) || '' }}
+
+jobs:
+  test:
+    name: Parallel test of PRIMA
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-20.04, macos-11, windows-2019]
+        matlab: [latest, R2020b, R2021a, R2022a, R2023a]
+        solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
+
+        # Exclude some versions of OS and MATLAB. In addition to the latest versions, we intend to
+        # test the earliest version of MATLAB on each OS.
+        exclude:
+          - os: ubuntu-latest
+            matlab: R2020b
+          - os: ubuntu-latest
+            matlab: R2021a
+          - os: ubuntu-latest
+            matlab: R2022a
+          - os: ubuntu-20.04
+            matlab: R2021a
+          - os: ubuntu-20.04
+            matlab: R2022a
+          - os: ubuntu-20.04
+            matlab: latest
+
+          - os: macos-latest
+            matlab: R2020b
+          - os: macos-latest
+            matlab: R2021a
+          - os: macos-latest
+            matlab: R2022a
+          - os: macos-11
+            matlab: R2020b
+          - os: macos-11
+            matlab: R2021a
+          - os: macos-11
+            matlab: latest
+
+          - os: windows-latest
+            matlab: R2020b
+          - os: windows-latest
+            matlab: R2021a
+          - os: windows-latest
+            matlab: R2022a
+          - os: windows-2019
+            matlab: R2020b
+          - os: windows-2019
+            matlab: R2022a
+          - os: windows-2019
+            matlab: latest
+
+
+    steps:
+
+      - name: Clone Repository (Latest)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref == ''
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+      - name: Clone Repository (Custom Ref)
+        uses: actions/checkout@v4
+        if: github.event.inputs.git-ref != ''
+        with:
+          ref: ${{ github.event.inputs.git-ref }}
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          submodules: recursive
+
+      - name: Link gfortran for MATLAB on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          GFVER=12
+          if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
+              GFVER=11
+          fi
+          if [[ "${{ matrix.matlab }}" = "R2020b" || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" = "R2021b" ]] ; then
+              GFVER=9
+          fi
+          bash .github/scripts/link_gfortran "$GFVER"
+
+      - name: Install Intel oneAPI on macOS
+        if: startsWith(matrix.os, 'macos')
+        run: bash .github/scripts/install_oneapi_macos.sh
+
+      - name: Install Intel oneAPI on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'
+
+      - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
+        uses: actions/cache@v3.3.2
+        with:
+          path: ${{ runner.tool_cache }}/MATLAB
+          key: ${{ matrix.os }}-${{ matrix.matlab }}-yes
+
+      - name: Set up MATLAB with optimization toolbox
+        uses: matlab-actions/setup-matlab@v2-beta
+        with:
+          release: ${{ matrix.matlab }}
+          products: Optimization_Toolbox
+
+      - name: Conduct the test
+        uses: matlab-actions/run-command@v1.2.1
+        with:
+          command: |
+            ver;
+            root_dir = pwd();
+            cd(fullfile(root_dir, 'matlab/tests'));
+            options = struct();
+            if ~isempty('${{ inputs.random-seed }}')
+                options.seed = str2num('${{ inputs.random-seed }}');
+            else
+                copyfile('private/year_week.m', cd());
+                options.seed = year_week('Asia/Shanghai');
+            end
+            if ~isempty('${{ inputs.dimension }}')
+                options.n = str2num('${{ inputs.dimension }}');
+            else
+                options.n = 10;
+            end
+            if ~isempty('${{ inputs.np }}')
+                options.np = str2num('${{ inputs.np }}');
+            else
+                options.np = 100;
+            end
+            options
+            parallel('${{ matrix.solver }}', options);
+
+
+  # The following job check whether the tests were successful or cancelled due to timeout.
+  # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.
+  check_success_timeout:
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() }}
+    needs: test
+    steps:
+      - name: Clone the GitHub actions scripts
+        uses: actions/checkout@v4
+        with:
+          repository: equipez/github_actions_scripts
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          path: scripts
+
+      - name: Check whether the tests were successful or cancelled due to timeout
+        run: bash scripts/check_success_timeout ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}

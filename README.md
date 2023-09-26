@@ -161,6 +161,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 - [Tests](https://github.com/sprimalib/prima/actions) at [sprimalib/prima](https://github.com/sprimalib/prima)<a name="stress-tests"></a>
 
+    - [![Parallel test, MATLAB](https://github.com/sprimalib/prima/actions/workflows/parallel_test_matlab.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/parallel_test_matlab.yml)
     - [![Recursive test, MATLAB](https://github.com/sprimalib/prima/actions/workflows/recursive_test_matlab.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/recursive_test_matlab.yml)
     - [![Stress test on large problems, MATLAB](https://github.com/sprimalib/prima/actions/workflows/stress_test_matlab.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/stress_test_matlab.yml)
     - [![Stress test on large problems, Fortran](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml)
