@@ -9,7 +9,7 @@ end
 if isfield(options, 'n')
     n = options.n;
 else
-    n = 10;
+    n = 100;
 end
 
 % Set the number of parallel runs
@@ -49,6 +49,10 @@ fprintf('\nYW = %d\n', yw);
 random_seed = yw;
 orig_rng_state = rng();  % Save the current random number generator settings
 
+% Turn off the warning about the debug mode.
+orig_warning_state = warning;
+warning('off', [solver_name, ':Debug']);
+
 % Conduct the test
 tic;
 fprintf('\n>>>>>> Parallel test for %s starts <<<<<<\n', solver_name);
@@ -57,8 +61,8 @@ fprintf('\n>>>>>> Parallel test for %s starts <<<<<<\n', solver_name);
 opt = struct();
 opt.iprint = 1;
 opt.debug = true;
-opt.rhoend = 1.0e-6;
-opt.maxfun = 500*n;
+opt.rhoend = 1.0e-3;
+opt.maxfun = min(100*n, 1e4);
 
 % We conduct two parallel tests, in case something does not finish correctly during the first run.
 for i = 1 : 2
@@ -81,5 +85,7 @@ toc;
 
 % Restore the random number generator state
 rng(orig_rng_state);
+% Restore the warning state
+warning(orig_warning_state);
 
 return

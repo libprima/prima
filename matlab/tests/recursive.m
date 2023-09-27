@@ -9,7 +9,7 @@ end
 if isfield(options, 'n')
     n = options.n;
 else
-    n = 2;
+    n = 50;
 end
 
 % Set the recursion depth
@@ -56,6 +56,10 @@ random_seed = yw;
 orig_rng_state = rng();  % Save the current random number generator settings
 rng(random_seed);
 
+% Turn off the warning about the debug mode.
+orig_warning_state = warning;
+warning('off', [solver_name, ':Debug']);
+
 % Conduct the test
 tic;
 fprintf('\n>>>>>> Recursive test for %s starts <<<<<<\n', solver_name);
@@ -64,6 +68,8 @@ fprintf('\n>>>>>> Recursive test for %s starts <<<<<<\n', solver_name);
 opt = struct();
 opt.iprint = 3;
 opt.debug = true;
+opt.rhoend = 1.0e-2;
+opt.maxfun = min(100*n, 5e3);
 
 % We call the solver two times, in case something does not finish correctly during the first run.
 [x, fx, exitflag, output] = solver(fun, randn(n, 1), opt)
@@ -74,6 +80,8 @@ toc;
 
 % Restore the random number generator state
 rng(orig_rng_state);
+% Restore the warning state
+warning(orig_warning_state);
 
 return
 
@@ -82,5 +90,7 @@ return
 function f = rfun(x, fun, solver, n)
 %RFUN defines a function of x by minimizing fun([x; y]) with respect to y in R^n using a solver.
 opt.debug = true;
+opt.rhoend = 1.0e-2;
+opt.maxfun = min(100*n, 5e3);
 [~, f] = solver(@(y) fun([x; y]), randn(n, 1), opt);
 return

@@ -146,7 +146,7 @@ jobs:
             if ~isempty('${{ inputs.dimension }}')
                 options.n = str2num('${{ inputs.dimension }}');
             else
-                options.n = 2;
+                options.n = 50;
             end
             if ~isempty('${{ inputs.depth }}')
                 options.depth = str2num('${{ inputs.depth }}');
