@@ -12,8 +12,8 @@ public :: cobyla_c
 contains
 
 
-subroutine cobyla_c(m_nlcon, cobjcon_ptr, data_ptr, n, x, f, cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &
-    & nf, rhobeg, rhoend, ftarget, maxfun, iprint, info) bind(C)
+subroutine cobyla_c(m_nlcon, cobjcon_ptr, data_ptr, callback_ptr, n, x, f, cstrv, nlconstr, &
+    & m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, nf, rhobeg, rhoend, ftarget, maxfun, iprint, info) bind(C)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR
 use, non_intrinsic :: cintrf_mod, only : COBJCON
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -24,6 +24,7 @@ implicit none
 integer(C_INT), intent(in), value :: m_nlcon
 type(C_FUNPTR), intent(in), value :: cobjcon_ptr
 type(C_PTR), intent(in), value :: data_ptr
+type(C_FUNPTR), intent(in), value :: callback_ptr
 integer(C_INT), intent(in), value :: n
 ! We cannot use assumed-shape arrays for C interoperability
 real(C_DOUBLE), intent(inout) :: x(n)
@@ -88,7 +89,7 @@ call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconst
     & Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, &
     & xl=xl_loc, xu=xu_loc, nf=nf_loc, &
     & rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, maxfun=maxfun_loc, &
-    & iprint=iprint_loc, info=info_loc)
+    & iprint=iprint_loc, callbck=calcb, info=info_loc)
 
 ! Write the outputs
 x = real(x_loc, kind(x))
@@ -114,6 +115,26 @@ real(RP), intent(out) :: f_sub
 real(RP), intent(out) :: constr_sub(:)
 call evalcobjcon(cobjcon_ptr, data_ptr, x_sub, f_sub, constr_sub)
 end subroutine calcfc
+
+
+subroutine calcb(x_sub, f_sub, nf_sub, tr_sub, cstrv_sub, nlconstr_sub, terminate_sub)
+use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: cintrf_mod, only : evalcallback
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_ASSOCIATED
+implicit none
+real(RP), intent(in) :: x_sub(:)
+real(RP), intent(in) :: f_sub
+integer(IK), intent(in) :: nf_sub
+integer(IK), intent(in) :: tr_sub
+real(RP), intent(in) :: cstrv_sub
+real(RP), intent(in) :: nlconstr_sub(:)
+logical, intent(out) :: terminate_sub
+terminate_sub = .false.
+if (C_ASSOCIATED(callback_ptr)) then
+    call evalcallback(callback_ptr, x_sub, f_sub, nf_sub, tr_sub, cstrv_sub, nlconstr_sub, terminate_sub)
+end if
+end subroutine calcb
+
 
 end subroutine cobyla_c
 

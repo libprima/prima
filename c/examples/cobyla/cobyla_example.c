@@ -14,6 +14,17 @@ static void fun(const double x[], double *f, double constr[], const void *data)
   (void)data;
 }
 
+
+static void callback(const int n, const double x[], const double f, const int nf, const int tr, const double cstrv, const int m_nlcon, const double nlconstr[], _Bool *terminate)
+{
+  (void)n;
+  printf("progress: x=[%g;%g] f=%g cstrv=%g nf=%d tr=%d\n", x[0], x[1], f, cstrv, nf, tr);
+  *terminate = 0;
+  (void)m_nlcon;
+  (void)nlconstr;
+}
+
+
 int main(int argc, char * argv[])
 {
   (void)argc;
@@ -44,7 +55,7 @@ int main(int argc, char * argv[])
   const int maxfun = 200*n;
   int nf = 0;
   void *data = NULL;
-  const int rc = prima_cobyla(m_nlcon, &fun, data, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+  const int rc = prima_cobyla(m_nlcon, &fun, data, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint, &callback);
   const char *msg = prima_get_rc_string(rc);
   printf("x*={%g, %g} f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", x[0], x[1], f, cstrv, nlconstr[0], rc, msg, nf);
   return (fabs(x[0]-3)>2e-2 || fabs(x[1]-2)>2e-2);

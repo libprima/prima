@@ -2067,3 +2067,8 @@ libclang
 dumpbin
 objdump
 rfun
+calcb
+callbck
+CCALLBACK
+evalcallback
+fcb

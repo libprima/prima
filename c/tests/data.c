@@ -93,23 +93,23 @@ int main(int argc, char * argv[])
   int rc = 0;
   if(strcmp(algo, "bobyqa") == 0)
   {
-    rc = prima_bobyqa(&fun, data_ref, n, x, &f, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    rc = prima_bobyqa(&fun, data_ref, n, x, &f, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint, NULL);
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
-    rc = prima_cobyla(m_nlcon, &fun_con, data_ref, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    rc = prima_cobyla(m_nlcon, &fun_con, data_ref, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint, NULL);
   }
   else if(strcmp(algo, "lincoa") == 0)
   {
-    rc = prima_lincoa(&fun, data_ref, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    rc = prima_lincoa(&fun, data_ref, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint, NULL);
   }
   else if(strcmp(algo, "newuoa") == 0)
   {
-    rc = prima_newuoa(&fun, data_ref, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    rc = prima_newuoa(&fun, data_ref, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint, NULL);
   }
   else if(strcmp(algo, "uobyqa") == 0)
   {
-    rc = prima_uobyqa(&fun, data_ref, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    rc = prima_uobyqa(&fun, data_ref, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, iprint, NULL);
   }
   else
   {
