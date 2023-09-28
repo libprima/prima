@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-latest, windows-2019, windows-latest, macos-11, macos-latest]
+        os: [ubuntu-20.04, ubuntu-latest, windows-2019, windows-latest, macos-11, macos-latest, macos-13]
         matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, latest]
 
         exclude:
@@ -43,6 +43,13 @@ jobs:
           - os: macos-latest
             matlab: R2021a
           - os: macos-latest
+            matlab: R2021b
+
+          - os: macos-13
+            matlab: R2020b
+          - os: macos-13
+            matlab: R2021a
+          - os: macos-13
             matlab: R2021b
 
         # Only R2021a/b and R2022a are available on Windows 2019.
@@ -77,6 +84,10 @@ jobs:
           - os: windows-latest
             matlab: latest
           - os: windows-latest
+            matlab: R2023b
+          - os: macos-13
+            matlab: latest
+          - os: macos-13
             matlab: R2023b
           - os: macos-latest
             matlab: latest

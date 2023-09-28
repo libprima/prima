@@ -28,8 +28,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-20.04, macos-11, windows-2019]
-        matlab: [latest, R2020b, R2021a, R2022a]
+        os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-20.04, macos-11, windows-2019, macos-13]
+        matlab: [latest, R2020b, R2021a, R2022a, R2023a]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
         test: [normal, tough]
 
@@ -51,6 +51,12 @@ jobs:
           - os: ubuntu-20.04
             matlab: latest
 
+          - os: macos-13
+            matlab: R2020b
+          - os: macos-13
+            matlab: R2021a
+          - os: macos-13
+            matlab: R2022a
           - os: macos-latest
             matlab: R2020b
           - os: macos-latest
@@ -84,6 +90,8 @@ jobs:
           # The following combinations are not available as of 20230928.
           - os: windows-latest
             matlab: latest
+          - os: macos-13
+            matlab: latest
           - os: macos-latest
             matlab: latest
 
@@ -112,7 +120,7 @@ jobs:
           if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
               GFVER=11
           fi
-          if [[ "${{ matrix.matlab }}" = "R2020b" || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" = "R2021b" ]] ; then
+          if [[ "${{ matrix.matlab }}" = "R2020b" || "${{ matrix.matlab }}" = "R2021a" ]] ; then
               GFVER=9
           fi
           bash .github/scripts/link_gfortran "$GFVER"
