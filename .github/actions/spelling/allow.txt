@@ -2067,3 +2067,6 @@ libclang
 dumpbin
 objdump
 rfun
+cfiles
+ifiles
+parcluster

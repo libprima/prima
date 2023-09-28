@@ -73,7 +73,7 @@ if contains(compiler_configurations.Manufacturer, 'gnu', 'IgnoreCase', true)  % 
     extra_compiler_options = '-fno-stack-arrays';
 elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', true)  % Intel compiler
     if ispc
-        extra_compiler_options = '/heap-arrays /asume:recursion';
+        extra_compiler_options = '/heap-arrays /assume:recursion';
     else
         extra_compiler_options = '-heap-arrays -assume recursion';
     end
