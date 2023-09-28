@@ -73,9 +73,9 @@ if contains(compiler_configurations.Manufacturer, 'gnu', 'IgnoreCase', true)  % 
     extra_compiler_options = '-fno-stack-arrays';
 elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', true)  % Intel compiler
     if ispc
-        extra_compiler_options = '/heap-arrays /recursive';
+        extra_compiler_options = '/heap-arrays /asume:recursion';
     else
-        extra_compiler_options = '-heap-arrays -recursive';
+        extra_compiler_options = '-heap-arrays -assume recursion';
     end
 else
     warning('prima:UnrecognizedCompiler', 'Unrecognized compiler %s. The package may not work.', ...

@@ -158,8 +158,6 @@ jobs:
             % Conduct the test multiple times, in case some errors occur not during the first time but later.
             exception = [];
             try
-              fclose(fopen(fullfile(tempdir(), 'matlab_crash_dump_test_2'), 'w'));
-              recursive('${{ matrix.solver }}', options);
               options.compile = false;
               recursive('${{ matrix.solver }}', options);
               recursive('${{ matrix.solver }}', options);
@@ -169,6 +167,7 @@ jobs:
             % Copy the crash dump files to root_dir if exceptions occur.
             if ~isempty(exception)
               copy_crash_dump_files(root_dir)
+              dir(root_dir)
               rethrow(exception);
             end
 
