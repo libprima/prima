@@ -47,6 +47,8 @@ jobs:
           - os: ubuntu-20.04
             matlab: R2022a
           - os: ubuntu-20.04
+            matlab: R2023a
+          - os: ubuntu-20.04
             matlab: latest
 
           - os: macos-latest
@@ -60,6 +62,8 @@ jobs:
           - os: macos-11
             matlab: R2021a
           - os: macos-11
+            matlab: 2023a
+          - os: macos-11
             matlab: latest
 
           - os: windows-latest
@@ -73,7 +77,16 @@ jobs:
           - os: windows-2019
             matlab: R2022a
           - os: windows-2019
+            matlab: 2023a
+          - os: windows-2019
             matlab: latest
+
+          # The following combinations are not available as of 20230928.
+          - os: windows-latest
+            matlab: latest
+          - os: macos-latest
+            matlab: latest
+
 
 
     steps:

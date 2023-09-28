@@ -61,8 +61,6 @@ fprintf('\n>>>>>> Parallel test for %s starts <<<<<<\n', solver_name);
 opt = struct();
 opt.iprint = 1;
 opt.debug = true;
-opt.rhoend = 1.0e-6;
-opt.maxfun = min(200*n, 2e4);
 
 % We conduct two parallel tests, in case something does not finish correctly during the first run.
 for i = 1 : 2

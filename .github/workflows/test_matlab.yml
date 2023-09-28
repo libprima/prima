@@ -71,6 +71,22 @@ jobs:
           - os: windows-latest
             matlab: R2022b
 
+          # The following combinations are not available as of 20230928.
+          - os: windows-latest
+            matlab: latest
+          - os: windows-latest
+            matlab: R2023b
+          - os: macos-latest
+            matlab: latest
+          - os: macos-latest
+            matlab: R2023b
+          - os: macos-11
+            matlab: latest
+          - os: macos-11
+            matlab: R2023b
+
+
+
     steps:
 
       - name: Clone Repository (Latest)
