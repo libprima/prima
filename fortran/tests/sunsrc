@@ -127,5 +127,12 @@ if [[ -f "$COBYLB" ]] ; then
     sed -ni '1,/\s*!\s*Calculation ends\s*!/p;/end subroutine cobylb/,$p' "$COBYLB"
     sed -i "s|calcfc_internal|calcfc|" "$COBYLB"
 fi
+for SOL in cobyla uobyqa newuoa bobyqa lincoa ; do
+    FILE="$DIR/test_$SOL.f90"
+    if [[ -f $FILE ]] ; then
+        sed -i "s|subroutine test_solver(\(.*\))\s*$|subroutine test_solver(\1)\n use, non_intrinsic :: recursive_mod, only : recursive_fun1|" "$FILE"
+        sed -i "s|call $SOL(recursive_fun2|call $SOL(recursive_fun1|" "$FILE"
+    fi
+done
 
 exit 0

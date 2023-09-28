@@ -53,6 +53,8 @@ jobs:
           - os: windows-2019
             matlab: R2023a
           - os: windows-2019
+            matlab: R2023b
+          - os: windows-2019
             matlab: latest
 
         # Below R2022a, MEX does not work on windows-latest due to the version of MS Visual Studio;

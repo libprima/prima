@@ -44,7 +44,6 @@ subroutine recursive_fun1(x, f)
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: hilbert_mod, only : hilbert
 use, non_intrinsic :: lincoa_mod, only : lincoa
-use, non_intrinsic :: rand_mod, only : randn
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
@@ -68,7 +67,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tuesday, September 26, 2023 AM02:11:57
+! Last Modified: Thursday, September 28, 2023 PM05:19:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -411,7 +410,7 @@ deallocate (Aineq, bineq, x)
 contains
 
 subroutine recursive_fun2(x_internal, f_internal)
-use recursive_mod, only : recursive_fun1
+use, non_intrinsic :: recursive_mod, only : recursive_fun1
 implicit none
 real(RP), intent(in) :: x_internal(:)
 real(RP), intent(out) :: f_internal

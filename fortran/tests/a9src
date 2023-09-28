@@ -74,6 +74,9 @@ for SOL in cobyla uobyqa newuoa bobyqa lincoa ; do
     if [[ -f $FILE ]] ; then
         sed -i "s|character(len=:), allocatable|character(len=1024)|g" "$FILE"
         sed -i "/safealloc(testdim.*$/d" "$FILE"
+        # af95 does not support internal subroutines as arguments.
+        sed -i "s|subroutine test_solver(\(.*\))\s*$|subroutine test_solver(\1)\n use, non_intrinsic :: recursive_mod, only : recursive_fun1|" "$FILE"
+        sed -i "s|call $SOL(recursive_fun2|call $SOL(recursive_fun1|" "$FILE"
     fi
 done
 

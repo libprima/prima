@@ -19,7 +19,6 @@ end subroutine chrosen
 subroutine recursive_fun1(x, f)
 use, non_intrinsic :: consts_mod, only : RP
 use, non_intrinsic :: newuoa_mod, only : newuoa
-use, non_intrinsic :: rand_mod, only : randn
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
@@ -39,7 +38,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, September 25, 2023 PM10:15:28
+! Last Modified: Thursday, September 28, 2023 PM04:53:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

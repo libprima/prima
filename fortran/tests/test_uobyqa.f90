@@ -19,7 +19,6 @@ end subroutine chrosen
 subroutine recursive_fun1(x, f)
 use, non_intrinsic :: consts_mod, only : RP
 use, non_intrinsic :: uobyqa_mod, only : uobyqa
-use, non_intrinsic :: rand_mod, only : randn
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
@@ -39,7 +38,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, September 25, 2023 PM10:24:14
+! Last Modified: Thursday, September 28, 2023 PM05:19:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -247,7 +246,7 @@ deallocate (x)
 contains
 
 subroutine recursive_fun2(x_internal, f_internal)
-use recursive_mod, only : recursive_fun1
+use, non_intrinsic :: recursive_mod, only : recursive_fun1
 implicit none
 real(RP), intent(in) :: x_internal(:)
 real(RP), intent(out) :: f_internal
