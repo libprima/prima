@@ -158,6 +158,7 @@ jobs:
             % Conduct the test multiple times, in case some errors occur not during the first time but later.
             exception = [];
             try
+              recursive('${{ matrix.solver }}', options);
               options.compile = false;
               recursive('${{ matrix.solver }}', options);
               recursive('${{ matrix.solver }}', options);
