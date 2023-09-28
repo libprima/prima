@@ -154,11 +154,33 @@ jobs:
                 options.depth = 3;
             end
             options
+
             % Conduct the test multiple times, in case some errors occur not during the first time but later.
-            recursive('${{ matrix.solver }}', options);
-            options.compile = false
-            recursive('${{ matrix.solver }}', options);
-            recursive('${{ matrix.solver }}', options);
+            exception = [];
+            try
+              fclose(fopen(fullfile(homedir(), 'matlab_crash_dump_test_1'), 'w'));
+              fclose(fopen(fullfile(tempdir(), 'matlab_crash_dump_test_2'), 'w'));
+              recursive('${{ matrix.solver }}', options);
+              options.compile = false;
+              recursive('${{ matrix.solver }}', options);
+              recursive('${{ matrix.solver }}', options);
+            catch exception
+            end
+
+            % Copy the crash dump files to root_dir if exceptions occur.
+            if ~isempty(exception)
+              copy_crash_dump_files(root_dir)
+              rethrow(exception);
+            end
+
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3.1.3
+        if: always()  # Always run even if the workflow is canceled manually or due to overtime.
+        with:
+          path: |
+            matlab_crash_dump*
+
 
 
   # The following job check whether the tests were successful or cancelled due to timeout.

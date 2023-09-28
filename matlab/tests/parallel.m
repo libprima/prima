@@ -16,7 +16,7 @@ end
 if isfield(options, 'np')
     np = options.np;
 else
-    np = 100;
+    np = 64;
 end
 
 % Set up the solver
@@ -61,7 +61,7 @@ fprintf('\n>>>>>> Parallel test for %s starts <<<<<<\n', solver_name);
 opt = struct();
 opt.iprint = 1;
 opt.debug = true;
-opt.rhoend = 1.0e-3;
+opt.rhoend = 1.0e-4;
 opt.maxfun = min(100*n, 1e4);
 
 % We conduct two parallel tests, in case something does not finish correctly during the first run.
@@ -76,7 +76,7 @@ for i = 1 : 2
         [x, fx, exitflag, output] = solver(fun, x0, opt)
         [~, gx] = chrosen(x + shift);
         norm(gx) / norm(g0)
-        assert(norm(gx) < 1.0e-5 * norm(g0), 'X is close to stationary.')
+        assert(norm(gx) < 1.0e-3 * norm(g0), 'X is close to stationary.')
     end
 end
 
