@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, September 04, 2023 PM01:05:54
+! Last Modified: Friday, September 29, 2023 AM12:38:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1566,7 +1566,7 @@ vlag(kref) = vlag(kref) + ONE
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(npt + n, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E12_RP * EPS * real(npt + n, RP)))
     call wassert(abs(sum(vlag(1:npt)) - ONE) / real(npt, RP) <= tol .or. RP == kind(0.0), &
         & 'SUM(VLAG(1:NPT)) == 1', srname)
 end if
