@@ -67,7 +67,7 @@ jobs:
           - os: macos-11
             matlab: R2021a
           - os: macos-11
-            matlab: 2023a
+            matlab: R2023a
           - os: macos-11
             matlab: latest
 
@@ -84,7 +84,7 @@ jobs:
           - os: windows-2019
             matlab: R2022a
           - os: windows-2019
-            matlab: 2023a
+            matlab: R2023a
           - os: windows-2019
             matlab: latest
 

@@ -9,7 +9,7 @@ end
 if isfield(options, 'n')
     n = options.n;
 else
-    n = 50;
+    n = 20;
 end
 
 % Set the recursion depth
