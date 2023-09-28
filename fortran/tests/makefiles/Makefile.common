@@ -558,7 +558,7 @@ ifeq ($(TESTDIM),small)
 else
 	VFORT := $(VFORT) -Mnostack_arrays
 endif
-VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk -Mchkptr -Mchkstk -traceback
+VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk -Mchkptr -traceback
 
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
 	FCO := $(VFORT) $(FFLAGSO) #-Ktrap=divz #-Kieee

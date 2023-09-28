@@ -14,7 +14,7 @@ real(RP) :: H(m, n)
 integer(IK) :: i, j
 do j = 1, n
     do i = 1, m
-        H(i, j) = 1.0_RP / (i + j - 1.0_RP)
+        H(i, j) = 1.0_RP / real(i + j - 1_IK, RP)
     end do
 end do
 end function hilbert
@@ -67,7 +67,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, September 28, 2023 PM05:19:18
+! Last Modified: Thursday, September 28, 2023 PM11:20:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -398,14 +398,13 @@ end if
 ! RECURSIVE_FUN1 in a similar way. Note that RECURSIVE_FUN1 is essentially a constant function.
 n = 3_IK
 print'(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
-call safealloc(Aineq, 2_IK * n, n)
+deallocate (Aineq, bineq)
+! For unknown reason, `safealloc` does not work here with `nvfortran -O1`, nvfortran 23.7.
+allocate (Aineq(1:2_IK * n, 1:n), bineq(1:2_IK * n), x(1:n))
 Aineq = hilbert(int(size(Aineq, 1), IK), int(size(Aineq, 2), IK))
-call safealloc(bineq, 2_IK * n)
 bineq = 1.0_RP
-call safealloc(x, n)
 x = randn(n)
 call lincoa(recursive_fun2, x, f, Aineq=Aineq, bineq=bineq, iprint=2_IK)
-deallocate (Aineq, bineq, x)
 
 contains
 
