@@ -158,7 +158,6 @@ jobs:
             % Conduct the test multiple times, in case some errors occur not during the first time but later.
             exception = [];
             try
-              fclose(fopen(fullfile(homedir(), 'matlab_crash_dump_test_1'), 'w'));
               fclose(fopen(fullfile(tempdir(), 'matlab_crash_dump_test_2'), 'w'));
               recursive('${{ matrix.solver }}', options);
               options.compile = false;
