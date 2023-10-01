@@ -43,6 +43,8 @@ jobs:
             compiler: d
           - compiler: s  # BOBYQA fails stest for unknown reason
             solver: bobyqa
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
 
     steps:
 

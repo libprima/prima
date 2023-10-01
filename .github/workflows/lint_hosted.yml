@@ -29,7 +29,8 @@ jobs:
       matrix:
         linter: [flint, mlint]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
     steps:
 
       - name: Run `sudo apt update`

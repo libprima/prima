@@ -36,6 +36,8 @@ jobs:
         exclude:
           - os: macos-latest
             ikind: i8
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
 
     steps:
       - name: Clone Repository (Latest)

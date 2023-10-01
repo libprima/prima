@@ -35,6 +35,8 @@ jobs:
           - solver: lincoa  # As of armflang 22.1, rtest often get canceled in the following cases.
             fflags: [-O2, -O3]
             testdim: big
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
 
     steps:
 

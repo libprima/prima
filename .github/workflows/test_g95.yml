@@ -28,6 +28,8 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
 
     steps:
       - name: Clone Repository (Latest)

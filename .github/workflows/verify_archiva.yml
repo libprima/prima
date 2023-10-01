@@ -40,6 +40,8 @@ jobs:
             dim: large  # very few problems but takes too much time to run
           - solver: newuoa
             dim: large  # very few problems but takes too much time to run
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
 
     steps:
 

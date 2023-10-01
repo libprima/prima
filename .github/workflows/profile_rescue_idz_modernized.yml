@@ -31,6 +31,8 @@ jobs:
         matlab: [latest]
         dim: [small, all]
         solver: [newuoa, bobyqa, lincoa]
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
 
     steps:
       - name: Get the solver name

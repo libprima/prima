@@ -97,6 +97,8 @@ jobs:
             matlab: latest
           - os: macos-11
             matlab: R2023b
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
 
 
 

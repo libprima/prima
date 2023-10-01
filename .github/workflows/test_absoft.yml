@@ -27,6 +27,8 @@ jobs:
       matrix:
         ikind: [i2]
         solver: [newuoa, lincoa, bobyqa, uobyqa]  # COBYLA cannot pass the test due to internal subroutines used as arguments
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
 
     steps:
 

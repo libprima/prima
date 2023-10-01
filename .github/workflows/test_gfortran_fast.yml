@@ -35,6 +35,8 @@ jobs:
         exclude:
           - os: windows-latest
             version: 13  # gfortran-13 is not available on Windows as of 20230904
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
 
     steps:
 
