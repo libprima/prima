@@ -14,19 +14,25 @@ if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND CMAKE_VERSION VERSION_GREATER_EQ
   check_linker_flag (Fortran "-Wl,--no-warn-execstack" HAVE_WARN_EXECSTACK)
 endif ()
 
-# allocate arrays on the heap instead of the stack, slower but can avoid memory errors on large problems
+# Set additional Fortran compiler flags
+# 1. We require the compilers to allocate arrays on the heap instead of the stack, which is
+# slower (does not matter for DFO applications) but can avoid memory errors on large problems.
+# 2. We require the compilers to compile the solvers so that they can be called recursively.
+# See https://fortran-lang.discourse.group/t/frecursive-assume-recursion-and-recursion-thread-safety
 option (PRIMA_HEAP_ARRAYS "allocate arrays on heap" ON)
 if (PRIMA_HEAP_ARRAYS)
   if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -frecursive")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
     if (WIN32)
-      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /heap-arrays")
+      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /heap-arrays /assume:recursion")
     else ()
-      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -heap-arrays")
+      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -heap-arrays -assume recursion")
     endif ()
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mnostack_arrays")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mnostack_arrays -Mrecursive")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NAG")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -recursive")  # What about stack/heap?
   endif ()
 endif ()
 

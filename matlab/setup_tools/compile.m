@@ -61,16 +61,19 @@ end
 
 % Modify the compiler options by revising FFLAGS or COMPFLAGS.
 % See https://www.mathworks.com/help/matlab/ref/mex.html
-% We force the Fortran compiler to allocate arrays on the heap instead of the stack. Otherwise,
+% 1. We force the Fortran compiler to allocate arrays on the heap instead of the stack. Otherwise,
 % the solvers will encounter stack overflow when the problem size is large. As of gfortran 12.0,
 % `-fno-stack-arrays` is indeed the default, and we specify it for safety; as of Intel oneAPI
 % 2023.1.0, `-no-heap-arrays` is the default, so we must specify `-heap-arrays`.
 % N.B.: We assume that the function evaluation is much more expensive than the memory allocation,
 % so the performance loss due to the heap allocation is negligible. This is true for derivative-free
 % optimization, but may not be true for optimization with derivatives.
+% 2. We require the Fortran compiler to compile the solvers so that they can be called recursively.
+% Otherwise, the solvers will not work properly in recursive invocations. See
+% https://fortran-lang.discourse.group/t/frecursive-assume-recursion-and-recursion-thread-safety
 compiler_configurations = mex.getCompilerConfigurations('fortran', 'selected');
 if contains(compiler_configurations.Manufacturer, 'gnu', 'IgnoreCase', true)  % gfortran
-    extra_compiler_options = '-fno-stack-arrays';
+    extra_compiler_options = '-fno-stack-arrays -frecursive';
 elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', true)  % Intel compiler
     if ispc
         extra_compiler_options = '/heap-arrays /assume:recursion';

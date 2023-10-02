@@ -10,6 +10,7 @@ if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     exit 1
 fi
 
+# See https://fortran-lang.discourse.group/t/is-this-expected/6486
 if [[ -f "$STRING" ]] ; then
     sed -i '/call assert(x >= REALMAX/,+1d' "$STRING"
     sed -i '/call assert(x <= -REALMAX/,+1d' "$STRING"
