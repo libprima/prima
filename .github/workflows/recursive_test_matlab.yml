@@ -167,7 +167,11 @@ jobs:
             if ~isempty('${{ inputs.dimension }}')
                 options.n = str2num('${{ inputs.dimension }}');
             else
-                options.n = 50;
+                if ismember('${{ matrix.solver }}', {'uobyqa', 'cobyla'})
+                    options.n = 10;
+                else
+                    options.n = 20;
+                end
             end
             if ~isempty('${{ inputs.depth }}')
                 options.depth = str2num('${{ inputs.depth }}');

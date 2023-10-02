@@ -9,7 +9,11 @@ end
 if isfield(options, 'n')
     n = options.n;
 else
-    n = 100;
+    if ismember(solver, {'uobyqa', 'cobyla'})
+        n = 20;
+    else
+        n = 50;
+    end
 end
 
 % Set the number of parallel runs

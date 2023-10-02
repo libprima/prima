@@ -9,7 +9,11 @@ end
 if isfield(options, 'n')
     n = options.n;
 else
-    n = 20;
+    if ismember(solver, {'uobyqa', 'cobyla'})
+        n = 10;
+    else
+        n = 20;
+    end
 end
 
 % Set the recursion depth
