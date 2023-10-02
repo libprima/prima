@@ -131,7 +131,7 @@ for SOL in cobyla uobyqa newuoa bobyqa lincoa ; do
     FILE="$DIR/test_$SOL.f90"
     if [[ -f $FILE ]] ; then
         sed -i "s|subroutine test_solver(\(.*\))\s*$|subroutine test_solver(\1)\n use, non_intrinsic :: recursive_mod, only : recursive_fun1|" "$FILE"
-        sed -i "s|call $SOL(recursive_fun2|call $SOL(recursive_fun1|" "$FILE"
+        sed -i "/call $SOL(recursive_fun2/d" "$FILE"
     fi
 done
 

@@ -8,7 +8,7 @@ module update_uobyqa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 08, 2023 AM12:28:26
+! Last Modified: Monday, October 02, 2023 PM10:33:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

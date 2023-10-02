@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 15, 2023 PM03:12:56
+! Last Modified: Monday, October 02, 2023 PM10:36:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -354,7 +354,7 @@ do tr = 1, maxtr
     ! N.B.: If SHORTD is TRUE at the very first iteration, then REDUCE_RHO will be set to TRUE.
     ! Powell's code does not have TRFAIL in BAD_TRSTEP; it terminates if TRFAIL is TRUE.
 
-    ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad? For UOBYQA, it is CRITICAL to
+    ! BAD_TRSTEP (for IMPROVE_GEO): Is the last trust-region step bad? For UOBYQA, it is CRUCIAL to
     ! include DMOVE <= 4.0_RP*RHO**2 in the definition of BAD_TRSTEP for IMPROVE_GEO.
     bad_trstep = (shortd .or. trfail .or. (ratio <= eta1 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
     !bad_trstep = (shortd .or. trfail .or. ratio <= eta1 .or. knew_tr == 0)  ! Works poorly!

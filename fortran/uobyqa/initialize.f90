@@ -8,7 +8,7 @@ module initialize_uobyqa_mod
 !
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Friday, May 12, 2023 PM06:51:54
+! Last Modified: Monday, October 02, 2023 PM02:11:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

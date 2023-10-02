@@ -1,0 +1,16 @@
+#!/bin/bash
+# This script pre-processes the Fortran source code for gfortran when it is invoked with -Ofast.
+
+DIR="$(realpath "$1")"
+STRINGF90="string.f90"
+STRING="$DIR/common/$STRINGF90"
+
+if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
+    printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
+    exit 1
+fi
+
+if [[ -f "$STRING" ]] ; then
+    sed -i '/call assert(x >= REALMAX/,+1d' "$STRING"
+    sed -i '/call assert(x <= -REALMAX/,+1d' "$STRING"
+fi

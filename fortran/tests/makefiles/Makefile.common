@@ -970,6 +970,10 @@ source_%: $(SRC_DIRS)
 	# https://github.com/flang-compiler/flang/issues/1238
 	# Check it again when new versions are available. Make a test using
 	# https://github.com/zequipe/test_compiler/blob/master/test_solve.f90
+	@if echo $@ | grep -q "gtest" && echo $(FFLAGS) | grep -q "fast"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash ../gsrc ./ ; \
+	fi
 	@if echo $@ | grep -q "ftest\|rtest\|dtest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash ../frdsrc ./ ; \

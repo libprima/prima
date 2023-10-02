@@ -19,6 +19,7 @@ add_library (primaf
   common/redrho.f90
   common/memory.F90
   common/selectx.f90
+  common/huge.F90
   common/infnan.F90
   common/shiftbase.f90
   common/infos.f90
