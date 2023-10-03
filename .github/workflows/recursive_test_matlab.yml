@@ -168,9 +168,9 @@ jobs:
                 options.n = str2num('${{ inputs.dimension }}');
             else
                 if ismember('${{ matrix.solver }}', {'uobyqa', 'cobyla'})
-                    options.n = 10;
-                else
                     options.n = 20;
+                else
+                    options.n = 50;
                 end
             end
             if ~isempty('${{ inputs.depth }}')

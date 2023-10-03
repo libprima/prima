@@ -63,7 +63,7 @@ fprintf('\n>>>>>> Parallel test for %s starts <<<<<<\n', solver_name);
 
 % Call the solver
 opt = struct();
-opt.iprint = 1;
+opt.iprint = 2;
 opt.debug = true;
 opt.rhoend = 1.0e-5;
 
