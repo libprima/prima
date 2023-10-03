@@ -86,7 +86,7 @@ jobs:
         # Zaikun 20230426: add dictionaries
         extra_dictionary_limit: 20
         extra_dictionaries:
-          cspell:bash/bash-words.txt
+          cspell:bash/src/bash-words.txt
           cspell:python/src/common/extra.txt
           cspell:python/src/python/python-lib.txt
           cspell:python/src/python/python.txt
@@ -94,11 +94,11 @@ jobs:
           cspell:software-terms/src/software-terms.txt
           cspell:software-terms/src/software-tools.txt
           cspell:cpp/src/cpp.txt
-          cspell:latex/latex.txt
+          cspell:latex/src/latex.txt
           cspell:filetypes/filetypes.txt
-          cspell:html/html.txt
+          cspell:html/src/html.txt
           cspell:html-symbol-entities/entities.txt
-          cspell:css/css.txt
+          cspell:css/src/css.txt
 
   comment-push:
     name: Report (Push)
