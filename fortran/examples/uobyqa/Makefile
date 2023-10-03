@@ -77,7 +77,7 @@ xtest: FC := ifx -warn all -stand f$(FS)
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
 %test: $(SOLVER)_example.f90 \
-	consts.o infos.o debug.o inf.o infnan.o memory.o string.o linalg.o powalg.o ratio.o redrho.o \
+	consts.o infos.o debug.o huge.o inf.o infnan.o memory.o string.o linalg.o powalg.o ratio.o redrho.o \
 	history.o checkexit.o fprint.o message.o preproc.o pintrf.o evaluate.o shiftbase.o \
 	initialize.o update.o trustregion.o geometry.o uobyqb.o uobyqa.o
 	$(FC) $(FFLAGS) -o $@ $(SOLVER)_example.f90 *.o
