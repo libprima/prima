@@ -8,7 +8,7 @@ module geometry_uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, October 04, 2023 PM08:59:50
+! Last Modified: Wednesday, October 04, 2023 PM11:23:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -425,7 +425,8 @@ else
 end if
 d = tempd * d + tempv * v
 
-! Indeed, only the KNEW-th entries of VLAG and VLAGC are needed.
+! Replace D with DCAUCHY if needed. Powell's code does not have this part. Indeed, only the KNEW-th
+! entries of VLAG and VLAGC are needed.
 vlag = calvlag(pl, d, xopt, kopt)
 vlagc = calvlag(pl, dcauchy, xopt, kopt)
 if (is_nan(sum(abs(d))) .or. abs(vlagc(knew)) > TWO * abs(vlag(knew))) then
