@@ -8,7 +8,7 @@ module geometry_uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, October 03, 2023 AM10:50:51
+! Last Modified: Wednesday, October 04, 2023 PM08:59:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -191,6 +191,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, QUART, DE
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, vec2smat, smat_mul_vec
+use, non_intrinsic :: powalg_mod, only : calvlag
 
 implicit none
 
@@ -230,6 +231,8 @@ real(RP) :: vhd
 real(RP) :: vhg
 real(RP) :: vhv
 real(RP) :: vlin
+real(RP) :: vlag(size(xpt, 2))
+real(RP) :: vlagc(size(xpt, 2))
 real(RP) :: vmu
 real(RP) :: vnorm
 real(RP) :: vv
@@ -421,7 +424,11 @@ else
     end if
 end if
 d = tempd * d + tempv * v
-if (is_nan(sum(abs(d)))) then
+
+! Indeed, only the KNEW-th entries of VLAG and VLAGC are needed.
+vlag = calvlag(pl, d, xopt, kopt)
+vlagc = calvlag(pl, dcauchy, xopt, kopt)
+if (is_nan(sum(abs(d))) .or. abs(vlagc(knew)) > TWO * abs(vlag(knew))) then
     d = dcauchy
 end if
 
