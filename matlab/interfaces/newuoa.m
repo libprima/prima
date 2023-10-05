@@ -34,7 +34,7 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %       2: a trust region step failed to reduce the quadratic model (possible only in classical mode)
 %       3: the objective function has been evaluated maxfun times
 %       14: a linear feasibility problem received and solved
-%       20: the trust-region iteration has been performed for 10*maxfun times
+%       20: the trust region iteration has been performed for 2*maxfun times
 %       -1: NaN occurs in x (possible only in the classical mode)
 %       -2: the objective function returns an Inf/NaN value (possible only in classical mode)
 %       -3: NaN occurs in the models (possible only in classical mode)
@@ -44,7 +44,7 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %       fhist: history of function values
 %       solver: backend solver that does the computation, i.e., 'newuoa'
 %       message: return message
-%       warnings: a cell array that records all the  warnings raised
+%       warnings: a cell array that records all the warnings raised
 %       during the computation
 %
 %   3. Options
@@ -117,8 +117,8 @@ function [x, fx, exitflag, output] = newuoa(varargin)
 %   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function value or not; default: false
 %       (if it is true, NEWUOA will check whether the returned value of fx
-%       matches fun(x) or not, which costs a function evaluation;
-%       designed only for debugging)
+%       matches fun(x) or not, which costs a function evaluation; designed only
+%       for debugging)
 %
 %   For example, the following code
 %

@@ -1182,7 +1182,7 @@ options.maxfun = double(options.maxfun);   % All integers will be passed as doub
 
 % Validate options.rhobeg
 % NOTE: if the problem is to be scaled, then options.rhobeg and options.rhoend
-% will be used as the initial and final trust-region radii for the scaled problem.
+% will be used as the initial and final trust region radii for the scaled problem.
 validated = false;
 if isfield(options, 'rhobeg')
     if ~isrealscalar(options.rhobeg) || options.rhobeg <= 0 || isnan(options.rhobeg) || options.rhobeg == inf
@@ -1623,16 +1623,16 @@ options.eta1 = double(options.eta1);
 % Validate options.eta2
 validated = false;
 if isfield(options, 'eta2')
-    if ~isrealscalar(options.eta2) || (isnan(options.eta1) && options.eta2 < 0) || options.eta2 < options.eta1 || options.eta2 > 1
+    if ~isrealscalar(options.eta2) || (isnan(options.eta1) && options.eta2 < 0) || options.eta2 < options.eta1 || options.eta2 >= 1
         wid = sprintf('%s:InvalidEta2', invoker);
         if user_eta1_correct
         % The user provides a correct eta1; we define eta2 as follows.
             options.eta2 = (options.eta1 + 2)/3;
             validated = true;
-            wmsg = sprintf('%s: invalid eta2; it should be in the interval [0, 1] and not less than eta1; it is set to %g.', invoker, options.eta2);
+            wmsg = sprintf('%s: invalid eta2; it should be in the interval [0, 1) and not less than eta1; it is set to %g.', invoker, options.eta2);
         else
         % The user does not provide a correct eta1; we take the default eta2 hard coded in Powell's code.
-            wmsg = sprintf('%s: invalid eta2; it should be in the interval [0, 1] and not less than eta1; it will be set to the default value.', invoker);
+            wmsg = sprintf('%s: invalid eta2; it should be in the interval [0, 1) and not less than eta1; it will be set to the default value.', invoker);
         end
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];

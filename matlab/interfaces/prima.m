@@ -28,7 +28,7 @@ function [x, fx, exitflag, output] = prima(varargin)
 %   *** fun is the name or function handle of the objective function; if
 %       there is no objective function (i.e., we have a feasibility problem),
 %       then set fun = []
-%   *** x0 is the starting point; x0 CANNOT be []
+%   *** x0 is the starting point; x0 CANNOT be omitted or set to []
 %   *** Aineq and bineq are the coefficient matrix and right-hand side of
 %       the linear inequality constraint Aineq * x <= bineq; if there is
 %       no such constraint, set Aineq = [], bineq = []
@@ -82,24 +82,23 @@ function [x, fx, exitflag, output] = prima(varargin)
 %
 %   *** x is the approximate solution to the optimization problem
 %   *** fx is fun(x)
-%   *** exitflag is an integer indicating why PRIMA or its backend solver
-%       returns; the possible values are
+%   *** exitflag is an integer indicating why PRIMA or its backend solver returns;
+%       the possible values are
 %       0: the lower bound for the trust region radius is reached
 %       1: the target function value is achieved
-%       2: a trust region step failed to reduce the quadratic model
+%       2: a trust region step failed to reduce the quadratic model (possible only in classical mode)
 %       3: the objective function has been evaluated maxfun times
-%       4, 7, 8, 9: rounding errors become severe in the Fortran code
+%       7: rounding errors become severe in the Fortran code
+%       8: a linear constraint has zero gradient
 %       13: all variables are fixed by the constraints
 %       14: a linear feasibility problem received and solved
 %       15: a linear feasibility problem received but not solved
-%       20: the trust-region iteration has been performed for 10*maxfun times
-%       -1: NaN occurs in x
-%       -2: the objective/constraint function returns NaN or nearly
-%       infinite values (only in the classical mode)
-%       -3: NaN occurs in the models
+%       20: the trust region iteration has been performed for 2*maxfun times
+%       -1: NaN occurs in x (possible only in the classical mode)
+%       -2: the objective/constraint function returns an Inf/NaN value (possible only in classical
+%       mode)
+%       -3: NaN occurs in the models (possible only in classical mode)
 %       -4: constraints are infeasible
-%       exitflag = 5, 10, 11, 12 are possible exitflags of the Fortran
-%       code but cannot be returned by PRIMA or its solvers
 %   *** output is a structure with the following fields:
 %       funcCount: number of function evaluations
 %       nlcineq: cineq(x) (if there is nonlcon)
@@ -114,7 +113,7 @@ function [x, fx, exitflag, output] = prima(varargin)
 %       options.output_nlchist = true)
 %       solver: backend solver that does the computation
 %       message: return message
-%       warnings: a cell array that record all the warnings raised
+%       warnings: a cell array that records all the warnings raised
 %       during the computation
 %
 %   4. Options
@@ -165,8 +164,8 @@ function [x, fx, exitflag, output] = prima(varargin)
 %       respect the user-defined x0; default: false
 %   *** iprint: a flag deciding how much information will be printed during
 %       the computation; possible values are value 0 (default), 1, -1, 2,
-%       -2, 3, or -3:
-%       0: there will be no printing;
+%       -2, 3, or -3.
+%       0: there will be no printing; this is the default;
 %       1: a message will be printed to the screen at the return, showing
 %          the best vector of variables found and its objective function value;
 %       2: in addition to 1, at each "new stage" of the computation, a message
@@ -194,8 +193,8 @@ function [x, fx, exitflag, output] = prima(varargin)
 %       If maxhist is so large that recording the history takes too much memory,
 %       the Fortran code will reset maxhist to a smaller value. The maximal
 %       amount of memory defined the Fortran code is 2GB.
-%       Let L = length(x) + 2*(number of nonlinear constraints). Assuming
-%       that maxfun <= 500*L, then any problem with L <= 400 is not affected.
+%       Let L = length(x) + 2*(number of nonlinear constraints). Assume
+%       that maxfun <= 500*L. Then any problem with L <= 400 is not affected.
 %       *******************************************************************
 %   *** output_xhist: a boolean value indicating whether to output the
 %       history of the iterates; if it is set to true, then the output
@@ -212,7 +211,7 @@ function [x, fx, exitflag, output] = prima(varargin)
 %   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function and constraint (if applicable) values or not; default: false
 %       (if it is true, PRIMA will check whether the returned values of fun and
-%       nonlcon match fun(x) and nonlcon(x), which costs function/constraint
+%       nonlcon match fun(x) and nonlcon(x) or not, which costs function/constraint
 %       evaluations; designed only for debugging)
 %
 %   For example, the following code
@@ -261,7 +260,7 @@ function [x, fx, exitflag, output] = prima(varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Attribute: public (can  be called directly by users)
 %
-% Remarks
+% Remarks:
 %
 % 1. Public function v.s. private function
 % 1.1. Public functions are functions that can be directly called by users.

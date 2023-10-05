@@ -438,7 +438,7 @@ C
   320         FORMAT (/5X,'Return from BOBYQA because of much',
      1          ' cancellation in a denominator.')
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-              INFO=4
+              INFO=7
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               GOTO 720
           END IF
@@ -477,7 +477,7 @@ C
               IF (NF > NRESC) GOTO 190
               IF (IPRINT > 0) PRINT 320
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-              INFO=4
+              INFO=7
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               GOTO 720
           END IF

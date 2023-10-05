@@ -460,7 +460,7 @@ end
 
 
 % Record the return message in output.message according to exitflag
-switch exitflag % If preprima works properly, then 5, 6, 10, 11, 12 should never happen
+switch exitflag % The flags commented out should never happen. They are skipped for backward compatibility.
 case 0
     output.message = sprintf('Return from %s because the trust region radius reaches its lower bound.', solver);
 case 1
@@ -469,8 +469,8 @@ case 2
     output.message = sprintf('Return from %s because a trust region step has failed to reduce the quadratic model.', solver);
 case 3
     output.message = sprintf('Return from %s because the objective function has been evaluated maxfun times.', solver);
-case 4
-    output.message = sprintf('Return from %s because of much cancellation in a denominator.', solver);
+%case 4
+%    output.message = sprintf('Return from %s because of much cancellation in a denominator.', solver);
 %case 5
 %    output.message = sprintf('Return from %s because npt is not in the required interval.', solver);
 %case 6
@@ -478,9 +478,9 @@ case 4
 case 7
     output.message = sprintf('Return from %s because rounding errors are becoming damaging.', solver);
 case 8
-    output.message = sprintf('Return from %s because rounding errors prevent reasonable changes to x.', solver);
-case 9
-    output.message = sprintf('Return from %s because the denominator of the updating formula is zero.', solver);
+    output.message = sprintf('Return from %s because one of the linear constraints has zero gradient.', solver);
+%case 9
+%    output.message = sprintf('Return from %s because the denominator of the updating formula is zero.', solver);
 %case 10
 %    output.message = sprintf('Return from %s because n should not be less than 2.', solver);
 %case 11
@@ -494,9 +494,9 @@ case 14
 case 15
     output.message = sprintf('%s receives a linear feasibility problem but does not find a feasible point.', invoker);
 case 20
-    output.message = sprintf('Return from %s because the trust-region iteration has been performed maxtr (= 2*maxfun) times.', invoker);
+    output.message = sprintf('Return from %s because the trust region iteration has been performed maxtr (= 2*maxfun) times.', invoker);
     wid = sprintf('%s:MaxtrReached', invoker);
-    wmsg = sprintf('%s: The maximal number of trust-region iterations is reached. This is rare. Check that the algorithm works properly.', invoker);
+    wmsg = sprintf('%s: The maximal number of trust region iterations is reached. This is rare. Check that the algorithm works properly.', invoker);
     warning(wid, '%s', wmsg);
     if isfield(output, 'warnings')
         output.warnings = [output.warnings, wmsg];

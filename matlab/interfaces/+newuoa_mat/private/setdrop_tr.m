@@ -3,7 +3,7 @@ function knew = setdrop_tr(idz, kopt, beta, delta, ratio, rho, vlag, xopt, xpt, 
     npt = size(xpt, 2);
     % This subroutine sets KNEW to the index of the interpolation point to be deleted AFTER A TRUST
     % REGION STEP. KNEW will be set in a way ensuring that the geometry of XPT is "optimal" after
-    % XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust-region step.  Note that the
+    % XPT(:, KNEW) is replaced by XNEW = XOPT + D, where D is the trust region step.  Note that the
     % information of XNEW is included in VLAG and BETA, which are calculated according to D.
     %
     % N.B.: At the entry of this function is invoked, XOPT may differ from XPT(:, KOPT), because XOPT is

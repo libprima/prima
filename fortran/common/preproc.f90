@@ -6,10 +6,13 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, April 11, 2023 PM04:47:58
+! Last Modified: Thursday, October 05, 2023 PM10:40:54
 !--------------------------------------------------------------------------------------------------!
 
-! N.B.: If all the inputs are valid, then PREPROC should do nothing.
+! N.B.:
+! 1. If all the inputs are valid, then PREPROC should do nothing.
+! 2. In PREPROC, we use VALIDATE instead of ASSERT, so that the parameters are validated even if we
+! are not in debug mode.
 
 implicit none
 private
@@ -27,7 +30,7 @@ subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, 
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, HALF, EPS, MAXHISTMEM, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 use, non_intrinsic :: consts_mod, only : CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT, IPRINT_DFT, MIN_MAXFILT, MAXFILT_DFT
-use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: debug_mod, only : validate, warning
 use, non_intrinsic :: infnan_mod, only : is_nan, is_inf, is_finite
 use, non_intrinsic :: linalg_mod, only : trueloc, falseloc
 use, non_intrinsic :: memory_mod, only : cstyle_sizeof
@@ -50,7 +53,11 @@ real(RP), intent(in), optional :: xu(:)
 integer(IK), intent(inout) :: iprint
 integer(IK), intent(inout) :: maxfun
 integer(IK), intent(inout) :: maxhist
+real(RP), intent(inout) :: eta1
+real(RP), intent(inout) :: eta2
 real(RP), intent(inout) :: ftarget
+real(RP), intent(inout) :: gamma1
+real(RP), intent(inout) :: gamma2
 real(RP), intent(inout) :: rhobeg
 real(RP), intent(inout) :: rhoend
 
@@ -59,10 +66,6 @@ integer(IK), intent(inout), optional :: npt
 integer(IK), intent(inout), optional :: maxfilt
 real(RP), intent(inout), optional :: ctol
 real(RP), intent(inout), optional :: cweight
-real(RP), intent(inout), optional :: eta1
-real(RP), intent(inout), optional :: eta2
-real(RP), intent(inout), optional :: gamma1
-real(RP), intent(inout), optional :: gamma2
 real(RP), intent(inout), optional :: x0(:)
 
 ! Local variables
@@ -75,8 +78,6 @@ integer(IK) :: unit_memo
 logical :: is_constrained_loc
 logical :: lbx(n)
 logical :: ubx(n)
-real(RP) :: eta1_loc
-real(RP) :: eta2_loc
 real(RP) :: rhobeg_default
 real(RP) :: rhobeg_old
 real(RP) :: rhoend_default
@@ -84,20 +85,20 @@ real(RP) :: x0_old(n)
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
+    call validate(n >= 1, 'N >= 1', srname)
     if (present(m)) then
-        call assert(m >= 0, 'M >= 0', srname)
-        call assert(m == 0 .or. lower(solver) == 'cobyla', 'M == 0 unless the solver is COBYLA', srname)
+        call validate(m >= 0, 'M >= 0', srname)
+        call validate(m == 0 .or. lower(solver) == 'cobyla', 'M == 0 unless the solver is COBYLA', srname)
     end if
     if (lower(solver) == 'cobyla' .and. present(m) .and. present(is_constrained)) then
-        call assert(m == 0 .or. is_constrained, 'For COBYLA, M == 0 unless the problem is constrained', srname)
+        call validate(m == 0 .or. is_constrained, 'For COBYLA, M == 0 unless the problem is constrained', srname)
     end if
     if (lower(solver) == 'bobyqa') then
-        call assert(present(xl) .and. present(xu), 'XL and XU are present if the solver is BOBYQA', srname)
-        call assert(all(xu - xl >= TWO * EPS), 'MINVAL(XU-XL) > 2*EPS', srname)
+        call validate(present(xl) .and. present(xu), 'XL and XU are present if the solver is BOBYQA', srname)
+        call validate(all(xu - xl >= TWO * EPS), 'MINVAL(XU-XL) > 2*EPS', srname)
     end if
     if (present(honour_x0)) then
-        call assert(lower(solver) == 'bobyqa' .and. present(has_rhobeg) .and. present(xl) .and. present(xu) &
+        call validate(lower(solver) == 'bobyqa' .and. present(has_rhobeg) .and. present(xl) .and. present(xu) &
             & .and. present(x0), 'If HONOUR_X0 is present, then so are XL, XU, and X0, and the solver is BOBYQA', srname)
     end if
 end if
@@ -119,7 +120,6 @@ if (present(is_constrained)) then
 else
     is_constrained_loc = (m_loc > 0)
 end if
-
 
 ! Validate IPRINT
 if (abs(iprint) > 3) then
@@ -151,10 +151,9 @@ if (maxhist < 0) then
 end if
 maxhist = min(maxhist, maxfun)  ! MAXHIST > MAXFUN is never needed.
 
-! Validate FTARGET
+! Validate FTARGET. We do not raise a warning if FTARGET is NaN.
 if (is_nan(ftarget)) then
     ftarget = FTARGET_DFT
-    call warning(solver, 'Invalid FTARGET; it should be a real number; it is set to '//num2str(ftarget))
 end if
 
 ! Validate NPT
@@ -203,76 +202,61 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
 end if
 
 ! Validate ETA1 and ETA2
-if (present(eta1)) then
-    eta1_loc = eta1
-else
-    eta1_loc = ETA1_DFT
+if (is_nan(eta1)) then
+    ! In this case, we take the value hard coded in Powell's original code without any warning.
+    ! It is useful when interfacing with MATLAB/Python.
+    eta1 = ETA1_DFT
+elseif (eta1 < 0 .or. eta1 >= 1) then
+    ! Take ETA2 into account if it has a valid value.
+    if (eta2 >= 0 .and. eta2 < 1) then
+        eta1 = eta2 / 7.0_RP
+    else
+        eta1 = ETA1_DFT
+    end if
+    call warning(solver, 'Invalid ETA1; it should be in the interval [0, 1) and not more than ETA2;'// &
+        & ' it is set to '//num2str(eta1))
 end if
-if (present(eta2)) then
-    eta2_loc = eta2
-else
-    eta2_loc = ETA2_DFT
+
+if (is_nan(eta2)) then
+    ! In this case, we take the value hard coded in Powell's original code without any warning.
+    ! It is useful when interfacing with MATLAB/Python.
+    eta2 = ETA2_DFT
+elseif (eta2 < eta1 .or. eta2 < 0 .or. eta2 >= 1) then
+    ! Take ETA1 into account if it has a valid value.
+    if (eta1 >= 0 .and. eta1 < 1) then
+        eta2 = (eta1 + TWO) / 3.0_RP
+    else
+        eta2 = ETA2_DFT
+    end if
+    call warning(solver, 'Invalid ETA2; it should be in the interval [0, 1) and not less than ETA1;'// &
+        & ' it is set to '//num2str(eta2))
 end if
 
 ! When the difference between ETA1 and ETA2 is tiny, we force them to equal.
 ! See the explanation around RHOBEG and RHOEND for the reason.
-if (present(eta1) .and. present(eta2)) then
-    if (abs(eta1 - eta2) < 1.0E2_RP * EPS * max(abs(eta1), ONE)) then
-        eta2 = eta1
-    end if
-end if
-
-if (present(eta1)) then
-    if (is_nan(eta1)) then
-        ! In this case, we take the value hard coded in Powell's original code
-        ! without any warning. It is useful when interfacing with MATLAB/Python.
-        eta1 = ETA1_DFT
-    elseif (eta1 < 0 .or. eta1 >= 1) then
-        ! Take ETA2 into account if it has a valid value.
-        if (present(eta2) .and. eta2_loc > 0 .and. eta2_loc <= 1) then
-            eta1 = max(EPS, eta2 / 7.0_RP)
-        else
-            eta1 = ETA1_DFT
-        end if
-        call warning(solver, 'Invalid ETA1; it should be in the interval [0, 1) and not more than ETA2;'// &
-            & ' it is set to '//num2str(eta1))
-    end if
-end if
-
-if (present(eta2)) then
-    if (is_nan(eta2)) then
-        ! In this case, we take the value hard coded in Powell's original code
-        ! without any warning. It is useful when interfacing with MATLAB/Python.
-        eta2 = ETA2_DFT
-    elseif (present(eta1) .and. (eta2 < eta1_loc .or. eta2 > 1)) then
-        eta2 = (eta1 + TWO) / 3.0_RP
-        call warning(solver, 'Invalid ETA2; it should be in the interval [0, 1) and not less than ETA1;'// &
-            & ' it is set to '//num2str(eta2))
-    end if
+if (abs(eta1 - eta2) < 1.0E2_RP * EPS * max(abs(eta1), ONE)) then
+    eta2 = eta1
 end if
 
 ! Validate GAMMA1 and GAMMA2
-if (present(gamma1)) then
-    if (is_nan(gamma1)) then
-        ! In this case, we take the value hard coded in Powell's original code
-        ! without any warning. It is useful when interfacing with MATLAB/Python.
-        gamma1 = GAMMA1_DFT
-    elseif (gamma1 <= 0 .or. gamma1 >= 1) then
-        gamma1 = GAMMA1_DFT
-        call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//num2str(gamma1))
-    end if
+if (is_nan(gamma1)) then
+    ! In this case, we take the value hard coded in Powell's original code
+    ! without any warning. It is useful when interfacing with MATLAB/Python.
+    gamma1 = GAMMA1_DFT
+elseif (gamma1 <= 0 .or. gamma1 >= 1) then
+    gamma1 = GAMMA1_DFT
+    call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//num2str(gamma1))
 end if
 
-if (present(gamma2)) then
-    if (is_nan(gamma2)) then
-        ! In this case, we take the value hard coded in Powell's original code
-        ! without any warning. It is useful when interfacing with MATLAB/Python.
-        gamma2 = GAMMA2_DFT
-    elseif (gamma2 < 1 .or. is_inf(gamma2)) then
-        gamma2 = GAMMA2_DFT
-        call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//num2str(gamma2))
-    end if
+if (is_nan(gamma2)) then
+    ! In this case, we take the value hard coded in Powell's original code
+    ! without any warning. It is useful when interfacing with MATLAB/Python.
+    gamma2 = GAMMA2_DFT
+elseif (gamma2 < 1 .or. is_inf(gamma2)) then
+    gamma2 = GAMMA2_DFT
+    call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//num2str(gamma2))
 end if
+
 
 ! Validate RHOBEG and RHOEND
 
@@ -399,31 +383,27 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', solver)
-    call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', solver)
+    call validate(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', solver)
+    call validate(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', solver)
     if (present(npt)) then
-        call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', solver)
-        call assert(npt >= 3, 'NPT >= 3', solver)
+        call validate(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', solver)
+        call validate(npt >= 3, 'NPT >= 3', solver)
     end if
     if (present(maxfilt)) then
-        call assert(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
+        call validate(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
             & 'MIN(MIN_MAXFILT, MAXFUN) <= MAXFILT <= MAXFUN', solver)
     end if
-    if (present(eta1) .and. present(eta2)) then
-        call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', solver)
-    end if
-    if (present(gamma1) .and. present(gamma2)) then
-        call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', solver)
-    end if
-    call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', solver)
+    call validate(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', solver)
+    call validate(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', solver)
+    call validate(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', solver)
     if (lower(solver) == 'bobyqa') then
-        call assert(all(rhobeg <= (xu - xl) / TWO), 'RHOBEG <= MINVAL(XU-XL)/2', solver)
-        call assert(all(is_finite(x0)), 'X0 is finite', solver)
-        call assert(all(x0 >= xl .and. (x0 <= xl .or. x0 >= xl + rhobeg)), 'X0 == XL or X0 >= XL + RHOBEG', solver)
-        call assert(all(x0 <= xu .and. (x0 >= xu .or. x0 <= xu - rhobeg)), 'X0 == XU or X0 >= XU - RHOBEG', solver)
+        call validate(all(rhobeg <= (xu - xl) / TWO), 'RHOBEG <= MINVAL(XU-XL)/2', solver)
+        call validate(all(is_finite(x0)), 'X0 is finite', solver)
+        call validate(all(x0 >= xl .and. (x0 <= xl .or. x0 >= xl + rhobeg)), 'X0 == XL or X0 >= XL + RHOBEG', solver)
+        call validate(all(x0 <= xu .and. (x0 >= xu .or. x0 <= xu - rhobeg)), 'X0 == XU or X0 >= XU - RHOBEG', solver)
     end if
     if (present(ctol)) then
-        call assert(ctol >= 0, 'CTOL >= 0', solver)
+        call validate(ctol >= 0, 'CTOL >= 0', solver)
     end if
 end if
 

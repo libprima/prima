@@ -28,10 +28,11 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %   x = cobyla(fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon)
 %
 %   solves the problem formulated above, where
+%
 %   *** fun is the name or function handle of the objective function; if
 %       there is no objective function (i.e., we have a feasibility problem),
 %       then set fun = []
-%   *** x0 is the starting point; x0 CANNOT be []
+%   *** x0 is the starting point; x0 CANNOT be omitted or set to []
 %   *** Aineq and bineq are the coefficient matrix and right-hand side of
 %       the linear inequality constraint Aineq * x <= bineq; if there is
 %       no such constraint, set Aineq = [], bineq = []
@@ -79,31 +80,33 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %
 %   *** x is the approximate solution to the optimization problem
 %   *** fx is fun(x)
-%   *** exitflag is an integer indicating why COBYLA returns; the
-%       possible values are
+%   *** exitflag is an integer indicating why COBYLA returns; thepossible values are
 %       0: the lower bound for the trust region radius is reached
 %       1: the target function value is achieved
-%       2: a trust region step failed to reduce the quadratic model
+%       2: a trust region step failed to reduce the quadratic model (possible only in classical mode)
 %       3: the objective function has been evaluated maxfun times
-%       4, 7, 8, 9: rounding errors become severe in the Fortran code
+%       7: rounding errors become severe in the Fortran code
 %       13: all variables are fixed by the constraints
 %       14: a linear feasibility problem received and solved
 %       15: a linear feasibility problem received but not solved
-%       20: the trust-region iteration has been performed for 10*maxfun times
-%       -1: NaN occurs in x
-%       -2: the objective/constraint function returns NaN or nearly
-%       infinite values (only in the classical mode)
-%       -3: NaN occurs in the models
+%       20: the trust region iteration has been performed for 2*maxfun times
+%       -1: NaN occurs in x (possible only in the classical mode)
+%       -2: the objective/constraint function returns an Inf/NaN value (possible only in classical
+%       mode)
+%       -3: NaN occurs in the models (possible only in classical mode)
 %       -4: constraints are infeasible
-%       exitflag = 5, 10, 11, 12 are possible exitflags of the Fortran
-%       code but cannot be returned by COBYLA
 %   *** output is a structure with the following fields:
 %       funcCount: number of function evaluations
 %       nlcineq: cineq(x) (if there is nonlcon)
 %       nlceq: ceq(x) (if there is nonlcon)
 %       constrviolation: constrviolation of x (if problem is constrained)
+%       xhist: history of iterates (if options.output_xhist = true)
 %       fhist: history of function values
 %       chist: history of constraint violations
+%       nlcihist: history of nonlinear inequality constraint values (if
+%       options.output_nlchist = true)
+%       nlcehist: history of nonlinear equality constraint values (if
+%       options.output_nlchist = true)
 %       solver: backend solver that does the computation, i.e., 'cobyla'
 %       message: return message
 %       warnings: a cell array that records all the warnings raised
@@ -131,10 +134,6 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %       not; default: true
 %   *** classical: a boolean value indicating whether to call the classical
 %       version of Powell's Fortran code or not; default: false
-%   *** scale: a boolean value indicating whether to scale the problem
-%       according to bounds or not; default: false; if the problem is to
-%       be scaled, then rhobeg and rhoend mentioned above will be used as
-%       the initial and final trust region radii for the scaled  problem
 %   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
 %       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
 %       of the trust region radius. Roughly speaking, the trust region radius
@@ -144,10 +143,14 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended
 %       to set eta1 >= 0.5. Default: eta1 = 0.1, eta2 = 0.7, gamma1 = 0.5,
 %       and gamma2 = 2.
+%   *** scale: a boolean value indicating whether to scale the problem
+%       according to bounds or not; default: false; if the problem is to
+%       be scaled, then rhobeg and rhoend mentioned above will be used as
+%       the initial and final trust region radii for the scaled  problem
 %   *** iprint: a flag deciding how much information will be printed during
 %       the computation; possible values are value 0 (default), 1, -1, 2,
-%       -2, 3, or -3:
-%       0: there will be no printing;
+%       -2, 3, or -3.
+%       0: there will be no printing; this is the default;
 %       1: a message will be printed to the screen at the return, showing
 %          the best vector of variables found and its objective function value;
 %       2: in addition to 1, at each "new stage" of the computation, a message
@@ -189,10 +192,10 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %       "filter" used for selecting the returned solution; default: 2000
 %   *** debug: a boolean value indicating whether to debug or not; default: false
 %   *** chkfunval: a boolean value indicating whether to verify the returned
-%       function and constraint (if applicable) value or not; default: false
-%       (if it is true, COBYLA will check whether the returned values of fun
-%       and nonlcon matches fun(x) and nonlcon(x) or not, which costs
-%       function/constraint evaluations; designed only for debugging)
+%       function and constraint (if applicable) values or not; default: false
+%       (if it is true, COBYLA will check whether the returned values of fun and
+%       nonlcon match fun(x) and nonlcon(x) or not, which costs function/constraint
+%       evaluations; designed only for debugging)
 %
 %   For example, the following code
 %

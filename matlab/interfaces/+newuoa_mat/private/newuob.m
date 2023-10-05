@@ -99,14 +99,14 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
     % artificial RATIO but use SHORTD to be more explicit. See IMPROVE_GEO and REDUCE_RHO for details.
     ratio = -1;
 
-    % Normally, each trust-region iteration takes one function evaluation. The following setting
+    % Normally, each trust region iteration takes one function evaluation. The following setting
     % essentially imposes no constraint on the maximal number of trust region iterations.
     maxtr = 10 * maxfun;
     % MAXTR is unlikely to be reached, but we define the following default value for INFO for safety.
     info = infos('maxtr_reached');
 
     % Begin the iterative procedure.
-    % After solving a trust-region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
+    % After solving a trust region subproblem, NEWUOA uses 3 boolean variables to control the work flow.
     % SHORTD - Is the trust region trial step too short to invoke a function evaluation?
     % IMPROVE_GEO - Will we improve the model after the trust region iteration?
     % REDUCE_RHO - Will we reduce rho after the trust region iteration?
@@ -237,9 +237,9 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
             % N.B.:
             % 1. This part is OPTIONAL, but it is crucial for the performance on some problems. See
             % Section 8 of the NEWUOA paper.
-            % 2. TRYQALT is called only after a trust-region step but not after a geometry step, maybe
+            % 2. TRYQALT is called only after a trust region step but not after a geometry step, maybe
             % because the model is expected to be good after a geometry step.
-            % 3. If KNEW_TR = 0 after a trust-region step, TRYQALT is not invoked. In this case, the
+            % 3. If KNEW_TR = 0 after a trust region step, TRYQALT is not invoked. In this case, the
             % interpolation set is unchanged, so it seems reasonable to keep the model unchanged.
             % 4. In theory, FVAL - FOPT in the call of TRYQALT can be replaced by FVAL + C with any
             % constant C. This constant will not affect the result in precise arithmetic. Powell chose
@@ -259,7 +259,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
         % according to IMPROVE_GEO and REDUCE_RHO. Now we decide these two indicators.
 
         % First define IMPROVE_GEO, which corresponds to Box 8 of the NEWUOA paper.
-        % The geometry of XPT likely needs improvement if the trust-region step bad --- either too short
+        % The geometry of XPT likely needs improvement if the trust region step bad --- either too short
         % (SHORTD = TRUE) or the reduction ratio is small (RATIO < 0.1_RP). However, if REDUCE_RHO_1 is
         % TRUE, meaning that the step is short and the latest model errors have been small, then we do
         % not need to improve the geometry; instead, RHO will be reduced.
@@ -275,23 +275,23 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
         % 2. If SHORTD = FALSE and KNEW_TR = 0, then IMPROVE_GEO = TRUE. Therefore, IMPROVE_GEO = TRUE
         % if it is impossible to obtain a good XPT by replacing a current point with the one suggested
         % by the trust region step.
-        % 3. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust-region step is not tried at all,
+        % 3. If REDUCE_RHO = FALSE and SHORTD = TRUE, then the trust region step is not tried at all,
         % i.e., no function evaluation is invoked at XOPT + D (when REDUCE_RHO = TRUE, the step is not
-        % tried either, but the same step will be generated again at the next trust-region iteration
+        % tried either, but the same step will be generated again at the next trust region iteration
         % after RHO is reduced and DELTA is updated; see the end of Section 2 of the NEWUOA paper).
-        % 4. If SHORTD = FALSE and KNEW_TR = 0, then the trust-region step invokes a function evaluation
+        % 4. If SHORTD = FALSE and KNEW_TR = 0, then the trust region step invokes a function evaluation
         % at XOPT + D, but [XOPT + D, F(XOPT +D)] is not included into [XPT, FVAL]. In other words, this
         % function value is discarded. THEORETICALLY, KNEW_TR = 0 only if RATIO <= 0, so that a function
         % value that renders a reduction is never discarded; however, KNEW_TR may turn out 0 due to NaN
         % even if RATIO > 0. See SETDROP_TR for details.
         % 5. If SHORTD = FALSE and KNEW_TR > 0 and RATIO < 0.1_RP, then [XPT, FVAL] is updated so that
         % [XPT(KNEW_TR), FVAL(KNEW_TR)] = [XOPT + D, F(XOPT + D)], and the model is updated accordingly,
-        % but such a model will not be used in the next trust-region iteration, because a geometry step
+        % but such a model will not be used in the next trust region iteration, because a geometry step
         % will be invoked to improve the geometry of the interpolation set and update the model again.
         % 6. DELTA has been updated before arriving here: if REDUCE_RHO = FALSE and SHORTD = TRUE, then
         % DELTA was reduced by a factor of 10; if SHORTD = FALSE, then DELTA was updated by TRRAD after
-        % the trust-region iteration.
-        % 7. If SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust-region
+        % the trust region iteration.
+        % 7. If SHORTD = FALSE and KNEW_TR > 0, then XPT has been updated after the trust region
         % iteration; if RATIO > 0 in addition, then XOPT has been updated as well.
 
         xdist = sqrt(sum((xpt - repmat(xopt, 1, npt)).^2, 1)');
@@ -299,7 +299,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
         improve_geo = (~reduce_rho_1) && (max(xdist) > 2 * delta) && bad_trstep;
 
         % If all the interpolation points are close to XOPT and the trust region is small, but the
-        % trust-region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
+        % trust region step is "bad" (SHORTD or RATIO <= 0), then we shrink RHO (update the criterion
         % for the "closeness" and SHORTD). REDUCE_RHO_2 corresponds to Box 10 of the NEWUOA paper.
         % N.B.:
         % 1. The definition of REDUCE_RHO_2 is equivalent to the following:
@@ -371,7 +371,7 @@ function [x, nf, f, fhist, xhist, info] = newuob(calfun, iprint, maxfun, npt, et
 
             % DNORMSAVE contains the DNORM of the latest 3 function evaluations with the current RHO.
             %------------------------------------------------------------------------------------------%
-            % Powell's code does not update DNORM. Therefore, DNORM is the length of last trust-region
+            % Powell's code does not update DNORM. Therefore, DNORM is the length of last trust region
             % trial step, which seems inconsistent with what is described in Section 7 (around (7.7)) of
             % the NEWUOA paper. Seemingly we should keep DNORM = ||D|| as we do here. The value of DNORM
             % will be used when defining REDUCE_RHO.

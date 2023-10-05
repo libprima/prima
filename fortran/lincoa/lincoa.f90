@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, September 28, 2023 PM11:02:04
+! Last Modified: Thursday, October 05, 2023 PM09:29:19
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -206,7 +206,7 @@ subroutine lincoa(calfun, x, f, &
 !   NAN_INF_MODEL: NaN or Inf occurs in the model;
 !   NAN_INF_X: NaN or Inf occurs in X;
 !   DAMAGING_ROUNDING: the rounding error becomes damaging;
-!   ZERO_LINEAR_CONSTRAINT: one of the linear constraint has a zero gradient
+!   ZERO_LINEAR_CONSTRAINT: one of the linear constraints has a zero gradient
 !   !--------------------------------------------------------------------------!
 !   The following case(s) should NEVER occur unless there is a bug.
 !   NAN_INF_F: the objective function returns NaN or +Inf;

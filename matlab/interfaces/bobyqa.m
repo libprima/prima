@@ -19,7 +19,7 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %
 %   solves the problem formulated above, where
 %   *** fun is the name or function handle of the objective function
-%   *** x0 is the starting point; x0 CANNOT be []
+%   *** x0 is the starting point; x0 CANNOT be omitted or set to []
 %   *** lb and ub, which are vectors of the same length as x, are the
 %       lower and upper bound in the bound constraint lb <= x <= ub;
 %       set lb = [] if no lower bound, and ub = [] if no upper bound
@@ -45,28 +45,26 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %       possible values are
 %       0: the lower bound for the trust region radius is reached
 %       1: the target function value is achieved
-%       2: a trust region step failed to reduce the quadratic model
+%       2: a trust region step failed to reduce the quadratic model (possible only in classical mode)
 %       3: the objective function has been evaluated maxfun times
-%       4, 7, 8, 9: rounding errors become severe in the Fortran code
+%       7: rounding errors become severe in the Fortran code
 %       13: all variables are fixed by the constraints
 %       14: a linear feasibility problem received and solved
-%       20: the trust-region iteration has been performed for 10*maxfun times
-%       -1: NaN occurs in x
-%       -2: the objective function returns an NaN or nearly infinite
-%       value (only in the classical mode)
-%       -3: NaN occurs in the models
+%       20: the trust region iteration has been performed for 2*maxfun times
+%       -1: NaN occurs in x (possible only in the classical mode)
+%       -2: the objective function returns an Inf/NaN value (possible only in classical mode)
+%       -3: NaN occurs in the models (possible only in classical mode)
 %       -4: constraints are infeasible
-%       exitflag = 5, 10, 11, 12 are possible exitflags of the Fortran
-%       code but cannot be returned by BOBYQA
 %   *** output is a structure with the following fields:
 %       funcCount: number of function evaluations
+%       xhist: history of iterates (if options.output_xhist = true)
 %       constrviolation: constrviolation of x (if problem is
 %       constrained; should be 0 since BOBYQA is a feasible method)
 %       fhist: history of function values
 %       chist: history of constraint violations (should be all 0)
 %       solver: backend solver that does the computation, i.e., 'bobyqa'
 %       message: return message
-%       warnings: a cell array that records all the  warnings raised
+%       warnings: a cell array that records all the warnings raised
 %       during the computation
 %
 %   4. Options
@@ -91,6 +89,15 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %       not; default: true
 %   *** classical: a boolean value indicating whether to call the classical
 %       version of Powell's Fortran code or not; default: false
+%   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
+%       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
+%       of the trust region radius. Roughly speaking, the trust region radius
+%       is contracted by a factor of gamma1 when the reduction ratio is below
+%       eta1, and  enlarged by a factor of gamma2 when the reduction ratio is
+%       above eta2. It is required that 0 < eta1 <= eta2 < 1 and
+%       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended
+%       to set eta1 >= 0.5. Default: eta1 = 0.1, eta2 = 0.7, gamma1 = 0.5,
+%       and gamma2 = 2.
 %   *** scale: a boolean value indicating whether to scale the problem
 %       according to bounds or not; default: false; if the problem is to be
 %       scaled, then rhobeg and rhoend mentioned above will be used as the
@@ -99,8 +106,8 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %       user-defined x0 or not; default: false
 %   *** iprint: a flag deciding how much information will be printed during
 %       the computation; possible values are value 0 (default), 1, -1, 2,
-%       -2, 3, or -3:
-%       0: there will be no printing;
+%       -2, 3, or -3.
+%       0: there will be no printing; this is the default;
 %       1: a message will be printed to the screen at the return, showing
 %          the best vector of variables found and its objective function value;
 %       2: in addition to 1, at each "new stage" of the computation, a message
@@ -137,7 +144,7 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %   *** chkfunval: a boolean value indicating whether to verify the returned
 %       function value or not; default: false
 %       (if it is true, BOBYQA will check whether the returned value of fx
-%       matches fun(x), which costs a function evaluation; designed only
+%       matches fun(x) or not, which costs a function evaluation; designed only
 %       for debugging)
 %
 %   For example, the following code

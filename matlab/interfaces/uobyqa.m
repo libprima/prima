@@ -27,23 +27,19 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %
 %   *** x is the approximate solution to the optimization problem
 %   *** fx is fun(x)
-%   *** exitflag is an integer indicating why UOBYQA returns; the
-%       possible values are
-%       0: the lower bound for the trust-region radius is reached
+%   *** exitflag is an integer indicating why UOBYQA returns; the possible values are
+%       0: the lower bound for the trust region radius is reached
 %       1: the target function value is achieved
-%       2: a trust-region step failed to reduce the quadratic model
+%       2: a trust region step failed to reduce the quadratic model (possible only in classical mode)
 %       3: the objective function has been evaluated maxfun times
-%       4, 7, 8, 9: rounding errors become severe in the Fortran code
 %       14: a linear feasibility problem received and solved
-%       20: the trust-region iteration has been performed for 10*maxfun times
-%       -1: NaN occurs in x
-%       -2: the objective function returns and NaN or nearly infinite
-%       value (only in the classical mode)
-%       -3: NaN occurs in the models
-%       exitflag = 5, 10, 11, 12 are possible exitflags of the Fortran
-%       code but cannot be returned by UOBYQA
+%       20: the trust region iteration has been performed for 2*maxfun times
+%       -1: NaN occurs in x (possible only in the classical mode)
+%       -2: the objective function returns an Inf/NaN value (possible only in classical mode)
+%       -3: NaN occurs in the models (possible only in classical mode)
 %   *** output is a structure with the following fields:
 %       funcCount: number of function evaluations
+%       xhist: history of iterates (if options.output_xhist = true)
 %       fhist: history of function values
 %       solver: backend solver that does the computation, i.e., 'uobyqa'
 %       message: return message
@@ -59,20 +55,29 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %   The options include
 %   *** maxfun: maximal number of function evaluations; default: 500*length(x0)
 %   *** ftarget: target function value; default: -Inf
-%   *** rhobeg: initial trust-region radius; typically, rhobeg should be in
+%   *** rhobeg: initial trust region radius; typically, rhobeg should be in
 %       the order of one tenth of the greatest expected change to a variable;
 %       rhobeg should be positive; default: 1
-%   *** rhoend: final trust-region radius; rhoend reflects the precision
+%   *** rhoend: final trust region radius; rhoend reflects the precision
 %       of the approximate solution obtained by UOBYQA; rhoend should be
 %       positive and not larger than rhobeg; default: 1e-6
 %   *** fortran: a boolean value indicating whether to call Fortran code or
 %       not; default: true
 %   *** classical: a boolean value indicating whether to call the classical
 %       version of Powell's Fortran code or not; default: false
+%   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
+%       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
+%       of the trust region radius. Roughly speaking, the trust region radius
+%       is contracted by a factor of gamma1 when the reduction ratio is below
+%       eta1, and  enlarged by a factor of gamma2 when the reduction ratio is
+%       above eta2. It is required that 0 < eta1 <= eta2 < 1 and
+%       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended
+%       to set eta1 >= 0.5. Default: eta1 = 0.1, eta2 = 0.7, gamma1 = 0.5,
+%       and gamma2 = 2.
 %   *** iprint: a flag deciding how much information will be printed during
 %       the computation; possible values are value 0 (default), 1, -1, 2,
-%       -2, 3, or -3:
-%       0: there will be no printing;
+%       -2, 3, or -3.
+%       0: there will be no printing; this is the default;
 %       1: a message will be printed to the screen at the return, showing
 %          the best vector of variables found and its objective function value;
 %       2: in addition to 1, at each "new stage" of the computation, a message
@@ -81,7 +86,7 @@ function [x, fx, exitflag, output] = uobyqa(varargin)
 %       3: in addition to 2, each function evaluation with its variables will
 %          be printed to the screen;
 %       -1, -2, -3: the same information as 1, 2, 3 will be printed, not to
-%          the screen but to a file named SOLVER_output.txt; the file will be
+%          the screen but to a file named UOBYQA_output.txt; the file will be
 %          created if it does not exist; the new output will be appended to
 %          the end of this file if it already exists.
 %       N.B.:

@@ -349,7 +349,7 @@ if (m > 0) then
         end do
         if (temp <= 0) then
             if (present(info)) then
-                info = 12
+                info = 8
             end if
             return
         end if
