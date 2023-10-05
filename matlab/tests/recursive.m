@@ -10,9 +10,9 @@ if isfield(options, 'n')
     n = options.n;
 else
     if ismember(solver, {'uobyqa', 'cobyla'})
-        n = 20;
+        n = 10;
     else
-        n = 50;
+        n = 20;
     end
 end
 

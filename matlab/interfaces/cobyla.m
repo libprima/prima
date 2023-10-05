@@ -80,7 +80,7 @@ function [x, fx, exitflag, output] = cobyla(varargin)
 %
 %   *** x is the approximate solution to the optimization problem
 %   *** fx is fun(x)
-%   *** exitflag is an integer indicating why COBYLA returns; thepossible values are
+%   *** exitflag is an integer indicating why COBYLA returns; the possible values are
 %       0: the lower bound for the trust region radius is reached
 %       1: the target function value is achieved
 %       2: a trust region step failed to reduce the quadratic model (possible only in classical mode)
