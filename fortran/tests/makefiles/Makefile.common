@@ -867,8 +867,8 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "Warning (102): MODULE PROCEDURE 'redrho' USEd at (1) is not referenced" \
 	| grep -v "common/linalg.f90:[0-9]*:.*pivot.*may be used uninitialized" \
 	| grep -v "common/linalg.f90:[0-9]*:.*rank.*may be used uninitialized" \
-	| grep -v "common/preproc.f90:22:.*min_maxfun.*may be used uninitialized" \
-	| grep -v "common/preproc.f90:22:.*unit_memo.*may be used uninitialized" \
+	| grep -v "common/preproc.f90:[0-9]*:.*min_maxfun.*may be used uninitialized" \
+	| grep -v "common/preproc.f90:[0-9]*:.*unit_memo.*may be used uninitialized" \
 	| grep -v "Compiling file\|Module subprogram name" \
 	| grep -v "An allocatable array function '.*' is an extended feature" \
 	| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
