@@ -103,7 +103,7 @@ jobs:
       - name: Revise the Fortran code to break infnan
         run: |
           mv fortran/tests/testsuite/inf.F90 fortran/common/ && cat fortran/common/inf.F90
-          mv fortran/tests/testsuite/preproc.f90 fortran/common/ && cat fortran/command/preproc.f90
+          mv fortran/tests/testsuite/preproc.f90 fortran/common/ && cat fortran/common/preproc.f90
 
       - name: Revise setup_compiler_options to print the revised mexopt file
         run: |
