@@ -1,4 +1,4 @@
-name: Plot performance profiles, various compiler options
+name: Plot performance profiles, broken infnan
 
 on:
   # Trigger the workflow on push or pull request
@@ -6,7 +6,7 @@ on:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 4 1-31/2 * *'
+    - cron: '0 4 2-30/2 * *'
   # Trigger the workflow manually
   workflow_dispatch:
     inputs:
@@ -31,17 +31,7 @@ jobs:
         dim: [all]
         solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]  # prima is too expensive
         compiler_options: [-O0, -O1, -O2, -O3, -Ofast -fno-stack-arrays, -ffast-math]
-        competitor: [classical]
-        with_optim_toolbox: [yes, no]
-        exclude:
-          - solver: cobylan
-            with_optim_toolbox: yes
-          - solver: uobyqa
-            with_optim_toolbox: yes
-          - solver: newuoa
-            with_optim_toolbox: yes
-          - solver: bobyqa
-            with_optim_toolbox: yes
+        competitor: [norma]
 
     steps:
 
@@ -102,20 +92,16 @@ jobs:
         uses: actions/cache@v3.3.2
         with:
           path: ${{ runner.tool_cache }}/MATLAB
-          key: ${{ matrix.os }}-${{ matrix.matlab }}-${{ matrix.with_optim_toolbox }}
-
-      - name: Set up MATLAB with optimization toolbox
-        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox == 'yes' }}
-        uses: matlab-actions/setup-matlab@v2-beta
-        with:
-          release: ${{ matrix.matlab }}
-          products: Optimization_Toolbox
+          key: ${{ matrix.os }}-${{ matrix.matlab }}-no
 
       - name: Set up MATLAB without optimization toolbox
-        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox != 'yes' }}
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
           release: ${{ matrix.matlab }}
+
+      - name: Revise the Fortran code to break infnan
+        run: mv fortran/tests/testsuite/{inf.F90, preproc.f90} fortran/common/
 
       - name: Revise setup_compiler_options to print the revised mexopt file
         run: |
@@ -135,13 +121,11 @@ jobs:
             options = struct();
             options.compiler_options = '${{ matrix.compiler_options }}';
             options.debug = ~contains('${{ matrix.compiler_options }}', 'fast')
-            options.nr = 4;  % 4 random runs for each problem
+            options.nr = 1;  % 1 random runs for each problem
 
             if strcmp('${{ matrix.solver }}', 'cobylal')
-                options.nr = 3;
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
-                options.nr = 3;
                 prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'lincoa')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
@@ -159,7 +143,7 @@ jobs:
             files = dir([solver, '*.summary.*.pdf'])
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
-                newfile = fullfile(files(ifile).folder, ['${{ matrix.with_optim_toolbox }}', '_', files(ifile).name])
+                newfile = fullfile(files(ifile).folder, ['no', '_', files(ifile).name])
                 movefile(file, newfile);
             end
             movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_prima/']);
@@ -168,7 +152,7 @@ jobs:
             files = [dir(['/tmp/', solver, '_profile_prima/*start*']); dir(['/tmp/', solver, '_profile_prima/*end*'])]
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
-                newfile = fullfile(files(ifile).folder, ['${{ matrix.with_optim_toolbox }}', '_', files(ifile).name])
+                newfile = fullfile(files(ifile).folder, ['no', '_', files(ifile).name])
                 movefile(file, newfile);
             end
 

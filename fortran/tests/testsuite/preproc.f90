@@ -1,18 +1,14 @@
 module preproc_mod
 !--------------------------------------------------------------------------------------------------!
-! PREPROC_MOD is a module that preprocesses the inputs.
+! This is the replacement of fortran/common/preproc.f90 for testing what if IS_FINITE always returns
+! TRUE, while is_inf, is_posinf, is_neginf, and is_nan always return FALSE.
 !
-! Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and papers.
+! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
-! Started: July 2020
+! Started: July 2020.
 !
-! Last Modified: Friday, October 06, 2023 AM11:07:52
+! Last Modified: Friday, October 06, 2023 AM11:13:50
 !--------------------------------------------------------------------------------------------------!
-
-! N.B.:
-! 1. If all the inputs are valid, then PREPROC should do nothing.
-! 2. In PREPROC, we use VALIDATE instead of ASSERT, so that the parameters are validated even if we
-! are not in debug mode.
 
 implicit none
 private
@@ -380,6 +376,8 @@ end if
 !====================!
 !  Calculation ends  !
 !====================!
+
+eta1 = ETA1_DFT; eta2 = ETA2_DFT; gamma1 = GAMMA1_DFT; gamma2 = GAMMA2_DFT; 
 
 ! Postconditions
 if (DEBUGGING) then

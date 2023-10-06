@@ -9,7 +9,7 @@ module inf_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Friday, October 06, 2023 AM11:08:24
+! Last Modified: Monday, October 02, 2023 PM10:18:38
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: huge_mode, only : huge_value
