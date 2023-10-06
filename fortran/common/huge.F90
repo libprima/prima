@@ -1,6 +1,6 @@
 #include "ppf.h"
 
-module huge_mode
+module huge_mod
 !--------------------------------------------------------------------------------------------------!
 ! This module provides a function that returns HUGE(X). See infnan.f90 for more comments.
 !
@@ -8,7 +8,7 @@ module huge_mode
 !
 ! Started: July 2020.
 !
-! Last Modified: Monday, October 02, 2023 PM10:18:29
+! Last Modified: Friday, October 06, 2023 PM07:30:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -59,4 +59,4 @@ y = huge(x)
 end function huge_value_qp
 #endif
 
-end module huge_mode
+end module huge_mod

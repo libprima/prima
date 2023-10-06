@@ -9,10 +9,10 @@ module inf_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Friday, October 06, 2023 AM11:08:24
+! Last Modified: Friday, October 06, 2023 PM07:30:36
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: huge_mode, only : huge_value
+use, non_intrinsic :: huge_mod, only : huge_value
 implicit none
 private
 public :: is_finite, is_posinf, is_neginf, is_inf

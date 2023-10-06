@@ -60,10 +60,11 @@ module infnan_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Friday, October 06, 2023 PM07:13:14
+! Last Modified: Friday, October 06, 2023 PM07:22:46
 !--------------------------------------------------------------------------------------------------!
 
-use inf_mod, only : is_finite, is_inf, is_posinf, is_neginf
+use, non_intrinsic :: huge_mod, only : huge_value
+use, non_intrinsic :: inf_mod, only : is_finite, is_inf, is_posinf, is_neginf
 implicit none
 private
 public :: is_finite, is_posinf, is_neginf, is_inf, is_nan
