@@ -101,7 +101,9 @@ jobs:
           release: ${{ matrix.matlab }}
 
       - name: Revise the Fortran code to break infnan
-        run: mv fortran/tests/testsuite/{inf.F90, preproc.f90} fortran/common/
+        run: |
+          mv fortran/tests/testsuite/inf.F90 fortran/common/
+          mv fortran/tests/testsuite/preproc.f90 fortran/common/
 
       - name: Revise setup_compiler_options to print the revised mexopt file
         run: |
