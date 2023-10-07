@@ -154,7 +154,8 @@ function [x, fx, exitflag, output] = prima(varargin)
 %       eta1, and  enlarged by a factor of gamma2 when the reduction ratio is
 %       above eta2. It is required that 0 < eta1 <= eta2 < 1 and
 %       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended
-%       to set eta1 >= 0.5. Default: values hard-coded in Powell's Fortran code.
+%       to set eta1 >= 0.5. Default: eta1 = 0.1, eta2 = 0.7, gamma1 = 0.5,
+%       and gamma2 = 2.
 %   *** scale: (only for BOBYQA, LINCOA, and COBYLA) a boolean value
 %       indicating whether to scale the problem according to bounds or not;
 %       default: false; if the problem is to be scaled, then rhobeg and rhoend

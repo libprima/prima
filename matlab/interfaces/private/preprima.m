@@ -916,10 +916,10 @@ output_xhist = false; % Output the history of x?
 output_nlchist = false; % Output the history of the nonlinear constraints?
 min_maxfilt = 200; % The smallest value of maxfilt; if maxfilt is too small, the returned x may not be the best one visited
 maxfilt = 10*min_maxfilt; % Length of the filter used for selecting the returned x in constrained problems
-eta1 = 0.1;
-eta2 = 0.7;
-gamma1 = 0.5;
-gamma2 = 2;
+eta1 = 0.1;  % Reduction ratio threshold for shrinking the trust region
+eta2 = 0.7;  % Reduction ratio threshold for expanding the trust region
+gamma1 = 0.5;  % Factor for shrinking the trust region
+gamma2 = 2;  % Factor for expanding the trust region
 
 if ~(isa(options, 'struct') || isempty(options))
     % Public/normal error
