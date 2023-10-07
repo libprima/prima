@@ -69,18 +69,16 @@ opt.rhoend = 1.0e-5;
 
 % We conduct two parallel tests, in case something does not finish correctly during the first run.
 for i = 1 : 2
+
+    ticBytes(gcp)
+
     parfor i = 1:np
         fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
-        rng(random_seed + i);
-        shift = randn(n, 1);
-        fun = @(x) chrosen(x + shift);
-        x0 = randn(n, 1);
-        [~, g0] = chrosen(x0 + shift);
-        [x, fx, exitflag, output] = solver(fun, x0, opt)
-        [~, gx] = chrosen(x + shift);
-        norm(gx) / norm(g0)
-        assert(norm(gx) < 1.0e-3 * norm(g0), 'X is close to stationary.')
+        test(solver, n, opt, random_seed + i);
     end
+
+    tocBytes(gcp)
+
 end
 
 fprintf('\n>>>>>> Parallel test for %s ends <<<<<<\n', solver_name);
@@ -91,4 +89,20 @@ rng(orig_rng_state);
 % Restore the warning state
 warning(orig_warning_state);
 
+return
+
+
+function test(solver, n, solver_options, random_seed)
+rng(random_seed);
+shift = randn(n, 1);
+fun = @(x) chrosen(x + shift);
+x0 = randn(n, 1);
+[~, g0] = chrosen(x0 + shift);
+[x, fx, exitflag, output] = solver(fun, x0, solver_options)
+[~, gx] = chrosen(x + shift);
+
+whos
+
+norm(gx) / norm(g0)
+assert(norm(gx) < 1.0e-3 * norm(g0), 'X is close to stationary');
 return

@@ -424,7 +424,7 @@ and [improvements](#improvements) that do not exist in Powell's original impleme
 
 ```bibtex
 @misc{Zhang_2023,
-    title        = {PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration},
+    title        = {{PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration}},
     author       = {Zhang, Z.},
     howpublished = {available at http://www.libprima.net, DOI: 10.5281/zenodo.8052654},
     year         = {2023}
