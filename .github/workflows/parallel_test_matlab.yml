@@ -34,64 +34,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-20.04, macos-11, windows-2019, macos-13]
-        matlab: [latest, R2020b, R2021a, R2022a, R2023a]
+        # Only the following combinations of OS and MATLAB support parfor
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+        matlab: [latest, R2023a]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
 
-        # Exclude some versions of OS and MATLAB. In addition to the latest versions, we intend to
-        # test the earliest version of MATLAB on each OS.
+        # Exclude some versions of OS and MATLAB.
         exclude:
-          - os: ubuntu-latest
-            matlab: R2020b
-          - os: ubuntu-latest
-            matlab: R2021a
-          - os: ubuntu-latest
-            matlab: R2022a
-          - os: ubuntu-20.04
-            matlab: R2021a
-          - os: ubuntu-20.04
-            matlab: R2022a
-          - os: ubuntu-20.04
-            matlab: R2023a
-          - os: ubuntu-20.04
-            matlab: latest
-
-          - os: macos-13
-            matlab: R2020b
-          - os: macos-13
-            matlab: R2021a
-          - os: macos-13
-            matlab: R2022a
-          - os: macos-latest
-            matlab: R2020b
-          - os: macos-latest
-            matlab: R2021a
-          - os: macos-latest
-            matlab: R2022a
-          - os: macos-11
-            matlab: R2020b
-          - os: macos-11
-            matlab: R2021a
-          - os: macos-11
-            matlab: R2023a
-          - os: macos-11
-            matlab: latest
-
-          - os: windows-latest
-            matlab: R2020b
-          - os: windows-latest
-            matlab: R2021a
-          - os: windows-latest
-            matlab: R2022a
-          - os: windows-2019
-            matlab: R2020b
-          - os: windows-2019
-            matlab: R2022a
-          - os: windows-2019
-            matlab: R2023a
-          - os: windows-2019
-            matlab: latest
-
           # The following combinations are not available as of 20230928.
           - os: windows-latest
             matlab: latest
@@ -99,8 +48,6 @@ jobs:
             matlab: latest
           - os: macos-latest
             matlab: latest
-
-
 
     steps:
 
@@ -120,15 +67,7 @@ jobs:
 
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          GFVER=12
-          if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
-              GFVER=11
-          fi
-          if [[ "${{ matrix.matlab }}" = "R2020b" || "${{ matrix.matlab }}" = "R2021a" ]] ; then
-              GFVER=9
-          fi
-          bash .github/scripts/link_gfortran "$GFVER"
+        run: bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
 
       - name: Install Intel oneAPI on macOS
         if: startsWith(matrix.os, 'macos')

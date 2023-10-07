@@ -94,6 +94,6 @@ return
 function f = rfun(x, fun, solver, n)
 %RFUN defines a function of x by minimizing fun([x; y]) with respect to y in R^n using a solver.
 opt.debug = true;
-opt.rhoend = 1.0e-3;
+opt.rhoend = 1.0e-2;
 [~, f] = solver(@(y) fun([x; y]), randn(2, 1), opt);
 return

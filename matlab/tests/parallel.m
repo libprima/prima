@@ -103,6 +103,7 @@ x0 = randn(n, 1);
 
 whos
 
+
 norm(gx) / norm(g0)
 assert(norm(gx) < 1.0e-3 * norm(g0), 'X is close to stationary');
 return
