@@ -65,6 +65,9 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
+
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
