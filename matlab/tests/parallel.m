@@ -83,7 +83,9 @@ for i = 1 : 2
 
     tocBytes(gcp)
 
-    rethrow(exception);
+    if ~isempty(exception)
+        rethrow(exception);
+    end
 
 end
 
