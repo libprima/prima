@@ -72,12 +72,18 @@ for i = 1 : 2
 
     ticBytes(gcp)
 
-    parfor i = 1:np
-        fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
-        test(solver, n, opt, random_seed + i);
+    exception = [];
+    try
+        parfor i = 1:np
+            fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
+            test(solver, n, opt, random_seed + i);
+        end
+    catch exception
     end
 
     tocBytes(gcp)
+
+    rethrow(exception);
 
 end
 
@@ -102,7 +108,6 @@ x0 = randn(n, 1);
 [~, gx] = chrosen(x + shift);
 
 whos
-
 
 norm(gx) / norm(g0)
 assert(norm(gx) < 1.0e-3 * norm(g0), 'X is close to stationary');
