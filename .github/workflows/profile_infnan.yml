@@ -28,7 +28,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         matlab: [latest]
-        dim: [all]
+        dim: [small]
         solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]  # prima is too expensive
         compiler_options: [-O0, -O1, -O2, -O3, -Ofast -fno-stack-arrays, -ffast-math]
         competitor: [norma]

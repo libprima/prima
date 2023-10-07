@@ -53,14 +53,17 @@ module infnan_mod
 ! Similarly, the intrinsic HUGE must be wrapped by HUGE_VALUE in a file separated from IS_INF and
 ! IS_FINITE. Otherwise, IS_INF and IS_FINITE do not work with `gfortran-13 -Ofast`.
 !
-! 9. Even though the functions involve invocation of ABS and HUGE, their performance (in terms of
+! 9. The implementation of IS_NAN may seem unnecessarily complicated and redundant. However, it is
+! the only way that I have found to work with all the compilers that I have tested.
+!
+! 10. Even though the functions involve invocation of ABS and HUGE, their performance (in terms of
 ! CPU time) turns out comparable to or even better than the functions in IEEE_ARITHMETIC.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020.
 !
-! Last Modified: Friday, October 06, 2023 PM07:22:46
+! Last Modified: Saturday, October 07, 2023 AM11:26:38
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: huge_mod, only : huge_value
