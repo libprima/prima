@@ -32,6 +32,8 @@ jobs:
         matlab: [latest]
         solver: [newuoa, cobyla, bobyqa, uobyqa]  # With the blacklist, there is no large problem for lincoa
         dim: [large]
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
 
     steps:
 

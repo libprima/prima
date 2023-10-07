@@ -24,7 +24,8 @@ jobs:
     name: CMake build with nagfor
     runs-on: [self-hosted, nagfor]
     continue-on-error: true
-
+    # run scheduled workflows only in central repository
+    if: ${{ (github.event_name != 'schedule') || ((github.event_name == 'schedule') && (github.repository == 'libprima/prima)) }}
     steps:
 
       - name: Clone Repository (Latest)
@@ -66,6 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     needs: cmake-nagfor
+    if: github.repository == 'libprima/prima'
     steps:
       - name: Clone the GitHub actions scripts
         uses: actions/checkout@v4
