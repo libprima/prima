@@ -34,8 +34,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest, ubuntu-20.04, macos-11, windows-2019, macos-13]
-        matlab: [latest, R2020b, R2021a, R2022a, R2023a]
+        os: [ubuntu-20.04, ubuntu-latest, windows-2019, windows-latest, macos-11, macos-latest, macos-13]
+        matlab: [R2020b, R2021a, R2022a, R2023a, latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
 
         # Exclude some versions of OS and MATLAB. In addition to the latest versions, we intend to

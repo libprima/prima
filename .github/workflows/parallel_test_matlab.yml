@@ -36,7 +36,7 @@ jobs:
       matrix:
         # Only the following combinations of OS and MATLAB support parfor
         os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
-        matlab: [latest, R2023a]
+        matlab: [R2023a, latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
 
         # Exclude some versions of OS and MATLAB.
