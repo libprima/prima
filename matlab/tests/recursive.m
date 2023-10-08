@@ -91,5 +91,7 @@ return
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function f = rfun(x, fun, solver, n, solver_options)
 %RFUN defines a function of x by minimizing fun([x; y]) with respect to y in R^n using a solver.
+solver_options.iprint = 0;
+solver_options.rhoend = 1.0e-2;
 [~, f] = solver(@(y) fun([x; y]), randn(2, 1), solver_options);
 return
