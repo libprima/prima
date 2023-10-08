@@ -51,7 +51,6 @@ if ~isfield(options, 'compile') || options.compile
     cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
     opt.verbose = true;
     opt.debug = (rand() < 0.5);
-    opt.debug_only = (rand() < 0.5);
     opt.single = strcmpi(precision, 'single');
     opt.quadruple = strcmpi(precision, 'quadruple');
     setup(solver, opt);

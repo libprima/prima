@@ -48,7 +48,6 @@ if ~isfield(options, 'compile') || options.compile
     opt = struct();
     opt.verbose = false;
     opt.debug = (rand() < 0.5)
-    opt.debug_only = (rand() < 0.5);
     opt.classical = false;
     opt.single = false;
     setup(solver, opt);
