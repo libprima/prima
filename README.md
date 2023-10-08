@@ -261,8 +261,7 @@ cmake --build build --target install
 - My ultimate objective is to have a native Python implementation of PRIMA **independent of Fortran**, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
 
 #### Julia
-- [Binaries for Julia](https://github.com/JuliaPackaging/Yggdrasil/pull/7332) have been built.
-- [A Julia interface](https://github.com/libprima/prima/pull/62) will be available soon.
+- [A Julia interface](https://github.com/emmt/PRIMA.jl) is available.
 
 #### Other languages
 
