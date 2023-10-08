@@ -49,7 +49,7 @@ end
 if ~isfield(options, 'compile') || options.compile
     old_directory = pwd();
     cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
-    comiple_options = struct();
+    compile_options = struct();
     compile_options.verbose = false;
     compile_options.debug = (rand() < 0.5);
     compile_options.single = strcmpi(precision, 'single');
