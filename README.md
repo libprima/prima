@@ -420,8 +420,7 @@ PRIMA has taken me significant energy and time. I will be very glad if it is use
 Note that PRIMA contains [bug fixes](#bug-fixes) and [improvements](#improvements) that do not exist in Powell's original
 implementation of the solvers. Results produced by PRIMA probably cannot be reproduced using the original solvers.
 
-If you use PRIMA, please cite it as follows (I have been writing a paper on PRIMA since the early
-stage of the project. The citation will be pointed to the paper when it is finished).
+If you use PRIMA, please cite it as follows (The citation will be pointed to the paper on PRIMA when I finish it).
 
 [1] Z. Zhang, PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration, available at http://www.libprima.net, [DOI: 10.5281/zenodo.8052654](https://doi.org/10.5281/zenodo.8052654), 2023
 
