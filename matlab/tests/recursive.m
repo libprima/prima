@@ -47,7 +47,7 @@ if ~isfield(options, 'compile') || options.compile
     cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
     compile_options = struct();
     compile_options.verbose = false;
-    compile_options.debug = (rand() < 0.5)
+    compile_options.debug = (rand() < 0.5);
     compile_options.classical = false;
     compile_options.single = false;
     setup(solver, compile_options);

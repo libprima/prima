@@ -1,5 +1,5 @@
 function pdv()
-% PDV tests the Fortran solvers for all precision, debugging flags, and variants.
+% PDV tests the Fortran solvers for all Precision, Debugging flags, and Variants.
 
 oldpath = path();  % Record the current path.
 restoredefaultpath;  % Restore the "right out of the box" path of MATLAB
