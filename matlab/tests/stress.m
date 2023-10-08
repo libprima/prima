@@ -14,13 +14,26 @@ function stress(solver, options)
 % optimization, but may not be true for optimization with derivatives.
 % See matlab/setup_tools/compile.m for details.
 
-
 % Turn off unwanted warnings
 orig_warning_state = warnoff({solver});
 
 if nargin < 2
     options = struct();
 end
+
+% Set the random seed. We ALTER THE SEED WEEKLY to test the solvers as much as possible.
+if isfield(options, 'yw')
+    yw = options.yw;
+elseif isfield(options, 'seed')
+    yw = options.seed;
+else
+    yw = year_week('Asia/Shanghai');
+end
+fprintf('\nYW = %d\n', yw);
+% Define the random seed by yw
+random_seed = yw;
+orig_rng_state = rng();  % Save the current random number generator settings
+rng(random_seed);
 
 % Whether to conduct a TOUGH test
 tough_test = isfield(options, 'tough') && options.tough;
@@ -37,7 +50,8 @@ if ~isfield(options, 'compile') || options.compile
     old_directory = pwd();
     cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
     opt.verbose = true;
-    opt.debug = true;
+    opt.debug = (rand() < 0.5);
+    opt.debug_only = (rand() < 0.5);
     opt.single = strcmpi(precision, 'single');
     opt.quadruple = strcmpi(precision, 'quadruple');
     setup(solver, opt);
@@ -45,18 +59,6 @@ if ~isfield(options, 'compile') || options.compile
 end
 solver_name = solver;
 solver = str2func(solver);
-
-% Set the random seed. We ALTER THE SEED WEEKLY to test the solvers as much as possible.
-if isfield(options, 'yw')
-    yw = options.yw;
-elseif isfield(options, 'seed')
-    yw = options.seed;
-else
-    yw = year_week('Asia/Shanghai');
-end
-fprintf('\nYW = %d\n', yw);
-% Define the random seed by yw
-random_seed = yw;
 
 % Set the dimension of the problem
 if isfield(options, 'n')
@@ -110,7 +112,7 @@ test_options.maxfun = 500 * n;
 test_options.rhobeg = 1;
 test_options.rhoend = 1.0e-7;
 test_options.iprint = 2;
-test_options.debug = true;
+test_options.debug = (rand() < 0.5);
 fprintf('\n>>>>>> test_options =');
 test_options
 
@@ -151,6 +153,8 @@ while redo
 end
 toc;
 
+% Restore the random number generator state
+rng(orig_rng_state);
 % Restore the behavior of displaying warnings
 warning(orig_warning_state);
 

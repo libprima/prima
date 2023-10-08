@@ -155,9 +155,6 @@ jobs:
             options = struct();
             if ~isempty('${{ inputs.random-seed }}')
                 options.seed = str2num('${{ inputs.random-seed }}');
-            else
-                copyfile('private/year_week.m', cd());
-                options.seed = year_week('Asia/Shanghai');
             end
             options.tough = strcmp('${{ matrix.test }}', 'tough');
             daynum = day(datetime('now', 'TimeZone', 'Asia/Shanghai'));

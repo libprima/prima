@@ -102,23 +102,12 @@ jobs:
             options = struct();
             if ~isempty('${{ inputs.random-seed }}')
                 options.seed = str2num('${{ inputs.random-seed }}');
-            else
-                copyfile('private/year_week.m', cd());
-                options.seed = year_week('Asia/Shanghai');
             end
             if ~isempty('${{ inputs.dimension }}')
                 options.n = str2num('${{ inputs.dimension }}');
-            else
-                if ismember('${{ matrix.solver }}', {'uobyqa', 'cobyla'})
-                    options.n = 20;
-                else
-                    options.n = 50;
-                end
             end
             if ~isempty('${{ inputs.np }}')
                 options.np = str2num('${{ inputs.np }}');
-            else
-                options.np = 32;
             end
             options
 
