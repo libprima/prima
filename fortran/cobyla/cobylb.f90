@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, August 07, 2023 PM02:53:28
+! Last Modified: Sunday, October 08, 2023 PM06:32:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -327,6 +327,11 @@ do tr = 1, maxtr
 
     ! Calculate the linear approximations to the objective and constraint functions.
     ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
+    ! Zaikun 2023108: According to a test on 2023108, calculating G and A(:, M_LCON+1:M) by solving
+    ! the linear systems SIM^T*G = FVAL(1:N)-FVAL(N+1) and SIM^T*A = CONMAT(:, 1:N)-CONMAT(:, N+1)
+    ! does not seem to improve or worsen the performance of COBYLA in terms of the number of function
+    ! evaluations. The system was solved by SOLVE in LINALG_MOD based on a QR factorization of SIM
+    ! (not necessarily a good algorithm). No preconditioning was used.
     g = matprod(fval(1:n) - fval(n + 1), simi)
     A(:, 1:m_lcon) = amat
     A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
