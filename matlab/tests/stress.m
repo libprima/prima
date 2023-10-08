@@ -49,11 +49,12 @@ end
 if ~isfield(options, 'compile') || options.compile
     old_directory = pwd();
     cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
-    opt.verbose = true;
-    opt.debug = (rand() < 0.5);
-    opt.single = strcmpi(precision, 'single');
-    opt.quadruple = strcmpi(precision, 'quadruple');
-    setup(solver, opt);
+    comiple_options = struct();
+    compile_options.verbose = false;
+    compile_options.debug = (rand() < 0.5);
+    compile_options.single = strcmpi(precision, 'single');
+    compile_options.quadruple = strcmpi(precision, 'quadruple');
+    setup(solver, compile_options);
     cd(old_directory);
 end
 solver_name = solver;
@@ -104,20 +105,20 @@ case 'cobyla'
     problem_type = 'n';
 end
 
-% Set the options for the test
-test_options = struct();
-test_options.precision = precision;
-test_options.maxfun = 500 * n;
-test_options.rhobeg = 1;
-test_options.rhoend = 1.0e-7;
-test_options.iprint = 2;
-test_options.debug = (rand() < 0.5);
-fprintf('\n>>>>>> test_options =');
-test_options
+% Set the options for the solver
+solver_options = struct();
+solver_options.precision = precision;
+solver_options.maxfun = 500 * n;
+solver_options.rhobeg = 1;
+solver_options.rhoend = 1.0e-7;
+solver_options.iprint = 2;
+solver_options.debug = (rand() < 0.5);
+fprintf('\n>>>>>> solver_options =');
+solver_options
 
 % Generate the problem
 problem = stress_problem(n, problem_type, random_seed);
-problem.options = test_options;
+problem.options = solver_options;
 original_problem = problem;
 if tough_test
     problem = tough(original_problem, random_seed);

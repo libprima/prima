@@ -45,12 +45,12 @@ end
 if ~isfield(options, 'compile') || options.compile
     old_directory = pwd();
     cd(fileparts(fileparts(fileparts(mfilename('fullpath')))));
-    opt = struct();
-    opt.verbose = false;
-    opt.debug = (rand() < 0.5);
-    opt.classical = false;
-    opt.single = false;
-    setup(solver, opt);
+    compile_options = struct();
+    compile_options.verbose = false;
+    compile_options.debug = (rand() < 0.5);
+    compile_options.classical = false;
+    compile_options.single = false;
+    setup(solver, compile_options);
     cd(old_directory);
 end
 solver_name = solver;
@@ -61,10 +61,10 @@ tic;
 fprintf('\n>>>>>> Parallel test for %s starts <<<<<<\n', solver_name);
 
 % Call the solver
-opt = struct();
-opt.iprint = 2;
-opt.debug = (rand() < 0.5);
-opt.rhoend = 1.0e-5;
+solver_options = struct();
+solver_options.iprint = 2;
+solver_options.debug = (rand() < 0.5);
+solver_options.rhoend = 1.0e-5;
 
 % We conduct two parallel tests, in case something does not finish correctly during the first run.
 for i = 1 : 2
@@ -73,7 +73,7 @@ for i = 1 : 2
 
     parfor i = 1:np
         fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
-        test(solver, n, opt, random_seed + i);
+        test(solver, n, solver_options, random_seed + i);
     end
 
     tocBytes(gcp)
