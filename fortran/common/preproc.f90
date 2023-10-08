@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, October 06, 2023 AM11:07:52
+! Last Modified: Monday, October 09, 2023 AM01:28:48
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -202,11 +202,7 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
 end if
 
 ! Validate ETA1 and ETA2
-if (is_nan(eta1)) then
-    ! In this case, we take the value hard coded in Powell's original code without any warning.
-    ! It is useful when interfacing with MATLAB/Python.
-    eta1 = ETA1_DFT
-elseif (eta1 < 0 .or. eta1 >= 1) then
+if (is_nan(eta1) .or. eta1 < 0 .or. eta1 >= 1) then
     ! Take ETA2 into account if it has a valid value.
     if (eta2 >= 0 .and. eta2 < 1) then
         eta1 = eta2 / 7.0_RP
@@ -217,11 +213,7 @@ elseif (eta1 < 0 .or. eta1 >= 1) then
         & ' it is set to '//num2str(eta1))
 end if
 
-if (is_nan(eta2)) then
-    ! In this case, we take the value hard coded in Powell's original code without any warning.
-    ! It is useful when interfacing with MATLAB/Python.
-    eta2 = ETA2_DFT
-elseif (eta2 < eta1 .or. eta2 < 0 .or. eta2 >= 1) then
+if (is_nan(eta2) .or. eta2 < eta1 .or. eta2 < 0 .or. eta2 >= 1) then
     ! Take ETA1 into account if it has a valid value.
     if (eta1 >= 0 .and. eta1 < 1) then
         eta2 = (eta1 + TWO) / 3.0_RP
