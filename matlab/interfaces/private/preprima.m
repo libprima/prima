@@ -301,7 +301,7 @@ probinfo.scaled = false;
 probinfo.scaling_factor = ones(size(x0));
 probinfo.shift = zeros(size(x0));
 if options.scale && ~probinfo.nofreex && ~probinfo.infeasible
-    [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shift, ~, warnings] = scale_problem(invoker, fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, warnings);
+    [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shift, warnings] = scale_problem(invoker, fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, warnings);
     % Scale and shift the problem so that all the bounds become [-1, 1]
     % It is done only if all variables have both lower and upper bounds
     probinfo.scaled = true;
@@ -1687,7 +1687,7 @@ options.gamma2 = double(options.gamma2);
 return
 
 %%%%%%%%%%%%%%%%%%%%%% Function for scaling the problem %%%%%%%%%%%%%%%%
-function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shift, substantially_scaled, warnings] = scale_problem(invoker, fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, warnings)
+function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shift, warnings] = scale_problem(invoker, fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, warnings)
 % x_before_scaling = scaling_factor.*x_after_scaling + shift
 
 % Question: What about scaling according to the magnitude of x0, lb, ub,
@@ -1698,10 +1698,6 @@ function [fun, x0, Aineq, bineq, Aeq, beq, lb, ub, nonlcon, scaling_factor, shif
 
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
-
-substantially_scaled_threshold = 2;
-% We consider the problem substantially scaled_threshold if
-% max([1; scaling_factor])/min([1; scaling_factor]) > substantially_scaled_threshold
 
 % Zaikun 2020-05-24: we change the scaling strategy; do not scale the problem
 % unless all variables have both lower and upper bounds
@@ -1756,12 +1752,6 @@ end
 %    warning(wid, '%s', wmsg);
 %    warnings = [warnings, wmsg];
 %end
-
-substantially_scaled = false;
-%if (max([scaling_factor; 1 ./ scaling_factor]) > substantially_scaled_threshold)
-if max([1; scaling_factor])/min([1; scaling_factor]) > substantially_scaled_threshold
-    substantially_scaled = true;
-end
 
 if min(scaling_factor) < eps
     % Private/unexpected error
