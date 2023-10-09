@@ -418,9 +418,9 @@ in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/a
 
 PRIMA has taken me significant energy and time. I will be delighted if it is useful to you. All I need is a citation / acknowledgment.
 Note that PRIMA contains [bug fixes](#bug-fixes) and [improvements](#improvements) that do not exist in Powell's original
-implementation of the solvers. Results produced by PRIMA may not reproducible using the original solvers.
+implementation of the solvers. Results produced by PRIMA may not be reproducible using the original solvers.
 
-If you use PRIMA, please cite it as follows (The citation will be pointed to my paper on PRIMA when I finish it).
+If you use PRIMA, please cite it as follows. The citation will be pointed to my paper on PRIMA when I finish it.
 
 [1] Z. Zhang, PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration, available at http://www.libprima.net, [DOI: 10.5281/zenodo.8052654](https://doi.org/10.5281/zenodo.8052654), 2023
 
