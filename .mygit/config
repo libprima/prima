@@ -11,6 +11,7 @@
 	pushurl = git@github.com:libprima/prima.git
 	pushurl = git@github.com:libsprima/prima.git
 	pushurl = git@github.com:primapack/prima.git
+	pushurl = git@github.com:fortlab/prima.git
 	pushurl = git@github.com:primalib/prima.git
 	pushurl = git@github.com:zequipe/prima.git
 	pushurl = git@github.com:equipez/prima.git
