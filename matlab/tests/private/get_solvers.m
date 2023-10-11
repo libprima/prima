@@ -64,12 +64,17 @@ for is = 1 : length(solvers)
 
 
         % Do we compile the single-precision version?
-        % Yes if we are in verification or if the solver name ends with '_single' or SOLVER_single is requested.
-        mexopts{is}.single = (isverify || endsWith(solvers{is}, '_single') || ismember([solvers{is}, '_single'], solvers));
+        % Yes if we are in verification or if the solver name ends with '_single' or
+        % SOLVER_single is requested or options.precision='single'.
+        mexopts{is}.single = (isverify || endsWith(solvers{is}, '_single') || ismember([solvers{is}, '_single'], solvers)) || ...
+            (isfield(options, 'precision') && (isa(options.precision, 'char') ||  isa(options.precision, 'string')) && strcmpi(options.precision, 'single'));
 
         % Do we compile the quadruple-precision version?
-        % Yes if we are in verification or if the solver name ends with '_quadruple' or SOLVER_quadruple is requested.
-        mexopts{is}.quadruple = (isverify || endsWith(solvers{is}, '_quadruple') || ismember([solvers{is}, '_quadruple'], solvers));
+        % Yes if we are in verification or if the solver name ends with '_quadruple' or
+        % SOLVER_quadruple is requested or options.precision is 'quadruple'.
+        mexopts{is}.quadruple = (isverify || endsWith(solvers{is}, '_quadruple') || ismember([solvers{is}, '_quadruple'], solvers)) || ...
+            (isfield(options, 'precision') && (isa(options.precision, 'char') ||  isa(options.precision, 'string')) && strcmpi(options.precision, 'quadruple'));
+
 
         % Should we be verbose?
         mexopts{is}.verbose = (isfield(options, 'verbose') && options.verbose || with_compiler_options);

@@ -6,6 +6,7 @@ end
 solvers = lower(solvers);
 
 % Default options
+precision = 'double';
 rhobeg = 1;
 rhoend = 1e-6;
 
@@ -87,7 +88,7 @@ disp(['prob_end_time_dir = ', prob_end_time_dir]);
 disp(['prob_end_runs_dir = ', prob_end_runs_dir]);
 
 % Set options
-options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
+options = setopt(options, precision, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
     eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
     sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict);
 
@@ -482,9 +483,13 @@ return
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function options = setopt(options, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, ...
+function options = setopt(options, precision, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, ...
         randomizex0, eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
         sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict) % Set options
+
+if (~isfield(options, 'precision'))
+    options.precision = precision;
+end
 
 if (~isfield(options, 'rhoend'))
     options.rhoend = rhoend;
@@ -681,6 +686,7 @@ return
 function solv_options = setsolvopt(solv, n, options)
 
 solv_options = struct();
+solv_options.precision = options.precision;
 solv_options.rhobeg = options.rhobeg;
 solv_options.rhoend = options.rhoend;
 solv_options.maxfun = min(options.maxfun_dim*n, options.maxfun);  % may differ from options.maxfun

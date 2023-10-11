@@ -80,6 +80,11 @@ try
     if isfield(options, 'randomizex0') && isnumeric(options.randomizex0) && isscalar(options.randomizex0) && abs(options.randomizex0) > 0
         test_feature = [test_feature, '.', 'randomizex0', sprintf('%g', options.randomizex0)];
     end
+    if isfield(options, 'precision') && (isa(options.precision, 'char') || ...
+            isa(options.precision, 'string')) && ~isempty(options.precision)
+        test_feature = [test_feature, '.', 'precision-', options.precision];
+    end
+
     if isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options))
         test_feature = [test_feature, '.', strjoin(fieldnames(options.eval_options), '_')];
         if isfield(options.eval_options, 'dnoise')
@@ -113,6 +118,8 @@ try
     test_feature = regexprep(test_feature, '^\.', '');
     if isempty(test_feature)
         test_feature = 'plain';
+    elseif isempty(regexprep(test_feature, 'precision-single|precision-double|precision-quadruple', ''))
+        test_feature = [test_feature, '.plain'];
     end
     options.test_feature = test_feature;
 
@@ -125,10 +132,6 @@ try
     if isfield(options, 'reverse') && options.reverse
         solvers = solvers(end:-1:1);  % Reverse order
     end
-
-    % The following line can be used for testing the single-precision version. If such a test is
-    % intended, remember to set mexopt.single = true in `get_solvers`.
-    %solvers = {solver, [solver, '_single']};
 
     % Make the solvers available. Note that the solvers are under `test_dir`.
     get_solvers(solvers, test_dir, options);
