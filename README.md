@@ -152,11 +152,12 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 - [Tests](https://github.com/fortlab/prima/actions) at [fortlab/prima](https://github.com/fortlab/prima)
 
-    - [![Plot performance profiles for all problems, single and quadruple](https://github.com/primalib/prima/actions/workflows/profile_all_sq.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_all_sq.yml)
+    - [![Plot performance profiles for all problems, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_all_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_all_sq.yml)
     - [![Plot performance profiles for cobyla, small, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_cobyla_small_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_cobyla_small_sq.yml)
     - [![Plot performance profiles for uobyqa, small, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_uobyqa_small_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_uobyqa_small_sq.yml)
     - [![Plot performance profiles for newuoa, small, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_newuoa_small_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_newuoa_small_sq.yml)
     - [![Plot performance profiles for bobyqa, small, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_bobyqa_small_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_bobyqa_small_sq.yml)
+    - [![Plot performance profiles for lincoa, small, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_lincoa_small_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_lincoa_small_sq.yml)
 
 - [Tests](https://github.com/primalib/prima/actions) at [primalib/prima](https://github.com/primalib/prima)
 
