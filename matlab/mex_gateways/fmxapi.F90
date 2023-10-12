@@ -12,7 +12,7 @@ module fmxapi_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Monday, May 08, 2023 PM06:05:21
+! Last Modified: Thursday, October 12, 2023 PM02:37:48
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -491,7 +491,7 @@ call fmxVerifyClassShape(px, 'double', 'matrix')
 ! Get size
 m = int(mxGetM(px), kind(m))
 n = int(mxGetN(px), kind(n))
-xsize = int(m * n, kind(xsize))
+xsize = int(m, kind(xsize)) * int(n, kind(xsize))
 
 ! Copy input to X_DP
 call safealloc(x_dp, m, n) ! NOT removable

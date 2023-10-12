@@ -506,11 +506,7 @@ case 20
 case -1
     output.message = sprintf('Return from %s because NaN occurs in x.', solver);
 case -2  % This cannot happen if the moderated extreme barrier is implemented, which is the case when options.classical is false.
-    if strcmp(solver, 'cobyla')
-        output.message = sprintf('Return from %s because the objective function returns an NaN or nearly infinite value, or the constraints return a NaN.', solver);
-    else
-        output.message = sprintf('Return from %s because the objective function returns an NaN or nearly infinite value.', solver);
-    end
+    output.message = sprintf('Return from %s because the objective function returns an NaN or nearly infinite value, or the constraints return a NaN.', solver);
 case -3
     output.message = sprintf('Return from %s because NaN occurs in the models.', solver);
 case -4
