@@ -1,3 +1,5 @@
+WARNING:File - , line 349
+auto indentation failed due to chars limit, line should be split(limit:132)
 module preproc_mod
 !--------------------------------------------------------------------------------------------------!
 ! PREPROC_MOD is a module that preprocesses the inputs.
@@ -6,7 +8,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, October 09, 2023 AM01:28:48
+! Last Modified: Thursday, October 12, 2023 PM08:51:55
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -139,8 +141,16 @@ case default  ! CASE ('NEWUOA', 'BOBYQA', 'LINCOA')
     min_maxfun = n + 3_IK
     min_maxfun_str = 'N + 3'
 end select
-if (maxfun < min_maxfun) then
-    maxfun = min_maxfun
+if (maxfun <= max(0_IK, min_maxfun)) then
+    if (maxfun > 0) then
+        maxfun = min_maxfun
+    else  ! We assume that nonpositive values of MAXFUN are produced by overflow.
+        if (n >= huge(maxfun) / MAXFUN_DIM_DFT) then
+            maxfun = huge(maxfun)
+        else
+            maxfun = MAXFUN_DIM_DFT * n
+        end if
+    end if
     call warning(solver, 'Invalid MAXFUN; it should be at least '//min_maxfun_str//'; it is set to '//num2str(maxfun))
 end if
 
@@ -344,7 +354,7 @@ if (present(honour_x0)) then
 
         if (any(abs(x0_old - x0) > 0)) then
             call warning(solver, 'X0 is revised so that the distance between X0 and the inactive bounds is at least RHOBEG; '// &
-                 & 'set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
+                  & 'set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
         end if
     end if
 end if
