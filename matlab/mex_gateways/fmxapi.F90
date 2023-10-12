@@ -12,7 +12,7 @@ module fmxapi_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Thursday, October 12, 2023 PM02:37:48
+! Last Modified: Thursday, October 12, 2023 PM03:18:10
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -483,7 +483,7 @@ real(RP), allocatable, intent(out) :: x(:, :)
 real(DP), allocatable :: x_dp(:, :)
 integer(IK) :: m, n
 mwSize :: xsize
-character(len=:), allocatable :: wid, msg
+character(len=:), allocatable :: wid, eid, msg
 
 ! Check input type and size
 call fmxVerifyClassShape(px, 'double', 'matrix')
@@ -492,6 +492,11 @@ call fmxVerifyClassShape(px, 'double', 'matrix')
 m = int(mxGetM(px), kind(m))
 n = int(mxGetN(px), kind(n))
 xsize = int(m, kind(xsize)) * int(n, kind(xsize))
+if (abs(real(xsize, DP) - real(m, DP) * real(n, DP)) > cvsnTol * (abs(xsize) + 1)) then
+    eid = 'FMXAPI:LargeMultiplicationError'
+    msg = 'READ_RMATRIX: Large error occurs when handling the size of the given matrix (maybe due to overflow).'
+    call mexErrMsgIdAndTxt(eid, msg)
+end if
 
 ! Copy input to X_DP
 call safealloc(x_dp, m, n) ! NOT removable
