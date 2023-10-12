@@ -108,10 +108,11 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
+            options.blacklist = {'DNIEPER', 'ERRINROSNE', 'PRODPL1', 'TRO6X2'};
             options.nr = 1;
             options.precision = '${{ matrix.precision }}';
 
-            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
+            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', 'b', options);
 
 
             % Move the files to prepare for uploading artifacts

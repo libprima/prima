@@ -107,6 +107,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
+            blacklist = {'TOINTQOR'};
             options.nr = 1;
             options.precision = '${{ matrix.precision }}';
 

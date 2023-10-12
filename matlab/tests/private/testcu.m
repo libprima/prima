@@ -888,6 +888,8 @@ case 'uobyqa'
         'TOINTPSP', ...
         'VARDIM', ...
         }];
+    % For the following problems, the classical uobyqa (single-precision) encounters infinite cycling.
+    blacklist = [blacklist, {'BEALE', 'BOXBODLS'}];
 case 'newuoa'
     blacklist = [blacklist, { ...
         'ARGTRIGLS', ...
@@ -916,7 +918,7 @@ case 'newuoa'
         'VARDIM', ...
         }];
 case 'bobyqa'
-    % For the following problems, the classical lincoa encounters SEGFAULT.
+    % For the following problems, the classical bobyqa (single-precision) encounters SEGFAULT.
     blacklist = [blacklist, {'MGH17LS'}];
 case 'lincoa'
     blacklist = [blacklist, { ...
@@ -1005,5 +1007,7 @@ case 'cobyla'
          }];
     % For the following problems, the classical cobyla encounters SEGFAULT.
     blacklist = [blacklist, {'ERRINBAR', 'HS118', 'LAKES', 'TENBARS1', 'TENBARS2', 'TENBARS3', 'TENBARS4', 'VANDERM4', 'VANDANIUMS'}];
+    % For the following problems, the classical cobyla (single-precision) encounters infinite cycling.
+    blacklist = [blacklist, {'HS101', 'HS112', 'MESH'}];
 end
 return

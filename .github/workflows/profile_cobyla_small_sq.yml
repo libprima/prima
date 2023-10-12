@@ -121,6 +121,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
+            options.blacklist = {'DNIEPER', 'ERRINROSNE', 'PRODPL1', 'TRO6X2'};
             options.nr = 1;
             options.precision = '${{ matrix.precision }}';
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));

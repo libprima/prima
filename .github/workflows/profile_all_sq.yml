@@ -136,6 +136,13 @@ jobs:
         uses: matlab-actions/run-command@v1.2.1
         with:
           command: |
+            blacklist = {};
+            blacklist = [blacklist, {'TOINTQOR'}];  % uobyqa
+            blacklist = [blacklist, {'LUKSAN13LS', 'SPIN2LS'}];  % newuoa
+            blacklist = [blacklist, {'CHEBYQAD', 'HOLMES'}];  % bobyqa
+            blacklist = [blacklist, {'AVION2', 'DUAL4', 'GMNCASE1', 'GMNCASE2', 'SMBANK', 'ZECEVIC2'}];  % lincoa
+            blacklist = [blacklist, {'DNIEPER', 'ERRINROSNE', 'PRODPL1', 'TRO6X2'}];  % cobyla
+
             ver;
             root_dir = pwd();
 
@@ -143,6 +150,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
+            options.blacklist = blacklist;
             options.nr = 1;
             options.precision = '${{ matrix.precision }}';
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));

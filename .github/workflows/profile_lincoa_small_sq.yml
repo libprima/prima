@@ -116,11 +116,12 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
+            blacklist = {'AVION2', 'DUAL4', 'GMNCASE1', 'GMNCASE2', 'SMBANK', 'ZECEVIC2'};
             options.nr = 1;
             options.precision = '${{ matrix.precision }}';
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
 
-            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
+            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', 'l', options);
 
 
             % Move the files to prepare for uploading artifacts
