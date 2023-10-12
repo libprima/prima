@@ -30,7 +30,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         matlab: [latest]
-        solver: [newuoa, cobyla, bobyqa, uobyqa]  # With the blacklist, there is no large problem for lincoa
+        solver: [newuoa, cobyla, uobyqa]  # With the blacklist, there is no large problem for bobyqa or lincoa
         dim: [large]
 
     steps:
