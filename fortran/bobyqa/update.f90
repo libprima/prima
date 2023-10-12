@@ -8,7 +8,7 @@ module update_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, October 12, 2023 PM12:30:17
+! Last Modified: Thursday, October 12, 2023 PM12:34:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -165,7 +165,7 @@ end do
 sqrtdn = sqrt(denom)
 zmat(:, 1) = (tau / sqrtdn) * zmat(:, 1) - (zmat(knew, 1) / sqrtdn) * vlag(1:npt)
 ! Zaikun 20231012: Either of the following two lines worsens the performance of BOBYQA when the
-! objeciive function is evaluated with 5 or less correct significance digits. Strange.
+! objective function is evaluated with 5 or less correct significance digits. Strange.
 ! !zmat(:, 1) = (tau * zmat(:, 1) - zmat(knew, 1) * vlag(1:npt)) / sqrtdn
 ! !zmat(knew, 1) = zknew1 / sqrtdn  ! ZKNEW1 is the unupdated ZMAT(KNEW, 1)
 
