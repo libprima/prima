@@ -36,6 +36,10 @@ jobs:
         exclude:
           - solver: cobylan
             with_optim_toolbox: yes
+          - solver: cobylal
+            with_optim_toolbox: no
+          - solver: lincoa
+            with_optim_toolbox: no
           - solver: uobyqa
             with_optim_toolbox: yes
           - solver: newuoa
