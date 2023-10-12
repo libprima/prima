@@ -6,7 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 1,13 * * *'
+    - cron: '0 1 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
     inputs:
@@ -31,7 +31,7 @@ jobs:
         solver: [lincoa]
         precision: [single, quadruple]
         competitor: [classical, archiva]
-        with_optim_toolbox: [yes, no]
+        with_optim_toolbox: [no]
         ctol_indicator: [0, 1, 2]
 
     steps:
@@ -102,7 +102,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
-            options.nr = 3;
+            options.nr = 1;
             options.precision = '${{ matrix.precision }}';
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
 
