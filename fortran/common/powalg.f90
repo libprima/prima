@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, October 04, 2023 AM12:40:04
+! Last Modified: Thursday, October 12, 2023 PM12:22:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1110,6 +1110,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, symmetrize, issymmetric, outprod!, r2update
+use, non_intrinsic :: string_mod, only : num2str
 implicit none
 
 ! Inputs
@@ -1172,6 +1173,13 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
+
+    do j = 1, npt
+        hcol(1:npt) = omega_col(idz, zmat, knew)
+        hcol(npt + 1:npt + n) = bmat(:, j)
+        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is finite and nonzero', srname)
+    end do
+
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
 
     ! Theoretically, CALVLAG and CALBETA should be independent of the reference point XPT(:, KREF).
@@ -1408,6 +1416,13 @@ if (DEBUGGING) then
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+
+    do j = 1, npt
+        hcol(1:npt) = omega_col(idz, zmat, knew)
+        hcol(npt + 1:npt + n) = bmat(:, j)
+        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is finite and nonzero', srname)
+    end do
+
     ! The following is too expensive to check.
     !call safealloc(xpt_test, n, npt)
     !xpt_test = xpt

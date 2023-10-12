@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, June 21, 2023 PM08:32:09
+! Last Modified: Thursday, October 12, 2023 PM12:28:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,6 +102,7 @@ use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update,
 use, non_intrinsic :: message_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : hess_mul, setij
+use, non_intrinsic :: string_mod, only : num2str
 use, non_intrinsic :: xinbd_mod, only : xinbd
 
 implicit none
@@ -141,6 +142,7 @@ integer(IK) :: ij(2, max(0, size(xpt, 2) - 2 * size(xpt, 1) - 1))
 integer(IK) :: ip
 integer(IK) :: iq
 integer(IK) :: iter
+integer(IK) :: j
 integer(IK) :: k
 integer(IK) :: kbase
 integer(IK) :: korig
@@ -160,6 +162,7 @@ real(RP) :: bsum
 real(RP) :: den(size(xpt, 2))
 real(RP) :: f
 real(RP) :: fbase
+real(RP) :: hcol(size(bmat, 2))
 real(RP) :: hdiag(size(xpt, 2))
 real(RP) :: moderr
 real(RP) :: pqinc(size(xpt, 2))
@@ -602,6 +605,13 @@ if (DEBUGGING) then
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+
+    do j = 1, npt
+        hcol(1:npt) = matprod(zmat, zmat(j, :))
+        hcol(npt + 1:npt + n) = bmat(:, j)
+        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is finite and nonzero', srname)
+    end do
+
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
 end if
@@ -627,6 +637,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
 use, non_intrinsic :: linalg_mod, only : planerot, matprod, outprod, symmetrize, issymmetric
+use, non_intrinsic :: string_mod, only : num2str
 implicit none
 
 ! Inputs
@@ -655,6 +666,7 @@ real(RP) :: tau
 real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(vlag_in))
+real(RP) :: zknew1
 real(RP) :: ztest
 
 ! Sizes.
@@ -670,6 +682,12 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1_IK, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
     call assert(size(vlag_in) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
+
+    do j = 1, npt
+        hcol(1:npt) = matprod(zmat, zmat(j, :))
+        hcol(npt + 1:npt + n) = bmat(:, j)
+        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is finite and nonzero', srname)
+    end do
 
     ! The following is too expensive to check.
     !tol = 1.0E-2_RP
@@ -712,7 +730,7 @@ vlag(knew) = vlag(knew) - ONE
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT. After this, ZMAT(KNEW, :) contains
 ! only one nonzero at ZMAT(KNEW, 1). Entries of ZMAT are treated as 0 if the moduli are at most ZTEST.
-ztest = 1.0E-20_RP * maxval(abs(zmat))
+ztest = 1.0E-20_RP * maxval(abs(zmat))  ! This threshold is by Powell
 do j = 2, npt - n - 1_IK
     if (abs(zmat(knew, j)) > ztest) then
         grot = planerot(zmat(knew, [1_IK, j]))
@@ -727,7 +745,9 @@ hcol(npt + 1:npt + n) = bmat(:, knew)
 
 ! Complete the updating of ZMAT. See (4.14) of the BOBYQA paper.
 sqrtdn = sqrt(denom)
-zmat(:, 1) = (tau / sqrtdn) * zmat(:, 1) - (zmat(knew, 1) / sqrtdn) * vlag(1:npt)
+zknew1 = zmat(knew, 1) / sqrtdn
+zmat(:, 1) = (tau / sqrtdn) * zmat(:, 1) - zknew1 * vlag(1:npt)
+zmat(knew, 1) = zknew1  ! Because TAU = VLAG(KNEW) + 1. Powell's code does not have this.
 
 ! Finally, update the matrix BMAT. It implements the last N rows of (4.9) in the BOBYQA paper.
 alpha = hcol(knew)
@@ -746,6 +766,12 @@ if (DEBUGGING) then
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT)==[N, NPT+N]', srname)
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
+
+    do j = 1, npt
+        hcol(1:npt) = matprod(zmat, zmat(j, :))
+        hcol(npt + 1:npt + n) = bmat(:, j)
+        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is finite and nonzero', srname)
+    end do
 
     ! The following is too expensive to check.
     ! !if (n * npt <= 50) then
