@@ -1,5 +1,3 @@
-WARNING:File - , line 349
-auto indentation failed due to chars limit, line should be split(limit:132)
 module preproc_mod
 !--------------------------------------------------------------------------------------------------!
 ! PREPROC_MOD is a module that preprocesses the inputs.
@@ -8,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, October 12, 2023 PM08:51:55
+! Last Modified: Thursday, October 12, 2023 PM09:03:20
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -29,7 +27,7 @@ subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, 
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, HALF, EPS, MAXHISTMEM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, HALF, EPS, MAXFUN_DIM_DFT, MAXHISTMEM, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 use, non_intrinsic :: consts_mod, only : CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT, IPRINT_DFT, MIN_MAXFILT, MAXFILT_DFT
 use, non_intrinsic :: debug_mod, only : validate, warning
@@ -145,7 +143,7 @@ if (maxfun <= max(0_IK, min_maxfun)) then
     if (maxfun > 0) then
         maxfun = min_maxfun
     else  ! We assume that nonpositive values of MAXFUN are produced by overflow.
-        if (n >= huge(maxfun) / MAXFUN_DIM_DFT) then
+        if (MAXFUN_DIM_DFT >= huge(maxfun) / n) then  ! Avoid overflow when N is large.
             maxfun = huge(maxfun)
         else
             maxfun = MAXFUN_DIM_DFT * n
