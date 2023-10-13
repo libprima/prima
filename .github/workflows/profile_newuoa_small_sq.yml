@@ -108,7 +108,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
-            options.blacklist = {'LUKSAN13LS', 'SPIN2LS'};
+            options.blacklist = {'LUKSAN11LS', 'LUKSAN13LS', 'QING', 'SPIN2LS'};
             options.nr = 1;
             options.precision = '${{ matrix.precision }}';
 

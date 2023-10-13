@@ -138,10 +138,10 @@ jobs:
           command: |
             blacklist = {};
             blacklist = [blacklist, {'TOINTQOR'}];  % uobyqa
-            blacklist = [blacklist, {'LUKSAN13LS', 'SPIN2LS'}];  % newuoa
+            blacklist = [blacklist, {'LUKSAN11LS', 'LUKSAN13LS', 'SPIN2LS', 'QING'}];  % newuoa
             blacklist = [blacklist, {'CHEBYQAD', 'HOLMES'}];  % bobyqa
-            blacklist = [blacklist, {'AVION2', 'DUAL4', 'GMNCASE1', 'GMNCASE2', 'SMBANK', 'ZECEVIC2'}];  % lincoa
-            blacklist = [blacklist, {'DNIEPER', 'ERRINROSNE', 'PRODPL1', 'TRO6X2'}];  % cobyla
+            blacklist = [blacklist, {'AGG', 'AVION2', 'CVXQP1', 'DALLASS', 'DUAL4', 'GMNCASE1', 'GMNCASE2', 'HIMMELBI', 'SMBANK', 'ZECEVIC2'}];  % lincoa
+            blacklist = [blacklist, {'ANTWERP', 'DNIEPER', 'ERRINROSNE', 'LAUNCH', 'LIN', 'LOADBAL', 'HALDMADS', 'PRODPL1', 'TRO6X2'}];  % cobyla
 
             ver;
             root_dir = pwd();
