@@ -31,7 +31,7 @@ jobs:
         solver: [lincoa]
         precision: [single, quadruple]
         competitor: [classical, archiva]
-        with_optim_toolbox: [no]
+        with_optim_toolbox: [yes]
         ctol_indicator: [0, 1, 2]
 
     steps:
