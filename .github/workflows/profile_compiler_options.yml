@@ -32,18 +32,6 @@ jobs:
         solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]  # prima is too expensive
         compiler_options: [-O0, -O1, -O2, -O3, -Ofast -fno-stack-arrays, -ffast-math]
         competitor: [classical]
-        with_optim_toolbox: [yes, no]
-        exclude:
-          - solver: cobylan
-            with_optim_toolbox: yes
-          - solver: uobyqa
-            with_optim_toolbox: yes
-          - solver: newuoa
-            with_optim_toolbox: yes
-          - solver: bobyqa
-            with_optim_toolbox: yes
-          - solver: lincoa
-            with_optim_toolbox: no
 
     steps:
 
@@ -104,20 +92,14 @@ jobs:
         uses: actions/cache@v3.3.2
         with:
           path: ${{ runner.tool_cache }}/MATLAB
-          key: ${{ matrix.os }}-${{ matrix.matlab }}-${{ matrix.with_optim_toolbox }}
+          key: ${{ matrix.os }}-${{ matrix.matlab }}-yes
 
       - name: Set up MATLAB with optimization toolbox
-        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox == 'yes' }}
+        if: ${{ steps.check_matlab.outputs.has_matlab != 'true'}}
         uses: matlab-actions/setup-matlab@v2-beta
         with:
           release: ${{ matrix.matlab }}
           products: Optimization_Toolbox
-
-      - name: Set up MATLAB without optimization toolbox
-        if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox != 'yes' }}
-        uses: matlab-actions/setup-matlab@v2-beta
-        with:
-          release: ${{ matrix.matlab }}
 
       - name: Revise setup_compiler_options to print the revised mexopt file
         run: |
@@ -161,7 +143,7 @@ jobs:
             files = dir([solver, '*.summary.*.pdf'])
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
-                newfile = fullfile(files(ifile).folder, ['${{ matrix.with_optim_toolbox }}', '_', files(ifile).name])
+                newfile = fullfile(files(ifile).folder, ['yes', '_', files(ifile).name])
                 movefile(file, newfile);
             end
             movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_prima/']);
@@ -170,7 +152,7 @@ jobs:
             files = [dir(['/tmp/', solver, '_profile_prima/*start*']); dir(['/tmp/', solver, '_profile_prima/*end*'])]
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
-                newfile = fullfile(files(ifile).folder, ['${{ matrix.with_optim_toolbox }}', '_', files(ifile).name])
+                newfile = fullfile(files(ifile).folder, ['yes', '_', files(ifile).name])
                 movefile(file, newfile);
             end
 
