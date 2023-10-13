@@ -31,6 +31,9 @@ jobs:
         solver: [uobyqa]
         precision: [single, quadruple]
         competitor: [classical, archiva]
+        exclude:
+          - precision: single
+            competitor: classical  # See https://github.com/libprima/prima/issues/98
 
     steps:
 

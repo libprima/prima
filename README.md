@@ -316,6 +316,8 @@ of Powell's solver. Inevitably, they suffer from the bugs in the Fortran 77 code
 
      - [Algorithm turns into infinite loop and never finishes #3](https://github.com/xypron/jcobyla/issues/3)
 
+     - [The Fortran 77 version of UOBYQA encounters infinite cyclings very often if PRIMA_REAL_PRECISION is 32](https://github.com/libprima/prima/issues/98)
+
 - The Fortran 77 solvers may **crash** with [segmentation faults](https://en.wikipedia.org/wiki/Segmentation_fault)
   due to uninitialized variables that are used as indices.
 
