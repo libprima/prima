@@ -8,7 +8,7 @@ module geometry_uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, October 04, 2023 PM11:23:35
+! Last Modified: Friday, October 13, 2023 PM02:22:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -429,7 +429,7 @@ d = tempd * d + tempv * v
 ! entries of VLAG and VLAGC are needed.
 vlag = calvlag(pl, d, xopt, kopt)
 vlagc = calvlag(pl, dcauchy, xopt, kopt)
-if (is_nan(sum(abs(d))) .or. abs(vlagc(knew)) > TWO * abs(vlag(knew))) then
+if (abs(vlagc(knew)) > TWO * abs(vlag(knew)) .or. is_nan(vlag(knew))) then
     d = dcauchy
 end if
 

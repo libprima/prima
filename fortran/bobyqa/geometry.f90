@@ -8,7 +8,7 @@ module geometry_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, October 11, 2023 PM08:36:51
+! Last Modified: Friday, October 13, 2023 PM02:27:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -185,8 +185,8 @@ function geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat) result(d)
 !   satisfies the SL, SU and trust region bounds and it should provide a large denominator in the
 !   next call of UPDATE. The step XLINE-XOPT from XOPT is restricted to moves along the straight
 !   lines through XOPT and another interpolation point.
-! XCAUCHY also provides a large value of the modulus of the KNEW-th Lagrange function subject to
-!   the constraints that have been mentioned, its main difference from XLINE being that XCAUCHY-XOPT
+! XCAUCHY provides a large value of the modulus of the KNEW-th Lagrange function subject to the
+!   constraints that have been mentioned, its main difference from XLINE being that XCAUCHY-XOPT
 !   is a bound-constrained version of the Cauchy step within the trust region.
 !--------------------------------------------------------------------------------------------------!
 
