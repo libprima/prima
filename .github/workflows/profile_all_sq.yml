@@ -45,6 +45,9 @@ jobs:
             ctol_indicator: 1
           - solver: bobyqa
             ctol_indicator: 2
+          - solver: uobyqa  # See https://github.com/libprima/prima/issues/98
+            competitor: classical
+            precision: single
 
     steps:
       - name: Get the solver name
