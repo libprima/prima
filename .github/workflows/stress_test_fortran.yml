@@ -69,7 +69,7 @@ jobs:
 
       - name: Install gfortran
         if: ${{ matrix.compiler == 'g' }}
-        uses: awvwgk/setup-fortran@main
+        uses: fortran-lang/setup-fortran@main
         id: setup-fortran
         with:
           compiler: gcc

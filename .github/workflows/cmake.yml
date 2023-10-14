@@ -65,7 +65,7 @@ jobs:
       - name: Install Ninja / MacOS
         if: ${{ matrix.os == 'macos-latest' }}
         run: brew install ninja
-      - uses: awvwgk/setup-fortran@main
+      - uses: fortran-lang/setup-fortran@main
         id: setup-fortran
         with:
           compiler: ${{ matrix.toolchain.compiler }}

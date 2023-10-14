@@ -55,7 +55,7 @@ jobs:
 
       - name: Setup Fortran
         id: setup_fortran
-        uses: awvwgk/setup-fortran@main
+        uses: fortran-lang/setup-fortran@main
         with:
           compiler: ${{ matrix.compiler }}
           version: ${{ matrix.version }}
