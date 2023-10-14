@@ -97,6 +97,7 @@ jobs:
                 copyfile('private/year_week.m', cd());
                 options.seed = year_week('Asia/Shanghai');
             end
+            options.nr = 6;
             options
             verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.

@@ -92,7 +92,6 @@ jobs:
             options = struct();
             options.verbose = true;
             options.nr = 5;
-            if strcmp('${{ matrix.solver }}', 'lincoa'), options.nr = 1; end;
             options.no_classical = true;  % We do not test the classical mode on "large" problems.
             if ~isempty('${{ inputs.random-seed }}')
                 options.seed = str2num('${{ inputs.random-seed }}');
