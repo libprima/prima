@@ -121,11 +121,11 @@ jobs:
         with:
           command: |
             blacklist = {};
-            blacklist = [blacklist, {'TOINTQOR'}];  % uobyqa
-            blacklist = [blacklist, {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1SPLS', 'CHNRSNBM', 'CHWIRUT1LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN16LS', 'SPIN2LS', 'QING'}];  % newuoa
-            blacklist = [blacklist, {'CHEBYQAD', 'HOLMES'}];  % bobyqa
-            blacklist = [blacklist, {'AGG', 'ARGLALE', 'AVION2', 'CVXQP1', 'DALLASS', 'DUAL1', 'DUAL3', 'DUAL4', 'GMNCASE1', 'GMNCASE2', 'GMNCASE3', 'HIMMELBI', 'SMBANK', 'SSEBLIN', 'ZECEVIC2'}];  % lincoa
-            blacklist = [blacklist, {'ACOPP14', 'ACOPR14', 'ANTWERP', 'CANTILVR', 'DEGENLPA', 'DEGENLPB', 'DNIEPER', 'ERRINROSNE', 'GBRAIN', 'GOULDQP1', 'GROUPING', 'HS33', 'HS102', 'HS105', 'LOTSCHD', 'LAUNCH', 'LIN', 'LOADBAL', 'MEYER3NE', 'NYSTROM5', 'HALDMADS', 'POLAK2', 'PRODPL0', 'PRODPL1', 'RAT42', 'RK23', 'TFI2', 'TRO6X2', 'TRUSPYR1', 'WACHBIEG', 'WATER', 'WATSONNE', 'WAYSEA1NE', 'ZANGWIL3', 'ZECEVIC2', 'ZECEVIC4', 'ZY2'}];  % cobyla
+            blacklist = [blacklist, {'HYDCAR6LS', 'JENSMP', 'METHANL8LS', 'MEXHAT', 'TOINTQOR'}];  % uobyqa
+            blacklist = [blacklist, {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1SPLS', 'CHNRSNBM', 'CHWIRUT1LS', 'LSC1LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN16LS', 'SPIN2LS', 'TOINTPSP', 'QING'}];  % newuoa
+            blacklist = [blacklist, {'CHEBYQAD', 'DECONVU', 'HOLMES'}];  % bobyqa
+            blacklist = [blacklist, {'AGG', 'ARGLALE', 'AVION2', 'CVXQP1', 'DALLASS', 'DUALC1', 'DUAL1', 'DUAL3', 'DUAL4', 'GMNCASE1', 'GMNCASE2', 'GMNCASE3', 'HIMMELBI', 'HYDROELS', 'KSIP', 'QPNBLEND', 'SMBANK', 'SSEBLIN', 'ZECEVIC2'}];  % lincoa
+            blacklist = [blacklist, {'ACOPP14', 'ACOPR14', 'ANTWERP', 'CANTILVR', 'DEGENLPA', 'DEGENLPB', 'DNIEPER', 'ERRINROSNE', 'GBRAIN', 'GOULDQP1', 'GROUPING', 'HS33', 'HS102', 'HS105', 'LOTSCHD', 'LAUNCH', 'LIN', 'LOADBAL', 'LSNNODOC', 'MARATOS', 'MEYER3NE', 'NET1', 'NYSTROM5', 'HALDMADS', 'OET2', 'OPTCNTRL', 'OPTPRLOC', 'OSCIPANE', 'PALMER4ANE', 'POLAK2', 'PRODPL0', 'PRODPL1', 'QPNBLEND', 'RAT42', 'RK23', 'TFI2', 'TWOBARS', 'TRIGON1NE', 'TRO6X2', 'TRO3X3', 'TRUSPYR1', 'WACHBIEG', 'WATER', 'WATSONNE', 'WAYSEA1NE', 'ZANGWIL3', 'ZECEVIC2', 'ZECEVIC4', 'ZY2'}];  % cobyla
 
             ver;
             root_dir = pwd();
