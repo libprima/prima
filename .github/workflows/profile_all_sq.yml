@@ -30,7 +30,7 @@ jobs:
         dim: [all]
         solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]  # prima is too expensive
         competitor: [classical, archiva]
-        precision: [single, quadruple]
+        precision: [single, quadruple, double]
         ctol_indicator: [0, 1, 2]
         exclude:
           - solver: uobyqa
@@ -122,10 +122,10 @@ jobs:
           command: |
             blacklist = {};
             blacklist = [blacklist, {'TOINTQOR'}];  % uobyqa
-            blacklist = [blacklist, {'ARGLINA', 'ARGLINC', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN16LS', 'SPIN2LS', 'QING'}];  % newuoa
+            blacklist = [blacklist, {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1SPLS', 'CHNRSNBM', 'CHWIRUT1LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN16LS', 'SPIN2LS', 'QING'}];  % newuoa
             blacklist = [blacklist, {'CHEBYQAD', 'HOLMES'}];  % bobyqa
             blacklist = [blacklist, {'AGG', 'ARGLALE', 'AVION2', 'CVXQP1', 'DALLASS', 'DUAL1', 'DUAL3', 'DUAL4', 'GMNCASE1', 'GMNCASE2', 'GMNCASE3', 'HIMMELBI', 'SMBANK', 'SSEBLIN', 'ZECEVIC2'}];  % lincoa
-            blacklist = [blacklist, {'ACOPR14', 'ANTWERP', 'CANTILVR', 'DEGENLPA', 'DEGENLPB', 'DNIEPER', 'ERRINROSNE', 'GBRAIN', 'GOULDQP1', 'GROUPING', 'HS33', 'HS105', 'LAUNCH', 'LIN', 'LOADBAL', 'MEYER3NE', 'NYSTROM5', 'HALDMADS', 'POLAK2', 'PRODPL0', 'PRODPL1', 'RAT42', 'RK23', 'TRO6X2', 'TRUSPYR1', 'WACHBIEG', 'WATER', 'WATSONNE', 'WAYSEA1NE', 'ZANGWIL3', 'ZECEVIC2', 'ZY2'}];  % cobyla
+            blacklist = [blacklist, {'ACOPP14', 'ACOPR14', 'ANTWERP', 'CANTILVR', 'DEGENLPA', 'DEGENLPB', 'DNIEPER', 'ERRINROSNE', 'GBRAIN', 'GOULDQP1', 'GROUPING', 'HS33', 'HS102', 'HS105', 'LOTSCHD', 'LAUNCH', 'LIN', 'LOADBAL', 'MEYER3NE', 'NYSTROM5', 'HALDMADS', 'POLAK2', 'PRODPL0', 'PRODPL1', 'RAT42', 'RK23', 'TFI2', 'TRO6X2', 'TRUSPYR1', 'WACHBIEG', 'WATER', 'WATSONNE', 'WAYSEA1NE', 'ZANGWIL3', 'ZECEVIC2', 'ZECEVIC4', 'ZY2'}];  % cobyla
 
             ver;
             root_dir = pwd();

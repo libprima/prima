@@ -30,7 +30,7 @@ jobs:
         matlab: [latest]
         dim: [small]
         solver: [newuoa]
-        precision: [single, quadruple]
+        precision: [single, quadruple, double]
         competitor: [classical, archiva]
 
     steps:
@@ -108,7 +108,7 @@ jobs:
 
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
-            options.blacklist = {'ARGLINA', 'ARGLINC', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN16LS', 'SPIN2LS', 'QING'};
+            options.blacklist = {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1SPLS', 'CHNRSNBM', 'CHWIRUT1LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN16LS', 'SPIN2LS', 'QING'};
             options.nr = 1;
             options.precision = '${{ matrix.precision }}';
 

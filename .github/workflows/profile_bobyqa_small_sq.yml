@@ -30,7 +30,7 @@ jobs:
         matlab: [latest]
         dim: [small]
         solver: [bobyqa]
-        precision: [single, quadruple]
+        precision: [single, quadruple, double]
         competitor: [classical, archiva]
 
     steps:
