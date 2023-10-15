@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, October 03, 2023 AM12:10:12
+! Last Modified: Sunday, October 15, 2023 PM12:03:14
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -45,7 +45,7 @@ module consts_mod
 !    flang 15.0.3 do not support REAL128).
 !    - The standard does not specify the range of the default integer. However, if the default real
 !    occupies 32 bits, which is normally the case, then the default integer occupies also 32 bits,
-!    and hence the range is probably [2^32, 2^31-1], approximately [-2*10^9, 2*10^9].
+!    and hence the range is probably [-2^32, 2^31-1], approximately [-2*10^9, 2*10^9].
 !    - The standard does not specify what the range and precision of the default real or the
 !    double-precision real, except that KIND(0.0D0) should have a greater precision than KIND(0.0)
 !    --- no requirement about the range.
@@ -99,6 +99,7 @@ integer, parameter :: IK = INT64
 #else
 integer, parameter :: IK = IK_DFT
 #endif
+
 ! Define the real kind to be used in the Fortran code.
 #if PRIMA_REAL_PRECISION == 0
 integer, parameter :: RP = RP_DFT
@@ -109,7 +110,7 @@ integer, parameter :: RP = REAL64
 #elif PRIMA_REAL_PRECISION == 128
 integer, parameter :: RP = REAL128
 #else
-integer, parameter :: RP = REAL64  ! double precision
+integer, parameter :: RP = REAL64  ! Double precision
 #endif
 
 ! Define some frequently used numbers.
@@ -200,5 +201,6 @@ integer, parameter :: MAXHISTMEM = min(MHM, huge(0))
 ! Maximal length of the filter used in constrained solvers.
 integer(IK), parameter :: MIN_MAXFILT = 200  ! Should be positive; < 200 is not recommended.
 integer(IK), parameter :: MAXFILT_DFT = 10_IK * MIN_MAXFILT
+
 
 end module consts_mod
