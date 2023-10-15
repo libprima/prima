@@ -4,7 +4,7 @@
 # 9: G95 (compilation only; no compilation of test_*.f90 and other testing code, which contains F03 constructs unsupported by G95)
 # a: Absoft af95 (compilation only; the compiler is buggy and not maintained anymore)
 # d: AOCC flang
-# f: Classic flang
+# f: Classic flang or Huawei Bisheng flang
 # g: GNU gfortran
 # n: NAG nagfor
 # i: Intel ifort
@@ -964,9 +964,9 @@ source_%: $(SRC_DIRS)
 		-o -name "*.out" \
 		-o -name "*__genmod.f90" \
 		\) -exec rm {} \;  # Cleaning up; important!!!
-	# Flang 15.0.3, Arm Fortran Compiler version 22.1, and AOCC 4.1.0 are buggy
-	# concerning 0-dimensional arrays, and they report false positive out-bound indices. Thus
-	# preprocessing by frdsrc is needed. See
+	# Classic Flang 15.0.3, Huawei Bisheng Flang 2.1.0, Arm Fortran Compiler version 22.1, and AOCC
+	# 4.1.0 are buggy concerning 0-dimensional arrays, and they report false positive out-bound
+	# indices. Thus preprocessing by frdsrc is needed. See
 	# https://github.com/flang-compiler/flang/issues/1238
 	# Check it again when new versions are available. Make a test using
 	# https://github.com/zequipe/test_compiler/blob/master/test_solve.f90
