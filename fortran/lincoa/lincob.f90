@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, August 04, 2023 PM09:53:21
+! Last Modified: Tuesday, October 17, 2023 PM02:52:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -176,6 +176,7 @@ real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: cfilt(maxfilt)
 real(RP) :: constr(count(xl > -REALMAX) + count(xu < REALMAX) + 2 * size(beq) + size(bineq))
 real(RP) :: constr_leq(size(beq))
+real(RP) :: cval(npt)
 real(RP) :: d(size(x))
 real(RP) :: delbar
 real(RP) :: delta
@@ -183,7 +184,7 @@ real(RP) :: distsq(npt)
 real(RP) :: dnorm
 real(RP) :: dnorm_rec(4)  ! Powell's implementation uses 5
 real(RP) :: ffilt(maxfilt)
-real(RP) :: fval(npt), cval(npt)
+real(RP) :: fval(npt)
 real(RP) :: galt(size(x))
 real(RP) :: gamma3
 real(RP) :: gopt(size(x))
