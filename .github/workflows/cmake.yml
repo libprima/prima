@@ -31,15 +31,25 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         toolchain:
-          - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+          - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+          - {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+          - {compiler: intel-classic, version: '2021.8', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - {compiler: intel-classic, version: '2021.9', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
         include:
           - os: ubuntu-latest
             toolchain: {compiler: intel, version: '2023.1', cflags: '', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
+          - os: ubuntu-latest
+            toolchain: {compiler: intel, version: '2023.2', cflags: '', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - os: windows-latest
             toolchain: {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
+            toolchain: {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+          - os: windows-latest
             toolchain: {compiler: intel, version: '2023.1', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+          - os: windows-latest
+            toolchain: {compiler: intel, version: '2023.2', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+          - os: windows-latest
+            toolchain: {compiler: intel-classic, version: '2021.8', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
 
