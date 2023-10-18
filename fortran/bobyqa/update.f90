@@ -8,7 +8,7 @@ module update_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, October 12, 2023 PM12:34:24
+! Last Modified: Wednesday, October 18, 2023 PM10:15:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -90,7 +90,7 @@ if (DEBUGGING) then
     do j = 1, npt
         hcol(1:npt) = matprod(zmat, zmat(j, :))
         hcol(npt + 1:npt + n) = bmat(:, j)
-        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is finite and nonzero', srname)
+        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
 
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -182,7 +182,7 @@ if (DEBUGGING) then
     do j = 1, npt
         hcol(1:npt) = matprod(zmat, zmat(j, :))
         hcol(npt + 1:npt + n) = bmat(:, j)
-        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is finite and nonzero', srname)
+        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
 
     ! The following is too expensive to check.
