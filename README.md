@@ -7,8 +7,8 @@
 - [Current status](#current-status)
     - [Modern Fortran](#modern-fortran)
     - [C](#c)
-    - [MATLAB](#matlab)
     - [Python](#python)
+    - [MATLAB](#matlab)
     - [Julia](#julia)
     - [Other languages](#other-languages)
 - [Bug fixes](#bug-fixes)
@@ -37,8 +37,9 @@ PRIMA is part of a research project funded by the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
 the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at the
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
-The current version is ready to be used [in Fortran](#modern-fortran), [in C](#c), [in Julia](https://github.com/libprima/PRIMA.jl),
-and [in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md).
+The current version is ready to be used [in Fortran](#modern-fortran), [in C](#c),
+[in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md),
+and [in Julia](https://github.com/libprima/PRIMA.jl).
 If you want to use the above-mentioned methods in Python, see the [website](https://www.pdfo.net)
 and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead.
 
@@ -75,7 +76,7 @@ Few people remember [who translated *Elements*](https://en.wikipedia.org/wiki/Eu
 but it is a job that must be done.
 
 PRIMA aims to provide the reference implementation of Powell's methods in modern languages,
-including [**modern** Fortran](https://fortran-lang.org) (F2008 or newer), MATLAB, Python, C/C++,
+including [**modern** Fortran](https://fortran-lang.org) (F2008 or newer), C/C++, Python, MATLAB,
 Julia, and R. It will be a **faithful** implementation, in the sense that the code will be
 mathematically equivalent to Powell’s, **except for** the
 [bug fixes](#bug-fixes) and [improvements](#improvements) made intentionally.
@@ -258,6 +259,12 @@ cmake --build build --target install
 ./install/bin/cobyla_example
 ```
 
+#### Python
+
+- The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
+- A [Python interface for the Fortran version of PRIMA](https://github.com/libprima/prima/pull/52) is under development.
+- A [native Python implementation of PRIMA](https://github.com/libprima/prima/pull/37) is under development.
+
 #### MATLAB
 
 - An [interface](./matlab/interfaces/prima.m) is provided for [using the **modern** Fortran implementation in MATLAB](./README_mat.md).
@@ -266,15 +273,10 @@ cmake --build build --target install
   **modern** Fortran code (with the help of Mr. Galann Pennec). The other four solvers will be
   implemented in MATLAB similarly.
 
-#### Python
-
-- The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
-- My ultimate objective is to have a native Python implementation of PRIMA **independent of Fortran**, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
-
 #### Julia
-- [A Julia interface](https://github.com/emmt/PRIMA.jl) 
-is [available https://juliahub.com/ui/Packages/General/PRIMA]. It is
-[https://github.com/JuliaRegistries/General/tree/master/P/PRIMA registered in the General Registry of Julia].
+- [A Julia interface](https://github.com/emmt/PRIMA.jl)
+is [available](https://juliahub.com/ui/Packages/General/PRIMA). It is
+[registered in the General Registry of Julia](https://github.com/JuliaRegistries/General/tree/master/P/PRIMA).
 
 #### Other languages
 
