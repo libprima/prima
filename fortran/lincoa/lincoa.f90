@@ -263,11 +263,11 @@ real(RP), intent(in), optional :: xu(:)  ! XU(N)
 ! Optional outputs
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
-real(RP), intent(out), allocatable, optional :: chist(:)  ! CHIST(MAXCHIST)
-real(RP), intent(out), allocatable, optional :: fhist(:)  ! FHIST(MAXFHIST)
-real(RP), intent(out), allocatable, optional :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(out), optional :: cstrv
 real(RP), intent(out), optional :: f
+real(RP), intent(out), optional, allocatable :: chist(:)  ! CHIST(MAXCHIST)
+real(RP), intent(out), optional, allocatable :: fhist(:)  ! FHIST(MAXFHIST)
+real(RP), intent(out), optional, allocatable :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 
 ! Local variables
 character(len=*), parameter :: solver = 'LINCOA'
