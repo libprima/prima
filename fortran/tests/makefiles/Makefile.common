@@ -134,6 +134,8 @@ TESTSUITE_DIR := $(TEST_DIR)/$(TESTSUITE)
 SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR) $(TESTSUITE_DIR)
 # Driver directory.
 DRIVER_DIR := $(TEST_DIR)
+# Tools directory
+TOOLS_DIR := $(TEST_DIR)/tools
 
 # Sources.
 COMMON_SRC := $(shell sed "s/^/\.\/common\//" $(COMMON_DIR)/ffiles.txt)
@@ -149,7 +151,7 @@ SRC_NO_TEST := $(COMMON_SRC) $(SOLVER_SRC)
 HEADERS := $(TEST_SOLVER_DIR)/$(COMMON)/*.h
 
 # The checktest script.
-CHCKTST := $(TEST_DIR)/checktest
+CHCKTST := $(TOOLS_DIR)/checktest
 
 # Define the tests.
 ######################################################################################
@@ -972,23 +974,23 @@ source_%: $(SRC_DIRS)
 	# https://github.com/zequipe/test_compiler/blob/master/test_solve.f90
 	@if echo $@ | grep -q "gtest" && echo $(FFLAGS) | grep -q "fast"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../gsrc ./ ; \
+		bash $(TOOLS_DIR)/gsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "ftest\|rtest\|dtest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../frdsrc ./ ; \
+		bash $(TOOLS_DIR)/frdsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "stest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../sunsrc ./ ; \
+		bash $(TOOLS_DIR)/sunsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "9test"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../9src ./ ; \
+		bash $(TOOLS_DIR)/9src ./ ; \
 	fi
 	@if echo $@ | grep -q "atest\|9test"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../a9src ./ ; \
+		bash $(TOOLS_DIR)/a9src ./ ; \
 	fi
 	@printf "Done.\n"
 

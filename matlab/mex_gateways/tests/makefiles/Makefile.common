@@ -79,6 +79,8 @@ SOLVER_DIR := $(FORTRAN_DIR)/$(SOLVER)
 MEXGATE_DIR := $(TEST_DIR)/..
 # Source directories.
 SRC_DIRS := $(COMMON_DIR) $(SOLVER_DIR)
+# Tools directory
+TOOLS_DIR := $(TEST_DIR)/tools
 
 # MEX_DEBUGF90 is the name of the MEX file that defines `debug_mod`, which has a common version
 # named CMN_DEBUGF90. We should use the MEX version in place of the common one when testing the MEX
@@ -101,7 +103,7 @@ SRC := $(COMMON_SRC) $(SOLVER_SRC) $(MEXGATE_SRC)
 HEADERS := $(TEST_SOLVER_DIR)/$(COMMON)/*.h
 
 # The checktest script.
-CHCKTST := $(TEST_DIR)/checktest
+CHCKTST := $(TOOLS_DIR)/checktest
 
 # Define the tests.
 ######################################################################################
@@ -611,19 +613,19 @@ source_%: $(SRC_DIRS)
 		\) -exec rm {} \;  # Cleaning up; important!!!
 	@if echo $@ | grep -q "stest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../sunsrc ./ ; \
+		bash $(TOOLS_DIR)/sunsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "9test"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../9src ./ ; \
+		bash $(TOOLS_DIR)/9src ./ ; \
 	fi
 	@if echo $@ | grep -q "atest\|9test"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../a9src ./ ; \
+		bash $(TOOLS_DIR)/a9src ./ ; \
 	fi
 	@if echo $@ | grep -q "stest\|9test"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
-		bash ../s9src ./ ; \
+		bash $(TOOLS_DIR)/s9src ./ ; \
 	fi
 	@printf "Done.\n"
 

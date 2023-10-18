@@ -1,19 +1,27 @@
 #!/bin/bash
 # This script checks the Fortran code of the solver corresponding to this directory.
-# Usage: flint [--compiler_name [--all]] or flint --clean
+# Usage: mlint [--compiler_name [-all]] or mlint --clean
+
+# This test needs the MathWorks fintrf.h. Exit if the file cannot be found.
+FINTRFH=$(locate '/extern/include/fintrf.h' 2>/dev/null | head -n 1)
+if [[ -z "$FINTRFH" ]] ; then
+    printf "\n***********************************************"
+    printf "\nfintrf.h is not found. Skip mlint.\n"
+    printf "*********************************************\n\n"
+    exit 0
+fi
 
 # Parse inputs.
 if [[ $# -gt 2 ]] ; then
-    printf "Usage: flint [--compiler_name [--all]] or flint --clean\n"
+    printf "Usage: mlint [--compiler_name [-all]] or mlint --clean\n"
     exit 2
 fi
 
 TEST_ALL="N"
 CLEAN="N"
 
+# af95 does not support internal subroutine as an actual argument. So it is not included
 # sunf95 is case sensitive. Put it as the first.
-# Disable atest for now, since it encounters licensing errors randomly
-printf "\n****** ATEST is disabled ******\n"
 # N.B.: () defines an array
 COMPILER_LIST=(sunf95 gfortran nagfor g95 ifort nvfortran flang aflang ifx)
 CLIST=(s g n 9 i v f d x)
@@ -49,9 +57,6 @@ while [[ -n "$1" ]]; do
         -n|--nagfor)
             COMP_LIST=" n"
             ;;
-        -a|--absoft)
-            COMP_LIST=" a"
-            ;;
         -9|--g95)
             COMP_LIST=" 9"
             ;;
@@ -71,7 +76,7 @@ while [[ -n "$1" ]]; do
             COMP_LIST=" x"
             ;;
         *)
-            printf "Usage: flint [--compiler_name [--all]] or flint -c|--clean\n"
+            printf "Usage: mlint [--compiler_name [--all]] or mlint -c|--clean\n"
             exit 2
             ;;
     esac
@@ -86,7 +91,7 @@ SOLVER_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 SOLVER=$(basename "$SOLVER_DIR")
 
 # The log directory in the solver's directory.
-SOLVER_LOG_DIR="$SOLVER_DIR"/flog
+SOLVER_LOG_DIR="$SOLVER_DIR"/mlog
 
 # Root directory of this project.
 ROOT_DIR=../..
@@ -99,21 +104,21 @@ printf  "Test directory:\n\n%s\n" "$TEST_DIR"
 # We export TEST_DIR, which will be referred to by the Makefiles.
 export TEST_DIR
 TEST_ROOT="$TEST_DIR"/prima
-FTEST_DIR="$TEST_ROOT"/fortran/tests
-FTEST_SOLVER_DIR="$FTEST_DIR"/test."$SOLVER"
+MTEST_DIR="$TEST_ROOT"/matlab/mex_gateways/tests
+MTEST_SOLVER_DIR="$MTEST_DIR"/test."$SOLVER"
 
 # The log directory in the testing directory.
-TEST_LOG_DIR="$FTEST_SOLVER_DIR"/log
+TEST_LOG_DIR="$MTEST_SOLVER_DIR"/log
 
 # The checktest script
-CHCKTST="$FTEST_DIR"/checktest
+CHCKTST="$MTEST_DIR"/tools/checktest
 
 # Remove the old logs.
 mkdir -p "$SOLVER_LOG_DIR"
 rm -f "$SOLVER_LOG_DIR"/*test*.log
 
 # Conduct the test.
-cd "$ROOT_DIR"/fortran/tests || exit 1
+cd "$ROOT_DIR"/matlab/mex_gateways/tests || exit 1
 
 # Make clean (old logs in $SOLVER_LOG_DIR have been cleaned up in the above).
 printf "\nCleaning up ... "
@@ -134,7 +139,7 @@ fi
 printf "Tests to make:%s\n\n" "$COMP_LIST"
 
 if [[ $TEST_ALL == 'Y' ]] ; then
-    FLG_LIST="-g -O1 -O2 -O3 -fast"
+    FLG_LIST="-g -O2 -O3 -fast"
 else
     FLG_LIST="-g -O2 -fast"
 fi
@@ -145,10 +150,10 @@ for COMP in $COMP_LIST; do
     if [[ $TEST_ALL == 'Y' && $ARM32 != 'Y' ]] ; then
         for FLG in $FLG_LIST ; do
             printf "%s\t" "$FLG"
-            export FFLAGS=$FLG && make "$COMP"test_c."$SOLVER"
+            export FFLAGS=$FLG && make "$COMP"test."$SOLVER"
         done
     else
-        if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $ARM32 == 'Y' ]] ; then
+       if [[ $COMP == 'f' || $COMP == 'v' || $COMP == 'd' || $COMP == 'x' || $ARM32 == 'Y' ]] ; then
             TESTS="i2_r4_d1 i8_r4_d0"
         else
             TESTS="i2_r16_d1 i8_r4_d0"
@@ -157,19 +162,21 @@ for COMP in $COMP_LIST; do
             for FLG in $FLG_LIST ; do
                 printf "%s\t" "$FLG"
                 export FFLAGS=$FLG
-                INFO="$(make "$COMP"test_"$TEST"_tst_c."$SOLVER" 2>&1 \
+                INFO="$(make "$COMP"test_"$TEST"_tst."$SOLVER" 2>&1 \
                     | grep -v "binary\ file\ matches" \
-                    | grep -i "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity" \
+                    | grep -i "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve" \
                     | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|infos.f90\|information\|xhist, info)\|zmat, info)\|--warning\|--error" \
-                    | grep -vi "pedantic-errors\|Werror\|warn\ errors\|diag-error-limit\|colour=error\|rounding\ error\|constraint violation\|default" \
+                    | grep -vi "pedantic-errors\|Werror\|warn\ errors\|diag-error-limit\|colour=error\|rounding\ error\|constraint\ violation\|default" \
+                    | grep -vi "INFO_DFT\|==\s*info\|errorid\|errormsg" \
+                    | grep -vi "\[xopt, fopt, info, nf, xhist, fhist\] = FUNCTION_NAME" \
                     | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
                     )"
-                echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity"
-                if echo "$INFO" | grep -iq "error\|abort\|invalid\|violation\|fault\|illegal\|fail\|Could\ not\ resolve\|not\ defined\|not\ public\ entity" ; then
-                    if [[ -f "$TEST_LOG_DIR"/"$COMP"test_"$TEST"_tst_c.log ]] ; then
-                        LOGFILE="$COMP"test_"$TEST"_tst_c.log
+                echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve"
+                if echo "$INFO" | grep -iq "error\|abort\|invalid\|violation\|fault\|illegal\|fail\|Could\ not\ resolve" ; then
+                    if [[ -f "$TEST_LOG_DIR"/"$COMP"test_"$TEST"_tst.log ]] ; then
+                        LOGFILE="$COMP"test_"$TEST"_tst.log
                     else
-                        LOGFILE="$COMP"test_c.log
+                        LOGFILE="$COMP"test.log
                     fi
                     mv "$TEST_LOG_DIR"/"$LOGFILE" "$SOLVER_LOG_DIR"
                     cat "$SOLVER_LOG_DIR"/"$LOGFILE"
