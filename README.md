@@ -37,7 +37,8 @@ PRIMA is part of a research project funded by the
 [Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
 the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at the
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
-The current version is ready to be used [in Fortran](#modern-fortran), [in C](#c), and [in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md).
+The current version is ready to be used [in Fortran](#modern-fortran), [in C](#c), [in Julia](https://github.com/libprima/PRIMA.jl),
+and [in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md).
 If you want to use the above-mentioned methods in Python, see the [website](https://www.pdfo.net)
 and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead.
 
@@ -271,7 +272,9 @@ cmake --build build --target install
 - My ultimate objective is to have a native Python implementation of PRIMA **independent of Fortran**, similar to what we have done with NEWUOA in MATLAB as [mentioned above](#newuoa_mat).
 
 #### Julia
-- [A Julia interface](https://github.com/emmt/PRIMA.jl) is available.
+- [A Julia interface](https://github.com/emmt/PRIMA.jl) 
+is [available https://juliahub.com/ui/Packages/General/PRIMA]. It is
+[https://github.com/JuliaRegistries/General/tree/master/P/PRIMA registered in the General Registry of Julia].
 
 #### Other languages
 
