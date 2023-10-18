@@ -39,7 +39,7 @@ the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at t
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 The current version is ready to be used [in Fortran](#modern-fortran), [in C](#c),
 [in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md),
-and [in Julia](https://github.com/libprima/PRIMA.jl).
+and [in Julia](https://juliahub.com/ui/Packages/General/PRIMA).
 If you want to use the above-mentioned methods in Python, see the [website](https://www.pdfo.net)
 and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead.
 
@@ -274,8 +274,10 @@ cmake --build build --target install
   implemented in MATLAB similarly.
 
 #### Julia
-- A [Julia interface](https://juliahub.com/ui/Packages/General/PRIMA) is available. It is
-[registered in the General Registry of Julia](https://github.com/JuliaRegistries/General/tree/master/P/PRIMA).
+- A [Julia interface](https://juliahub.com/ui/Packages/General/PRIMA) is provided
+by [`PRIMA.jl`](https://github.com/libprima/prima.jl).
+It is registered in the General Registry of Julia as
+[`PRIMA`](https://github.com/JuliaRegistries/General/tree/master/P/PRIMA).
 
 #### Other languages
 
