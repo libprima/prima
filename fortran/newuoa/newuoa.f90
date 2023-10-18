@@ -22,7 +22,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, May 08, 2023 PM03:15:27
+! Last Modified: Wednesday, October 18, 2023 PM07:42:01
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,11 +33,11 @@ public :: newuoa
 contains
 
 
-subroutine newuoa(calfun, x, f, &
-    & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
-    & eta1, eta2, gamma1, gamma2, xhist, fhist, maxhist, info)
+subroutine newuoa(calfun, x, &
+    & f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
+    & xhist, fhist, maxhist, info)
 !--------------------------------------------------------------------------------------------------!
-! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
+! Among all the arguments, only CALFUN and X are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
 ! the default value detailed below. For instance, we may invoke the solver as follows.
 !
@@ -178,25 +178,29 @@ use, non_intrinsic :: newuob_mod, only : newuob
 
 implicit none
 
-! Arguments
-procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
+! Compulsory arguments
+procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTERbb
 real(RP), intent(inout) :: x(:)
-real(RP), intent(out) :: f
-integer(IK), intent(out), optional :: nf
-real(RP), intent(in), optional :: rhobeg
-real(RP), intent(in), optional :: rhoend
-real(RP), intent(in), optional :: ftarget
-integer(IK), intent(in), optional :: maxfun
-integer(IK), intent(in), optional :: npt
+
+! Optional inputs
 integer(IK), intent(in), optional :: iprint
+integer(IK), intent(in), optional :: maxfun
+integer(IK), intent(in), optional :: maxhist
+integer(IK), intent(in), optional :: npt
 real(RP), intent(in), optional :: eta1
 real(RP), intent(in), optional :: eta2
+real(RP), intent(in), optional :: ftarget
 real(RP), intent(in), optional :: gamma1
 real(RP), intent(in), optional :: gamma2
+real(RP), intent(in), optional :: rhobeg
+real(RP), intent(in), optional :: rhoend
+
+! Optional outputs
+integer(IK), intent(out), optional :: info
+integer(IK), intent(out), optional :: nf
+real(RP), intent(out), optional :: f
 real(RP), intent(out), optional, allocatable :: fhist(:)
 real(RP), intent(out), optional, allocatable :: xhist(:, :)
-integer(IK), intent(in), optional :: maxhist
-integer(IK), intent(out), optional :: info
 
 ! Local variables
 character(len=*), parameter :: solver = 'NEWUOA'
@@ -211,6 +215,7 @@ integer(IK) :: nhist
 integer(IK) :: npt_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
+real(RP) :: f_loc
 real(RP) :: ftarget_loc
 real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
@@ -329,11 +334,15 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 !-------------------- Call NEWUOB, which performs the real calculations. --------------------------!
 call newuob(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
-    & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, f, fhist_loc, xhist_loc, info_loc)
+    & gamma2_loc, rhobeg_loc, rhoend_loc, x, nf_loc, f_loc, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
 
 ! Write the outputs.
+
+if (present(f)) then
+    f = f_loc
+end if
 
 if (present(nf)) then
     nf = nf_loc
@@ -393,7 +402,7 @@ if (DEBUGGING) then
     if (present(fhist)) then
         call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
         call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
-        call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
+        call assert(.not. any(fhist < f_loc), 'F is the smallest in FHIST', srname)
     end if
 end if
 

@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 15, 2023 PM09:46:32
+! Last Modified: Wednesday, October 18, 2023 PM07:26:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -36,12 +36,12 @@ public :: bobyqa
 contains
 
 
-subroutine bobyqa(calfun, x, f, &
-    & xl, xu, &
+subroutine bobyqa(calfun, x, &
+    & f, xl, xu, &
     & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &
     & eta1, eta2, gamma1, gamma2, xhist, fhist, maxhist, honour_x0, info)
 !--------------------------------------------------------------------------------------------------!
-! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
+! Among all the arguments, only CALFUN and X are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
 ! the default value detailed below. For instance, we may invoke the solver as follows.
 !
@@ -210,7 +210,6 @@ implicit none
 ! Compulsory arguments
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)  ! X(N)
-real(RP), intent(out) :: f
 
 ! Optional inputs
 integer(IK), intent(in), optional :: iprint
@@ -233,6 +232,7 @@ integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
 real(RP), intent(out), allocatable, optional :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out), allocatable, optional :: xhist(:, :)  ! XHIST(N, MAXXHIST)
+real(RP), intent(out), optional :: f
 
 ! Local variables
 character(len=*), parameter :: solver = 'BOBYQA'
@@ -250,6 +250,7 @@ logical :: has_rhobeg
 logical :: honour_x0_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
+real(RP) :: f_loc
 real(RP) :: ftarget_loc
 real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
@@ -415,11 +416,15 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 !-------------------- Call BOBYQB, which performs the real calculations. --------------------------!
 call bobyqb(calfun, iprint_loc, maxfun_loc, npt_loc, eta1_loc, eta2_loc, ftarget_loc, &
-    & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, f, &
+    & gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, f_loc, &
     & fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
 ! Write the outputs.
+
+if (present(f)) then
+    f = f_loc
+end if
 
 if (present(nf)) then
     nf = nf_loc
@@ -502,7 +507,7 @@ if (DEBUGGING) then
     if (present(fhist)) then
         call assert(size(fhist) == nhist, 'SIZE(FHIST) == NHIST', srname)
         call assert(.not. any(is_nan(fhist) .or. is_posinf(fhist)), 'FHIST does not contain NaN/+Inf', srname)
-        call assert(.not. any(fhist < f), 'F is the smallest in FHIST', srname)
+        call assert(.not. any(fhist < f_loc), 'F is the smallest in FHIST', srname)
     end if
 end if
 

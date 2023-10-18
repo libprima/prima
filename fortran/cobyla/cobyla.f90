@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, August 11, 2023 PM06:41:04
+! Last Modified: Wednesday, October 18, 2023 PM07:08:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -53,8 +53,8 @@ public :: cobyla
 contains
 
 
-subroutine cobyla(calcfc, m_nlcon, x, f, &
-    & cstrv, nlconstr, &
+subroutine cobyla(calcfc, m_nlcon, x, &
+    & f, cstrv, nlconstr, &
     & Aineq, bineq, &
     & Aeq, beq, &
     & xl, xu, &
@@ -62,10 +62,9 @@ subroutine cobyla(calcfc, m_nlcon, x, f, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, nlchist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
-! Among all the arguments, only CALCFC, M_NLCON, X, and F are obligatory. The others are
-! OPTIONAL and you can neglect them unless you are familiar with the algorithm. Any unspecified
-! optional input will take the default value detailed below. For instance, we may invoke the
-! solver as follows.
+! Among all the arguments, only CALCFC, M_NLCON, and X are obligatory. The others are OPTIONAL and
+! you can neglect them unless you are familiar with the algorithm. Any unspecified optional input
+! will take the default value detailed below. For instance, we may invoke the solver as follows.
 !
 ! ! First define CALCFC, M_NLCON, and X, and then do the following.
 ! call cobyla(calcfc, m_nlcon, x, f)
@@ -277,7 +276,6 @@ implicit none
 ! Compulsory arguments
 procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)     ! X(N)
-real(RP), intent(out) :: f
 integer(IK), intent(in) :: m_nlcon
 
 ! Optional inputs
@@ -306,12 +304,13 @@ real(RP), intent(in), optional :: xu(:)  ! XU(N)
 ! Optional outputs
 integer(IK), intent(out), optional :: info
 integer(IK), intent(out), optional :: nf
-real(RP), intent(out), optional :: nlconstr(:) ! NLCONSTR(M_NLCON)
 real(RP), intent(out), allocatable, optional :: chist(:)    ! CHIST(MAXCHIST)
-real(RP), intent(out), allocatable, optional :: nlchist(:, :)     ! NLCHIST(M_NLCON, MAXCONHIST)
 real(RP), intent(out), allocatable, optional :: fhist(:)    ! FHIST(MAXFHIST)
+real(RP), intent(out), allocatable, optional :: nlchist(:, :)     ! NLCHIST(M_NLCON, MAXCONHIST)
 real(RP), intent(out), allocatable, optional :: xhist(:, :) ! XHIST(N, MAXXHIST)
 real(RP), intent(out), optional :: cstrv
+real(RP), intent(out), optional :: f
+real(RP), intent(out), optional :: nlconstr(:) ! NLCONSTR(M_NLCON)
 
 ! Local variables
 character(len=*), parameter :: solver = 'COBYLA'
@@ -336,6 +335,7 @@ real(RP) :: ctol_loc
 real(RP) :: cweight_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
+real(RP) :: f_loc
 real(RP) :: ftarget_loc
 real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
@@ -477,11 +477,11 @@ call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 ! to them. Otherwise, set [F, CONSTR_LOC] = [F(X0), CONSTR(X0)], so COBYLB only needs one interface.
 constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)
 if (present(f0) .and. present(nlconstr0) .and. all(is_finite(x))) then
-    f = f0
+    f_loc = f0
     constr_loc(m - m_nlcon + 1:m) = nlconstr0
 else
     x = moderatex(x)
-    call evaluate(calcfc, x, f, constr_loc(m - m_nlcon + 1:m))
+    call evaluate(calcfc, x, f_loc, constr_loc(m - m_nlcon + 1:m))
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
@@ -603,7 +603,7 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 !call cobylb(calcfc_internal, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, cweight_loc, eta1_loc, eta2_loc, &
 call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
     & eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, &
-    & f, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
+    & f_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
@@ -612,15 +612,18 @@ deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec, xl_loc, xu_loc)
 
 ! Write the outputs.
 
-! Copy CONSTR_LOC to NLCONSTR if needed.
-if (present(nlconstr)) then
-    nlconstr = constr_loc(m - m_nlcon + 1:m)
+if (present(f)) then
+    f = f_loc
 end if
-deallocate (constr_loc)
 
 if (present(cstrv)) then
     cstrv = cstrv_loc
 end if
+
+if (present(nlconstr)) then
+    nlconstr = constr_loc(m - m_nlcon + 1:m)
+end if
+deallocate (constr_loc)
 
 if (present(nf)) then
     nf = nf_loc
@@ -717,7 +720,7 @@ if (DEBUGGING) then
         call assert(.not. any(is_nan(nlchist) .or. is_posinf(nlchist)), 'NLCHIST does not contain NaN/+Inf', srname)
     end if
     if (present(fhist) .and. present(chist)) then
-        call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv_loc, ctol_loc)), &
+        call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f_loc, cstrv_loc, ctol_loc)), &
             & 'No point in the history is better than X', srname)
     end if
 end if

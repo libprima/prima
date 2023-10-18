@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, October 05, 2023 PM09:29:19
+! Last Modified: Wednesday, October 18, 2023 PM07:11:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,15 +47,15 @@ public :: lincoa
 contains
 
 
-subroutine lincoa(calfun, x, f, &
-    & cstrv, &
+subroutine lincoa(calfun, x, &
+    & f, cstrv, &
     & Aineq, bineq, &
     & Aeq, beq, &
     & xl, xu, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
     & xhist, fhist, chist, maxhist, maxfilt, info)
 !--------------------------------------------------------------------------------------------------!
-! Among all the arguments, only CALFUN, X, and F are obligatory. The others are OPTIONAL and you can
+! Among all the arguments, only CALFUN, and X are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
 ! the default value detailed below. For instance, we may invoke the solver as follows.
 !
@@ -237,7 +237,6 @@ implicit none
 ! Compulsory arguments
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)  ! X(N)
-real(RP), intent(out) :: f
 
 ! Optional inputs
 integer(IK), intent(in), optional :: iprint
@@ -268,6 +267,7 @@ real(RP), intent(out), allocatable, optional :: chist(:)  ! CHIST(MAXCHIST)
 real(RP), intent(out), allocatable, optional :: fhist(:)  ! FHIST(MAXFHIST)
 real(RP), intent(out), allocatable, optional :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 real(RP), intent(out), optional :: cstrv
+real(RP), intent(out), optional :: f
 
 ! Local variables
 character(len=*), parameter :: solver = 'LINCOA'
@@ -288,6 +288,7 @@ real(RP) :: ctol_loc
 real(RP) :: cweight_loc
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
+real(RP) :: f_loc
 real(RP) :: ftarget_loc
 real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
@@ -511,7 +512,7 @@ call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, rhoend_loc, xl_loc, xu_l
 call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
     & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
     & gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, chist_loc, cstrv_loc, &
-    & f, fhist_loc, xhist_loc, info_loc)
+    & f_loc, fhist_loc, xhist_loc, info_loc)
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
@@ -519,6 +520,10 @@ deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec, xl_loc, xu_loc)
 
 
 ! Write the outputs.
+
+if (present(f)) then
+    f = f_loc
+end if
 
 if (present(cstrv)) then
     cstrv = cstrv_loc
@@ -598,7 +603,7 @@ if (DEBUGGING) then
         call assert(.not. any(is_nan(chist) .or. is_posinf(chist)), 'CHIST does not contain NaN/+Inf', srname)
     end if
     if (present(fhist) .and. present(chist)) then
-        call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv_loc, ctol_loc)),&
+        call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f_loc, cstrv_loc, ctol_loc)),&
             & 'No point in the history is better than X', srname)
     end if
 end if
