@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, September 28, 2023 PM11:01:36
+! Last Modified: Wednesday, October 18, 2023 PM05:16:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -130,6 +130,7 @@ x = -huge(x)  ! Costly if X is of a large size.
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == n, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == N', srname)
 end subroutine alloc_rvector_sp
 
 
@@ -163,6 +164,8 @@ x = -huge(x)  ! Costly if X is of a large size.
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == m, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == M', srname)
+call validate(lbound(x, 2) == 1 .and. ubound(x, 2) == n, 'LBOUND(X, 2) == 1, UBOUND(X, 2) == N', srname)
 end subroutine alloc_rmatrix_sp
 
 
@@ -199,6 +202,7 @@ x = -huge(x)  ! Costly if X is of a large size.
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == n, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == N', srname)
 end subroutine alloc_rvector_dp
 
 
@@ -232,6 +236,8 @@ x = -huge(x)  ! Costly if X is of a large size.
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == m, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == M', srname)
+call validate(lbound(x, 2) == 1 .and. ubound(x, 2) == n, 'LBOUND(X, 2) == 1, UBOUND(X, 2) == N', srname)
 end subroutine alloc_rmatrix_dp
 
 
@@ -270,6 +276,7 @@ x = -huge(x)  ! Costly if X is of a large size.
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == n, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == N', srname)
 end subroutine alloc_rvector_qp
 
 
@@ -303,6 +310,8 @@ x = -huge(x)  ! Costly if X is of a large size.
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == m, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == M', srname)
+call validate(lbound(x, 2) == 1 .and. ubound(x, 2) == n, 'LBOUND(X, 2) == 1, UBOUND(X, 2) == N', srname)
 end subroutine alloc_rmatrix_qp
 
 #endif
@@ -338,6 +347,7 @@ x = .false.  ! Costly if X is of a large size.
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == n, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == N', srname)
 end subroutine alloc_lvector
 
 
@@ -371,6 +381,7 @@ x = -huge(x)  ! Costly if X is of a large size.
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x) == n, 'SIZE(X) == N', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == n, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == N', srname)
 end subroutine alloc_ivector
 
 
@@ -404,6 +415,8 @@ x = -huge(x)  ! Costly if X is of a large size.
 call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
 call validate(allocated(x), 'X is allocated', srname)
 call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == m, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == M', srname)
+call validate(lbound(x, 2) == 1 .and. ubound(x, 2) == n, 'LBOUND(X, 2) == 1, UBOUND(X, 2) == N', srname)
 end subroutine alloc_imatrix
 
 
