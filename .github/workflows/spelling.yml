@@ -35,22 +35,7 @@ name: Check Spelling
 
 on:
   push:
-    branches:
-    - "**"
-    tags-ignore:
-    - "**"
-  pull_request_target:
-    branches:
-    - "**"
-    tags-ignore:
-    - "**"
-    types:
-    - 'opened'
-    - 'reopened'
-    - 'synchronize'
-  issue_comment:
-    types:
-    - 'created'
+  pull_request:
   # Trigger the workflow manually
   workflow_dispatch:
 
