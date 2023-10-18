@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, October 18, 2023 PM08:23:45
+! Last Modified: Wednesday, October 18, 2023 PM08:29:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -473,8 +473,8 @@ call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, xl_loc, xu_loc, amat, bv
 ! Allocate memory for CONSTR_LOC.
 call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 
-! If the user provides the function & nonlinear constraint value at X0, then set up [F, CONSTR_LOC]
-! to them. Otherwise, set [F, CONSTR_LOC] = [F(X0), CONSTR(X0)], so COBYLB only needs one interface.
+! Set [F_LOC, CONSTR_LOC] to [F(X0), CONSTR(X0)] after evaluating the latter if needed. In this way,
+! COBYLB only needs one interface.
 constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)
 if (present(f0) .and. present(nlconstr0) .and. all(is_finite(x))) then
     f_loc = f0
