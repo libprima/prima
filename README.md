@@ -274,8 +274,7 @@ cmake --build build --target install
   implemented in MATLAB similarly.
 
 #### Julia
-- [A Julia interface](https://github.com/emmt/PRIMA.jl)
-is [available](https://juliahub.com/ui/Packages/General/PRIMA). It is
+- A [Julia interface](https://juliahub.com/ui/Packages/General/PRIMA) is available. It is
 [registered in the General Registry of Julia](https://github.com/JuliaRegistries/General/tree/master/P/PRIMA).
 
 #### Other languages
