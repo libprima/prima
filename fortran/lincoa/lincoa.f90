@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, October 18, 2023 PM07:11:31
+! Last Modified: Thursday, October 19, 2023 AM10:34:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -65,7 +65,7 @@ subroutine lincoa(calfun, x, &
 ! or
 !
 ! ! First define CALFUN, X, Aineq, and Bineq, and then do the following.
-! call lincoa(calfun, x, f, Aineq = Aineq, bineq = bineq, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! call lincoa(calfun, x, f, cstrv, Aineq = Aineq, bineq = bineq, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! See examples/lincoa_exmp.f90 for a concrete example.
 !
@@ -135,8 +135,8 @@ subroutine lincoa(calfun, x, &
 ! CTOL
 !   Input, REAL(RP) scalar, default: machine epsilon.
 !   CTOL is the tolerance of constraint violation. X is considered feasible if CSTRV(X) <= CTOL.
-!   N.B.: 1. CTOL is absolute, not relative. 2. CTOL is used only when selecting the returned X.
-!   It does not affect the iterations of the algorithm.
+!   N.B.: 1. CTOL is absolute, not relative.
+!   2. CTOL is used for choosing the returned X. It does not affect the iterations of the algorithm.
 !
 ! CWEIGHT
 !   Input, REAL(RP) scalar, default: CWEIGHT_DFT defined in the module CONSTS_MOD in common/consts.F90.

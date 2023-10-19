@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, October 18, 2023 PM08:29:41
+! Last Modified: Thursday, October 19, 2023 AM10:39:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -67,12 +67,12 @@ subroutine cobyla(calcfc, m_nlcon, x, &
 ! will take the default value detailed below. For instance, we may invoke the solver as follows.
 !
 ! ! First define CALCFC, M_NLCON, and X, and then do the following.
-! call cobyla(calcfc, m_nlcon, x, f)
+! call cobyla(calcfc, m_nlcon, x, f, cstrv)
 !
 ! or
 !
 ! ! First define CALCFC, M_NLCON, and X, and then do the following.
-! call cobyla(calcfc, m_nlcon, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! call cobyla(calcfc, m_nlcon, x, f, cstrv, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
 !
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! ! IMPORTANT NOTICE: The user must set M_NLCON correctly to the number of nonlinear constraints,
@@ -127,8 +127,9 @@ subroutine cobyla(calcfc, m_nlcon, x, &
 !   MAXVAL([0, XL - X, X - XU, Aineq*X - Bineq, ABS(Aeq*X -Beq), NLCONSTR(X)]).
 !
 ! NLCONSTR
-!   Output, ALLOCATABLE REAL(RP) vector.
-!   NLCONSTR will be set to the nonlinear constraint value of X at exit.
+!   Output, REAL(RP) vector.
+!   NLCONSTR should be an M_NLCON-dimensional vector and will be set to the nonlinear constraint
+!   value of X at exit.
 !
 ! Aineq, Bineq
 !   Input, REAL(RP) matrix of size [Mineq, N] and REAL vector of size Mineq unless they are both
@@ -276,7 +277,7 @@ implicit none
 ! Compulsory arguments
 procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 real(RP), intent(inout) :: x(:)     ! X(N)
-integer(IK), intent(in) :: m_nlcon
+integer(IK), intent(in) :: m_nlcon  ! Number of constraints defined in CALCFC
 
 ! Optional inputs
 integer(IK), intent(in), optional :: iprint
