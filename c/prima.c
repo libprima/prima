@@ -1,6 +1,31 @@
+
 /* Dedicated to the late Professor M. J. D. Powell FRS (1936--2015). */
 
 #include "prima/prima.h"
+#include "stddef.h"
+#include "math.h"
+
+int prima_init_options(prima_options * opt)
+{
+  if (opt != NULL)
+  {
+    opt->maxfun = 100;
+    opt->rhobeg = 1.0;
+    opt->rhoend = 1e-6;
+    opt->iprint = PRIMA_MSG_NONE;
+    opt->ftarget = -INFINITY;
+    opt->npt = -1;// interpreted as 2*n+1
+    opt->data = NULL;
+    opt->m_ineq = 0;
+    opt->Aineq = NULL;
+    opt->bineq = NULL;
+    opt->m_eq = 0;
+    opt->Aeq = NULL;
+    opt->beq = NULL;
+    return 0;
+  }
+  return 1;
+}
 
 /* implemented in fortran (*_c.f90) */
 int cobyla_c(const int m_nlcon, const prima_objcon calcfc, const void *data, const int n, double x[], double *f, double *cstrv, double nlconstr[],
@@ -22,49 +47,60 @@ int lincoa_c(prima_obj calfun, const void *data, const int n, double x[], double
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, int *info);
 
 /* these functions just call the fortran compatibility layer and return the status code */
-int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const void *data, const int n, double x[], double *f, double *cstrv, double nlconstr[],
-                 const int m_ineq, const double Aineq[], const double bineq[],
-                 const int m_eq, const double Aeq[], const double beq[],
+int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, double x[], double *f,
+                 double *cstrv, double nlconstr[],
                  const double xl[], const double xu[],
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint)
+                 int *nf, const prima_options * opt)
 {
+  if (!opt)
+    return PRIMA_NULL_OPTIONS;
   int info = 0;
-  cobyla_c(m_nlcon, calcfc, data, n, x, f, cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, nf, rhobeg, rhoend, ftarget, maxfun, iprint, &info);
+  cobyla_c(m_nlcon, calcfc, opt->data, n, x, f, cstrv, nlconstr,
+           opt->m_ineq, opt->Aineq, opt->bineq, opt->m_eq, opt->Aeq, opt->beq,
+           xl, xu, nf, opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->iprint, &info);
   return info;
 }
 
-int prima_bobyqa(const prima_obj calfun, const void *data, const int n, double x[], double *f, const double xl[], const double xu[],
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint)
+int prima_bobyqa(const prima_obj calfun, const int n, double x[], double *f, const double xl[], const double xu[],
+                 int *nf, const prima_options * opt)
 {
+  if (!opt)
+    return PRIMA_NULL_OPTIONS;
   int info = 0;
-  bobyqa_c(calfun, data, n, x, f, xl, xu, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &info);
+  bobyqa_c(calfun, opt->data, n, x, f, xl, xu, nf, opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt < 0 ? 2*n+1 : opt->npt, opt->iprint, &info);
   return info;
 }
 
-int prima_newuoa(const prima_obj calfun, const void *data, const int n, double x[], double *f,
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint)
+int prima_newuoa(const prima_obj calfun, const int n, double x[], double *f,
+                 int *nf, const prima_options * opt)
 {
+  if (!opt)
+    return PRIMA_NULL_OPTIONS;
   int info = 0;
-  newuoa_c(calfun, data, n, x, f, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &info);
+  newuoa_c(calfun, opt->data, n, x, f, nf, opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt < 0 ? 2*n+1 : opt->npt, opt->iprint, &info);
   return info;
 }
 
-int prima_uobyqa(const prima_obj calfun, const void *data, const int n, double x[], double *f,
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint)
+int prima_uobyqa(const prima_obj calfun, const int n, double x[], double *f,
+                 int *nf, const prima_options * opt)
 {
+  if (!opt)
+    return PRIMA_NULL_OPTIONS;
   int info = 0;
-  uobyqa_c(calfun, data, n, x, f, nf, rhobeg, rhoend, ftarget, maxfun, iprint, &info);
+  uobyqa_c(calfun, opt->data, n, x, f, nf, opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->iprint, &info);
   return info;
 }
 
-int prima_lincoa(const prima_obj calfun, const void *data, const int n, double x[], double *f, double *cstrv,
-                 const int m_ineq, const double Aineq[], const double bineq[],
-                 const int m_eq, const double Aeq[], const double beq[],
+int prima_lincoa(const prima_obj calfun, const int n, double x[], double *f, double *cstrv,
                  const double xl[], const double xu[],
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint)
+                 int *nf, const prima_options * opt)
 {
+  if (!opt)
+    return PRIMA_NULL_OPTIONS;
   int info = 0;
-  lincoa_c(calfun, data, n, x, f, cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, &info);
+  lincoa_c(calfun, opt->data, n, x, f, cstrv,
+           opt->m_ineq, opt->Aineq, opt->bineq, opt->m_eq, opt->Aeq, opt->beq,
+           xl, xu, nf, opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt < 0 ? 2*n+1 : opt->npt, opt->iprint, &info);
   return info;
 }
 
