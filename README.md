@@ -395,7 +395,7 @@ and [SQP method](https://en.wikipedia.org/wiki/Sequential_quadratic_programming)
 Each of them is a pillar of modern numerical optimization. He also made significant contributions
 to [approximation theory and methods](https://www.cambridge.org/highereducation/books/approximation-theory-and-methods/66FD8CD6F18FE1ED499A8CA9A05F2A5A#overview).
 
-Among numerous honors, Powell was one of the first two recipients of the
+Among numerous honors, Powell was one of the two recipients of the first
 [Dantzig Prize](https://en.wikipedia.org/wiki/Dantzig_Prize)
 from the Mathematical Programming Society (MOS) and Society for Industrial and Applied Mathematics (SIAM).
 This is considered the highest award in optimization.
