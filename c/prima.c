@@ -22,6 +22,7 @@ int prima_init_options(prima_options * opt)
     opt->m_eq = 0;
     opt->Aeq = NULL;
     opt->beq = NULL;
+    opt->m_nlcon = 0;
     return 0;
   }
   return 1;
@@ -47,7 +48,7 @@ int lincoa_c(prima_obj calfun, const void *data, const int n, double x[], double
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, int *info);
 
 /* these functions just call the fortran compatibility layer and return the status code */
-int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, double x[], double *f,
+int prima_cobyla(const prima_objcon calcfc, const int n, double x[], double *f,
                  double *cstrv, double nlconstr[],
                  const double xl[], const double xu[],
                  int *nf, const prima_options * opt)
@@ -55,7 +56,7 @@ int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, doub
   if (!opt)
     return PRIMA_NULL_OPTIONS;
   int info = 0;
-  cobyla_c(m_nlcon, calcfc, opt->data, n, x, f, cstrv, nlconstr,
+  cobyla_c(opt->m_nlcon, calcfc, opt->data, n, x, f, cstrv, nlconstr,
            opt->m_ineq, opt->Aineq, opt->bineq, opt->m_eq, opt->Aeq, opt->beq,
            xl, xu, nf, opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->iprint, &info);
   return info;

@@ -114,6 +114,9 @@ typedef struct {
   double *Aeq;
   double *beq;
 
+  // number of non-linear constraints for cobyla (>=0), default=0
+  int m_nlcon;
+
 } prima_options;
 
 /* Initialize option data */
@@ -127,7 +130,6 @@ int prima_init_options(prima_options * options);
  *             on output, the solution
  * f         : objective value (output)
  * nf        : number of objective function calls (output)
- * m_nlcon   : number of non-linear constraints (>=0)
  * calcfc    : function to minimize and constraints (see prima_objcon)
  * cstrv     : constraint violation (output)
  * nlconstr  : non-linear constraint values of size m_nlcon (output)
@@ -150,7 +152,7 @@ int prima_uobyqa(const prima_obj calfun, const int n, double x[], double *f,
                  int *nf, const prima_options * options);
 
 PRIMAC_API
-int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const int n, double x[], double *f,
+int prima_cobyla(const prima_objcon calcfc, const int n, double x[], double *f,
                  double *cstrv, double nlconstr[],
                  const double xl[], const double xu[],
                  int *nf, const prima_options * options);

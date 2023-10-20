@@ -29,6 +29,7 @@ int main(int argc, char * argv[])
   options.iprint = PRIMA_MSG_EXIT;
   options.rhoend= 1e-3;
   options.maxfun = 200*n;
+  options.m_nlcon = m_nlcon;
   // x1<=4, x2<=3, x1+x2<=10
   options.m_ineq = 3;
   double Aineq[3*2] = {1.0, 0.0,
@@ -42,7 +43,7 @@ int main(int argc, char * argv[])
   double xl[2] = {-6.0, -6.0};
   double xu[2] = {6.0, 6.0};
   int nf = 0;
-  const int rc = prima_cobyla(m_nlcon, &fun, n, x, &f, &cstrv, nlconstr, xl, xu, &nf, &options);
+  const int rc = prima_cobyla(&fun, n, x, &f, &cstrv, nlconstr, xl, xu, &nf, &options);
   const char *msg = prima_get_rc_string(rc);
   printf("x*={%g, %g} f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", x[0], x[1], f, cstrv, nlconstr[0], rc, msg, nf);
   return (fabs(x[0]-3)>2e-2 || fabs(x[1]-2)>2e-2);

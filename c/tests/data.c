@@ -96,7 +96,8 @@ int main(int argc, char * argv[])
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
-    rc = prima_cobyla(m_nlcon, &fun_con, n, x, &f, &cstrv, nlconstr, xl, xu, &nf, &options);
+    options.m_nlcon = m_nlcon;
+    rc = prima_cobyla(&fun_con, n, x, &f, &cstrv, nlconstr, xl, xu, &nf, &options);
   }
   else if(strcmp(algo, "lincoa") == 0)
   {
