@@ -82,24 +82,18 @@ int main(int argc, char * argv[])
   double x[n_max];
   double xl[n_max];
   double xu[n_max];
-  double f = 0.0;
-  double cstrv = 0.0;
-  double nlconstr[m_nlcon];
+  prima_options options;
+  prima_init_options(&options);
+  options.iprint = PRIMA_MSG_RHO;
+  options.maxfun = 500*n_max;
   double *Aineq = malloc(n_max*m_ineq_max*sizeof(double));
   double bineq[m_ineq_max];
-  const int m_eq = 0;
-  double *Aeq = NULL;
-  double *beq = NULL;
-  const double rhobeg = 1.0;
-  const double rhoend = 1e-6;
-  const double ftarget = -INFINITY;
-  const int iprint = PRIMA_MSG_RHO;
-  const int maxfun = 500*n_max;
-
+  options.Aineq = Aineq;
+  options.bineq = bineq;
+  options.xl = xl;
+  options.xu = xu;
   for (int j = 0; j < m_ineq_max; ++ j)
     bineq[j] = random_gen(-1.0, 1.0);
-  for (int j = 0; j < m_nlcon; ++ j)
-    nlconstr[j] = 0.0;
 
   for (int i = 0; i < n_max; ++ i)
   {
@@ -109,33 +103,34 @@ int main(int argc, char * argv[])
     xl[i] = -1.0;
     xu[i] = 1.0;
   }
-  int nf = 0;
+  prima_results results;
   if(strcmp(algo, "bobyqa") == 0)
   {
     n = 1600;
-    rc = prima_bobyqa(&fun, NULL, n, x, &f, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    rc = prima_bobyqa(&fun, n, x, &options, &results);
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
     n = 800;
-    m_ineq = 600;
-    rc = prima_cobyla(m_nlcon, &fun_con, NULL, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    options.m_nlcon = m_nlcon;
+    options.m_ineq = 600;
+    rc = prima_cobyla(&fun_con, n, x, &options, &results);
   }
   else if(strcmp(algo, "lincoa") == 0)
   {
     n = 1000;
-    m_ineq = 1000;
-    rc = prima_lincoa(&fun, NULL, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    options.m_ineq = 1000;
+    rc = prima_lincoa(&fun, n, x, &options, &results);
   }
   else if(strcmp(algo, "newuoa") == 0)
   {
     n = 1600;
-    rc = prima_newuoa(&fun, NULL, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    rc = prima_newuoa(&fun, n, x, &options, &results);
   }
   else if(strcmp(algo, "uobyqa") == 0)
   {
     n = 100;
-    rc = prima_uobyqa(&fun, NULL, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    rc = prima_uobyqa(&fun, n, x, &options, &results);
   }
   else
   {
@@ -144,6 +139,8 @@ int main(int argc, char * argv[])
   }
   const char *msg = prima_get_rc_string(rc);
 
-  printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", f, cstrv, nlconstr[0], rc, msg, nf);
+  printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", results.f, results.cstrv, results.nlconstr ? results.nlconstr[0] : 0.0, rc, msg, results.nf);
+  prima_free_options(&options);
+  prima_free_results(&results);
   return 0;
 }

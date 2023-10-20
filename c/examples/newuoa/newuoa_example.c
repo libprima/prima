@@ -18,17 +18,16 @@ int main(int argc, char * argv[])
   (void)argv;
   const int n = 2;
   double x[2] = {0.0, 0.0};
-  double f = 0.0;
-  const double rhobeg = 1.0;
-  const double rhoend = 1e-3;
-  const double ftarget = -INFINITY;
-  const int iprint = PRIMA_MSG_EXIT;
-  const int maxfun = 200*n;
-  const int npt = 2*n+1;
-  int nf = 0;
-  void *data = NULL;
-  const int rc = prima_newuoa(&fun, data, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint);
+  prima_options options;
+  prima_init_options(&options);
+  options.iprint = PRIMA_MSG_EXIT;
+  options.rhoend= 1e-3;
+  options.maxfun = 200*n;
+  prima_results results;
+  const int rc = prima_newuoa(&fun, n, x, &options, &results);
   const char *msg = prima_get_rc_string(rc);
-  printf("x*={%g, %g} rc=%d msg='%s' evals=%d\n", x[0], x[1], rc, msg, nf);
+  printf("x*={%g, %g} rc=%d msg='%s' evals=%d\n", x[0], x[1], rc, msg, results.nf);
+  prima_free_options(&options);
+  prima_free_results(&results);
   return (fabs(x[0]-3)>2e-2 || fabs(x[1]-2)>2e-2);
 }

@@ -13,7 +13,7 @@ contains
 
 
 subroutine cobyla_c(m_nlcon, cobjcon_ptr, data_ptr, n, x, f, cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &
-    & nf, rhobeg, rhoend, ftarget, maxfun, iprint, info) bind(C)
+    & f0, nlconstr0, nf, rhobeg, rhoend, ftarget, maxfun, iprint, info) bind(C)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR
 use, non_intrinsic :: cintrf_mod, only : COBJCON
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -38,6 +38,8 @@ real(C_DOUBLE), intent(in) :: Aeq(n, m_eq)
 real(C_DOUBLE), intent(in) :: beq(m_eq)
 real(C_DOUBLE), intent(in) :: xl(n)
 real(C_DOUBLE), intent(in) :: xu(n)
+real(C_DOUBLE), intent(in), value :: f0
+real(C_DOUBLE), intent(in) :: nlconstr0(m_nlcon)
 integer(C_INT), intent(out) :: nf
 real(C_DOUBLE), intent(in), value :: rhobeg
 real(C_DOUBLE), intent(in), value :: rhoend
@@ -65,6 +67,8 @@ real(RP) :: ftarget_loc
 real(RP) :: x_loc(n)
 real(RP) :: xl_loc(n)
 real(RP) :: xu_loc(n)
+real(RP) :: f0_loc
+real(RP) :: nlconstr0_loc(m_nlcon)
 
 ! Read the inputs and convert them to the Fortran side types
 ! Note that `transpose` is needed when reading 2D arrays, since they are stored in the row-major
@@ -76,6 +80,8 @@ Aeq_loc = real(transpose(Aeq), kind(Aeq_loc))
 beq_loc = real(beq, kind(beq_loc))
 xl_loc = real(xl, kind(xl_loc))
 xu_loc = real(xu, kind(xu_loc))
+f0_loc = real(f0, kind(f0_loc))
+nlconstr0_loc = real(nlconstr0, kind(nlconstr0_loc))
 rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
 rhoend_loc = real(rhoend, kind(rhoend_loc))
 ftarget_loc = real(ftarget, kind(ftarget_loc))
@@ -86,7 +92,7 @@ m_nlcon_loc = int(m_nlcon, kind(m_nlcon_loc))
 ! Call the Fortran code
 call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, &
     & Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, &
-    & xl=xl_loc, xu=xu_loc, nf=nf_loc, &
+    & xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, nf=nf_loc, &
     & rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, maxfun=maxfun_loc, &
     & iprint=iprint_loc, info=info_loc)
 
