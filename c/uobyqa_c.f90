@@ -47,9 +47,9 @@ real(RP) :: x_loc(n)
 
 ! Read the inputs and convert them to the Fortran side types
 x_loc = real(x, kind(x_loc))
-rhobeg_loc = real(rhobeg, kind(rhobeg))
-rhoend_loc = real(rhoend, kind(rhoend))
-ftarget_loc = real(ftarget, kind(ftarget))
+rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
+rhoend_loc = real(rhoend, kind(rhoend_loc))
+ftarget_loc = real(ftarget, kind(ftarget_loc))
 maxfun_loc = int(maxfun, kind(maxfun_loc))
 iprint_loc = int(iprint, kind(iprint_loc))
 
