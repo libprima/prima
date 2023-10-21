@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, October 17, 2023 PM02:52:22
+! Last Modified: Saturday, October 21, 2023 PM08:06:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -182,7 +182,7 @@ real(RP) :: delbar
 real(RP) :: delta
 real(RP) :: distsq(npt)
 real(RP) :: dnorm
-real(RP) :: dnorm_rec(4)  ! Powell's implementation uses 5
+real(RP) :: dnorm_rec(3)  ! Powell's implementation: DNORM_REC(5)
 real(RP) :: ffilt(maxfilt)
 real(RP) :: fval(npt)
 real(RP) :: galt(size(x))
@@ -368,9 +368,9 @@ do tr = 1, maxtr
     ! !SHORTD = (DNORM < HALF * RHO)
     !------------------------------------------------------------------------------------------!
 
-    ! DNORM_REC records the DNORM of last few (five) trust-region iterations. It will be used to
-    ! decide whether we should improve the geometry of the interpolation set or reduce RHO when
-    ! SHORTD is TRUE. Note that it does not record the geometry steps.
+    ! DNORM_REC records the DNORM of recent trust-region iterations. It will be used to decide
+    ! whether we should improve the geometry of the interpolation set or reduce RHO when SHORTD
+    ! is TRUE. Note that it does not record the geometry steps.
     dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
 
     ! In some cases, we reset DNORM_REC to REALMAX. This indicates a preference of improving the
@@ -485,7 +485,7 @@ do tr = 1, maxtr
     ! verify a curvature condition that really indicates that recent models are sufficiently
     ! accurate. Here, however, we are not really sure whether they are accurate or not. Therefore,
     ! ACCURATE_MOD is not the best name, but we keep it to align with the other solvers.
-    accurate_mod = all(dnorm_rec <= HALF * rho) .or. all(dnorm_rec(3:size(dnorm_rec)) <= 0.2 * rho)
+    accurate_mod = all(dnorm_rec <= rho) .or. all(dnorm_rec(2:size(dnorm_rec)) <= 0.2 * rho)
     ! Powell's version (note that size(dnorm_rec) = 5 in his implementation):
     !accurate_mod = all(dnorm_rec <= HALF * rho) .or. all(dnorm_rec(3:size(dnorm_rec)) <= TENTH * rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?

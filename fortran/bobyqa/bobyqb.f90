@@ -291,7 +291,7 @@ do tr = 1, maxtr
 
     ! When D is short, make a choice between reducing RHO and improving the geometry depending
     ! on whether or not our work with the current RHO seems complete. RHO is reduced if the
-    ! errors in the quadratic model at the last three interpolation points compare favourably
+    ! errors in the quadratic model at the recent interpolation points compare favourably
     ! with predictions of likely improvements to the model within distance HALF*RHO of XOPT.
     ! Why do we reduce RHO when SHORTD is true and the entries of MODERR_REC and DNORM_REC are all
     ! small? The reason is well explained by the BOBYQA paper in the paragraphs surrounding
@@ -326,10 +326,10 @@ do tr = 1, maxtr
         end if
 
         ! Update DNORM_REC and MODERR_REC.
-        ! DNORM_REC records the DNORM of the latest 3 function evaluations with the current RHO.
+        ! DNORM_REC records the DNORM of the recent function evaluations with the current RHO.
         dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
-        ! MODERR_REC records the prediction errors of the latest 3 models with the current RHO.
+        ! MODERR_REC records the prediction errors of the recent models with the current RHO.
         moderr = f - fval(kopt) + qred
         moderr_rec = [moderr_rec(2:size(moderr_rec)), moderr]
 
@@ -518,13 +518,13 @@ do tr = 1, maxtr
             end if
 
             ! Update DNORM_REC and MODERR_REC.
-            ! DNORM_REC records the DNORM of the latest 3 function evaluations with the current RHO.
+            ! DNORM_REC records the DNORM of the recent function evaluations with the current RHO.
             ! Powell's code does not update DNORM. Therefore, DNORM is the length of the last
             ! trust-region trial step, inconsistent with MODERR_REC. The same problem exists in NEWUOA.
             dnorm = min(delbar, norm(d))
             dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
             ! MODERR is the error of the current model in predicting the change in F due to D.
-            ! MODERR_REC records the prediction errors of the latest 3 models with the current RHO.
+            ! MODERR_REC records the prediction errors of the recent models with the current RHO.
             moderr = f - fval(kopt) - quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
             moderr_rec = [moderr_rec(2:size(moderr_rec)), moderr]
 
@@ -552,7 +552,7 @@ do tr = 1, maxtr
         rho = redrho(rho, rhoend)
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, delta, fval(kopt), rho, xbase + xpt(:, kopt))
-        ! DNORM_REC and MODERR_REC are corresponding to the latest 3 function evaluations with
+        ! DNORM_REC and MODERR_REC are corresponding to the recent function evaluations with
         ! the current RHO. Update them after reducing RHO.
         dnorm_rec = REALMAX
         moderr_rec = REALMAX

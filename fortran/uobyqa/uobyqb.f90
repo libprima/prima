@@ -267,10 +267,10 @@ do tr = 1, maxtr
         end if
 
         ! Update DNORM_REC and MODERR_REC.
-        ! DNORM_REC records the DNORM of the latest 3 function evaluations with the current RHO.
+        ! DNORM_REC records the DNORM of the recent function evaluations with the current RHO.
         dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
-        ! MODERR_REC records the prediction errors of the latest 3 models with the current RHO.
+        ! MODERR_REC records the prediction errors of the recent models with the current RHO.
         moderr = f - fval(kopt) + qred
         moderr_rec = [moderr_rec(2:size(moderr_rec)), moderr]
 
@@ -423,11 +423,11 @@ do tr = 1, maxtr
         end if
 
         ! Update DNORM_REC and MODERR_REC.
-        ! DNORM_REC records the DNORM of the latest 3 function evaluations with the current RHO.
+        ! DNORM_REC records the DNORM of the recent function evaluations with the current RHO.
         dnorm = min(delbar, norm(d))   ! In theory, DNORM = DELBAR in this case.
         dnorm_rec = [dnorm_rec(2:size(dnorm_rec)), dnorm]
         ! MODERR is the error of the current model in predicting the change in F due to D.
-        ! MODERR_REC records the prediction errors of the latest 3 models with the current RHO.
+        ! MODERR_REC records the prediction errors of the recent models with the current RHO.
         moderr = f - fval(kopt) - quadinc(pq, d, xpt(:, kopt))  ! QUADINC = Q(XOPT + D) - Q(XOPT)
         moderr_rec = [moderr_rec(2:size(moderr_rec)), moderr]
 
@@ -446,7 +446,7 @@ do tr = 1, maxtr
         rho = redrho(rho, rhoend)
         ! Print a message about the reduction of RHO according to IPRINT.
         call rhomsg(solver, iprint, nf, delta, fval(kopt), rho, xbase + xpt(:, kopt))
-        ! DNORM_REC and MODERR_REC are corresponding to the latest 3 function evaluations with
+        ! DNORM_REC and MODERR_REC are corresponding to the recent function evaluations with
         ! the current RHO. Update them after reducing RHO.
         dnorm_rec = REALMAX
         moderr_rec = REALMAX
