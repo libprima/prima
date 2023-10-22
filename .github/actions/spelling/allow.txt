@@ -2131,3 +2131,4 @@ OPTPRLOC
 OSCIPANE
 TWOBARS
 lang
+archnorma
