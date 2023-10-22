@@ -31,7 +31,7 @@ jobs:
         dim: [small]
         solver: [bobyqa]
         precision: [single, quadruple, double]
-        competitor: [classical, archiva]
+        competitor: [classical, archiva, norma]
 
     steps:
 
@@ -62,6 +62,9 @@ jobs:
           ref: ${{ github.event.inputs.git-ref }}
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
+      - name: Set norma to the last commit to prepare for profiling
+        if: ${{ matrix.competitor == 'norma' }}
+        run: git checkout HEAD^ && cd .development && bash ./archnorma && cd ../ && git checkout -
 
       - name: Miscellaneous setup
         run: bash .github/scripts/misc_setup

@@ -29,7 +29,7 @@ jobs:
         matlab: [latest]
         dim: [all]
         solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]  # prima is too expensive
-        competitor: [classical, archiva]
+        competitor: [classical, archiva, norma]
         precision: [single, quadruple, double]
         ctol_indicator: [0, 1, 2]
         exclude:
@@ -80,6 +80,9 @@ jobs:
           ref: ${{ github.event.inputs.git-ref }}
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
+      - name: Set norma to the last commit to prepare for profiling
+        if: ${{ matrix.competitor == 'norma' }}
+        run: git checkout HEAD^ && cd .development && bash ./archnorma && cd ../ && git checkout -
 
       - name: Miscellaneous setup
         run: bash .github/scripts/misc_setup
