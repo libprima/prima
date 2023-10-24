@@ -1,9 +1,9 @@
 function stress(solver, options)
 %STRESS test of a solver on excessively large problems that the solver is NOT designed for.
-% N.B.: When the dimension beyond some limit, the MEX function will crash due to memory violations.
-% In the official version, the limit for each solver is much higher than the size of problems that
-% it is designed to solve. To achieve this, we have to force the MEX function to use the heap
-% instead of the stack for automatic arrays. This is done by the following compilation options:
+% N.B.: When the dimension is beyond some limit, the MEX function will crash due to memory violations.
+% However, the limit for each solver is much higher than the size of problems that it is designed to
+% solve. To achieve this, we have to force the MEX function to use the heap instead of the stack for
+% automatic arrays. This is done by the following compilation options:
 % gfortran on Linux: -fno-stack-arrays
 % Intel compiler on macOS: -heap-arrays
 % Intel compiler on Windows: /heap-arrays
