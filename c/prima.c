@@ -103,28 +103,28 @@ int prima_free_options(prima_options *opt)
     return PRIMA_NULL_OPTIONS;
 }
 
-int prima_init_result(prima_results *results)
+int prima_init_result(prima_result *result)
 {
-  if (results)
+  if (result)
   {
-    memset(results, 0, sizeof(prima_results));
-    results->f = 0.0;
-    results->cstrv = 0.0;
+    memset(result, 0, sizeof(prima_result));
+    result->f = 0.0;
+    result->cstrv = 0.0;
     return 0;
   }
   else
     return PRIMA_NULL_RESULT;
 }
 
-int prima_free_results(prima_results *results)
+int prima_free_result(prima_result *result)
 {
-  if (results)
+  if (result)
   {
-    if (results->nlconstr)
+    if (result->nlconstr)
     {
-      free(results->nlconstr);
-      results->nlconstr = NULL;
-      results->_m_nlcon = 0;
+      free(result->nlconstr);
+      result->nlconstr = NULL;
+      result->_m_nlcon = 0;
     }
     return 0;
   }
@@ -133,22 +133,22 @@ int prima_free_results(prima_results *results)
 }
 
 /* these functions just call the fortran compatibility layer and return the status code */
-int prima_cobyla(const prima_objcon calcfc, const int n, double x[], prima_options *opt, prima_results *results)
+int prima_cobyla(const prima_objcon calcfc, const int n, double x[], prima_options *opt, prima_result *result)
 {
   int info = prima_check_options(opt, n, 1);
   if (info == 0)
-    info = prima_init_result(results);
+    info = prima_init_result(result);
   if (info == 0)
   {
     // reuse or (re)allocate nlconstr
-    if (results->_m_nlcon != opt->m_nlcon)
+    if (result->_m_nlcon != opt->m_nlcon)
     {
-      if (results->nlconstr)
-        free(results->nlconstr);
-      results->nlconstr = (double*)calloc(opt->m_nlcon, sizeof(double));
-      if (!(results->nlconstr))
+      if (result->nlconstr)
+        free(result->nlconstr);
+      result->nlconstr = (double*)calloc(opt->m_nlcon, sizeof(double));
+      if (!(result->nlconstr))
         info = PRIMA_MEMORY_ALLOCATION_FAILS;
-      results->_m_nlcon = opt->m_nlcon;
+      result->_m_nlcon = opt->m_nlcon;
     }
   }
   if (info == 0)
@@ -168,59 +168,59 @@ int prima_cobyla(const prima_objcon calcfc, const int n, double x[], prima_optio
   }
   if (info == 0)
   {
-    cobyla_c(opt->m_nlcon, calcfc, opt->data, n, x, &(results->f), &(results->cstrv), results->nlconstr,
+    cobyla_c(opt->m_nlcon, calcfc, opt->data, n, x, &(result->f), &(result->cstrv), result->nlconstr,
             opt->m_ineq, opt->Aineq, opt->bineq, opt->m_eq, opt->Aeq, opt->beq,
-            opt->xl, opt->xu, opt->f0, opt->nlconstr0, &(results->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->iprint, &info);
+            opt->xl, opt->xu, opt->f0, opt->nlconstr0, &(result->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->iprint, &info);
   }
   return info;
 }
 
-int prima_bobyqa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_results *results)
+int prima_bobyqa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_result *result)
 {
   int info = prima_check_options(opt, n, 1);
   if (info == 0)
-    info = prima_init_result(results);
+    info = prima_init_result(result);
   if (info == 0)
   {
-    bobyqa_c(calfun, opt->data, n, x, &(results->f), opt->xl, opt->xu, &(results->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt, opt->iprint, &info);
+    bobyqa_c(calfun, opt->data, n, x, &(result->f), opt->xl, opt->xu, &(result->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt, opt->iprint, &info);
   }
   return info;
 }
 
-int prima_newuoa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_results *results)
+int prima_newuoa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_result *result)
 {
   int info = prima_check_options(opt, n, 0);
   if (info == 0)
-    info = prima_init_result(results);
+    info = prima_init_result(result);
   if (info == 0)
   {
-    newuoa_c(calfun, opt->data, n, x, &(results->f), &(results->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt, opt->iprint, &info);
+    newuoa_c(calfun, opt->data, n, x, &(result->f), &(result->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt, opt->iprint, &info);
   }
   return info;
 }
 
-int prima_uobyqa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_results *results)
+int prima_uobyqa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_result *result)
 {
   int info = prima_check_options(opt, n, 0);
   if (info == 0)
-    info = prima_init_result(results);
+    info = prima_init_result(result);
   if (info == 0)
   {
-    uobyqa_c(calfun, opt->data, n, x, &(results->f), &(results->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->iprint, &info);
+    uobyqa_c(calfun, opt->data, n, x, &(result->f), &(result->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->iprint, &info);
   }
   return info;
 }
 
-int prima_lincoa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_results *results)
+int prima_lincoa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_result *result)
 {
   int info = prima_check_options(opt, n, 1);
   if (info == 0)
-    info = prima_init_result(results);
+    info = prima_init_result(result);
   if (info == 0)
   {
-    lincoa_c(calfun, opt->data, n, x, &(results->f), &(results->cstrv),
+    lincoa_c(calfun, opt->data, n, x, &(result->f), &(result->cstrv),
             opt->m_ineq, opt->Aineq, opt->bineq, opt->m_eq, opt->Aeq, opt->beq,
-            opt->xl, opt->xu, &(results->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt, opt->iprint, &info);
+            opt->xl, opt->xu, &(result->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt, opt->iprint, &info);
   }
   return info;
 }
