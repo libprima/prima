@@ -17,31 +17,34 @@ int main(int argc, char * argv[])
   (void)argc;
   (void)argv;
   const int n = 2;
-  double x[2] = {0.0, 0.0};
+  double x0[2] = {0.0, 0.0};
+  prima_problem problem;
+  prima_init_problem(&problem, n);
+  problem.calfun = &fun;
+  problem.x0 = x0;
   prima_options options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_EXIT;
   options.rhoend= 1e-3;
   options.maxfun = 200*n;
   // x1<=4, x2<=3, x1+x2<=10
-  options.m_ineq = 3;
+  problem.m_ineq = 3;
   double Aineq[3*2] = {1.0, 0.0,
                        0.0, 1.0,
                        1.0, 1.0};
   double bineq[3] = {4.0,
                      3.0,
                      10.0};
-  options.Aineq = Aineq;
-  options.bineq = bineq;
+  problem.Aineq = Aineq;
+  problem.bineq = bineq;
   double xl[2] = {-6.0, -6.0};
   double xu[2] = {6.0, 6.0};
-  options.xl = xl;
-  options.xu = xu;
+  problem.xl = xl;
+  problem.xu = xu;
   prima_result result;
-  const int rc = prima_lincoa(&fun, n, x, &options, &result);
-  const char *msg = prima_get_rc_string(rc);
-  printf("x*={%g, %g} f*=%g cstrv=%g rc=%d msg='%s' evals=%d\n", x[0], x[1], result.f, result.cstrv, rc, msg, result.nf);
-  prima_free_options(&options);
+  const int rc = prima_lincoa(&problem, &options, &result);
+  printf("x*={%g, %g} f*=%g cstrv=%g rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], result.f, result.cstrv, rc, result.message, result.nf);
+  prima_free_problem(&problem);
   prima_free_result(&result);
-  return (fabs(x[0]-3)>2e-2 || fabs(x[1]-2)>2e-2);
+  return (fabs(result.x[0]-3)>2e-2 || fabs(result.x[1]-2)>2e-2);
 }

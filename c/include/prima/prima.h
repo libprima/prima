@@ -54,7 +54,10 @@ typedef enum
   PRIMA_VALIDATION_FAILS = 102,
   PRIMA_MEMORY_ALLOCATION_FAILS = 103,
   PRIMA_NULL_OPTIONS = 110,
-  PRIMA_NULL_RESULT = 111,
+  PRIMA_NULL_PROBLEM = 111,
+  PRIMA_NULL_X0 = 112,
+  PRIMA_NULL_RESULT = 113,
+  PRIMA_NULL_FUNCTION = 114,
 } prima_rc;
 
 /*
@@ -102,6 +105,26 @@ typedef struct {
   // user-data, will be passed through the objective function callback
   void *data;
 
+} prima_options;
+
+/* Initialize problem */
+PRIMAC_API
+int prima_init_options(prima_options *options);
+
+typedef struct {
+
+  // dimension of the problem
+  int n;
+
+  // objective function to minimize (not cobyla)
+  prima_obj calfun;
+
+  // objective function to minimize with constraints (cobyla)
+  prima_objcon calcfc;
+  
+  // starting point
+  double *x0;
+
   // bound constraints, ignored for newuoa & uobyqa
   double *xl;
   double *xu;
@@ -134,17 +157,22 @@ typedef struct {
   // whether prima had to allocate nlconstr0 (private, do not use)
   int _allocated_nlconstr0;
   
-} prima_options;
+} prima_problem;
 
 
-/* Initialize/free option data */
+/* Initialize/free problem */
 PRIMAC_API
-int prima_init_options(prima_options * options);
+int prima_init_problem(prima_problem *problem, int n);
 
 PRIMAC_API
-int prima_free_options(prima_options * opt);
+int prima_free_problem(prima_problem *problem);
+
 
 typedef struct {
+
+  // final point
+  double *x;
+
   // objective value
   double f;
 
@@ -160,6 +188,12 @@ typedef struct {
   // size of nlconstr (private, do not use)
   int _m_nlcon;
 
+  // exit code
+  int status;
+  
+  // error message
+  const char *message;
+
 } prima_result;
 
 
@@ -168,30 +202,26 @@ PRIMAC_API
 int prima_free_result(prima_result * result);
 
 /*
- * calfun    : function to minimize (see prima_obj)
- * calcfc    : function to minimize and constraints (see prima_objcon)
- * n         : number of variables (>=0)
- * x         : on input, initial estimate
- *             on output, the solution
+ * problem   : optimization problem (see prima_problem)
  * options   : optimization options (see prima_options)
  * result    : optimization result (see prima_result)
  * return    : see prima_rc enum for return codes
  */
 
 PRIMAC_API
-int prima_bobyqa(const prima_obj calfun, const int n, double x[], prima_options *options, prima_result *result);
+int prima_bobyqa(prima_problem *problem, prima_options *options, prima_result *result);
 
 PRIMAC_API
-int prima_newuoa(const prima_obj calfun, const int n, double x[], prima_options *options, prima_result *result);
+int prima_newuoa(prima_problem *problem, prima_options *options, prima_result *result);
 
 PRIMAC_API
-int prima_uobyqa(const prima_obj calfun, const int n, double x[], prima_options *options, prima_result *result);
+int prima_uobyqa(prima_problem *problem, prima_options *options, prima_result *result);
 
 PRIMAC_API
-int prima_cobyla(const prima_objcon calcfc, const int n, double x[], prima_options *options, prima_result *result);
+int prima_cobyla(prima_problem *problem, prima_options *options, prima_result *result);
 
 PRIMAC_API
-int prima_lincoa(const prima_obj calfun, const int n, double x[], prima_options *options, prima_result *result);
+int prima_lincoa(prima_problem *problem, prima_options *options, prima_result *result);
 
 #ifdef __cplusplus
 }

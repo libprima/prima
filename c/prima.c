@@ -8,22 +8,34 @@
 
 #define MAXFUN_DIM_DFT 500
 
-int prima_init_options(prima_options *opt)
+int prima_init_options(prima_options *options)
 {
-  if (opt)
+  if (options)
   {
-    memset(opt, 0, sizeof(prima_options));
-    opt->maxfun = -1;// interpreted as MAXFUN_DIM_DFT*n
-    opt->rhobeg = 1.0;
-    opt->rhoend = 1e-6;
-    opt->iprint = PRIMA_MSG_NONE;
-    opt->ftarget = -INFINITY;
-    opt->npt = -1;// interpreted as 2*n+1
-    opt->f0 = NAN;
+    memset(options, 0, sizeof(prima_options));
+    options->maxfun = -1;// interpreted as MAXFUN_DIM_DFT*n
+    options->rhobeg = 1.0;
+    options->rhoend = 1e-6;
+    options->iprint = PRIMA_MSG_NONE;
+    options->ftarget = -INFINITY;
+    options->npt = -1;// interpreted as 2*n+1
     return 0;
   }
   else
     return PRIMA_NULL_OPTIONS;
+}
+
+int prima_init_problem(prima_problem *problem, int n)
+{
+  if (problem)
+  {
+    memset(problem, 0, sizeof(prima_problem));
+    problem->n = n;
+    problem->f0 = NAN;
+    return 0;
+  }
+  else
+    return PRIMA_NULL_PROBLEM;
 }
 
 /* implemented in fortran (*_c.f90) */
@@ -46,70 +58,84 @@ int lincoa_c(prima_obj calfun, const void *data, const int n, double x[], double
              const double xl[], const double xu[],
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, int *info);
 
-int prima_check_options(prima_options *opt, int n, int alloc_bounds)
+int prima_check_problem(prima_problem *problem, prima_options *options, int alloc_bounds, int use_constr)
 {
-  if (!opt)
+  if (!problem)
+    return PRIMA_NULL_PROBLEM;
+  if (!options)
     return PRIMA_NULL_OPTIONS;
-  if (alloc_bounds && !opt->xl)
+  if (!problem->x0)
+    return PRIMA_NULL_X0;
+  if ((use_constr && !problem->calcfc) || (!use_constr && !problem->calfun))
+    return PRIMA_NULL_FUNCTION;
+  if (alloc_bounds && !problem->xl)
   {
-    opt->xl = (double*)malloc(n * sizeof(double));
-    if (!opt->xl)
+    problem->xl = (double*)malloc(problem->n * sizeof(double));
+    if (!problem->xl)
       return PRIMA_MEMORY_ALLOCATION_FAILS;
-    opt->_allocated_xl = 1;
-    for (int i = 0; i< n; ++ i)
-      opt->xl[i] = -INFINITY;
+    problem->_allocated_xl = 1;
+    for (int i = 0; i< problem->n; ++ i)
+      problem->xl[i] = -INFINITY;
   }
-  if (alloc_bounds && !opt->xu)
+  if (alloc_bounds && !problem->xu)
   {
-    opt->xu = (double*)malloc(n * sizeof(double));
-    if (!opt->xu)
+    problem->xu = (double*)malloc(problem->n * sizeof(double));
+    if (!problem->xu)
       return PRIMA_MEMORY_ALLOCATION_FAILS;
-    opt->_allocated_xu = 1;
-    for (int i = 0; i< n; ++ i)
-      opt->xu[i] = INFINITY;
+    problem->_allocated_xu = 1;
+    for (int i = 0; i< problem->n; ++ i)
+      problem->xu[i] = INFINITY;
   }
-  if (opt->maxfun < 0)
-    opt->maxfun = MAXFUN_DIM_DFT*n;
-  if (opt->npt < 0)
-    opt->npt = 2*n+1;
+  if (options->maxfun < 0)
+    options->maxfun = MAXFUN_DIM_DFT*problem->n;
+  if (options->npt < 0)
+    options->npt = 2*problem->n+1;
   return 0;
 }
 
-int prima_free_options(prima_options *opt)
+int prima_free_problem(prima_problem *problem)
 {
-  if (opt)
+  if (problem)
   {
-    if (opt->_allocated_xl)
+    if (problem->_allocated_xl)
     {
-      free(opt->xl);
-      opt->xl = NULL;
-      opt->_allocated_xl = 0;
+      free(problem->xl);
+      problem->xl = NULL;
+      problem->_allocated_xl = 0;
     }
-    if (opt->_allocated_xu)
+    if (problem->_allocated_xu)
     {
-      free(opt->xu);
-      opt->xu = NULL;
-      opt->_allocated_xu = 0;
+      free(problem->xu);
+      problem->xu = NULL;
+      problem->_allocated_xu = 0;
     }
-    if (opt->_allocated_nlconstr0)
+    if (problem->_allocated_nlconstr0)
     {
-      free(opt->nlconstr0);
-      opt->nlconstr0 = NULL;
-      opt->_allocated_nlconstr0 = 0;
+      free(problem->nlconstr0);
+      problem->nlconstr0 = NULL;
+      problem->_allocated_nlconstr0 = 0;
     }
     return 0;
   }
   else
-    return PRIMA_NULL_OPTIONS;
+    return PRIMA_NULL_PROBLEM;
 }
 
-int prima_init_result(prima_result *result)
+int prima_init_result(prima_result *result, prima_problem *problem)
 {
   if (result)
   {
     memset(result, 0, sizeof(prima_result));
     result->f = 0.0;
     result->cstrv = 0.0;
+    if (!problem)
+      return PRIMA_NULL_PROBLEM;
+    if (!problem->x0)
+      return PRIMA_NULL_X0;
+    result->x = (double*)malloc(problem->n * sizeof(double));
+    if (!result->x)
+      return PRIMA_MEMORY_ALLOCATION_FAILS;
+    memcpy(result->x, problem->x0, problem->n * sizeof(double));
     return 0;
   }
   else
@@ -133,94 +159,104 @@ int prima_free_result(prima_result *result)
 }
 
 /* these functions just call the fortran compatibility layer and return the status code */
-int prima_cobyla(const prima_objcon calcfc, const int n, double x[], prima_options *opt, prima_result *result)
+int prima_cobyla(prima_problem *problem, prima_options *options, prima_result *result)
 {
-  int info = prima_check_options(opt, n, 1);
+  int info = prima_check_problem(problem, options, 1, 1);
   if (info == 0)
-    info = prima_init_result(result);
+    info = prima_init_result(result, problem);
   if (info == 0)
   {
     // reuse or (re)allocate nlconstr
-    if (result->_m_nlcon != opt->m_nlcon)
+    if (result->_m_nlcon != problem->m_nlcon)
     {
       if (result->nlconstr)
         free(result->nlconstr);
-      result->nlconstr = (double*)calloc(opt->m_nlcon, sizeof(double));
+      result->nlconstr = (double*)calloc(problem->m_nlcon, sizeof(double));
       if (!(result->nlconstr))
         info = PRIMA_MEMORY_ALLOCATION_FAILS;
-      result->_m_nlcon = opt->m_nlcon;
+      result->_m_nlcon = problem->m_nlcon;
     }
   }
   if (info == 0)
   {
     // evaluate f0, nlconstr0 if either one is not provided
-    if (opt->f0 == NAN || !opt->nlconstr0)
+    if (problem->f0 == NAN || !problem->nlconstr0)
     {
-      if (!opt->nlconstr0)
+      if (!problem->nlconstr0)
       {
-        opt->nlconstr0 = (double*)calloc(n, sizeof(double));
-        if (!opt->nlconstr0)
+        problem->nlconstr0 = (double*)calloc(problem->n, sizeof(double));
+        if (!problem->nlconstr0)
           return PRIMA_MEMORY_ALLOCATION_FAILS;
-        opt->_allocated_nlconstr0 = 1;
+        problem->_allocated_nlconstr0 = 1;
       }
-      calcfc(x, &(opt->f0), opt->nlconstr0, opt->data);
+      problem->calcfc(result->x, &(problem->f0), problem->nlconstr0, options->data);
     }
   }
   if (info == 0)
   {
-    cobyla_c(opt->m_nlcon, calcfc, opt->data, n, x, &(result->f), &(result->cstrv), result->nlconstr,
-            opt->m_ineq, opt->Aineq, opt->bineq, opt->m_eq, opt->Aeq, opt->beq,
-            opt->xl, opt->xu, opt->f0, opt->nlconstr0, &(result->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->iprint, &info);
+    cobyla_c(problem->m_nlcon, problem->calcfc, options->data, problem->n, result->x, &(result->f), &(result->cstrv), result->nlconstr,
+            problem->m_ineq, problem->Aineq, problem->bineq, problem->m_eq, problem->Aeq, problem->beq,
+            problem->xl, problem->xu, problem->f0, problem->nlconstr0, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, &info);
+    result->status = info;
+    result->message = prima_get_rc_string(info);
   }
   return info;
 }
 
-int prima_bobyqa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_result *result)
+int prima_bobyqa(prima_problem *problem, prima_options *options, prima_result *result)
 {
-  int info = prima_check_options(opt, n, 1);
+  int info = prima_check_problem(problem, options, 1, 0);
   if (info == 0)
-    info = prima_init_result(result);
+    info = prima_init_result(result, problem);
   if (info == 0)
   {
-    bobyqa_c(calfun, opt->data, n, x, &(result->f), opt->xl, opt->xu, &(result->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt, opt->iprint, &info);
+    bobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
+    result->status = info;
+    result->message = prima_get_rc_string(info);
   }
   return info;
 }
 
-int prima_newuoa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_result *result)
+int prima_newuoa(prima_problem *problem, prima_options *options, prima_result *result)
 {
-  int info = prima_check_options(opt, n, 0);
+  int info = prima_check_problem(problem, options, 0, 0);
   if (info == 0)
-    info = prima_init_result(result);
+    info = prima_init_result(result, problem);
   if (info == 0)
   {
-    newuoa_c(calfun, opt->data, n, x, &(result->f), &(result->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt, opt->iprint, &info);
+    newuoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
+    result->status = info;
+    result->message = prima_get_rc_string(info);
   }
   return info;
 }
 
-int prima_uobyqa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_result *result)
+int prima_uobyqa(prima_problem *problem, prima_options *options, prima_result *result)
 {
-  int info = prima_check_options(opt, n, 0);
+  int info = prima_check_problem(problem, options, 0, 0);
   if (info == 0)
-    info = prima_init_result(result);
+    info = prima_init_result(result, problem);
   if (info == 0)
   {
-    uobyqa_c(calfun, opt->data, n, x, &(result->f), &(result->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->iprint, &info);
+    uobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, &info);
+    result->status = info;
+    result->message = prima_get_rc_string(info);
   }
   return info;
 }
 
-int prima_lincoa(const prima_obj calfun, const int n, double x[], prima_options *opt, prima_result *result)
+int prima_lincoa(prima_problem *problem, prima_options *options, prima_result *result)
 {
-  int info = prima_check_options(opt, n, 1);
+  int info = prima_check_problem(problem, options, 1, 0);
   if (info == 0)
-    info = prima_init_result(result);
+    info = prima_init_result(result, problem);
   if (info == 0)
   {
-    lincoa_c(calfun, opt->data, n, x, &(result->f), &(result->cstrv),
-            opt->m_ineq, opt->Aineq, opt->bineq, opt->m_eq, opt->Aeq, opt->beq,
-            opt->xl, opt->xu, &(result->nf), opt->rhobeg, opt->rhoend, opt->ftarget, opt->maxfun, opt->npt, opt->iprint, &info);
+    lincoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->cstrv),
+            problem->m_ineq, problem->Aineq, problem->bineq, problem->m_eq, problem->Aeq, problem->beq,
+            problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
+    result->status = info;
+    result->message = prima_get_rc_string(info);
   }
   return info;
 }
@@ -261,8 +297,14 @@ const char *prima_get_rc_string(const int rc)
       return "Memory allocation failed";
     case PRIMA_NULL_OPTIONS:
       return "NULL options";
+    case PRIMA_NULL_PROBLEM:
+      return "NULL problem";
+    case PRIMA_NULL_X0:
+      return "NULL x0";
     case PRIMA_NULL_RESULT:
       return "NULL result";
+    case PRIMA_NULL_FUNCTION:
+      return "NULL function";
     default:
       return "Invalid return code";
   }

@@ -17,17 +17,20 @@ int main(int argc, char * argv[])
   (void)argc;
   (void)argv;
   const int n = 2;
-  double x[2] = {0.0, 0.0};
+  double x0[2] = {0.0, 0.0};
+  prima_problem problem;
+  prima_init_problem(&problem, n);
+  problem.x0 = x0;
+  problem.calfun = &fun;
   prima_options options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_EXIT;
   options.rhoend= 1e-3;
   options.maxfun = 200*n;
   prima_result result;
-  const int rc = prima_bobyqa(&fun, n, x, &options, &result);
-  const char *msg = prima_get_rc_string(rc);
-  printf("x*={%g, %g} rc=%d msg='%s' evals=%d\n", x[0], x[1], rc, msg, result.nf);
-  prima_free_options(&options);
+  const int rc = prima_bobyqa(&problem, &options, &result);
+  printf("x*={%g, %g} rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], rc, result.message, result.nf);
+  prima_free_problem(&problem);
   prima_free_result(&result);
-  return (fabs(x[0]-3)>2e-2 || fabs(x[1]-2)>2e-2);
+  return (fabs(result.x[0]-3)>2e-2 || fabs(result.x[1]-2)>2e-2);
 }

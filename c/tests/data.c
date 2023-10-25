@@ -66,57 +66,60 @@ int main(int argc, char * argv[])
     debug = (strcmp(argv[2], "debug") == 0);
   printf("debug=%d\n", debug);
 
-  double x[] = {0, 0};
+  double x0[] = {0, 0};
   double xl[] = {-6.0, -6.0};
   double xu[] = {6.0, 6.0};
+  prima_problem problem;
+  prima_init_problem(&problem, n);
+  problem.calcfc = &fun_con;
+  problem.calfun = &fun;
+  problem.x0 = x0;
   prima_options options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_RHO;
   options.maxfun = 500*n;
   options.data = data_ref;
-  options.m_ineq = 3;
+  problem.m_ineq = 3;
   double Aineq[3*2] = {1.0, 0.0,
                        0.0, 1.0,
                        1.0, 1.0};
   double bineq[3] = {4.0,
                      3.0,
                      10.0};
-  options.Aineq = Aineq;
-  options.bineq = bineq;
-  options.xl = xl;
-  options.xu = xu;
+  problem.Aineq = Aineq;
+  problem.bineq = bineq;
+  problem.xl = xl;
+  problem.xu = xu;
   prima_result result;
   int rc = 0;
   if(strcmp(algo, "bobyqa") == 0)
   {
-    rc = prima_bobyqa(&fun, n, x, &options, &result);
+    rc = prima_bobyqa(&problem, &options, &result);
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
-    options.m_nlcon = m_nlcon;
-    rc = prima_cobyla(&fun_con, n, x, &options, &result);
+    problem.m_nlcon = m_nlcon;
+    rc = prima_cobyla(&problem, &options, &result);
   }
   else if(strcmp(algo, "lincoa") == 0)
   {
-    rc = prima_lincoa(&fun, n, x, &options, &result);
+    rc = prima_lincoa(&problem, &options, &result);
   }
   else if(strcmp(algo, "newuoa") == 0)
   {
-    rc = prima_newuoa(&fun, n, x, &options, &result);
+    rc = prima_newuoa(&problem, &options, &result);
   }
   else if(strcmp(algo, "uobyqa") == 0)
   {
-    rc = prima_uobyqa(&fun, n, x, &options, &result);
+    rc = prima_uobyqa(&problem, &options, &result);
   }
   else
   {
     printf("incorrect algo\n");
     return 1;
   }
-  const char *msg = prima_get_rc_string(rc);
-
-  printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, msg, result.nf);
-  prima_free_options(&options);
+  printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
+  prima_free_problem(&problem);
   prima_free_result(&result);
-  return (fabs(x[0]-3)>2e-2 || fabs(x[1]-2)>2e-2);
+  return (fabs(result.x[0]-3)>2e-2 || fabs(result.x[1]-2)>2e-2);
 }
