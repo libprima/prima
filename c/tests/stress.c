@@ -9,11 +9,11 @@
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-const int n_max = 2000;
+#define n_max 2000
 int n = 0;
-const int m_ineq_max = 1000;
+#define m_ineq_max 1000
 int m_ineq = 0;
-const int m_nlcon = 200;
+#define m_nlcon 200
 const double alpha = 4.0;
 int debug = 0;
 

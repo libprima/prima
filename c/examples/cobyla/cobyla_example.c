@@ -5,6 +5,8 @@
 #include <math.h>
 #include <stdint.h>
 
+#define m_nlcon 1
+
 static void fun(const double x[], double *f, double constr[], const void *data)
 {
   const double x1 = x[0];
@@ -18,7 +20,6 @@ int main(int argc, char * argv[])
 {
   (void)argc;
   (void)argv;
-  const int m_nlcon = 1;
   const int n = 2;
   double x[2] = {0.0, 0.0};
   double f = 0.0;
