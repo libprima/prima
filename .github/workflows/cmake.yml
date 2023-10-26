@@ -57,11 +57,15 @@ jobs:
           - os: windows-latest
             toolchain: {compiler: intel, version: '2023.2', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
+            toolchain: {compiler: intel, version: '2023.2', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
+          - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.7', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.8', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+          - os: windows-latest
+            toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
 
     steps:
 
@@ -90,6 +94,10 @@ jobs:
         with:
           compiler: ${{ matrix.toolchain.compiler }}
           version: ${{ matrix.toolchain.version }}
+
+      - name: Override C compiler
+        if: ${{ matrix.toolchain.cc }}
+        run: echo "CC=${{ matrix.toolchain.cc }}" >> $env:GITHUB_ENV
 
       - name: Build
         run: |
