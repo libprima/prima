@@ -51,17 +51,17 @@ jobs:
           - os: windows-latest
             toolchain: {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2023.0', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel, version: '2023.0', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion /fpp'}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2023.1', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel, version: '2023.1', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion /fpp'}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2023.2', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel, version: '2023.2', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion /fpp'}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.7', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel-classic, version: '2021.7', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion /fpp'}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.8', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel-classic, version: '2021.8', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion /fpp'}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion /fpp'}
 
     steps:
 
