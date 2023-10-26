@@ -7,7 +7,7 @@
 #include <string.h>
 
 const int n = 2;
-const int m_nlcon = 1;
+#define m_nlcon 1
 int debug = 0;
 static int int_data = 0xff;
 const void * data_ref = &int_data;

@@ -31,9 +31,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         toolchain:
-          - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+          - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+          - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+          - {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - {compiler: intel-classic, version: '2021.7', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - {compiler: intel-classic, version: '2021.8', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - {compiler: intel-classic, version: '2021.9', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
@@ -45,11 +45,11 @@ jobs:
           - os: ubuntu-latest
             toolchain: {compiler: intel, version: '2023.2', cflags: '', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - os: windows-latest
-            toolchain: {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+            toolchain: {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
-            toolchain: {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+            toolchain: {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
-            toolchain: {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+            toolchain: {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
             toolchain: {compiler: intel, version: '2023.0', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
@@ -114,9 +114,9 @@ jobs:
       fail-fast: false
       matrix:
         toolchain:
-          - {compiler: aflang, cflags: '-Wall', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
+          - {compiler: aflang, cflags: '-Wall', fflags: '-Wpedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
           - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk -Mchkptr'}
-          - {compiler: flang, cflags: '-Wall', fflags: '-pedantic -Weverything -Wall -Wextra'}
+          - {compiler: flang, cflags: '-Wall', fflags: '-Wpedantic -Weverything -Wall -Wextra'}
 
     steps:
 
