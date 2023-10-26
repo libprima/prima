@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdint.h>
 
-#define m_nlcon 1
+#define M_NLCON 1
 
 static void fun(const double x[], double *f, double constr[], const void *data)
 {
@@ -31,7 +31,7 @@ int main(int argc, char * argv[])
   options.iprint = PRIMA_MSG_EXIT;
   options.rhoend= 1e-3;
   options.maxfun = 200*n;
-  problem.m_nlcon = m_nlcon;
+  problem.m_nlcon = M_NLCON;
   // x1<=4, x2<=3, x1+x2<=10
   problem.m_ineq = 3;
   double Aineq[3*2] = {1.0, 0.0,

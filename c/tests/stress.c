@@ -9,11 +9,12 @@
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define n_max 2000
+#define N_MAX 2000
+#define M_INEQ_MAX 1000
+#define M_NLCON 200
+
 int n = 0;
-#define m_ineq_max 1000
 int m_ineq = 0;
-#define m_nlcon 200
 const double alpha = 4.0;
 int debug = 0;
 
@@ -45,7 +46,7 @@ static void fun_con(const double x[], double *f, double constr[], const void *da
   for (int i = 0; i < n-1; ++ i)
     *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]*x[i]) * (x[i+1] - x[i]*x[i]);
   // x_{i+1} <= x_i^2
-  for (int i = 0; i < MIN(m_nlcon, n-1); ++ i)
+  for (int i = 0; i < MIN(M_NLCON, n-1); ++ i)
     constr[i] = x[i+1] - x[i] * x[i];
 
   static int count = 0;
@@ -79,31 +80,31 @@ int main(int argc, char * argv[])
   printf("seed=%d\n", seed);
   srand(seed);
 
-  double x0[n_max];
-  double xl[n_max];
-  double xu[n_max];
+  double x0[N_MAX];
+  double xl[N_MAX];
+  double xu[N_MAX];
   prima_problem problem;
-  prima_init_problem(&problem, n_max);
+  prima_init_problem(&problem, N_MAX);
   problem.x0 = x0;
   problem.calcfc = &fun_con;
   problem.calfun = &fun;
   prima_options options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_RHO;
-  options.maxfun = 500*n_max;
-  double *Aineq = malloc(n_max*m_ineq_max*sizeof(double));
-  double bineq[m_ineq_max];
+  options.maxfun = 500*N_MAX;
+  double *Aineq = malloc(N_MAX*M_INEQ_MAX*sizeof(double));
+  double bineq[M_INEQ_MAX];
   problem.Aineq = Aineq;
   problem.bineq = bineq;
   problem.xl = xl;
   problem.xu = xu;
-  for (int j = 0; j < m_ineq_max; ++ j)
+  for (int j = 0; j < M_INEQ_MAX; ++ j)
     bineq[j] = random_gen(-1.0, 1.0);
 
-  for (int i = 0; i < n_max; ++ i)
+  for (int i = 0; i < N_MAX; ++ i)
   {
     for (int j = 0; j < m_ineq; ++ j)
-      Aineq[j*n_max+i] = random_gen(-1.0, 1.0);
+      Aineq[j*N_MAX+i] = random_gen(-1.0, 1.0);
     x0[i] = random_gen(-1.0, 1.0);
     xl[i] = -1.0;
     xu[i] = 1.0;
@@ -117,7 +118,7 @@ int main(int argc, char * argv[])
   else if(strcmp(algo, "cobyla") == 0)
   {
     problem.n = 800;
-    problem.m_nlcon = m_nlcon;
+    problem.m_nlcon = M_NLCON;
     problem.m_ineq = 600;
     rc = prima_cobyla(&problem, &options, &result);
   }

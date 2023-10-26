@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define M_NLCON 1
 const int n = 2;
-#define m_nlcon 1
 int debug = 0;
 static int int_data = 0xff;
 void * data_ref = &int_data;
@@ -98,7 +98,7 @@ int main(int argc, char * argv[])
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
-    problem.m_nlcon = m_nlcon;
+    problem.m_nlcon = M_NLCON;
     rc = prima_cobyla(&problem, &options, &result);
   }
   else if(strcmp(algo, "lincoa") == 0)
