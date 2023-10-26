@@ -226,7 +226,7 @@ It can be compiled using CMake as follows.<a name="cmake"></a>
 ```bash
 git clone --depth 1 https://github.com/libprima/prima.git
 cd prima
-cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DBUILD_SHARED_LIBS=OFF
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install
 cmake --build build --target install
 ```
 This should create the `primaf` library for Fortran usage, located in the `install/lib/` directory
