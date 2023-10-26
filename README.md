@@ -241,7 +241,7 @@ Below is an illustration with COBYLA.
 cd fortran/examples/cobyla
 cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DPRIMA_DIR=$PWD/../../../install/lib/cmake/prima/
 cmake --build build --target install
-./install/bin/cobyla_example
+LD_LIBRARY_PATH=$PWD/../../../install/lib ./install/bin/cobyla_example
 ```
 
 #### C

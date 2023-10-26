@@ -15,6 +15,7 @@ set_target_properties(primac PROPERTIES POSITION_INDEPENDENT_CODE ON C_STANDARD 
 
 if (NOT BUILD_SHARED_LIBS)
   target_compile_definitions(primac PUBLIC PRIMAC_STATIC)
+  target_link_libraries (primac INTERFACE ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
 endif ()
 
 # Export symbols on Windows. See more comments in fortran/CMakeLists.txt.
