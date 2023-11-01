@@ -8,7 +8,7 @@ module trustregion_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, August 27, 2023 PM09:42:37
+! Last Modified: Tuesday, October 31, 2023 PM02:31:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -515,7 +515,7 @@ do iter = 1, maxiter
     if (any(is_nan(args))) then
         exit
     end if
-    ! Defile the grid size of the search for HANGT. Powell defined the size to be 4 if hangt_bd is
+    ! Define the grid size of the search for HANGT. Powell defined the size to be 4 if hangt_bd is
     ! nearly zero and 20 if it is nearly one, with a linear interpolation in between. We double this
     ! size, which improves the performance of BOBYQA in general according to a test on 20230827.
     !grid_size = nint(17.0_RP * hangt_bd + 4.1_RP, kind(grid_size))  ! Powell's version

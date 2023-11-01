@@ -347,8 +347,8 @@ atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
-AFINC := $(shell dirname $$(dirname $(AFLANG)) 2>/dev/null)/include
-AFLIB := $(shell dirname $$(dirname $(AFLANG)) 2>/dev/null)/lib
+AFINC := $(shell dirname $$(dirname $(AFLANG) 2>/dev/null) 2>/dev/null)/include
+AFLIB := $(shell dirname $$(dirname $(AFLANG) 2>/dev/null) 2>/dev/null)/lib
 AFLANG := $(AFLANG) -I$(AFINC) -L$(AFLIB)
 AFLANG := $(AFLANG) -pedantic-errors -Werror
 ifeq ($(TESTDIM),small)
@@ -966,7 +966,7 @@ source_%: $(SRC_DIRS)
 		-o -name "*.out" \
 		-o -name "*__genmod.f90" \
 		\) -exec rm {} \;  # Cleaning up; important!!!
-	# Classic Flang 15.0.3, Huawei Bisheng Flang 2.1.0, Arm Fortran Compiler version 22.1, and AOCC
+	# Classic Flang 15.0.3, Huawei Bisheng Flang 2.1.0, Arm Fortran Compiler version 23.10, and AOCC
 	# 4.1.0 are buggy concerning 0-dimensional arrays, and they report false positive out-bound
 	# indices. Thus preprocessing by frdsrc is needed. See
 	# https://github.com/flang-compiler/flang/issues/1238
