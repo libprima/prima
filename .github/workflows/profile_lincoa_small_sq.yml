@@ -104,7 +104,7 @@ jobs:
           products: Optimization_Toolbox
 
       - name: Conduct the test
-        uses: matlab-actions/run-command@v1.2.1
+        uses: matlab-actions/run-command@v1.2.2
         with:
           command: |
             ver;
