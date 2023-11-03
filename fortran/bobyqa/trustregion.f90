@@ -8,7 +8,7 @@ module trustregion_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 03, 2023 PM02:58:59
+! Last Modified: Friday, November 03, 2023 PM03:07:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -124,7 +124,6 @@ real(RP) :: args(5)
 real(RP) :: dred(size(gopt_in))
 real(RP) :: gnew(size(gopt_in))
 real(RP) :: gopt(size(gopt_in))
-real(RP) :: gred(size(gopt_in))
 real(RP) :: hdred(size(gopt_in))
 real(RP) :: hs(size(gopt_in))
 real(RP) :: modscal
