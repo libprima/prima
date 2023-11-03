@@ -8,7 +8,7 @@ module trustregion_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, October 31, 2023 PM02:31:05
+! Last Modified: Friday, November 03, 2023 PM02:58:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,7 +19,7 @@ public :: trsbox, trrad
 contains
 
 
-subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, xopt, xpt, crvmin, d)
+subroutine trsbox(delta, gopt_in, hq_in, pq_in, sl, su, tol, xopt, xpt, crvmin, d)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine approximately solves
 ! minimize Q(XOPT + D) subject to ||D|| <= DELTA, SL <= XOPT + D <= SU.
@@ -70,6 +70,7 @@ real(RP), intent(in) :: hq_in(:, :)  ! HQ_IN(N, N)
 real(RP), intent(in) :: pq_in(:)  ! PQ_IN(NPT)
 real(RP), intent(in) :: sl(:)  ! SL(N)
 real(RP), intent(in) :: su(:)  ! SU(N)
+real(RP), intent(in) :: tol
 real(RP), intent(in) :: xopt(:)  ! XOPT(N)
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
@@ -123,6 +124,7 @@ real(RP) :: args(5)
 real(RP) :: dred(size(gopt_in))
 real(RP) :: gnew(size(gopt_in))
 real(RP) :: gopt(size(gopt_in))
+real(RP) :: gred(size(gopt_in))
 real(RP) :: hdred(size(gopt_in))
 real(RP) :: hs(size(gopt_in))
 real(RP) :: modscal
@@ -131,7 +133,6 @@ real(RP) :: sqdscr(size(gopt_in))
 real(RP) :: ssq(size(gopt_in))
 real(RP) :: tanbd(size(gopt_in))
 real(RP) :: xnew(size(gopt_in))
-real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
 
 ! Sizes
 n = int(size(gopt_in), kind(n))
@@ -240,7 +241,7 @@ do iter = 1, maxiter
     stepsq = sum(s**2)
     ds = inprod(d(trueloc(xbdi == 0)), s(trueloc(xbdi == 0)))
 
-    if (.not. (stepsq > EPS * delsq .and. gredsq * delsq > (ctest * qred)**2 .and. .not. is_nan(ds))) then
+    if (.not. (stepsq > EPS * delsq .and. gredsq * delsq > (tol * qred)**2 .and. .not. is_nan(ds))) then
         exit
     end if
 
@@ -375,7 +376,7 @@ do iter = 1, maxiter
     elseif (stplen < bstep) then
         ! Either apply another conjugate gradient iteration or exit.
         ! N.B. ITERCG > N - NACT is impossible.
-        if (itercg >= n - nact .or. sdec <= ctest * qred .or. is_nan(sdec) .or. is_nan(qred)) then
+        if (itercg >= n - nact .or. sdec <= tol * qred .or. is_nan(sdec) .or. is_nan(qred)) then
             exit
         end if
         beta = gredsq / ggsav  ! Has GGSAV got the correct value yet?
@@ -437,13 +438,8 @@ do iter = 1, maxiter
 
     ! Let the search direction S be a linear combination of the reduced D and the reduced G that is
     ! orthogonal to the reduced D.
-    ! Zaikun 20210926:
-    ! Should we calculate S as in TRSAPP of NEWUOA in order to make sure that ||S|| = ||D||?? Namely:
-    ! S = something, then S = (norm(D)/norm(S))*S
-    ! Also, should exit if the orthogonality of S and D is damaged, or S is not finite.
-    ! See the corresponding part of TRSAPP.
     temp = gredsq * dredsq - dredg * dredg
-    if (temp <= ctest**2 * qred * qred .or. is_nan(temp) .or. is_nan(qred)) then
+    if (.not. temp > tol**2 * max(gredsq * dredsq, qred**2)) then  ! TEMP is tiny or NaN occurs
         exit
     end if
     temp = sqrt(temp)
@@ -538,7 +534,7 @@ do iter = 1, maxiter
     if (iact >= 1 .and. iact <= n .and. hangt >= hangt_bd) then  ! D(IACT) reaches lower/upper bound.
         xbdi(iact) = nint(sign(ONE, xopt(iact) + d(iact) - HALF * (sl(iact) + su(iact))), kind(xbdi))
         !!MATLAB: xbdi(iact) = sign(xopt(iact)+d(iact) - (sl+su)/2);
-    elseif (.not. sdec > ctest * qred) then
+    elseif (.not. sdec > tol * qred) then  ! SDEC is small or NaN occurs
         exit
     end if
 end do

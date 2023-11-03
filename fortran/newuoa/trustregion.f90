@@ -8,7 +8,7 @@ module trustregion_newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, August 07, 2023 AM03:55:07
+! Last Modified: Friday, November 03, 2023 PM01:51:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -351,8 +351,8 @@ do iter = 1, maxiter
     ! PROJECT(X, V) returns the projection of X to SPAN(V): X'*(V/||V||)*(V/||V||).
     d = (g + hs) - project(g + hs, s)
     ! N.B.:
-    ! 1. The condition ||D||<=SQRT(TOL*GG) below is equivalent to |INPROD(G+HS,S)|<=SQRT((1-TOL)*GG*SS)
-    ! in theory. As given above, Powell's code triggers an exit if INPROD(G+HS,S)=SGK<=(TOL-1)*GG*SS.
+    ! 1. The condition ||D||<=SQRT(TOL*GG) below is equivalent to |INPROD(G+HS,S)|<=SQRT((1-TOL)*GG*SS).
+    ! As given above, Powell's code triggers an exit if INPROD(G+HS,S)=SGK<=(TOL-1)*SQRT(GG*SS).
     ! Since |SQRT(1-TOL) - (1-TOL)| <= TOL/2, our condition is close to |SGK| <= (TOL-1)*GG*SS.
     ! When |SGK| is tiny, S and G+HS are nearly parallel and hence the 2-dimensional search cannot
     ! continue. Note that SGK is unlikely positive if everything goes well.

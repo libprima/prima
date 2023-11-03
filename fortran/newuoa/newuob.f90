@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, October 29, 2023 PM02:26:04
+! Last Modified: Friday, November 03, 2023 PM02:56:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,7 +146,7 @@ real(RP) :: xdrop(size(x))
 real(RP) :: xosav(size(x))
 real(RP) :: xpt(size(x), npt)
 real(RP) :: zmat(npt, npt - size(x) - 1)
-real(RP), parameter :: trtol = 1.0E-2_RP  ! Tolerance used in TRSAPP.
+real(RP), parameter :: trtol = 1.0E-2_RP  ! Convergence tolerance of trust-region subproblem solver
 
 ! Sizes
 n = int(size(x), kind(n))

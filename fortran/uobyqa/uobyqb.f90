@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, October 04, 2023 PM08:47:15
+! Last Modified: Friday, November 03, 2023 PM02:57:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -135,7 +135,7 @@ real(RP) :: rho
 real(RP) :: xbase(size(x))
 real(RP) :: xpt(size(x), size(distsq))
 real(RP), allocatable :: pl(:, :)
-real(RP), parameter :: trtol = 1.0E-2_RP  ! Tolerance used in TRSTEP.
+real(RP), parameter :: trtol = 1.0E-2_RP  ! Convergence tolerance of trust-region subproblem solver
 
 ! Sizes.
 n = int(size(x), kind(n))

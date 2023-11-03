@@ -11,7 +11,7 @@ module trustregion_lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, June 03, 2023 PM01:36:44
+! Last Modified: Friday, November 03, 2023 PM02:59:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -22,7 +22,7 @@ public :: trstep, trrad
 contains
 
 
-subroutine trstep(amat, delta, gopt_in, hq_in, pq_in, rescon, xpt, iact, nact, qfac, rfac, s, ngetact)
+subroutine trstep(amat, delta, gopt_in, hq_in, pq_in, rescon, tol, xpt, iact, nact, qfac, rfac, s, ngetact)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine solves
 !       minimize Q(XOPT + D)  s.t. ||D|| <= DELTA, AMAT^T*D <= B.
@@ -65,6 +65,7 @@ real(RP), intent(in) :: gopt_in(:)  ! GOPT_IN(N)
 real(RP), intent(in) :: hq_in(:, :)  ! HQ_IN(N, N)
 real(RP), intent(in) :: pq_in(:)  ! PQ_IN(NPT)
 real(RP), intent(in) :: rescon(:)  ! RESCON(M)
+real(RP), intent(in) :: tol
 real(RP), intent(in) :: xpt(:, :)  ! XPT(N, NPT)
 
 ! In-outputs
@@ -107,6 +108,7 @@ real(RP) :: gopt(size(gopt_in))
 real(RP) :: hd(size(gopt_in))
 real(RP) :: hq(size(hq_in, 1), size(hq_in, 2))
 real(RP) :: modscal
+real(RP) :: orthtol
 real(RP) :: pg(size(gopt_in))
 real(RP) :: pq(size(pq_in))
 real(RP) :: psd(size(gopt_in))
@@ -118,8 +120,6 @@ real(RP) :: restmp(size(amat, 2))
 real(RP) :: sold(size(s))
 real(RP) :: sqrtd
 real(RP) :: ss
-real(RP) :: tol
-real(RP), parameter :: ctest = 0.01_RP  ! Convergence test parameter.
 
 ! Sizes.
 m = int(size(amat, 2), kind(m))
@@ -140,8 +140,8 @@ if (DEBUGGING) then
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
-    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    orthtol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    call assert(isorth(qfac, orthtol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
@@ -333,9 +333,9 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
         exit
     end if
 
-    ! Powell's condition for the following IF: -ALPHA * DG <= CTEST * REDUCT. Note that the EXIT
+    ! Powell's condition for the following IF: -ALPHA * DG <= TOL * REDUCT. Note that the EXIT
     ! will be triggered if DG >= 0, as ALPHA >= 0.
-    if (-alpha * dg <= ctest * reduct .or. is_nan(alpha * dg)) then
+    if (-alpha * dg <= tol * reduct .or. is_nan(alpha * dg)) then
         exit
     end if
 
@@ -434,7 +434,7 @@ do iter = 1, maxiter  ! Powell's code is essentially a DO WHILE loop. We impose 
     end if
 
     ! Test for termination.
-    if (alpha >= alpht .or. -alphm * (dg + HALF * alphm * dhd) <= ctest * reduct) then
+    if (alpha >= alpht .or. -alphm * (dg + HALF * alphm * dhd) <= tol * reduct) then
         exit
     end if
 
@@ -494,7 +494,7 @@ if (DEBUGGING) then
     call assert(norm(s) <= TWO * delta, '||S|| <= 2*DELTA', srname)
     call assert(nact >= 0 .and. nact <= min(m, n), '0 <= NACT <= MIN(M, N)', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
+    call assert(isorth(qfac, orthtol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
     if (present(ngetact)) then
