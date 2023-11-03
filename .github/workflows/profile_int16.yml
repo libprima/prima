@@ -112,7 +112,7 @@ jobs:
           sed -i "s|return|for ifile = 1 : length(config_files), ifile, cfile = fullfile(config_dir, config_files{ifile}) , system(['cat ', cfile]); end|" set_compiler_options.m
 
       - name: Conduct the test
-        uses: matlab-actions/run-command@v1.2.1
+        uses: matlab-actions/run-command@v1.2.2
         with:
           command: |
             ver;
