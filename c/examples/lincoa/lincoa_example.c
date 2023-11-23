@@ -12,6 +12,15 @@ static void fun(const double x[], double *f, const void *data)
   (void)data;
 }
 
+static void callback(int n, const double x[], double f, int nf, int tr, double cstrv, int m_nlcon, const double nlconstr[], bool *terminate)
+{
+  (void)n;
+  printf("progress: x=[%g;%g] f=%g cstrv=%g nf=%d tr=%d\n", x[0], x[1], f, cstrv, nf, tr);
+  (void)m_nlcon;
+  (void)nlconstr;
+  *terminate = 0;
+}
+
 int main(int argc, char * argv[])
 {
   (void)argc;
@@ -27,6 +36,7 @@ int main(int argc, char * argv[])
   options.iprint = PRIMA_MSG_EXIT;
   options.rhoend= 1e-3;
   options.maxfun = 200*n;
+  options.callback = &callback;
   // x1<=4, x2<=3, x1+x2<=10
   problem.m_ineq = 3;
   double Aineq[3*2] = {1.0, 0.0,

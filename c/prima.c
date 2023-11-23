@@ -44,19 +44,19 @@ int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, c
              const int m_eq, const double Aeq[], const double beq[],
              const double xl[], const double xu[],
              double f0, const double nlconstr0[],
-             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, int *info);
+             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *info);
 int bobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f, const double xl[], const double xu[],
-             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, int *info);
+             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *info);
 int newuoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f,
-             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, int *info);
+             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *info);
 int uobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f,
-             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, int *info);
+             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *info);
 int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f,
              double *cstrv,
              const int m_ineq, const double Aineq[], const double bineq[],
              const int m_eq, const double Aeq[], const double beq[],
              const double xl[], const double xu[],
-             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, int *info);
+             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *info);
 
 int prima_check_problem(prima_problem_t *problem, prima_options_t *options, int alloc_bounds, int use_constr)
 {
@@ -203,27 +203,27 @@ int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, 
     switch (algorithm)
     {
       case PRIMA_BOBYQA:
-        bobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
+        bobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, options->callback, &info);
       break;
 
       case PRIMA_COBYLA:
         cobyla_c(problem->m_nlcon, problem->calcfc, options->data, problem->n, result->x, &(result->f), &(result->cstrv), result->nlconstr,
               problem->m_ineq, problem->Aineq, problem->bineq, problem->m_eq, problem->Aeq, problem->beq,
-              problem->xl, problem->xu, problem->f0, problem->nlconstr0, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, &info);
+              problem->xl, problem->xu, problem->f0, problem->nlconstr0, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, options->callback, &info);
       break;
 
       case PRIMA_LINCOA:
         lincoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->cstrv),
             problem->m_ineq, problem->Aineq, problem->bineq, problem->m_eq, problem->Aeq, problem->beq,
-            problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
+            problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, options->callback, &info);
       break;
 
       case PRIMA_NEWUOA:
-        newuoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
+        newuoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, options->callback, &info);
       break;
 
       case PRIMA_UOBYQA:
-        uobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, &info);
+        uobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, options->callback, &info);
       break;
 
       default:
@@ -261,6 +261,8 @@ const char *prima_get_rc_string(const prima_rc_t rc)
       return "Rounding errors are becoming damaging";
     case PRIMA_ZERO_LINEAR_CONSTRAINT:
       return "One of the linear constraints has a zero gradient";
+    case PRIMA_USER_STOP:
+      return "User requested end of optimization";
     case PRIMA_INVALID_INPUT:
       return "Invalid input";
     case PRIMA_ASSERTION_FAILS:

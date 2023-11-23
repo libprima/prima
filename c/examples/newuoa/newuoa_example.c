@@ -12,6 +12,15 @@ static void fun(const double x[], double *f, const void *data)
   (void)data;
 }
 
+static void callback(int n, const double x[], double f, int nf, int tr, double cstrv, int m_nlcon, const double nlconstr[], bool *terminate)
+{
+  (void)n;
+  printf("progress: x=[%g;%g] f=%g cstrv=%g nf=%d tr=%d\n", x[0], x[1], f, cstrv, nf, tr);
+  (void)m_nlcon;
+  (void)nlconstr;
+  *terminate = 0;
+}
+
 int main(int argc, char * argv[])
 {
   (void)argc;
@@ -27,6 +36,7 @@ int main(int argc, char * argv[])
   options.iprint = PRIMA_MSG_EXIT;
   options.rhoend= 1e-3;
   options.maxfun = 200*n;
+  options.callback = &callback;
   prima_result_t result;
   const int rc = prima_minimize(PRIMA_NEWUOA, &problem, &options, &result);
   printf("x*={%g, %g} rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], rc, result.message, result.nf);

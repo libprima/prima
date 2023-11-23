@@ -16,6 +16,17 @@ static void fun(const double x[], double *f, double constr[], const void *data)
   (void)data;
 }
 
+
+static void callback(const int n, const double x[], const double f, const int nf, const int tr, const double cstrv, const int m_nlcon, const double nlconstr[], bool *terminate)
+{
+  (void)n;
+  printf("progress: x=[%g;%g] f=%g cstrv=%g nf=%d tr=%d\n", x[0], x[1], f, cstrv, nf, tr);
+  *terminate = 0;
+  (void)m_nlcon;
+  (void)nlconstr;
+}
+
+
 int main(int argc, char * argv[])
 {
   (void)argc;
@@ -31,6 +42,7 @@ int main(int argc, char * argv[])
   options.iprint = PRIMA_MSG_EXIT;
   options.rhoend= 1e-3;
   options.maxfun = 200*n;
+  options.callback = &callback;
   problem.m_nlcon = M_NLCON;
   // x1<=4, x2<=3, x1+x2<=10
   problem.m_ineq = 3;

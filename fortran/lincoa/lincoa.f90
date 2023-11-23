@@ -53,7 +53,7 @@ subroutine lincoa(calfun, x, &
     & Aeq, beq, &
     & xl, xu, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, npt, iprint, eta1, eta2, gamma1, gamma2, &
-    & xhist, fhist, chist, maxhist, maxfilt, info)
+    & xhist, fhist, chist, maxhist, maxfilt, callback_fcn, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALFUN, and X are obligatory. The others are OPTIONAL and you can
 ! neglect them unless you are familiar with the algorithm. Any unspecified optional input will take
@@ -195,6 +195,9 @@ subroutine lincoa(calfun, x, &
 !   CONSTS_MOD (see consts.F90 under the directory named "common").
 !   Use *HIST with caution! (N.B.: the algorithm is NOT designed for large problems).
 !
+! CALLBACK
+!   Input, function to report progress and request termination.
+!
 ! INFO
 !   Output, INTEGER(IK) scalar.
 !   INFO is the exit flag. It will be set to one of the following values defined in the module
@@ -224,7 +227,7 @@ use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
 use, non_intrinsic :: preproc_mod, only : preproc
 use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: string_mod, only : num2str
@@ -239,6 +242,7 @@ procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedur
 real(RP), intent(inout) :: x(:)  ! X(N)
 
 ! Optional inputs
+procedure(CALLBACK), optional :: callback_fcn
 integer(IK), intent(in), optional :: iprint
 integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
@@ -509,10 +513,17 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, rhoend_loc, xl_loc, xu_loc, x, amat, bvec)
 
 !-------------------- Call LINCOB, which performs the real calculations. --------------------------!
-call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
-    & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
-    & gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, chist_loc, cstrv_loc, &
-    & f_loc, fhist_loc, xhist_loc, info_loc)
+if (present(callback_fcn)) then
+    call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
+        & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
+        & gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, chist_loc, cstrv_loc, &
+        & f_loc, fhist_loc, xhist_loc, info_loc, callback_fcn)
+else
+    call lincob(calfun, iprint_loc, maxfilt_loc, maxfun_loc, npt_loc, Aeq_loc, Aineq_loc, amat, &
+        & beq_loc, bineq_loc, bvec, ctol_loc, cweight_loc, eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, &
+        & gamma2_loc, rhobeg_loc, rhoend_loc, xl_loc, xu_loc, x, nf_loc, chist_loc, cstrv_loc, &
+        & f_loc, fhist_loc, xhist_loc, info_loc)
+end if
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
