@@ -69,9 +69,7 @@ typedef enum {
     PRIMA_NULL_X0 = 112,
     PRIMA_NULL_RESULT = 113,
     PRIMA_NULL_FUNCTION = 114,
-    PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS = 115,
-    PRIMA_PROBLEM_SOLVER_MISMATCH_LINEAR_CONSTRAINTS = 116,
-    PRIMA_PROBLEM_SOLVER_MISMATCH_BOUNDS = 117,
+    PRIMA_RESULT_INITIALIZED = 115,
 } prima_rc_t;
 
 
@@ -234,7 +232,7 @@ typedef struct {
     // of sqrt(machine epsilon) will be used.
     double ctol;
 
-    // data: user data, will be passed through the objective function callback
+    // data: user data, will be passed through the objective function
     // Default: NULL
     void *data;
 
@@ -272,7 +270,7 @@ typedef struct {
     int nf;
 
     // status: return code
-    int status;
+    prima_rc_t status;
 
     // message: exit message
     const char *message;
@@ -299,6 +297,10 @@ prima_rc_t prima_free_result(prima_result_t *const result);
 PRIMAC_API
 prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result);
 
+
+// Function to check if PRIMA returned normally or ran into abnormal conditions
+PRIMAC_API
+bool prima_is_success(const prima_result_t result);
 
 #ifdef __cplusplus
 }

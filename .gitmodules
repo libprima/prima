@@ -7,3 +7,6 @@
 [submodule ".development"]
 	path = .development
 	url = git@github.com:libprima/prima_development.git
+[submodule "python/pybind11"]
+	path = python/pybind11
+	url = https://github.com/pybind/pybind11

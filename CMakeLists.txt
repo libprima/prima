@@ -79,27 +79,58 @@ endif ()
 
 # Get the version number
 find_package(Git)
+set(IS_REPO FALSE)
 if(GIT_EXECUTABLE)
   # --always means git describe will output the commit hash if no tags are found
   # This is usually the case for forked repos since they do not clone tags by default.
   execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE PRIMA_VERSION
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-else()
-  # If git is not available, that may indicate we are building on macports which
-  # downloads the bundle from github (which uses git archive) and so the version
-  # number should be in .git-archival.txt
-  file(STRINGS .git-archival.txt PRIMA_VERSION)
-  if(PRIMA_VERSION MATCHES "describe")
-    message(WARNING "No git detected and .git-archival.txt does not contain a version number")
-    set(PRIMA_VERSION "unknown")
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE GIT_RESULT ERROR_QUIET)
+  if (GIT_RESULT EQUAL 0)
+    set(IS_REPO TRUE)
+  endif()
+endif()
+if(NOT GIT_EXECUTABLE OR NOT IS_REPO)
+  # If git is not available, or this isn't a repo, that may indicate we are building
+  # on macports which downloads the bundle from github (which uses git archive) and
+  # so the version number should be in .git-archival.txt.
+  # Alternatively it might mean that we're building the Python bindings, in which case
+  # the version is output in _version.txt. I know, it's complicated. I don't make the rules.
+  if(EXISTS _version.txt)
+    file(STRINGS _version.txt PRIMA_VERSION)
+  else()
+    file(STRINGS .git-archival.txt PRIMA_VERSION)
+    if(PRIMA_VERSION MATCHES "describe")
+      message(WARNING "No git detected and .git-archival.txt does not contain a version number")
+      set(PRIMA_VERSION "unknown")
+    endif()
   endif()
 
 endif()
 # Remove the leading v from PRIMA_VERSION, if it contains one.
 string(REGEX REPLACE "^v" "" PRIMA_VERSION ${PRIMA_VERSION})
 message(STATUS "Setting PRIMA version to ${PRIMA_VERSION}")
+
+option (PRIMA_ENABLE_PYTHON "Python binding" OFF)
+if (PRIMA_ENABLE_PYTHON)
+  if(NOT PRIMA_ENABLE_C)
+    message(FATAL_ERROR "Building Python bindings requires C bindings. Please turn on PRIMA_ENABLE_C")
+  endif()
+  if(BUILD_SHARED_LIBS)
+    # This will include libprimaf, libprimafc, and libprimac into the compiled Python binding, removing the need
+    # to properly set the rpath or find those libraries at runtime.
+    # Even if we did make it successfully build with shared libraries, delocate/auditwheel will copy them into the
+    # bindings anyway
+    message(FATAL_ERROR "Building Python bindings requires static libraries. Please disable BUILD_SHARED_LIBS")
+  endif()
+  if(NOT CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    message(WARNING "Compiling Python bindings with compilers other than GNU has not been tested and no support is planned at this time")
+  endif()
+  enable_language(CXX)
+  add_subdirectory(python)
+endif ()
 
 install(
     TARGETS primaf ${primac_target}
