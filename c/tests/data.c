@@ -6,11 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define M_NLCON 1
 const int n = 2;
-#define m_nlcon 1
 int debug = 0;
 static int int_data = 0xff;
-const void * data_ref = &int_data;
+void * data_ref = &int_data;
 
 static void fun(const double x[], double *f, const void *data)
 {
@@ -66,58 +66,60 @@ int main(int argc, char * argv[])
     debug = (strcmp(argv[2], "debug") == 0);
   printf("debug=%d\n", debug);
 
-  double x[] = {0, 0};
+  double x0[] = {0, 0};
   double xl[] = {-6.0, -6.0};
   double xu[] = {6.0, 6.0};
-  double f = 0.0;
-  double cstrv = 0.0;
-  double nlconstr[m_nlcon];
-  for (int j = 0; j < m_nlcon; ++ j)
-    nlconstr[j] = 0.0;
-  const int m_ineq = 3;
+  prima_problem problem;
+  prima_init_problem(&problem, n);
+  problem.calcfc = &fun_con;
+  problem.calfun = &fun;
+  problem.x0 = x0;
+  prima_options options;
+  prima_init_options(&options);
+  options.iprint = PRIMA_MSG_RHO;
+  options.maxfun = 500*n;
+  options.data = data_ref;
+  problem.m_ineq = 3;
   double Aineq[3*2] = {1.0, 0.0,
                        0.0, 1.0,
                        1.0, 1.0};
   double bineq[3] = {4.0,
                      3.0,
                      10.0};
-  const int m_eq = 0;
-  double *Aeq = NULL;
-  double *beq = NULL;
-  const double rhobeg = 1.0;
-  const double rhoend = 1e-6;
-  const double ftarget = -INFINITY;
-  const int iprint = PRIMA_MSG_RHO;
-  const int maxfun = 500*n;
-  int nf = 0;
+  problem.Aineq = Aineq;
+  problem.bineq = bineq;
+  problem.xl = xl;
+  problem.xu = xu;
+  prima_result result;
   int rc = 0;
   if(strcmp(algo, "bobyqa") == 0)
   {
-    rc = prima_bobyqa(&fun, data_ref, n, x, &f, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    rc = prima_bobyqa(&problem, &options, &result);
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
-    rc = prima_cobyla(m_nlcon, &fun_con, data_ref, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    problem.m_nlcon = M_NLCON;
+    rc = prima_cobyla(&problem, &options, &result);
   }
   else if(strcmp(algo, "lincoa") == 0)
   {
-    rc = prima_lincoa(&fun, data_ref, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    rc = prima_lincoa(&problem, &options, &result);
   }
   else if(strcmp(algo, "newuoa") == 0)
   {
-    rc = prima_newuoa(&fun, data_ref, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    rc = prima_newuoa(&problem, &options, &result);
   }
   else if(strcmp(algo, "uobyqa") == 0)
   {
-    rc = prima_uobyqa(&fun, data_ref, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    rc = prima_uobyqa(&problem, &options, &result);
   }
   else
   {
     printf("incorrect algo\n");
     return 1;
   }
-  const char *msg = prima_get_rc_string(rc);
-
-  printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", f, cstrv, nlconstr[0], rc, msg, nf);
-  return (fabs(x[0]-3)>2e-2 || fabs(x[1]-2)>2e-2);
+  printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
+  prima_free_problem(&problem);
+  prima_free_result(&result);
+  return (fabs(result.x[0]-3)>2e-2 || fabs(result.x[1]-2)>2e-2);
 }

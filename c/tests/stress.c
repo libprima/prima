@@ -9,11 +9,12 @@
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define n_max 2000
+#define N_MAX 2000
+#define M_INEQ_MAX 1000
+#define M_NLCON 200
+
 int n = 0;
-#define m_ineq_max 1000
 int m_ineq = 0;
-#define m_nlcon 200
 const double alpha = 4.0;
 int debug = 0;
 
@@ -45,7 +46,7 @@ static void fun_con(const double x[], double *f, double constr[], const void *da
   for (int i = 0; i < n-1; ++ i)
     *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]*x[i]) * (x[i+1] - x[i]*x[i]);
   // x_{i+1} <= x_i^2
-  for (int i = 0; i < MIN(m_nlcon, n-1); ++ i)
+  for (int i = 0; i < MIN(M_NLCON, n-1); ++ i)
     constr[i] = x[i+1] - x[i] * x[i];
 
   static int count = 0;
@@ -79,71 +80,72 @@ int main(int argc, char * argv[])
   printf("seed=%d\n", seed);
   srand(seed);
 
-  double x[n_max];
-  double xl[n_max];
-  double xu[n_max];
-  double f = 0.0;
-  double cstrv = 0.0;
-  double nlconstr[m_nlcon];
-  double *Aineq = malloc(n_max*m_ineq_max*sizeof(double));
-  double bineq[m_ineq_max];
-  const int m_eq = 0;
-  double *Aeq = NULL;
-  double *beq = NULL;
-  const double rhobeg = 1.0;
-  const double rhoend = 1e-6;
-  const double ftarget = -INFINITY;
-  const int iprint = PRIMA_MSG_RHO;
-  const int maxfun = 500*n_max;
-
-  for (int j = 0; j < m_ineq_max; ++ j)
+  double x0[N_MAX];
+  double xl[N_MAX];
+  double xu[N_MAX];
+  prima_problem problem;
+  prima_init_problem(&problem, N_MAX);
+  problem.x0 = x0;
+  problem.calcfc = &fun_con;
+  problem.calfun = &fun;
+  prima_options options;
+  prima_init_options(&options);
+  options.iprint = PRIMA_MSG_RHO;
+  options.maxfun = 500*N_MAX;
+  double *Aineq = malloc(N_MAX*M_INEQ_MAX*sizeof(double));
+  double bineq[M_INEQ_MAX];
+  problem.Aineq = Aineq;
+  problem.bineq = bineq;
+  problem.xl = xl;
+  problem.xu = xu;
+  for (int j = 0; j < M_INEQ_MAX; ++ j)
     bineq[j] = random_gen(-1.0, 1.0);
-  for (int j = 0; j < m_nlcon; ++ j)
-    nlconstr[j] = 0.0;
 
-  for (int i = 0; i < n_max; ++ i)
+  for (int i = 0; i < N_MAX; ++ i)
   {
     for (int j = 0; j < m_ineq; ++ j)
-      Aineq[j*n_max+i] = random_gen(-1.0, 1.0);
-    x[i] = random_gen(-1.0, 1.0);
+      Aineq[j*N_MAX+i] = random_gen(-1.0, 1.0);
+    x0[i] = random_gen(-1.0, 1.0);
     xl[i] = -1.0;
     xu[i] = 1.0;
   }
-  int nf = 0;
+  prima_result result;
   if(strcmp(algo, "bobyqa") == 0)
   {
-    n = 1600;
-    rc = prima_bobyqa(&fun, NULL, n, x, &f, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    problem.n = 1600;
+    rc = prima_bobyqa(&problem, &options, &result);
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
-    n = 800;
-    m_ineq = 600;
-    rc = prima_cobyla(m_nlcon, &fun_con, NULL, n, x, &f, &cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    problem.n = 800;
+    problem.m_nlcon = M_NLCON;
+    problem.m_ineq = 600;
+    rc = prima_cobyla(&problem, &options, &result);
   }
   else if(strcmp(algo, "lincoa") == 0)
   {
-    n = 1000;
-    m_ineq = 1000;
-    rc = prima_lincoa(&fun, NULL, n, x, &f, &cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    problem.n = 1000;
+    problem.m_ineq = 1000;
+    rc = prima_lincoa(&problem, &options, &result);
   }
   else if(strcmp(algo, "newuoa") == 0)
   {
-    n = 1600;
-    rc = prima_newuoa(&fun, NULL, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, 2*n+1, iprint);
+    problem.n = 1600;
+    rc = prima_newuoa(&problem, &options, &result);
   }
   else if(strcmp(algo, "uobyqa") == 0)
   {
-    n = 100;
-    rc = prima_uobyqa(&fun, NULL, n, x, &f, &nf, rhobeg, rhoend, ftarget, maxfun, iprint);
+    problem.n = 100;
+    rc = prima_uobyqa(&problem, &options, &result);
   }
   else
   {
     printf("incorrect algo\n");
     return 1;
   }
-  const char *msg = prima_get_rc_string(rc);
 
-  printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", f, cstrv, nlconstr[0], rc, msg, nf);
+  printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
+  prima_free_problem(&problem);
+  prima_free_result(&result);
   return 0;
 }

@@ -53,6 +53,11 @@ typedef enum
   PRIMA_ASSERTION_FAILS = 101,
   PRIMA_VALIDATION_FAILS = 102,
   PRIMA_MEMORY_ALLOCATION_FAILS = 103,
+  PRIMA_NULL_OPTIONS = 110,
+  PRIMA_NULL_PROBLEM = 111,
+  PRIMA_NULL_X0 = 112,
+  PRIMA_NULL_RESULT = 113,
+  PRIMA_NULL_FUNCTION = 114,
 } prima_rc;
 
 /*
@@ -75,64 +80,148 @@ const char *prima_get_rc_string(int rc);
 typedef void (*prima_obj)(const double x[], double *f, const void *data);
 typedef void (*prima_objcon)(const double x[], double *f, double constr[], const void *data);
 
+
+typedef struct {
+  
+  // a reasonable initial change to the variables (default=1.0)
+  double rhobeg;
+
+  // required accuracy for the variables (default=1e-6)
+  double rhoend;
+
+  // maximum number of function evaluations (default=-1 interpreted as 500*n)
+  int maxfun;
+
+  // verbosity level, see the prima_message enum (default=PRIMA_MSG_NONE)
+  int iprint;
+
+  // target function value; optimization stops when f <= ftarget for a feasible point (default=-inf)
+  double ftarget;
+
+  // number of points in the interpolation set n+2<=npt<=(n+1)(n+2)/2 (default=-1 interpreted as 2*n+1)
+  // ignored for uobyqa & cobyla
+  int npt;
+
+  // user-data, will be passed through the objective function callback
+  void *data;
+
+} prima_options;
+
+/* Initialize problem */
+PRIMAC_API
+int prima_init_options(prima_options *options);
+
+typedef struct {
+
+  // dimension of the problem
+  int n;
+
+  // objective function to minimize (not cobyla)
+  prima_obj calfun;
+
+  // objective function to minimize with constraints (cobyla)
+  prima_objcon calcfc;
+  
+  // starting point
+  double *x0;
+
+  // bound constraints, ignored for newuoa & uobyqa
+  double *xl;
+  double *xu;
+
+  // whether prima had to allocate xl/xu (private, do not use)
+  int _allocated_xl;
+  int _allocated_xu;
+
+  // Aineq*x <= bineq constraint
+  // Aineq is an m_ineq-by-n matrix stored in row-major order (line by line)
+  // bineq is of size m_ineq
+  int m_ineq;
+  double *Aineq;
+  double *bineq;
+
+  // m_eq, Aeq, beq : Aeq*x = beq constraint
+  // Aeq is an m_eq-by-n matrix stored in row-major order (line by line)
+  // beq is of size m_eq
+  int m_eq;
+  double *Aeq;
+  double *beq;
+
+  // number of non-linear constraints for cobyla (>=0), cobyla-only, default=0
+  int m_nlcon;
+
+  // should be set to the objective function value and constraints values of the starting X, cobyla-only
+  double f0;
+  double *nlconstr0;
+
+  // whether prima had to allocate nlconstr0 (private, do not use)
+  int _allocated_nlconstr0;
+  
+} prima_problem;
+
+
+/* Initialize/free problem */
+PRIMAC_API
+int prima_init_problem(prima_problem *problem, int n);
+
+PRIMAC_API
+int prima_free_problem(prima_problem *problem);
+
+
+typedef struct {
+
+  // final point
+  double *x;
+
+  // objective value
+  double f;
+
+  // number of objective function calls
+  int nf;
+
+  // constraint violation (cobyla & lincoa)
+  double cstrv;
+
+  // non-linear constraint values, of size m_nlcon (cobyla only)
+  double *nlconstr;
+
+  // size of nlconstr (private, do not use)
+  int _m_nlcon;
+
+  // exit code
+  int status;
+  
+  // error message
+  const char *message;
+
+} prima_result;
+
+
+/* Free result after optimization */
+PRIMAC_API
+int prima_free_result(prima_result * result);
+
 /*
- * calfun    : function to minimize (see prima_obj)
- * data      : user-data, will be passed through the objective function callback
- * n         : number of variables (>=0)
- * x         : on input, initial estimate
- *             on output, the solution
- * f         : objective value (output)
- * nf        : number of objective function calls (output)
- * rhobeg    : a reasonable initial change to the variables
- * rhoend    : required accuracy for the variables
- * ftarget   : target function value; optimization stops when f <= ftarget for a feasible point,
- *             can be set to -INFINITY to disable
- * maxfun    : maximum number of function evaluations
- * npt       : number of points in the interpolation set, n+2<=npt<=(n+1)(n+2)/2, recommended: 2*n+1
- * iprint    : verbosity level, see the prima_message enum
- * m_nlcon   : number of non-linear constraints (>=0)
- * calcfc    : function to minimize and constraints (see prima_objcon)
- * cstrv     : constraint violation (output)
- * nlconstr  : non-linear constraint values of size m_nlcon (output)
- * m_ineq, Aineq, bineq : Aineq*x <= bineq constraint
- *             Aineq is an m_ineq-by-n matrix stored in row-major order (line by line)
- *             bineq is of size m_ineq
- * m_eq, Aeq, beq : Aeq*x = beq constraint
- *             Aeq is an m_eq-by-n matrix stored in row-major order (line by line)
- *             beq is of size m_eq
- * xl, xu    : x lower & upper bounds, of size n
- *
+ * problem   : optimization problem (see prima_problem)
+ * options   : optimization options (see prima_options)
+ * result    : optimization result (see prima_result)
  * return    : see prima_rc enum for return codes
  */
 
 PRIMAC_API
-int prima_bobyqa(const prima_obj calfun, const void *data, const int n, double x[], double *f,
-                 const double xl[], const double xu[],
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint);
+int prima_bobyqa(prima_problem *problem, prima_options *options, prima_result *result);
 
 PRIMAC_API
-int prima_newuoa(const prima_obj calfun, const void *data, const int n, double x[], double *f,
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint);
+int prima_newuoa(prima_problem *problem, prima_options *options, prima_result *result);
 
 PRIMAC_API
-int prima_uobyqa(const prima_obj calfun, const void *data, const int n, double x[], double *f,
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
+int prima_uobyqa(prima_problem *problem, prima_options *options, prima_result *result);
 
 PRIMAC_API
-int prima_cobyla(const int m_nlcon, const prima_objcon calcfc, const void *data, const int n, double x[], double *f,
-                 double *cstrv, double nlconstr[],
-                 const int m_ineq, const double Aineq[], const double bineq[],
-                 const int m_eq, const double Aeq[], const double beq[],
-                 const double xl[], const double xu[],
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint);
+int prima_cobyla(prima_problem *problem, prima_options *options, prima_result *result);
 
 PRIMAC_API
-int prima_lincoa(const prima_obj calfun, const void *data, const int n, double x[], double *f,
-                 double *cstrv,
-                 const int m_ineq, const double Aineq[], const double bineq[],
-                 const int m_eq, const double Aeq[], const double beq[],
-                 const double xl[], const double xu[],
-                 int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint);
+int prima_lincoa(prima_problem *problem, prima_options *options, prima_result *result);
 
 #ifdef __cplusplus
 }
