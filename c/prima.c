@@ -159,12 +159,16 @@ int prima_free_result(prima_result *result)
 }
 
 /* these functions just call the fortran compatibility layer and return the status code */
-int prima_cobyla(prima_problem *problem, prima_options *options, prima_result *result)
+int prima_minimize(prima_algorithm algorithm, prima_problem *problem, prima_options *options, prima_result *result)
 {
-  int info = prima_check_problem(problem, options, 1, 1);
+  int alloc_bounds = (algorithm == PRIMA_COBYLA) || (algorithm == PRIMA_BOBYQA) || (algorithm == PRIMA_LINCOA);
+  int use_constr = (algorithm == PRIMA_COBYLA);
+
+  int info = prima_check_problem(problem, options, alloc_bounds, use_constr);
   if (info == 0)
     info = prima_init_result(result, problem);
-  if (info == 0)
+
+  if ((info == 0) && use_constr)
   {
     // reuse or (re)allocate nlconstr
     if (result->_m_nlcon != problem->m_nlcon)
@@ -177,7 +181,8 @@ int prima_cobyla(prima_problem *problem, prima_options *options, prima_result *r
       result->_m_nlcon = problem->m_nlcon;
     }
   }
-  if (info == 0)
+
+  if ((info == 0) && use_constr)
   {
     // evaluate f0, nlconstr0 if either one is not provided
     if (problem->f0 == NAN || !problem->nlconstr0)
@@ -192,69 +197,38 @@ int prima_cobyla(prima_problem *problem, prima_options *options, prima_result *r
       problem->calcfc(result->x, &(problem->f0), problem->nlconstr0, options->data);
     }
   }
-  if (info == 0)
-  {
-    cobyla_c(problem->m_nlcon, problem->calcfc, options->data, problem->n, result->x, &(result->f), &(result->cstrv), result->nlconstr,
-            problem->m_ineq, problem->Aineq, problem->bineq, problem->m_eq, problem->Aeq, problem->beq,
-            problem->xl, problem->xu, problem->f0, problem->nlconstr0, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, &info);
-    result->status = info;
-    result->message = prima_get_rc_string(info);
-  }
-  return info;
-}
 
-int prima_bobyqa(prima_problem *problem, prima_options *options, prima_result *result)
-{
-  int info = prima_check_problem(problem, options, 1, 0);
-  if (info == 0)
-    info = prima_init_result(result, problem);
   if (info == 0)
   {
-    bobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
-    result->status = info;
-    result->message = prima_get_rc_string(info);
-  }
-  return info;
-}
+    switch (algorithm)
+    {
+      case PRIMA_BOBYQA:
+        bobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
+      break;
 
-int prima_newuoa(prima_problem *problem, prima_options *options, prima_result *result)
-{
-  int info = prima_check_problem(problem, options, 0, 0);
-  if (info == 0)
-    info = prima_init_result(result, problem);
-  if (info == 0)
-  {
-    newuoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
-    result->status = info;
-    result->message = prima_get_rc_string(info);
-  }
-  return info;
-}
+      case PRIMA_COBYLA:
+        cobyla_c(problem->m_nlcon, problem->calcfc, options->data, problem->n, result->x, &(result->f), &(result->cstrv), result->nlconstr,
+              problem->m_ineq, problem->Aineq, problem->bineq, problem->m_eq, problem->Aeq, problem->beq,
+              problem->xl, problem->xu, problem->f0, problem->nlconstr0, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, &info);
+      break;
 
-int prima_uobyqa(prima_problem *problem, prima_options *options, prima_result *result)
-{
-  int info = prima_check_problem(problem, options, 0, 0);
-  if (info == 0)
-    info = prima_init_result(result, problem);
-  if (info == 0)
-  {
-    uobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, &info);
-    result->status = info;
-    result->message = prima_get_rc_string(info);
-  }
-  return info;
-}
-
-int prima_lincoa(prima_problem *problem, prima_options *options, prima_result *result)
-{
-  int info = prima_check_problem(problem, options, 1, 0);
-  if (info == 0)
-    info = prima_init_result(result, problem);
-  if (info == 0)
-  {
-    lincoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->cstrv),
+      case PRIMA_LINCOA:
+        lincoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->cstrv),
             problem->m_ineq, problem->Aineq, problem->bineq, problem->m_eq, problem->Aeq, problem->beq,
             problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
+      break;
+
+      case PRIMA_NEWUOA:
+        newuoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, &info);
+      break;
+
+      case PRIMA_UOBYQA:
+        uobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, &info);
+      break;
+
+      default:
+        return PRIMA_INVALID_INPUT;
+    }
     result->status = info;
     result->message = prima_get_rc_string(info);
   }

@@ -42,7 +42,7 @@ int main(int argc, char * argv[])
   problem.xl = xl;
   problem.xu = xu;
   prima_result result;
-  const int rc = prima_lincoa(&problem, &options, &result);
+  const int rc = prima_minimize(PRIMA_LINCOA, &problem, &options, &result);
   printf("x*={%g, %g} f*=%g cstrv=%g rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], result.f, result.cstrv, rc, result.message, result.nf);
   prima_free_problem(&problem);
   prima_free_result(&result);

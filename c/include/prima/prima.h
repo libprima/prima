@@ -202,6 +202,20 @@ PRIMAC_API
 int prima_free_result(prima_result * result);
 
 /*
+ * Algorithm
+ */
+typedef enum
+{
+  PRIMA_BOBYQA,
+  PRIMA_COBYLA,
+  PRIMA_LINCOA,
+  PRIMA_NEWUOA,
+  PRIMA_UOBYQA
+} prima_algorithm;
+
+
+/*
+ * algorithm : optimization algorithm (see prima_algorithm)
  * problem   : optimization problem (see prima_problem)
  * options   : optimization options (see prima_options)
  * result    : optimization result (see prima_result)
@@ -209,19 +223,7 @@ int prima_free_result(prima_result * result);
  */
 
 PRIMAC_API
-int prima_bobyqa(prima_problem *problem, prima_options *options, prima_result *result);
-
-PRIMAC_API
-int prima_newuoa(prima_problem *problem, prima_options *options, prima_result *result);
-
-PRIMAC_API
-int prima_uobyqa(prima_problem *problem, prima_options *options, prima_result *result);
-
-PRIMAC_API
-int prima_cobyla(prima_problem *problem, prima_options *options, prima_result *result);
-
-PRIMAC_API
-int prima_lincoa(prima_problem *problem, prima_options *options, prima_result *result);
+int prima_minimize(prima_algorithm algorithm, prima_problem *problem, prima_options *options, prima_result *result);
 
 #ifdef __cplusplus
 }
