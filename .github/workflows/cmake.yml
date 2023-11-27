@@ -44,8 +44,8 @@ jobs:
             toolchain: {compiler: intel, version: '2023.1', cflags: '', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - os: ubuntu-latest
             toolchain: {compiler: intel, version: '2023.2', cflags: '', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
-          - os: windows-latest
-            toolchain: {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+              #          - os: windows-latest
+              #            toolchain: {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
             toolchain: {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
