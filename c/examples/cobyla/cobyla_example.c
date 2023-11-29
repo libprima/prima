@@ -22,11 +22,11 @@ int main(int argc, char * argv[])
   (void)argv;
   const int n = 2;
   double x0[2] = {0.0, 0.0};
-  prima_problem problem;
+  prima_problem_t problem;
   prima_init_problem(&problem, n);
   problem.calcfc = &fun;
   problem.x0 = x0;
-  prima_options options;
+  prima_options_t options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_EXIT;
   options.rhoend= 1e-3;
@@ -46,7 +46,7 @@ int main(int argc, char * argv[])
   double xu[2] = {6.0, 6.0};
   problem.xl = xl;
   problem.xu = xu;
-  prima_result result;
+  prima_result_t result;
   const int rc = prima_minimize(PRIMA_COBYLA, &problem, &options, &result);
   printf("x*={%g, %g} f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], result.f, result.cstrv, result.nlconstr[0], rc, result.message, result.nf);
   prima_free_problem(&problem);

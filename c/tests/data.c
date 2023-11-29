@@ -69,12 +69,12 @@ int main(int argc, char * argv[])
   double x0[] = {0, 0};
   double xl[] = {-6.0, -6.0};
   double xu[] = {6.0, 6.0};
-  prima_problem problem;
+  prima_problem_t problem;
   prima_init_problem(&problem, n);
   problem.calcfc = &fun_con;
   problem.calfun = &fun;
   problem.x0 = x0;
-  prima_options options;
+  prima_options_t options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_RHO;
   options.maxfun = 500*n;
@@ -90,8 +90,8 @@ int main(int argc, char * argv[])
   problem.bineq = bineq;
   problem.xl = xl;
   problem.xu = xu;
-  prima_result result;
-  int algorithm = 0;
+  prima_result_t result;
+  prima_algorithm_t algorithm = 0;
   if(strcmp(algo, "bobyqa") == 0)
   {
     algorithm = PRIMA_BOBYQA;

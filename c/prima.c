@@ -8,11 +8,11 @@
 
 #define MAXFUN_DIM_DFT 500
 
-int prima_init_options(prima_options *options)
+int prima_init_options(prima_options_t *options)
 {
   if (options)
   {
-    memset(options, 0, sizeof(prima_options));
+    memset(options, 0, sizeof(prima_options_t));
     options->maxfun = -1;// interpreted as MAXFUN_DIM_DFT*n
     options->rhobeg = 1.0;
     options->rhoend = 1e-6;
@@ -25,11 +25,11 @@ int prima_init_options(prima_options *options)
     return PRIMA_NULL_OPTIONS;
 }
 
-int prima_init_problem(prima_problem *problem, int n)
+int prima_init_problem(prima_problem_t *problem, int n)
 {
   if (problem)
   {
-    memset(problem, 0, sizeof(prima_problem));
+    memset(problem, 0, sizeof(prima_problem_t));
     problem->n = n;
     problem->f0 = NAN;
     return 0;
@@ -39,26 +39,26 @@ int prima_init_problem(prima_problem *problem, int n)
 }
 
 /* implemented in fortran (*_c.f90) */
-int cobyla_c(const int m_nlcon, const prima_objcon calcfc, const void *data, const int n, double x[], double *f, double *cstrv, double nlconstr[],
+int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, const int n, double x[], double *f, double *cstrv, double nlconstr[],
              const int m_ineq, const double Aineq[], const double bineq[],
              const int m_eq, const double Aeq[], const double beq[],
              const double xl[], const double xu[],
              double f0, const double nlconstr0[],
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, int *info);
-int bobyqa_c(prima_obj calfun, const void *data, const int n, double x[], double *f, const double xl[], const double xu[],
+int bobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f, const double xl[], const double xu[],
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, int *info);
-int newuoa_c(prima_obj calfun, const void *data, const int n, double x[], double *f,
+int newuoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f,
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, int *info);
-int uobyqa_c(prima_obj calfun, const void *data, const int n, double x[], double *f,
+int uobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f,
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, int *info);
-int lincoa_c(prima_obj calfun, const void *data, const int n, double x[], double *f,
+int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f,
              double *cstrv,
              const int m_ineq, const double Aineq[], const double bineq[],
              const int m_eq, const double Aeq[], const double beq[],
              const double xl[], const double xu[],
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, int *info);
 
-int prima_check_problem(prima_problem *problem, prima_options *options, int alloc_bounds, int use_constr)
+int prima_check_problem(prima_problem_t *problem, prima_options_t *options, int alloc_bounds, int use_constr)
 {
   if (!problem)
     return PRIMA_NULL_PROBLEM;
@@ -93,7 +93,7 @@ int prima_check_problem(prima_problem *problem, prima_options *options, int allo
   return 0;
 }
 
-int prima_free_problem(prima_problem *problem)
+int prima_free_problem(prima_problem_t *problem)
 {
   if (problem)
   {
@@ -121,11 +121,11 @@ int prima_free_problem(prima_problem *problem)
     return PRIMA_NULL_PROBLEM;
 }
 
-int prima_init_result(prima_result *result, prima_problem *problem)
+int prima_init_result(prima_result_t *result, prima_problem_t *problem)
 {
   if (result)
   {
-    memset(result, 0, sizeof(prima_result));
+    memset(result, 0, sizeof(prima_result_t));
     result->f = 0.0;
     result->cstrv = 0.0;
     if (!problem)
@@ -142,7 +142,7 @@ int prima_init_result(prima_result *result, prima_problem *problem)
     return PRIMA_NULL_RESULT;
 }
 
-int prima_free_result(prima_result *result)
+int prima_free_result(prima_result_t *result)
 {
   if (result)
   {
@@ -159,7 +159,7 @@ int prima_free_result(prima_result *result)
 }
 
 /* these functions just call the fortran compatibility layer and return the status code */
-int prima_minimize(prima_algorithm algorithm, prima_problem *problem, prima_options *options, prima_result *result)
+int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, prima_result_t *result)
 {
   int alloc_bounds = (algorithm == PRIMA_COBYLA) || (algorithm == PRIMA_BOBYQA) || (algorithm == PRIMA_LINCOA);
   int use_constr = (algorithm == PRIMA_COBYLA);
@@ -235,7 +235,7 @@ int prima_minimize(prima_algorithm algorithm, prima_problem *problem, prima_opti
   return info;
 }
 
-const char *prima_get_rc_string(const int rc)
+const char *prima_get_rc_string(const prima_rc_t rc)
 {
   switch (rc)
   {

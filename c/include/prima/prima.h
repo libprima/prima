@@ -31,7 +31,7 @@ typedef enum {
   PRIMA_MSG_EXIT = 1, /* Exit reasons */
   PRIMA_MSG_RHO = 2, /* Rho changes */
   PRIMA_MSG_FEVL = 3, /* The object/constraint functions get evaluated */
-} prima_message;
+} prima_message_t;
 
 /*
  * Possible return values
@@ -58,13 +58,13 @@ typedef enum
   PRIMA_NULL_X0 = 112,
   PRIMA_NULL_RESULT = 113,
   PRIMA_NULL_FUNCTION = 114,
-} prima_rc;
+} prima_rc_t;
 
 /*
  * Return code string
  */
 PRIMAC_API
-const char *prima_get_rc_string(int rc);
+const char *prima_get_rc_string(const prima_rc_t rc);
 
 /*
  * A function as required by solvers
@@ -77,8 +77,8 @@ const char *prima_get_rc_string(int rc);
  *          NaN values can be passed to signal evaluation errors
  *          only for cobyla
 */
-typedef void (*prima_obj)(const double x[], double *f, const void *data);
-typedef void (*prima_objcon)(const double x[], double *f, double constr[], const void *data);
+typedef void (*prima_obj_t)(const double x[], double *f, const void *data);
+typedef void (*prima_objcon_t)(const double x[], double *f, double constr[], const void *data);
 
 
 typedef struct {
@@ -92,7 +92,7 @@ typedef struct {
   // maximum number of function evaluations (default=-1 interpreted as 500*n)
   int maxfun;
 
-  // verbosity level, see the prima_message enum (default=PRIMA_MSG_NONE)
+  // verbosity level, see the prima_message_t enum (default=PRIMA_MSG_NONE)
   int iprint;
 
   // target function value; optimization stops when f <= ftarget for a feasible point (default=-inf)
@@ -105,11 +105,11 @@ typedef struct {
   // user-data, will be passed through the objective function callback
   void *data;
 
-} prima_options;
+} prima_options_t;
 
 /* Initialize problem */
 PRIMAC_API
-int prima_init_options(prima_options *options);
+int prima_init_options(prima_options_t *options);
 
 typedef struct {
 
@@ -117,10 +117,10 @@ typedef struct {
   int n;
 
   // objective function to minimize (not cobyla)
-  prima_obj calfun;
+  prima_obj_t calfun;
 
   // objective function to minimize with constraints (cobyla)
-  prima_objcon calcfc;
+  prima_objcon_t calcfc;
   
   // starting point
   double *x0;
@@ -157,15 +157,15 @@ typedef struct {
   // whether prima had to allocate nlconstr0 (private, do not use)
   int _allocated_nlconstr0;
   
-} prima_problem;
+} prima_problem_t;
 
 
 /* Initialize/free problem */
 PRIMAC_API
-int prima_init_problem(prima_problem *problem, int n);
+int prima_init_problem(prima_problem_t *problem, int n);
 
 PRIMAC_API
-int prima_free_problem(prima_problem *problem);
+int prima_free_problem(prima_problem_t *problem);
 
 
 typedef struct {
@@ -194,12 +194,12 @@ typedef struct {
   // error message
   const char *message;
 
-} prima_result;
+} prima_result_t;
 
 
 /* Free result after optimization */
 PRIMAC_API
-int prima_free_result(prima_result * result);
+int prima_free_result(prima_result_t * result);
 
 /*
  * Algorithm
@@ -211,7 +211,7 @@ typedef enum
   PRIMA_LINCOA,
   PRIMA_NEWUOA,
   PRIMA_UOBYQA
-} prima_algorithm;
+} prima_algorithm_t;
 
 
 /*
@@ -219,11 +219,11 @@ typedef enum
  * problem   : optimization problem (see prima_problem)
  * options   : optimization options (see prima_options)
  * result    : optimization result (see prima_result)
- * return    : see prima_rc enum for return codes
+ * return    : see prima_rc_t enum for return codes
  */
 
 PRIMAC_API
-int prima_minimize(prima_algorithm algorithm, prima_problem *problem, prima_options *options, prima_result *result);
+int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, prima_result_t *result);
 
 #ifdef __cplusplus
 }
