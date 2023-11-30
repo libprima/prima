@@ -12,9 +12,14 @@ if (WIN32 AND BUILD_SHARED_LIBS)
   endif ()
 endif ()
 
+get_property(PRIMAF_MODULE_DIR TARGET primaf PROPERTY Fortran_MODULE_DIRECTORY)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/../fortran/${PRIMAF_MODULE_DIR}/${CMAKE_BUILD_TYPE})
+
 add_library(primac_f OBJECT cintrf.f90 cobyla_c.f90 lincoa_c.f90 bobyqa_c.f90 newuoa_c.f90 uobyqa_c.f90)
 add_library(primac_c OBJECT prima.c)
 add_library(primac $<TARGET_OBJECTS:primac_f> $<TARGET_OBJECTS:primac_c>)
+add_dependencies(primac_f primaf)
+add_dependencies(primac_c primaf)
 
 if (WIN32)
   set_target_properties(primac PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
