@@ -8,6 +8,7 @@
 
 #define MAXFUN_DIM_DFT 500
 
+PRIMAC_API
 int prima_init_options(prima_options *options)
 {
   if (options)
@@ -25,6 +26,7 @@ int prima_init_options(prima_options *options)
     return PRIMA_NULL_OPTIONS;
 }
 
+PRIMAC_API
 int prima_init_problem(prima_problem *problem, int n)
 {
   if (problem)
@@ -93,6 +95,7 @@ int prima_check_problem(prima_problem *problem, prima_options *options, int allo
   return 0;
 }
 
+PRIMAC_API
 int prima_free_problem(prima_problem *problem)
 {
   if (problem)

@@ -94,6 +94,9 @@ _gxchk.htm
 # PyCharm IDE
 .idea/
 
+# CLion IDE
+cmake-build*
+
 # Distribution / packaging
 .Python
 build/
