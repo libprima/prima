@@ -1,6 +1,7 @@
 
 macro (prima_add_c_test_multi name)
   add_executable(${name}_c_exe EXCLUDE_FROM_ALL ${name}.c)
+  set_target_properties(${name}_c_exe PROPERTIES C_STANDARD 99)
   if (PRIMA_ENABLE_TESTING)
     set_target_properties (${name}_c_exe PROPERTIES EXCLUDE_FROM_ALL FALSE)
   endif ()
