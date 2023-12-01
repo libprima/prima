@@ -8,7 +8,6 @@ if (WIN32 AND BUILD_SHARED_LIBS)
   if (CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
     get_filename_component(Fortran_COMPILER_PATH ${CMAKE_Fortran_COMPILER} DIRECTORY)
     link_directories(${Fortran_COMPILER_PATH}/../../compiler/lib/intel64) # works for oneAPI 2023
-    link_libraries(ifmodintr)
   endif ()
   get_property(PRIMAF_MODULE_DIR TARGET primaf PROPERTY Fortran_MODULE_DIRECTORY)
   set(MOD_DIR ${CMAKE_CURRENT_BINARY_DIR}/../fortran/${PRIMAF_MODULE_DIR})
