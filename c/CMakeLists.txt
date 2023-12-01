@@ -10,10 +10,13 @@ if (WIN32 AND BUILD_SHARED_LIBS)
     link_directories(${Fortran_COMPILER_PATH}/../../compiler/lib/intel64) # works for oneAPI 2023
     link_libraries(ifmodintr)
   endif ()
+  get_property(PRIMAF_MODULE_DIR TARGET primaf PROPERTY Fortran_MODULE_DIRECTORY)
+  set(MOD_DIR ${CMAKE_CURRENT_BINARY_DIR}/../fortran/${PRIMAF_MODULE_DIR})
+  if (MSVC)
+    set(MOD_DIR ${MOD_DIR}/${CMAKE_BUILD_TYPE})
+  endif ()
+  include_directories(${MOD_DIR})
 endif ()
-
-get_property(PRIMAF_MODULE_DIR TARGET primaf PROPERTY Fortran_MODULE_DIRECTORY)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/../fortran/${PRIMAF_MODULE_DIR}/${CMAKE_BUILD_TYPE})
 
 add_library(primac_f OBJECT cintrf.f90 cobyla_c.f90 lincoa_c.f90 bobyqa_c.f90 newuoa_c.f90 uobyqa_c.f90)
 add_library(primac_c OBJECT prima.c)
