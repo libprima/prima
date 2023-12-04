@@ -83,12 +83,12 @@ int main(int argc, char * argv[])
   double x0[N_MAX];
   double xl[N_MAX];
   double xu[N_MAX];
-  prima_problem problem;
+  prima_problem_t problem;
   prima_init_problem(&problem, N_MAX);
   problem.x0 = x0;
   problem.calcfc = &fun_con;
   problem.calfun = &fun;
-  prima_options options;
+  prima_options_t options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_RHO;
   options.maxfun = 500*N_MAX;
@@ -109,41 +109,42 @@ int main(int argc, char * argv[])
     xl[i] = -1.0;
     xu[i] = 1.0;
   }
-  prima_result result;
+  prima_algorithm_t algorithm = 0;
+  prima_result_t result;
   if(strcmp(algo, "bobyqa") == 0)
   {
+    algorithm = PRIMA_BOBYQA;
     problem.n = 1600;
-    rc = prima_bobyqa(&problem, &options, &result);
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
+    algorithm = PRIMA_COBYLA;
     problem.n = 800;
     problem.m_nlcon = M_NLCON;
     problem.m_ineq = 600;
-    rc = prima_cobyla(&problem, &options, &result);
   }
   else if(strcmp(algo, "lincoa") == 0)
   {
+    algorithm = PRIMA_LINCOA;
     problem.n = 1000;
     problem.m_ineq = 1000;
-    rc = prima_lincoa(&problem, &options, &result);
   }
   else if(strcmp(algo, "newuoa") == 0)
   {
+    algorithm = PRIMA_NEWUOA;
     problem.n = 1600;
-    rc = prima_newuoa(&problem, &options, &result);
   }
   else if(strcmp(algo, "uobyqa") == 0)
   {
+    algorithm = PRIMA_UOBYQA;
     problem.n = 100;
-    rc = prima_uobyqa(&problem, &options, &result);
   }
   else
   {
     printf("incorrect algo\n");
     return 1;
   }
-
+  rc = prima_minimize(algorithm, &problem, &options, &result);
   printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
   prima_free_problem(&problem);
   prima_free_result(&result);
