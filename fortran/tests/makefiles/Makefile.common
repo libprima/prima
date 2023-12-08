@@ -100,9 +100,10 @@ VFF := -O4 -fast  # nvfortran -fast implies -O2, but the highest optimization le
 # catastrophic error: Function return parameter requires SSE register while SSE is disabled.
 # In the following, we assume that there is only one type of CPU on the current platform.
 ifneq (,$(findstring intel,$(shell lscpu 2> /dev/null | tr '[:upper:]' '[:lower:]')))  # Intel CPU.
-	IFF := -fast  # -fast is "A combination of -Ofast, -ipo, -static (for static linking),  and -xHost."
-	#XFF := -fast  # As of ifx (IFORT) 2022.2.1, IS_NAN does not work with -fast and leads to exceptions
-	XFF := -Ofast -xHost
+	#IFF := -fast  # -fast is "A combination of -Ofast, -ipo, -static (for static linking),  and -xHost."
+	#XFF := -Ofast -xHost  # As of ifx (IFORT) 2022.2.1, IS_NAN does not work with -fast and leads to exceptions
+	IFF := -Ofast -xHost # ifort (IFORT) 2021.11.0 does not work due to an error with -ipo
+	XFF := -fast  # -fast seems to work starting from ifx (IFX) 2024.0.0
 else  # Non-Intel CPU, especially AMD.
 	IFF := -Ofast # -Ofast implies -O3
 	XFF := -Ofast -xHost
@@ -662,10 +663,12 @@ else
 endif
 XFORT := $(XFORT) -standard-semantics -assume recursion -fimplicit-none
 
+# In the following, `-check all,nouninit` can be changed to `-check all` later, probably with OneAPI 2024.1. See
+# https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-missing-clang-rt-msan-to-link-Fortran-program-in-debug-build/m-p/1533430
 xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
 	FCO := $(XFORT) $(FFLAGSO) -fp-trap=divzero
 xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
-	FCG := $(XFORT) $(FFLAGSG) -check all -fp-trap=divzero
+	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -fp-trap=divzero
 xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
 	FCF := $(XFORT) -fp-trap=divzero $(XFF)
 
@@ -674,7 +677,7 @@ xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_ts
 	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FCG := $(XFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
@@ -686,7 +689,7 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FCG := $(XFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
 	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
