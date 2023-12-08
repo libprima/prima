@@ -367,7 +367,7 @@ ntest_i2_r16_d1_tst ntest_i4_r16_d1_tst ntest_i8_r16_d1_tst ntest_i2_r16_d0_tst 
 
 # NVIDIA nvfortran (aka, pgfortran)
 VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2>/dev/null | sort | tail -n 1)
-VFORT := $(VFORT) -Werror
+VFORT := $(VFORT) #-Werror  # -Werror will lead to failures due to nonstandard use of data type length specifier in the MEX API.
 VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
 
 vtest_i2_r4_d1_tst vtest_i4_r4_d1_tst vtest_i8_r4_d1_tst vtest_i2_r4_d0_tst vtest_i4_r4_d0_tst vtest_i8_r4_d0_tst: \
@@ -539,7 +539,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "common/linalg.f90:[0-9]*:.*rank.*may be used uninitialized" \
 	| grep -v "common/preproc.f90:[0-9]*:.*min_maxfun.*may be used uninitialized" \
 	| grep -v "common/preproc.f90:[0-9]*:.*unit_memo.*may be used uninitialized" \
-	| grep -v "W-0173-PGI Fortran extension: nonstandard use of data type length specifier" \
+	| grep -v "Fortran extension: nonstandard use of data type length specifier" \
 	| grep -v "[0-9]\s*inform,\s*[0-9]*\s*warnings,\s*[0-9]\s*severes,\s*[0-9]\s*fatal for" \
 	| grep -v "Warning: GNU Extension: Nonstandard type declaration INTEGER\*[1-9].*" \
 	| grep -v "Warning: GNU Extension: Nonstandard type declaration REAL\*[1-9].*" \

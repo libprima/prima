@@ -318,18 +318,6 @@ function [x, fx, exitflag, output] = prima(varargin)
 % 3. probinfo
 % !!! TREAT probinfo AS A READONLY VARIABLE AFTER PREPRIMA !!!
 % !!! DO NOT CHANGE probinfo AFTER PREPRIMA !!!
-%
-% TODO:
-% 1. Implicit NONE and variable declaration in the Fortran code
-% 2. Change the interface of preprima to
-%    probinfo = preprima(argin{:}, interface_type),
-%    where interface_type is one of 'unconstrained',
-%    'bound-constrained', 'linearly-constrained',
-%    'nonlinearly-constrained'.
-%    All the information needed by the solvers should be included in probinfo.
-% 3. To add a new solver, we only need to call preprima, call the solver
-%    using the information in probinfo, record the results in output, and
-%    then call postprima.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % prima starts

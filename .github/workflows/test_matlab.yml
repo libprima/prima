@@ -52,9 +52,11 @@ jobs:
           - os: macos-13
             matlab: R2021b
 
-        # Only R2021a/b and R2022a are available on Windows 2019.
+        # Only R2021a/b and R2022a are available on Windows 2019. Test on R2021a often fails due to overtime.
           - os: windows-2019
             matlab: R2020b
+          - os: windows-2019
+            matlab: R2021a
           - os: windows-2019
             matlab: R2022b
           - os: windows-2019
