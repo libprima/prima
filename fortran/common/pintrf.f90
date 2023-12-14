@@ -43,9 +43,9 @@ abstract interface
     real(RP), intent(in) :: f
     integer(IK), intent(in) :: nf
     integer(IK), intent(in) :: tr
-    real(RP), intent(in) :: cstrv
-    real(RP), intent(in) :: nlconstr(:)
-    logical, intent(out) :: terminate
+    real(RP), intent(in), optional :: cstrv
+    real(RP), intent(in), optional :: nlconstr(:)
+    logical, intent(out), optional :: terminate
     end subroutine CALLBACK
 
 end interface

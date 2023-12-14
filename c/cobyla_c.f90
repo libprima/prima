@@ -125,12 +125,13 @@ contains
 ! This subroutine defines `calcfc` using the C function pointer with an internal subroutine.
 ! This allows to avoid passing the C function pointer by a module variable, which is thread-unsafe.
 ! A possible security downside is that the compiler must allow for an executable stack.
+! This subroutine is identical across 4/5 algorithms; COBYLA requires a slightly different signature.
 !--------------------------------------------------------------------------------------------------!
 subroutine calcfc(x_sub, f_sub, constr_sub)
 use, non_intrinsic :: consts_mod, only : RP
 use, intrinsic :: iso_c_binding, only : C_DOUBLE
 implicit none
-real(RP), intent(in) :: x_sub(:)
+real(RP), intent(in) :: x_sub(:) ! We name some variables _sub to avoid masking the parent variables
 real(RP), intent(out) :: f_sub
 real(RP), intent(out) :: constr_sub(:)
 
@@ -152,18 +153,24 @@ constr_sub = real(constr_sub_loc, kind(constr_sub))
 end subroutine calcfc
 
 
-! We name some variables _sub to avoid masking the parent variables
-subroutine callback_fcn(x_sub, f_sub, nf_sub, tr, cstrv, nlconstr, terminate)
+!--------------------------------------------------------------------------------------------------!
+! This subroutine defines `callback_fcn` using the C function pointer with an internal subroutine.
+! This allows to avoid passing the C function pointer by a module variable, which is thread-unsafe.
+! A possible security downside is that the compiler must allow for an executable stack.
+! This subroutine is identical across all 5 algorithms.
+!--------------------------------------------------------------------------------------------------!
+subroutine callback_fcn(x_sub, f_sub, nf_sub, tr, cstrv_sub, nlconstr_sub, terminate)
 use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: memory_mod, only : safealloc
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_BOOL
 implicit none
-real(RP), intent(in) :: x_sub(:)
+real(RP), intent(in) :: x_sub(:) ! We name some variables _sub to avoid masking the parent variables
 real(RP), intent(in) :: f_sub
 integer(IK), intent(in) :: nf_sub
 integer(IK), intent(in) :: tr
-real(RP), intent(in) :: cstrv
-real(RP), intent(in) :: nlconstr(:)
-logical, intent(out) :: terminate
+real(RP), intent(in), optional :: cstrv_sub
+real(RP), intent(in), optional :: nlconstr_sub(:)
+logical, intent(out), optional :: terminate
 
 ! Local variables
 integer(C_INT) :: n_sub_loc
@@ -171,9 +178,9 @@ real(C_DOUBLE) :: x_sub_loc(size(x_sub))
 real(C_DOUBLE) :: f_sub_loc
 integer(C_INT) :: nf_sub_loc
 integer(C_INT) :: tr_loc
-real(C_DOUBLE) :: cstrv_loc
+real(C_DOUBLE) :: cstrv_sub_loc
 integer(C_INT) :: m_nlconstr
-real(C_DOUBLE) :: nlconstr_loc(size(nlconstr))
+real(C_DOUBLE), allocatable :: nlconstr_sub_loc(:)
 logical(C_BOOL) :: terminate_loc
 
 ! Read the inputs and convert them to the types specified in CCALLBACK
@@ -182,15 +189,34 @@ x_sub_loc = real(x_sub, kind(x_sub_loc))
 f_sub_loc = real(f_sub, kind(f_sub_loc))
 nf_sub_loc = int(nf_sub, kind(nf_sub_loc))
 tr_loc = int(tr, kind(tr_loc))
-cstrv_loc = real(cstrv, kind(cstrv_loc))
-m_nlconstr = size(nlconstr)
-nlconstr_loc = real(nlconstr, kind(nlconstr_loc))
+
+! Set the constraint violation to a sensible default value if it is not provided.
+if (present(cstrv_sub)) then
+    cstrv_sub_loc = real(cstrv_sub, kind(cstrv_sub_loc))
+else
+    cstrv_sub_loc = 0.0_C_DOUBLE
+end if
+
+! Set the nonlinear constraints to a sensible default value if it is not provided.
+if (present(nlconstr_sub)) then
+    m_nlconstr = int(size(nlconstr_sub), C_INT)
+    call safealloc(nlconstr_sub_loc, int(m_nlconstr, IK))
+    nlconstr_sub_loc = real(nlconstr_sub, kind(nlconstr_sub_loc))
+else
+    m_nlconstr = 0_C_INT
+    nlconstr_sub_loc = [real(C_DOUBLE) ::]
+end if
 
 ! Call the C objective function
-call cb_ptr(n_sub_loc, x_sub_loc, f_sub_loc, nf_sub_loc, tr_loc, cstrv_loc, m_nlconstr, nlconstr_loc, terminate_loc)
+call cb_ptr(n_sub_loc, x_sub_loc, f_sub_loc, nf_sub_loc, tr_loc, cstrv_sub_loc, m_nlconstr, nlconstr_sub_loc, terminate_loc)
 
 ! Write the output
-terminate = logical(terminate_loc, kind(terminate))
+if ( present(terminate) ) then
+    terminate = logical(terminate_loc, kind(terminate))
+end if
+
+! Deallocate resources
+if (allocated(nlconstr_sub_loc)) deallocate(nlconstr_sub_loc)
 
 end subroutine callback_fcn
 

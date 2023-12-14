@@ -2136,3 +2136,5 @@ nouninit
 libgfortran
 chocolatey
 fcn
+BINDIR
+cmdfile

@@ -221,10 +221,7 @@ call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fh
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
-    ! Since this algorithm is a feasible method, the constraint violation is always 0.
-    ! Secondly, since we only solve bound constrained problems, the nonlinear constraint is set
-    ! to an empty array.
-    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0, 0.0_RP, [real(RP) ::], terminate)
+    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0, terminate=terminate)
     if (terminate) then
         subinfo = USER_STOP
     end if
@@ -588,10 +585,7 @@ do tr = 1, maxtr
     
     ! Report the current best value, and check if user asks for early termination.
     if (present(callback_fcn)) then
-        ! Since this algorithm is a feasible method, the constraint violation is always 0.
-        ! Secondly, since we only solve bound constrained problems, the nonlinear constraint is set
-        ! to an empty array.
-        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, 0.0_RP, [real(RP) ::], terminate)  
+        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)  
         if (terminate) then
             info = USER_STOP
             exit
