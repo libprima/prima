@@ -83,6 +83,9 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
+
       - name: Install Ninja / Ubuntu
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: sudo apt update && sudo apt install ninja-build
@@ -116,9 +119,10 @@ jobs:
         run: |
           cmake --version
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
-          cmake --build . --target install --parallel 4
-          cmake --build . --target tests --parallel 4
-          ctest --output-on-failure -V -j4 -E stress
+          cmake --build . --target install
+          cmake --build . --target tests
+          ctest --output-on-failure -V -E stress
+        shell: bash
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
         shell: bash
@@ -126,7 +130,8 @@ jobs:
       - name: Stress test
         if: ${{ github.event_name == 'schedule' || github.event.inputs.stress-test == 'true' }}
         run: |
-          ctest --output-on-failure -V -j4 -R stress
+          ctest --output-on-failure -V -R stress
+        shell: bash
 
 
   cmake-other:
@@ -156,6 +161,9 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
+
       - name: Install AOCC
         if: ${{ matrix.toolchain.compiler == 'aflang' }}
         run: bash .github/scripts/install_aocc
@@ -171,17 +179,19 @@ jobs:
       - name: Build
         run: |
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
-          cmake --build . --target install --parallel 4
-          cmake --build . --target tests --parallel 4
+          cmake --build . --target install
+          cmake --build . --target tests
           # cobyla test does not pass on AOCC: https://github.com/libprima/prima/issues/41
-          ctest --output-on-failure -V -j4 -E "stress|cobyla"
+          ctest --output-on-failure -V -E "stress|cobyla"
+        shell: bash
         env:
           FC: ${{ matrix.toolchain.compiler }}
 
       - name: Stress test
         if: ${{ github.event_name == 'schedule' || github.event.inputs.stress-test == 'true' }}
         run: |
-          ctest --output-on-failure -V -j4 -R stress -E cobyla
+          ctest --output-on-failure -V -R stress -E cobyla
+        shell: bash
 
 
   # The following job check whether the tests were successful or cancelled due to timeout.

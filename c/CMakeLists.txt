@@ -35,7 +35,24 @@ macro (prima_add_c_test name)
   if (WIN32)
     set_target_properties(example_${name}_c_exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
   endif()
-  add_test (NAME example_${name}_c COMMAND example_${name}_c_exe)
+
+  # Outside of CI we don't want to force people to run examples with gdb, so we test the executables by themselves.
+  # We want these to run in CI as well, because sometimes running with gdb masks an error, so we set them up
+  # before we set up the examples for CI
+  if(APPLE OR UNIX)
+    add_test (NAME example_${name}_c COMMAND example_${name}_c_exe)
+  elseif(WIN32)
+    add_test (NAME example_${name}_c COMMAND ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/example_${name}_c_exe.exe)
+  endif()
+
+  # Within CI, we'd like to run with gdb so that if there's a segfault the logs will have a stacktrace we can use to investigate.
+  # Of course this can be run locally as well if you define CI in your environment.
+  if(NOT APPLE AND UNIX AND DEFINED ENV{CI})  # Apple security policy will not allow running gdb in CI
+    add_test (NAME example_${name}_c_with_gdb COMMAND gdb -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb example_${name}_c_exe)
+  elseif(WIN32 AND DEFINED ENV{CI})
+    add_test (NAME example_${name}_c_with_gdb COMMAND gdb -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/example_${name}_c_exe.exe)
+  endif()
+
   add_dependencies(examples example_${name}_c_exe)
 endmacro ()
 
