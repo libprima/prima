@@ -20,7 +20,7 @@ implicit none
 
 ! Compulsory arguments
 type(C_FUNPTR), intent(IN), value :: cobj_ptr
-type(C_PTR), intent(in), value :: data_ptr
+type(C_PTR), intent(in) :: data_ptr
 integer(C_INT), intent(in), value :: n
 ! We cannot use assumed-shape arrays for C interoperability
 real(C_DOUBLE), intent(inout) :: x(n)

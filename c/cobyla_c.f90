@@ -22,7 +22,7 @@ implicit none
 ! Compulsory arguments
 integer(C_INT), intent(in), value :: m_nlcon
 type(C_FUNPTR), intent(in), value :: cobjcon_ptr
-type(C_PTR), intent(in), value :: data_ptr
+type(C_PTR), intent(in) :: data_ptr
 integer(C_INT), intent(in), value :: n
 ! We cannot use assumed-shape arrays for C interoperability
 real(C_DOUBLE), intent(inout) :: x(n)

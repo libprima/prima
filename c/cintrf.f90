@@ -18,7 +18,7 @@ abstract interface
     ! We cannot use assumed-shape arrays for C interoperability
     real(C_DOUBLE), intent(in) :: x(*)
     real(C_DOUBLE), intent(out) :: f
-    type(C_PTR), intent(in), value :: data_ptr
+    type(C_PTR), intent(in) :: data_ptr
     end subroutine COBJ
 
     subroutine COBJCON(x, f, constr, data_ptr) bind(c)
@@ -28,7 +28,7 @@ abstract interface
     real(C_DOUBLE), intent(in) :: x(*)
     real(C_DOUBLE), intent(out) :: f
     real(C_DOUBLE), intent(out) :: constr(*)
-    type(C_PTR), intent(in), value :: data_ptr
+    type(C_PTR), intent(in) :: data_ptr
     end subroutine COBJCON
 
     subroutine CCALLBACK(n, x, f, nf, tr, cstrv, m_nlcon, nlconstr, terminate) bind(c)
