@@ -14,8 +14,7 @@ contains
 
 subroutine cobyla_c(m_nlcon, cobjcon_ptr, data_ptr, n, x, f, cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, &
     & xl, xu, f0, nlconstr0, nf, rhobeg, rhoend, ftarget, maxfun, iprint, callback_ptr, info) bind(C)
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER
-use, non_intrinsic :: cintrf_mod, only : COBJCON, CCALLBACK
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: cobyla_mod, only : cobyla
 implicit none
@@ -70,8 +69,6 @@ real(RP) :: xl_loc(n)
 real(RP) :: xu_loc(n)
 real(RP) :: f0_loc
 real(RP) :: nlconstr0_loc(m_nlcon)
-procedure(CCALLBACK), pointer :: cb_ptr
-procedure(COBJCON), pointer :: objcon_ptr
 
 ! Read the inputs and convert them to the Fortran side types
 ! Note that `transpose` is needed when reading 2D arrays, since they are stored in the row-major
@@ -91,13 +88,11 @@ ftarget_loc = real(ftarget, kind(ftarget_loc))
 maxfun_loc = int(maxfun, kind(maxfun_loc))
 iprint_loc = int(iprint, kind(iprint_loc))
 m_nlcon_loc = int(m_nlcon, kind(m_nlcon_loc))
-call C_F_PROCPOINTER(cobjcon_ptr, objcon_ptr)
 
 ! Call the Fortran code
 if (C_ASSOCIATED(callback_ptr)) then
-    ! If a C callback function is provided, we capture it for use in the closure below
-    call C_F_PROCPOINTER(callback_ptr, cb_ptr)
-    ! And then we pass the closure to the Fortran code
+    ! If a C callback function is provided, we capture the callback_ptr for use in the closure below,
+    ! and then we pass the closure to the Fortran code.
     call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, &
         & Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, &
         & xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, nf=nf_loc, &
@@ -128,8 +123,9 @@ contains
 ! This subroutine is identical across 4/5 algorithms; COBYLA requires a slightly different signature.
 !--------------------------------------------------------------------------------------------------!
 subroutine calcfc(x_sub, f_sub, constr_sub)
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_F_PROCPOINTER
+use, non_intrinsic :: cintrf_mod, only : COBJCON
 use, non_intrinsic :: consts_mod, only : RP
-use, intrinsic :: iso_c_binding, only : C_DOUBLE
 implicit none
 real(RP), intent(in) :: x_sub(:) ! We name some variables _sub to avoid masking the parent variables
 real(RP), intent(out) :: f_sub
@@ -139,9 +135,14 @@ real(RP), intent(out) :: constr_sub(:)
 real(C_DOUBLE) :: x_sub_loc(size(x_sub))
 real(C_DOUBLE) :: f_sub_loc
 real(C_DOUBLE) :: constr_sub_loc(size(constr_sub))
+procedure(COBJCON), pointer :: objcon_ptr
 
 ! Read the inputs and convert them to the types specified in COBJCON
 x_sub_loc = real(x_sub, kind(x_sub_loc))
+
+! The intel compiler insists that we convert the C function pointer to a Fortran function pointer
+! here as opposed to within the parent function, otherwise it segfaults.
+call C_F_PROCPOINTER(cobjcon_ptr, objcon_ptr)
 
 ! Call the C objective function
 call objcon_ptr(x_sub_loc, f_sub_loc, constr_sub_loc, data_ptr)
@@ -160,9 +161,10 @@ end subroutine calcfc
 ! This subroutine is identical across all 5 algorithms.
 !--------------------------------------------------------------------------------------------------!
 subroutine callback_fcn(x_sub, f_sub, nf_sub, tr, cstrv_sub, nlconstr_sub, terminate)
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_BOOL, C_F_PROCPOINTER
+use, non_intrinsic :: cintrf_mod, only : CCALLBACK
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: memory_mod, only : safealloc
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_BOOL
 implicit none
 real(RP), intent(in) :: x_sub(:) ! We name some variables _sub to avoid masking the parent variables
 real(RP), intent(in) :: f_sub
@@ -182,6 +184,7 @@ real(C_DOUBLE) :: cstrv_sub_loc
 integer(C_INT) :: m_nlconstr
 real(C_DOUBLE), allocatable :: nlconstr_sub_loc(:)
 logical(C_BOOL) :: terminate_loc
+procedure(CCALLBACK), pointer :: cb_ptr
 
 ! Read the inputs and convert them to the types specified in CCALLBACK
 n_sub_loc = size(x_sub)
@@ -206,6 +209,10 @@ else
     m_nlconstr = 0_C_INT
     nlconstr_sub_loc = [real(C_DOUBLE) ::]
 end if
+
+! As above, the intel compiler insists on doing this conversion here, every time, as opposed to
+! within the parent function, once.
+call C_F_PROCPOINTER(callback_ptr, cb_ptr)
 
 ! Call the C objective function
 call cb_ptr(n_sub_loc, x_sub_loc, f_sub_loc, nf_sub_loc, tr_loc, cstrv_sub_loc, m_nlconstr, nlconstr_sub_loc, terminate_loc)
