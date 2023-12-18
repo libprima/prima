@@ -22,7 +22,7 @@ implicit none
 
 ! Compulsory arguments
 type(C_FUNPTR), intent(IN), value :: cobj_ptr
-type(C_PTR), intent(in) :: data_ptr
+type(C_PTR), intent(in), value :: data_ptr
 integer(C_INT), intent(in), value :: n
 ! We cannot use assumed-shape arrays for C interoperability
 real(C_DOUBLE), intent(inout) :: x(n)
@@ -87,7 +87,8 @@ contains
 ! This subroutine defines `calfun` using the C function pointer with an internal subroutine.
 ! This allows to avoid passing the C function pointer by a module variable, which is thread-unsafe.
 ! A possible security downside is that the compiler must allow for an executable stack.
-! This subroutine is identical across 4/5 algorithms; COBYLA requires a slightly different signature.
+! This subroutine is identical across 4 out of 5 algorithms; COBYLA requires a slightly different
+! signature.
 !--------------------------------------------------------------------------------------------------!
 subroutine calfun(x_sub, f_sub)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_F_PROCPOINTER
@@ -105,7 +106,7 @@ procedure(COBJ), pointer :: obj_ptr
 ! Read the inputs and convert them to the types specified in COBJ
 x_sub_loc = real(x_sub, kind(x_sub_loc))
 
-! The intel compiler insists that we convert the C function pointer to a Fortran function pointer
+! The Intel compiler ifx insists that we convert the C function pointer to a Fortran function pointer
 ! here as opposed to within the parent function, otherwise it segfaults.
 call C_F_PROCPOINTER(cobj_ptr, obj_ptr)
 
@@ -174,7 +175,7 @@ else
     nlconstr_sub_loc = [real(C_DOUBLE) ::]
 end if
 
-! As above, the intel compiler insists on doing this conversion here, every time, as opposed to
+! As above, the Intel compiler ifx insists on doing this conversion here, every time, as opposed to
 ! within the parent function, once.
 call C_F_PROCPOINTER(callback_ptr, cb_ptr)
 

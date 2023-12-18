@@ -169,7 +169,7 @@ subroutine bobyqa(calfun, x, &
 !  X0 if needed. See the PREPROC subroutine for more information.
 !
 ! CALLBACK
-!   Input, function to report progress and request termination.
+!   Input, function to report progress and optionally request termination.
 !
 ! INFO
 !   Output, INTEGER(IK) scalar.

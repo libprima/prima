@@ -22,7 +22,7 @@ implicit none
 ! Compulsory arguments
 integer(C_INT), intent(in), value :: m_nlcon
 type(C_FUNPTR), intent(in), value :: cobjcon_ptr
-type(C_PTR), intent(in) :: data_ptr
+type(C_PTR), intent(in), value :: data_ptr
 integer(C_INT), intent(in), value :: n
 ! We cannot use assumed-shape arrays for C interoperability
 real(C_DOUBLE), intent(inout) :: x(n)
@@ -93,16 +93,14 @@ m_nlcon_loc = int(m_nlcon, kind(m_nlcon_loc))
 if (C_ASSOCIATED(callback_ptr)) then
     ! If a C callback function is provided, we capture the callback_ptr for use in the closure below,
     ! and then we pass the closure to the Fortran code.
-    call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, &
-        & Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, &
-        & xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, nf=nf_loc, &
-        & rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, maxfun=maxfun_loc, &
+    call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, Aineq=Aineq_loc, &
+        & bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, &
+        & nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, maxfun=maxfun_loc, &
         & iprint=iprint_loc, callback_fcn=callback_fcn, info=info_loc)
 else
-    call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, &
-        & Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, &
-        & xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, nf=nf_loc, &
-        & rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, maxfun=maxfun_loc, &
+    call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, Aineq=Aineq_loc, &
+        & bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, &
+        & nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, maxfun=maxfun_loc, &
         & iprint=iprint_loc, info=info_loc)
 end if
 
@@ -120,7 +118,8 @@ contains
 ! This subroutine defines `calcfc` using the C function pointer with an internal subroutine.
 ! This allows to avoid passing the C function pointer by a module variable, which is thread-unsafe.
 ! A possible security downside is that the compiler must allow for an executable stack.
-! This subroutine is identical across 4/5 algorithms; COBYLA requires a slightly different signature.
+! This subroutine is identical across 4 out of 5 algorithms; COBYLA requires a slightly different
+! signature.
 !--------------------------------------------------------------------------------------------------!
 subroutine calcfc(x_sub, f_sub, constr_sub)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_F_PROCPOINTER
@@ -140,7 +139,7 @@ procedure(COBJCON), pointer :: objcon_ptr
 ! Read the inputs and convert them to the types specified in COBJCON
 x_sub_loc = real(x_sub, kind(x_sub_loc))
 
-! The intel compiler insists that we convert the C function pointer to a Fortran function pointer
+! The Intel compiler ifx insists that we convert the C function pointer to a Fortran function pointer
 ! here as opposed to within the parent function, otherwise it segfaults.
 call C_F_PROCPOINTER(cobjcon_ptr, objcon_ptr)
 
@@ -210,7 +209,7 @@ else
     nlconstr_sub_loc = [real(C_DOUBLE) ::]
 end if
 
-! As above, the intel compiler insists on doing this conversion here, every time, as opposed to
+! As above, the Intel compiler ifx insists on doing this conversion here, every time, as opposed to
 ! within the parent function, once.
 call C_F_PROCPOINTER(callback_ptr, cb_ptr)
 

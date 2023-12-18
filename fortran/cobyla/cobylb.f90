@@ -46,7 +46,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING, USER_STOP
+use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING, CALLBACK_TERMINATE
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON, CALLBACK
@@ -220,7 +220,7 @@ terminate = .false.
 if (present(callback_fcn)) then
     call callback_fcn(sim(:, n+1), fval(n+1), nf, 0, cval(n+1), conmat(:, n+1), terminate)
     if (terminate) then
-        subinfo = USER_STOP
+        subinfo = CALLBACK_TERMINATE
     end if
 end if
 
@@ -607,7 +607,7 @@ do tr = 1, maxtr
     if (present(callback_fcn)) then
         call callback_fcn(sim(:, n+1), fval(n+1), nf, tr, cval(n+1), conmat(:, n+1), terminate)
         if (terminate) then
-            info = USER_STOP
+            info = CALLBACK_TERMINATE
             exit
         end if
     end if

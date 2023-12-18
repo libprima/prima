@@ -235,7 +235,7 @@ subroutine cobyla(calcfc, m_nlcon, x, &
 !   see common/consts.F90 for the definitions of MAXFILT_DFT and MIN_MAXFILT.
 !
 ! CALLBACK
-!   Input, function to report progress and request termination.
+!   Input, function to report progress and optionally request termination.
 !
 ! INFO
 !   Output, INTEGER(IK) scalar.

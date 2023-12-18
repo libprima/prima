@@ -82,7 +82,7 @@ use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, USER_STOP
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, CALLBACK_TERMINATE
 use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
@@ -223,7 +223,7 @@ terminate = .false.
 if (present(callback_fcn)) then
     call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0, terminate=terminate)
     if (terminate) then
-        subinfo = USER_STOP
+        subinfo = CALLBACK_TERMINATE
     end if
 endif
 
@@ -587,7 +587,7 @@ do tr = 1, maxtr
     if (present(callback_fcn)) then
         call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)  
         if (terminate) then
-            info = USER_STOP
+            info = CALLBACK_TERMINATE
             exit
         end if
     end if

@@ -196,7 +196,7 @@ subroutine lincoa(calfun, x, &
 !   Use *HIST with caution! (N.B.: the algorithm is NOT designed for large problems).
 !
 ! CALLBACK
-!   Input, function to report progress and request termination.
+!   Input, function to report progress and optionally request termination.
 !
 ! INFO
 !   Output, INTEGER(IK) scalar.

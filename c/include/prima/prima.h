@@ -51,7 +51,7 @@ typedef enum
   PRIMA_NO_SPACE_BETWEEN_BOUNDS = 6,
   PRIMA_DAMAGING_ROUNDING = 7,
   PRIMA_ZERO_LINEAR_CONSTRAINT = 8,
-  PRIMA_USER_STOP = 9,
+  PRIMA_CALLBACK_TERMINATE = 30,
   PRIMA_INVALID_INPUT = 100,
   PRIMA_ASSERTION_FAILS = 101,
   PRIMA_VALIDATION_FAILS = 102,
@@ -75,7 +75,7 @@ const char *prima_get_rc_string(const prima_rc_t rc);
  * x     : on input, then vector of variables (should not be modified)
  * f     : on output, the value of the function
  *         a NaN value can be passed to signal an evaluation error
- * data  : user-data
+ * data  : user data
  * constr : on output, the value of the constraints (of size m_nlcon)
  *          NaN values can be passed to signal evaluation errors
  *          only for cobyla
@@ -120,7 +120,7 @@ typedef struct {
   // ignored for uobyqa & cobyla
   int npt;
 
-  // user-data, will be passed through the objective function callback
+  // user data, will be passed through the objective function callback
   void *data;
 
   // callback function to report algorithm progress (default=NULL)

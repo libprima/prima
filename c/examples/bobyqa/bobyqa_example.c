@@ -16,7 +16,7 @@ static void callback(int n, const double x[], double f, int nf, int tr, double c
 {
   (void)n;
   printf("progress: x=[%g;%g] f=%g cstrv=%g nf=%d tr=%d\n", x[0], x[1], f, cstrv, nf, tr);
-  *terminate = x[1] > 1.8;  // test early termination
+  *terminate = 0;
   (void)m_nlcon;
   (void)nlconstr;
 }

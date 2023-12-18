@@ -25,7 +25,7 @@ public :: NAN_INF_MODEL
 public :: DAMAGING_ROUNDING
 public :: NO_SPACE_BETWEEN_BOUNDS
 public :: ZERO_LINEAR_CONSTRAINT
-public :: USER_STOP
+public :: CALLBACK_TERMINATE
 public :: INVALID_INPUT
 public :: ASSERTION_FAILS
 public :: VALIDATION_FAILS
@@ -43,7 +43,7 @@ integer(IK), parameter :: NAN_INF_MODEL = -3
 integer(IK), parameter :: NO_SPACE_BETWEEN_BOUNDS = 6
 integer(IK), parameter :: DAMAGING_ROUNDING = 7
 integer(IK), parameter :: ZERO_LINEAR_CONSTRAINT = 8
-integer(IK), parameter :: USER_STOP = 9
+integer(IK), parameter :: CALLBACK_TERMINATE = 30
 
 ! Stop-codes.
 ! The following codes are used by ERROR STOP as stop-codes, which should be default integers.
