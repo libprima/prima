@@ -95,7 +95,7 @@ jobs:
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make gtest
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v4.0.0
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
         # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
