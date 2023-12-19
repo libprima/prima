@@ -482,6 +482,7 @@ gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d
 # protect_parens, realloc_lhs1, recursion, std_intent_in, std_minus0_rounding1, std_mod_proc_name,
 # and std_value1.
 IFORT := ifort #-stand f$(FS)
+IFORT := $(IFORT) -diag-disable=10448  # Ignore the warning about the deprecation of ifort
 IFORT := $(IFORT) -warn all -debug extended -warn errors -traceback -debug-parameters all #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
@@ -793,7 +794,7 @@ $(TESTS_C) $(TESTS_INT_C):
 			if [[ -x $@_c_$(SUFFIXO) ]] ; then \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXO) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
-				$(GDB) ./$@_c_$(SUFFIXO) 2>&1 \ 
+				$(GDB) ./$@_c_$(SUFFIXO) 2>&1 \
 				| grep -v "Processor does not support trapping of floating-point exceptions" \
 				| grep -v "libthread_db" \
 				| tee -a "$(LOG_DIR)/$@.log" ; \

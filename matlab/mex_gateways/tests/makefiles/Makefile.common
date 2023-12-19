@@ -313,6 +313,7 @@ gtest_i2_r16_d1_tst gtest_i4_r16_d1_tst gtest_i8_r16_d1_tst gtest_i2_r16_d0_tst 
 #  https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/language-reference/a-to-z-reference/q-to-r/recursive-and-non-recursive.html
 IFORT := ifort
 #IFORT := $(IFORT) -diag-error-limit 1
+IFORT := $(IFORT) -diag-disable=10448  # Ignore the warning about the deprecation of ifort
 IFORT := $(IFORT) -stand f95 -standard-semantics -assume norecursion -warn all -debug extended -fimplicit-none \
 	-traceback -debug-parameters all
 
