@@ -80,7 +80,7 @@ elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', tru
     else
         extra_compiler_options = '-heap-arrays -assume recursion';
     end
-else
+elseif ~contains(compiler_configurations.Manufacturer, 'nag', 'IgnoreCase', true)  % NAG compiler
     warning('prima:UnrecognizedCompiler', 'Unrecognized compiler %s. The package may not work.', ...
         compiler_configurations.Name);
     extra_compiler_options = '';
