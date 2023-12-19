@@ -40,7 +40,7 @@ public :: destruct
 integer, parameter :: PNLEN = 64
 
 type PROB_T
-    character(len=PNLEN) :: probname  
+    character(len=PNLEN) :: probname
     character :: probtype
     integer(IK) :: m
     integer(IK) :: n
