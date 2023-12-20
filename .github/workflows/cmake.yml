@@ -122,7 +122,6 @@ jobs:
           cmake --build . --target install
           cmake --build . --target tests
           ctest --output-on-failure -V -E stress
-        shell: bash
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
         shell: bash
