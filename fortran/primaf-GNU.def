@@ -1,4 +1,6 @@
 EXPORTS
+  __memory_mod_MOD_alloc_rvector_sp
+  __memory_mod_MOD_alloc_rvector_dp
   __bobyqa_mod_MOD_bobyqa
   __cobyla_mod_MOD_cobyla
   __lincoa_mod_MOD_lincoa

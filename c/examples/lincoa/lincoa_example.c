@@ -12,21 +12,26 @@ static void fun(const double x[], double *f, const void *data)
   (void)data;
 }
 
+static void callback(int n, const double x[], double f, int nf, int tr, double cstrv, int m_nlcon, const double nlconstr[], bool *terminate)
+{
+  (void)n;
+  (void)m_nlcon;
+  (void)nlconstr;
+  printf("best point so far: x=[%g;%g] f=%g cstrv=%g nf=%d tr=%d\n", x[0], x[1], f, cstrv, nf, tr);
+  *terminate = 0;
+}
+
 int main(int argc, char * argv[])
 {
   (void)argc;
   (void)argv;
   const int n = 2;
   double x0[2] = {0.0, 0.0};
+  // set up the problem
   prima_problem_t problem;
   prima_init_problem(&problem, n);
   problem.calfun = &fun;
   problem.x0 = x0;
-  prima_options_t options;
-  prima_init_options(&options);
-  options.iprint = PRIMA_MSG_EXIT;
-  options.rhoend= 1e-3;
-  options.maxfun = 200*n;
   // x1<=4, x2<=3, x1+x2<=10
   problem.m_ineq = 3;
   double Aineq[3*2] = {1.0, 0.0,
@@ -41,7 +46,16 @@ int main(int argc, char * argv[])
   double xu[2] = {6.0, 6.0};
   problem.xl = xl;
   problem.xu = xu;
+  // set up the options
+  prima_options_t options;
+  prima_init_options(&options);
+  options.iprint = PRIMA_MSG_EXIT;
+  options.rhoend= 1e-3;
+  options.maxfun = 200*n;
+  options.callback = &callback;
+  // initialize the result
   prima_result_t result;
+  // run the solver
   const int rc = prima_minimize(PRIMA_LINCOA, &problem, &options, &result);
   printf("x*={%g, %g} f*=%g cstrv=%g rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], result.f, result.cstrv, rc, result.message, result.nf);
   prima_free_problem(&problem);

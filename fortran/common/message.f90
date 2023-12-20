@@ -33,7 +33,7 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: fprint_mod, only : fprint
 use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, &
-    & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT
+    & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT, CALLBACK_TERMINATE
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
@@ -124,6 +124,8 @@ case (NO_SPACE_BETWEEN_BOUNDS)
     reason = 'there is no space between the lower and upper bounds of variable.'
 case (ZERO_LINEAR_CONSTRAINT)
     reason = 'one of the linear constraints has a zero gradient'
+case (CALLBACK_TERMINATE)
+    reason = 'callback function requested termination of optimization'
 case default
     reason = 'UNKNOWN EXIT FLAG'
 end select

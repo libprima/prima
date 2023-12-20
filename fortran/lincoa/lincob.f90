@@ -28,7 +28,7 @@ contains
 
 subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, Aeq, Aineq, amat, beq, bineq, bvec, &
     & ctol, cweight, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, xl, xu, x, nf, chist, &
-    & cstrv, f, fhist, xhist, info)
+    & cstrv, f, fhist, xhist, info, callback_fcn)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of LINCOA.
 !
@@ -78,11 +78,11 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS
+use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, CALLBACK_TERMINATE
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, linspace, norm, trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: message_mod, only : fmsg, rhomsg, retmsg
-use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
 use, non_intrinsic :: powalg_mod, only : quadinc, omega_mul, hess_mul, updateh
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
@@ -98,6 +98,7 @@ use, non_intrinsic :: update_lincoa_mod, only : updatexf, updateq, tryqalt, upda
 implicit none
 
 ! Inputs
+procedure(CALLBACK), optional :: callback_fcn
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
@@ -169,6 +170,7 @@ logical :: qalt_better(3)
 logical :: reduce_rho
 logical :: shortd
 logical :: small_trrad
+logical :: terminate
 logical :: trfail
 logical :: ximproved
 real(RP) :: b(size(bvec))
@@ -252,6 +254,15 @@ ixu = trueloc(xu < REALMAX)
 b = bvec
 call initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ftarget, rhobeg, xl, xu, &
     & x, b, ij, kopt, nf, chist, cval, fhist, fval, xbase, xhist, xpt, evaluated, subinfo)
+
+! Report the current best value, and check if user asks for early termination.
+terminate = .false.
+if (present(callback_fcn)) then
+    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0, cval(kopt), terminate=terminate)
+    if (terminate) then
+        subinfo = CALLBACK_TERMINATE
+    end if
+end if
 
 ! Initialize X, F, CONSTR, and CSTRV according to KOPT.
 ! N.B.: We must set CONSTR and CSTRV. Otherwise, if REDUCE_RHO is TRUE after the very first
@@ -635,6 +646,16 @@ do tr = 1, maxtr
         pqalt = omega_mul(idz, zmat, fval - fval(kopt))
         galt = matprod(bmat(:, 1:npt), fval - fval(kopt)) + hess_mul(xpt(:, kopt), xpt, pqalt)
     end if
+    
+    ! Report the current best value, and check if user asks for early termination.
+    if (present(callback_fcn)) then
+        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, cval(kopt), terminate=terminate)
+        if (terminate) then
+            info = CALLBACK_TERMINATE
+            exit
+        end if
+    end if
+
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.

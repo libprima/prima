@@ -45,6 +45,7 @@ BQPGASIM
 BROWNAL
 Bindel
 Broyden
+CCALLBACK
 CGRAD
 CHANDHEQ
 CHCKTST
@@ -2048,8 +2049,6 @@ COBJCON
 cobjfun
 cobjfuncon
 constrc
-evalcobj
-evalcobjcon
 execstack
 FUNPTR
 PROCPOINTER
@@ -2136,3 +2135,6 @@ orthtol
 nouninit
 libgfortran
 chocolatey
+fcn
+BINDIR
+cmdfile

@@ -36,6 +36,15 @@ if (PRIMA_HEAP_ARRAYS)
   endif ()
 endif ()
 
+# For running tests with gdb. $_exitcode == -1 means the program ran without exiting
+# normally, and in this case we want to show a stack trace
+file(WRITE ${CMAKE_BINARY_DIR}/cmdfile.gdb "init-if-undefined $_exitcode = -1
+run
+if $_exitcode == -1
+  where
+end
+quit $_exitcode")
+
 option(PRIMA_ENABLE_EXAMPLES "build examples by default" OFF)
 add_custom_target (examples)
 enable_testing ()

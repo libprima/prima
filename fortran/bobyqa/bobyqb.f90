@@ -44,7 +44,7 @@ contains
 
 
 subroutine bobyqb(calfun, iprint, maxfun, npt, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
-    & xl, xu, x, nf, f, fhist, xhist, info)
+    & xl, xu, x, nf, f, fhist, xhist, info, callback_fcn)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the major calculations of BOBYQA.
 !
@@ -82,10 +82,10 @@ use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, CALLBACK_TERMINATE
 use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
-use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
 use, non_intrinsic :: powalg_mod, only : quadinc, calden, calvlag!, errquad
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
@@ -102,6 +102,7 @@ use, non_intrinsic :: update_bobyqa_mod, only : updatexf, updateq, tryqalt, upda
 implicit none
 
 ! Inputs
+procedure(CALLBACK), optional :: callback_fcn
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
@@ -150,6 +151,7 @@ logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
 logical :: small_trrad
+logical :: terminate
 logical :: trfail
 logical :: ximproved
 real(RP) :: bmat(size(x), npt + size(x))
@@ -215,6 +217,15 @@ end if
 ! Initialize XBASE, XPT, SL, SU, FVAL, and KOPT, together with the history, NF, and IJ.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fhist, fval, &
     & sl, su, xbase, xhist, xpt, subinfo)
+
+! Report the current best value, and check if user asks for early termination.
+terminate = .false.
+if (present(callback_fcn)) then
+    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0, terminate=terminate)
+    if (terminate) then
+        subinfo = CALLBACK_TERMINATE
+    end if
+endif
 
 ! Initialize X and F according to KOPT.
 x = xinbd(xbase, xpt(:, kopt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
@@ -571,6 +582,16 @@ do tr = 1, maxtr
         call shiftbase(kopt, xbase, xpt, zmat, bmat, pq, hq)
         xbase = max(xl, min(xu, xbase))
     end if
+    
+    ! Report the current best value, and check if user asks for early termination.
+    if (present(callback_fcn)) then
+        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)  
+        if (terminate) then
+            info = CALLBACK_TERMINATE
+            exit
+        end if
+    end if
+    
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.

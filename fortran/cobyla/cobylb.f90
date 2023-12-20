@@ -29,12 +29,12 @@ contains
 
 
 subroutine cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta2, ftarget, &
-    & gamma1, gamma2, rhobeg, rhoend, constr, f, x, nf, chist, conhist, cstrv, fhist, xhist, info)
+    & gamma1, gamma2, rhobeg, rhoend, constr, f, x, nf, chist, conhist, cstrv, fhist, xhist, info, callback_fcn)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the actual calculations of COBYLA.
 !
 ! IPRINT, MAXFILT, MAXFUN, MAXHIST, CTOL, CWEIGHT, ETA1, ETA2, FTARGET, GAMMA1, GAMMA2, RHOBEG,
-! RHOEND, X, NF, F, XHIST, FHIST, CHIST, CONHIST, CSTRV and INFO are identical to the corresponding
+! RHOEND, X, NF, F, XHIST, FHIST, CHIST, CONHIST, CSTRV, INFO and CALLBACK are identical to the corresponding
 ! arguments in subroutine COBYLA.
 !--------------------------------------------------------------------------------------------------!
 
@@ -46,10 +46,10 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING
+use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING, CALLBACK_TERMINATE
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
-use, non_intrinsic :: pintrf_mod, only : OBJCON
+use, non_intrinsic :: pintrf_mod, only : OBJCON, CALLBACK
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
@@ -63,6 +63,7 @@ use, non_intrinsic :: update_cobyla_mod, only : updatexfc, updatepole
 implicit none
 
 ! Inputs
+procedure(CALLBACK), optional :: callback_fcn
 procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
@@ -119,6 +120,7 @@ logical :: evaluated(size(x) + 1)
 logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
+logical :: terminate
 logical :: trfail
 logical :: ximproved
 real(RP) :: A(size(x), size(constr)) ! A contains the approximate gradient for the constraints
@@ -212,6 +214,15 @@ end if
 ! constraint values, and constraint violations on the vertices in the order corresponding to SIM.
 call initxfc(calcfc_internal, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
    & conmat, cval, fhist, fval, sim, simi, xhist, evaluated, subinfo)
+
+! Report the current best value, and check if user asks for early termination.
+terminate = .false.
+if (present(callback_fcn)) then
+    call callback_fcn(sim(:, n+1), fval(n+1), nf, 0, cval(n+1), conmat(m_lcon+1:m, n+1), terminate)
+    if (terminate) then
+        subinfo = CALLBACK_TERMINATE
+    end if
+end if
 
 ! Initialize the filter, including XFILT, FFILT, CONFILT, CFILT, and NFILT.
 ! N.B.: The filter is used only when selecting which iterate to return. It does not interfere with
@@ -591,6 +602,15 @@ do tr = 1, maxtr
             exit  ! Better action to take? Geometry step, or simply continue?
         end if
     end if  ! End of IF (REDUCE_RHO). The procedure of reducing RHO ends.
+
+    ! Report the current best value, and check if user asks for early termination.
+    if (present(callback_fcn)) then
+        call callback_fcn(sim(:, n+1), fval(n+1), nf, tr, cval(n+1), conmat(m_lcon+1:m, n+1), terminate)
+        if (terminate) then
+            info = CALLBACK_TERMINATE
+            exit
+        end if
+    end if
 
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 

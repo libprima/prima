@@ -7,7 +7,7 @@ module cintrf_mod
 
 implicit none
 private
-public :: COBJ, COBJCON, evalcobj, evalcobjcon
+public :: COBJ, COBJCON, CCALLBACK
 
 
 abstract interface
@@ -31,66 +31,23 @@ abstract interface
     type(C_PTR), intent(in), value :: data_ptr
     end subroutine COBJCON
 
+    subroutine CCALLBACK(n, x, f, nf, tr, cstrv, m_nlcon, nlconstr, terminate) bind(c)
+    use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_BOOL, C_INT
+    implicit none
+    integer(C_INT), intent(in), value :: n
+    ! We cannot use assumed-shape arrays for C interoperability
+    real(C_DOUBLE), intent(in) :: x(*)
+    real(C_DOUBLE), intent(in), value :: f
+    integer(C_INT), intent(in), value :: nf
+    integer(C_INT), intent(in), value :: tr
+    real(C_DOUBLE), intent(in), value :: cstrv
+    integer(C_INT), intent(in), value :: m_nlcon
+    real(C_DOUBLE), intent(in) :: nlconstr(*)
+    logical(C_BOOL), intent(out) :: terminate
+    end subroutine CCALLBACK
+
+
 end interface
 
-
-contains
-
-
-subroutine evalcobj(cobj_ptr, data_ptr, x, f)
-use, non_intrinsic :: consts_mod, only : RP
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_FUNPTR, C_F_PROCPOINTER, C_PTR
-implicit none
-type(C_FUNPTR), intent(in) :: cobj_ptr
-type(C_PTR), intent(in), value :: data_ptr
-real(RP), intent(in) :: x(:)
-real(RP), intent(out) :: f
-
-! Local variables
-procedure(COBJ), pointer :: obj_ptr
-real(C_DOUBLE) :: x_loc(size(x))
-real(C_DOUBLE) :: f_loc
-
-! Read the inputs and convert them to the types specified in COBJ
-x_loc = real(x, kind(x_loc))
-call C_F_PROCPOINTER(cobj_ptr, obj_ptr)
-
-! Call the C objective function
-call obj_ptr(x_loc, f_loc, data_ptr)
-
-! Write the output
-f = real(f_loc, kind(f))
-
-end subroutine evalcobj
-
-
-subroutine evalcobjcon(cobjcon_ptr, data_ptr, x, f, constr)
-use, non_intrinsic :: consts_mod, only : RP
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_FUNPTR, C_F_PROCPOINTER, C_PTR
-implicit none
-type(C_FUNPTR), intent(in) :: cobjcon_ptr
-type(C_PTR), intent(in), value :: data_ptr
-real(RP), intent(in) :: x(:)
-real(RP), intent(out) :: f
-real(RP), intent(out) :: constr(:)
-
-! Local variables
-procedure(COBJCON), pointer :: objcon_ptr
-real(C_DOUBLE) :: x_loc(size(x))
-real(C_DOUBLE) :: f_loc
-real(C_DOUBLE) :: constr_loc(size(constr))
-
-! Read the inputs and convert them to the types specified in COBJCON
-x_loc = real(x, kind(x_loc))
-call C_F_PROCPOINTER(cobjcon_ptr, objcon_ptr)
-
-! Call the C objective function
-call objcon_ptr(x_loc, f_loc, constr_loc, data_ptr)
-
-! Write the output
-f = real(f_loc, kind(f))
-constr = real(constr_loc, kind(constr))
-
-end subroutine evalcobjcon
 
 end module cintrf_mod

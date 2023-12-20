@@ -60,7 +60,7 @@ subroutine cobyla(calcfc, m_nlcon, x, &
     & xl, xu, &
     & f0, nlconstr0, &
     & nf, rhobeg, rhoend, ftarget, ctol, cweight, maxfun, iprint, eta1, eta2, gamma1, gamma2, &
-    & xhist, fhist, chist, nlchist, maxhist, maxfilt, info)
+    & xhist, fhist, chist, nlchist, maxhist, maxfilt, callback_fcn, info)
 !--------------------------------------------------------------------------------------------------!
 ! Among all the arguments, only CALCFC, M_NLCON, and X are obligatory. The others are OPTIONAL and
 ! you can neglect them unless you are familiar with the algorithm. Any unspecified optional input
@@ -234,6 +234,9 @@ subroutine cobyla(calcfc, m_nlcon, x, &
 !   the returned solution; default: MAXFILT_DFT (a value lower than MIN_MAXFILT is not recommended);
 !   see common/consts.F90 for the definitions of MAXFILT_DFT and MIN_MAXFILT.
 !
+! CALLBACK
+!   Input, function to report progress and optionally request termination.
+!
 ! INFO
 !   Output, INTEGER(IK) scalar.
 !   INFO is the exit flag. It will be set to one of the following values defined in the module
@@ -264,7 +267,7 @@ use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INVALID_INPUT
 use, non_intrinsic :: linalg_mod, only : trueloc, matprod
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: pintrf_mod, only : OBJCON
+use, non_intrinsic :: pintrf_mod, only : OBJCON, CALLBACK
 use, non_intrinsic :: selectx_mod, only : isbetter
 use, non_intrinsic :: preproc_mod, only : preproc
 use, non_intrinsic :: string_mod, only : num2str
@@ -280,6 +283,7 @@ real(RP), intent(inout) :: x(:)     ! X(N)
 integer(IK), intent(in) :: m_nlcon  ! Number of constraints defined in CALCFC
 
 ! Optional inputs
+procedure(CALLBACK), optional :: callback_fcn
 integer(IK), intent(in), optional :: iprint
 integer(IK), intent(in), optional :: maxfilt
 integer(IK), intent(in), optional :: maxfun
@@ -349,8 +353,8 @@ real(RP), allocatable :: beq_loc(:)  ! Beq_LOC(Meq)
 real(RP), allocatable :: bineq_loc(:)  ! Bineq_LOC(Mineq)
 real(RP), allocatable :: bvec(:)  ! BVEC(M_LCON)
 real(RP), allocatable :: chist_loc(:)  ! CHIST_LOC(MAXCHIST)
-real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M_NLCON, MAXCONHIST)
-real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M_NLCON)
+real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M, MAXCONHIST)
+real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M)
 real(RP), allocatable :: fhist_loc(:)   ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 real(RP), allocatable :: xl_loc(:)  ! XL_LOC(N)
@@ -601,10 +605,15 @@ call prehist(maxhist_loc, n, present(xhist), xhist_loc, present(fhist), fhist_lo
 
 
 !-------------------- Call COBYLB, which performs the real calculations. --------------------------!
-!call cobylb(calcfc_internal, iprint_loc, maxfilt_loc, maxfun_loc, ctol_loc, cweight_loc, eta1_loc, eta2_loc, &
-call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
+if (present(callback_fcn)) then
+    call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
+        & eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, &
+        & f_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc, callback_fcn)
+else
+    call cobylb(calcfc, iprint_loc, maxfilt_loc, maxfun_loc, amat, bvec, ctol_loc, cweight_loc, &
     & eta1_loc, eta2_loc, ftarget_loc, gamma1_loc, gamma2_loc, rhobeg_loc, rhoend_loc, constr_loc, &
     & f_loc, x, nf_loc, chist_loc, conhist_loc, cstrv_loc, fhist_loc, xhist_loc, info_loc)
+end if
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.

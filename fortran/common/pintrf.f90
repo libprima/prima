@@ -15,7 +15,7 @@ module pintrf_mod
 
 implicit none
 private
-public :: OBJ, OBJCON
+public :: OBJ, OBJCON, CALLBACK
 
 
 abstract interface
@@ -36,7 +36,18 @@ abstract interface
     real(RP), intent(out) :: constr(:)
     end subroutine OBJCON
 
-end interface
+    subroutine CALLBACK(x, f, nf, tr, cstrv, nlconstr, terminate)
+    use consts_mod, only : RP, IK
+    implicit none
+    real(RP), intent(in) :: x(:)
+    real(RP), intent(in) :: f
+    integer(IK), intent(in) :: nf
+    integer(IK), intent(in) :: tr
+    real(RP), intent(in), optional :: cstrv
+    real(RP), intent(in), optional :: nlconstr(:)
+    logical, intent(out), optional :: terminate
+    end subroutine CALLBACK
 
+end interface
 
 end module pintrf_mod

@@ -3,6 +3,8 @@
 #ifndef PRIMA_H
 #define PRIMA_H
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,6 +51,7 @@ typedef enum
   PRIMA_NO_SPACE_BETWEEN_BOUNDS = 6,
   PRIMA_DAMAGING_ROUNDING = 7,
   PRIMA_ZERO_LINEAR_CONSTRAINT = 8,
+  PRIMA_CALLBACK_TERMINATE = 30,
   PRIMA_INVALID_INPUT = 100,
   PRIMA_ASSERTION_FAILS = 101,
   PRIMA_VALIDATION_FAILS = 102,
@@ -67,18 +70,33 @@ PRIMAC_API
 const char *prima_get_rc_string(const prima_rc_t rc);
 
 /*
- * A function as required by solvers
+ * The objective function as required by solvers
  *
  * x     : on input, then vector of variables (should not be modified)
  * f     : on output, the value of the function
  *         a NaN value can be passed to signal an evaluation error
- * data  : user-data
+ * data  : user data
  * constr : on output, the value of the constraints (of size m_nlcon)
  *          NaN values can be passed to signal evaluation errors
  *          only for cobyla
 */
 typedef void (*prima_obj_t)(const double x[], double *f, const void *data);
 typedef void (*prima_objcon_t)(const double x[], double *f, double constr[], const void *data);
+
+/* An optional callback function to report algorithm progress
+ *
+ * n     : number of variables
+ * x     : the current best point
+ * f     : the function value of the best point
+ * nf    : number of objective function calls
+ * tr    : iteration number
+ * cstrv : the constraint value verified by the current best point
+ * m_nlcon : number of non-linear constraints (cobyla only)
+ * nlconstr : non-linear constraints values verified by the current best point (cobyla only)
+ * terminate : a boolean to ask from early optimization exit
+*/
+typedef void (*prima_callback_t)(const int n, const double x[], const double f, int nf, int tr,
+                               const double cstrv, int m_nlcon, const double nlconstr[], bool *terminate);
 
 
 typedef struct {
@@ -102,8 +120,11 @@ typedef struct {
   // ignored for uobyqa & cobyla
   int npt;
 
-  // user-data, will be passed through the objective function callback
+  // user data, will be passed through the objective function callback
   void *data;
+
+  // callback function to report algorithm progress (default=NULL)
+  prima_callback_t callback;
 
 } prima_options_t;
 

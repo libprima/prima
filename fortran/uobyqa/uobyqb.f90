@@ -20,7 +20,7 @@ contains
 
 
 subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, rhobeg, rhoend, &
-    & x, nf, f, fhist, xhist, info)
+    & x, nf, f, fhist, xhist, info, callback_fcn)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine performs the major calculations of UOBYQA.
 !
@@ -50,11 +50,11 @@ use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, CALLBACK_TERMINATE
 use, non_intrinsic :: linalg_mod, only : vec2smat, smat_mul_vec, norm
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: message_mod, only : fmsg, rhomsg, retmsg
-use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
 use, non_intrinsic :: powalg_mod, only : quadinc
 use, non_intrinsic :: ratio_mod, only : redrat
 use, non_intrinsic :: redrho_mod, only : redrho
@@ -69,6 +69,7 @@ use, non_intrinsic :: update_uobyqa_mod, only : update
 implicit none
 
 ! Inputs
+procedure(CALLBACK), optional :: callback_fcn
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
@@ -112,6 +113,7 @@ logical :: improve_geo
 logical :: reduce_rho
 logical :: shortd
 logical :: small_trrad
+logical :: terminate
 logical :: trfail
 logical :: ximproved
 real(RP) :: crvmin
@@ -164,6 +166,16 @@ end if
 
 ! Initialize XBASE, XPT, FVAL, and KOPT, together with the history and NF.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
+
+
+! Report the current best value, and check if user asks for early termination.
+terminate = .false.
+if (present(callback_fcn)) then
+    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0, terminate=terminate)
+    if (terminate) then
+        subinfo = CALLBACK_TERMINATE
+    end if
+end if
 
 ! Initialize X and F according to KOPT.
 x = xbase + xpt(:, kopt)
@@ -457,6 +469,15 @@ do tr = 1, maxtr
     ! after RHO is reduced. Our implementation aligns with NEWUOA/BOBYQA/LINCOA.
     if (sum(xpt(:, kopt)**2) >= 1.0E3_RP * delta**2) then
         call shiftbase(kopt, pl, pq, xbase, xpt)
+    end if
+    
+    ! Report the current best value, and check if user asks for early termination.
+    if (present(callback_fcn)) then
+        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)
+        if (terminate) then
+            info = CALLBACK_TERMINATE
+            exit
+        end if
     end if
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
