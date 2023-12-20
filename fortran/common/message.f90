@@ -125,7 +125,7 @@ case (NO_SPACE_BETWEEN_BOUNDS)
 case (ZERO_LINEAR_CONSTRAINT)
     reason = 'one of the linear constraints has a zero gradient'
 case (CALLBACK_TERMINATE)
-    reason = 'callback function requested early termination of optimization'
+    reason = 'callback function requested termination of optimization'
 case default
     reason = 'UNKNOWN EXIT FLAG'
 end select

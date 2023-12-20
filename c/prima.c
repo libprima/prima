@@ -262,7 +262,7 @@ const char *prima_get_rc_string(const prima_rc_t rc)
     case PRIMA_ZERO_LINEAR_CONSTRAINT:
       return "One of the linear constraints has a zero gradient";
     case PRIMA_CALLBACK_TERMINATE:
-      return "Callback function requested early termination of optimization";
+      return "Callback function requested termination of optimization";
     case PRIMA_INVALID_INPUT:
       return "Invalid input";
     case PRIMA_ASSERTION_FAILS:

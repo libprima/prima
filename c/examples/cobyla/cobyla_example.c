@@ -20,10 +20,9 @@ static void fun(const double x[], double *f, double constr[], const void *data)
 static void callback(const int n, const double x[], const double f, const int nf, const int tr, const double cstrv, const int m_nlcon, const double nlconstr[], bool *terminate)
 {
   (void)n;
-  printf("progress: x=[%g;%g] f=%g cstrv=%g nf=%d tr=%d\n", x[0], x[1], f, cstrv, nf, tr);
-  *terminate = 0;
   (void)m_nlcon;
-  (void)nlconstr;
+  printf("best point so far: x=[%g;%g] f=%g cstrv=%g nlconstr=%g nf=%d tr=%d\n", x[0], x[1], f, cstrv, nlconstr[0], nf, tr);
+  *terminate = 0;
 }
 
 
