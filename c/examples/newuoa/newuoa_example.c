@@ -28,17 +28,21 @@ int main(int argc, char * argv[])
   (void)argv;
   const int n = 2;
   double x0[2] = {0.0, 0.0};
+  // set up the problem
   prima_problem_t problem;
   prima_init_problem(&problem, n);
   problem.calfun = &fun;
   problem.x0 = x0;
+  // set up the options
   prima_options_t options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_EXIT;
   options.rhoend= 1e-3;
   options.maxfun = 200*n;
   options.callback = &callback;
+  // initialize the result
   prima_result_t result;
+  // run the solver
   const int rc = prima_minimize(PRIMA_NEWUOA, &problem, &options, &result);
   printf("x*={%g, %g} rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], rc, result.message, result.nf);
   prima_free_problem(&problem);

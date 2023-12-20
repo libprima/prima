@@ -28,20 +28,28 @@ int main(int argc, char * argv[])
   (void)argv;
   const int n = 2;
   double x0[2] = {0.0, 0.0};
+  // set up the problem
   prima_problem_t problem;
   prima_init_problem(&problem, n);
   problem.x0 = x0;
   problem.calfun = &fun;
+  double xl[] = {0.0, 0.0};
+  double xu[] = {1.0, 1.0};
+  problem.xl = xl;
+  problem.xu = xu;
+  // set up the options
   prima_options_t options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_EXIT;
   options.rhoend= 1e-3;
   options.maxfun = 200*n;
   options.callback = &callback;
+  // initialize the result
   prima_result_t result;
+  // run the solver
   const int rc = prima_minimize(PRIMA_BOBYQA, &problem, &options, &result);
   printf("x*={%g, %g} rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], rc, result.message, result.nf);
   prima_free_problem(&problem);
   prima_free_result(&result);
-  return (fabs(result.x[0]-3)>2e-2 || fabs(result.x[1]-2)>2e-2);
+  return (fabs(result.x[0]-1)>2e-2 || fabs(result.x[1]-1)>2e-2);
 }
