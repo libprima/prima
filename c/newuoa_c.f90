@@ -47,8 +47,10 @@ real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: ftarget_loc
 real(RP) :: x_loc(n)
-procedure(COBJ), pointer :: obj_ptr
-procedure(CCALLBACK), pointer :: cb_ptr
+! The initialization to null is necessary to avoid a bug with the newer Intel compiler.
+! See details here: https://fortran-lang.discourse.group/t/strange-issue-with-ifx-compiler-and-assume-recursion/7013
+procedure(COBJ), pointer :: obj_ptr => null()
+procedure(CCALLBACK), pointer :: cb_ptr => null()
 
 ! Read the inputs and convert them to the Fortran side types
 x_loc = real(x, kind(x_loc))

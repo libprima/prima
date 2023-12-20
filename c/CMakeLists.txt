@@ -6,19 +6,6 @@ if (WIN32)
   set_target_properties(primac PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 endif()
 
-# The newer intel compiler has issues when trying to capture a Fortran procedure pointer in a closure.
-# We can fix this by appending norecursion to our compile options when we compile the C interface.
-# More details may be found here: https://fortran-lang.discourse.group/t/strange-issue-with-ifx-compiler-and-assume-recursion/7013
-if (CMAKE_Fortran_COMPILER_ID MATCHES "IntelLLVM")
-  if (WIN32)
-    # The $<$<COMPILE_LANGUAGE:Fortran> part is so that this only applies when compiling Fortran
-    # files and *not* when compiling prima.c (because 'assume' is not a valid compiler flag when
-    # compiling C).
-    target_compile_options(primac PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:/assume:norecursion>)
-  else ()
-    target_compile_options(primac PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-assume norecursion>)
-  endif ()
-endif ()
 
 target_include_directories (primac PUBLIC
   $<INSTALL_INTERFACE:include>
