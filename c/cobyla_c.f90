@@ -70,8 +70,10 @@ real(RP) :: xl_loc(n)
 real(RP) :: xu_loc(n)
 real(RP) :: f0_loc
 real(RP) :: nlconstr0_loc(m_nlcon)
-! The initialization to null is necessary to avoid a bug with the newer Intel compiler.
+! The initialization to null is necessary to avoid a bug with the newer Intel compiler ifx.
 ! See details here: https://fortran-lang.discourse.group/t/strange-issue-with-ifx-compiler-and-assume-recursion/7013
+! The bug was observed in all versions of ifx up to 2024.0.1. Once this bug is fixed we should remove the
+! initialization to null because it implies the 'save' attribute, which is undesirable.
 procedure(COBJCON), pointer :: objcon_ptr => null()
 procedure(CCALLBACK), pointer :: cb_ptr => null()
 
