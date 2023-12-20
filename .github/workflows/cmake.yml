@@ -89,6 +89,9 @@ jobs:
       - name: Install Ninja / MacOS
         if: ${{ matrix.os == 'macos-latest' }}
         run: brew install ninja
+      - name: Install Ninja / Windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: choco install ninja
       - uses: fortran-lang/setup-fortran@main
         id: setup-fortran
         with:
@@ -99,6 +102,16 @@ jobs:
         if: ${{ matrix.toolchain.cc }}
         run: echo "CC=${{ matrix.toolchain.cc }}" >> $env:GITHUB_ENV
 
+      # gcc 12 is installed on windows runners by default. setup-fortran moves gfortran, gcc, and g++ to a temp directory
+      # so that they do not get picked up by CMake, but it doesn't move libgfortran-5.dll, and because /c/mingw64/bin is
+      # on the path ahead of /c/ProgramData/chocolatey/bin (setup-fortran uses chocolatey to install gcc11), the programs
+      # that are compiled with gcc11 try to use libgfortran-5.dll from gcc12 and crash. For now we rename the gcc12 version
+      # of libgfortran-5.dll so that the programs pick up the correct version in chocolatey/bin
+      - name: Move libgfortran-5.dll for gcc11 windows
+        if: ${{ matrix.os == 'windows-latest' && matrix.toolchain.compiler == 'gcc' && matrix.toolchain.version == '11' }} 
+        run: mv /c/mingw64/bin/libgfortran-5.dll /c/mingw64/bin/libgfortran-5.dll.old
+        shell: bash
+
       - name: Build
         run: |
           cmake --version
@@ -108,6 +121,7 @@ jobs:
           ctest --output-on-failure -V -j4 -E stress
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
+        shell: bash
 
       - name: Stress test
         if: ${{ github.event_name == 'schedule' || github.event.inputs.stress-test == 'true' }}

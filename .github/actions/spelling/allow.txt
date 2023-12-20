@@ -2134,3 +2134,5 @@ lang
 archnorma
 orthtol
 nouninit
+libgfortran
+chocolatey
