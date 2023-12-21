@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 03, 2023 PM02:57:32
+! Last Modified: Thursday, December 21, 2023 PM03:03:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -258,7 +258,7 @@ call initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ftarget,
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
-    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0, cval(kopt), terminate=terminate)
+    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, cval(kopt), terminate=terminate)
     if (terminate) then
         subinfo = CALLBACK_TERMINATE
     end if
@@ -646,7 +646,7 @@ do tr = 1, maxtr
         pqalt = omega_mul(idz, zmat, fval - fval(kopt))
         galt = matprod(bmat(:, 1:npt), fval - fval(kopt)) + hess_mul(xpt(:, kopt), xpt, pqalt)
     end if
-    
+
     ! Report the current best value, and check if user asks for early termination.
     if (present(callback_fcn)) then
         call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, cval(kopt), terminate=terminate)

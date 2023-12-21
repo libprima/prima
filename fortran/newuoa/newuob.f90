@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, November 06, 2023 PM07:46:24
+! Last Modified: Thursday, December 21, 2023 PM03:05:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -180,7 +180,7 @@ call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, ij, kopt, nf, fhist, fva
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
-    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0, terminate=terminate)
+    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, terminate=terminate)
     if (terminate) then
         subinfo = CALLBACK_TERMINATE
     end if

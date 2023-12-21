@@ -506,12 +506,12 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "NAG Fortran Compiler normal termination, [0-9]* info message" \
 	| grep -v "Warning: Change of value in conversion from .INTEGER(8). to .REAL(8). at (1) \[-Wconversion\]" \
 	| grep -v "Warning: Change of value in conversion from .REAL(16). to .REAL(8). at (1) \[-Wconversion\]" \
-	| grep -v "Extension: fmxapi\.F90, line [0-9]*: Byte count on numeric data type" \
-	| grep -v "Extension: cbfun\.F90, line [0-9]*: Byte count on numeric data type" \
-	| grep -v "Extension: \./classical/fmxcl\.F90, line [0-9]*: Byte count on numeric data type" \
-	| grep -v "Extension: \./classical/fmxcl\.F90, line [0-9]*: Line longer than 132 characters" \
-	| grep -v "Extension: .*_mex\.F90, line [0-9]*: Byte count on numeric data type" \
-	| grep -v "Extension: .*_mex\.F90, line [0-9]*: Line longer than 132 characters" \
+	| grep -v "Non-standard(Obsolete): fmxapi.F90, line 824: Byte count on numeric data type" \
+	| grep -v "cbfun\.F90, line [0-9]*: Byte count on numeric data type" \
+	| grep -v "\./classical/fmxcl\.F90, line [0-9]*: Byte count on numeric data type" \
+	| grep -v "\./classical/fmxcl\.F90, line [0-9]*: Line longer than 132 characters" \
+	| grep -v "\.F90, line [0-9]*: Byte count on numeric data type" \
+	| grep -v "\.F90, line [0-9]*: Line longer than 132 characters" \
 	| grep -v "detected at \*@[0-9]*" \
 	| grep -v "Info: fmxapi\.F90, line [0-9]*: Possibly discontiguous POUT passed to old style dummy" \
 	| grep -v "Info: No licences currently available for product" \

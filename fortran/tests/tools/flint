@@ -158,7 +158,7 @@ for COMP in $COMP_LIST; do
                 printf "%s\t" "$FLG"
                 export FFLAGS=$FLG
                 INFO="$(make "$COMP"test_"$TEST"_tst_c."$SOLVER" 2>&1 \
-                    | grep -v "binary\ file\ matches" \
+                    | grep -v "binary\ file\ matches\|info,\ callback_fcn" \
                     | grep -i "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could\ not\ resolve\|not\ defined\|not\ public\ entity" \
                     | grep -vi "[0-9]\s*warning\|[0-9]\s*error\|[0-9]\s*info\|infos.f90\|information\|xhist, info)\|zmat, info)\|--warning\|--error" \
                     | grep -vi "pedantic-errors\|Werror\|warn\ errors\|diag-error-limit\|colour=error\|rounding\ error\|constraint violation\|default" \

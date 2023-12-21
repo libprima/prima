@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, October 16, 2023 AM01:15:52
+! Last Modified: Thursday, December 21, 2023 PM02:57:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -218,7 +218,7 @@ call initxfc(calcfc_internal, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, 
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
-    call callback_fcn(sim(:, n+1), fval(n+1), nf, 0, cval(n+1), conmat(m_lcon+1:m, n+1), terminate)
+    call callback_fcn(sim(:, n + 1), fval(n + 1), nf, 0_IK, cval(n + 1), conmat(m_lcon + 1:m, n + 1), terminate)
     if (terminate) then
         subinfo = CALLBACK_TERMINATE
     end if
@@ -605,7 +605,7 @@ do tr = 1, maxtr
 
     ! Report the current best value, and check if user asks for early termination.
     if (present(callback_fcn)) then
-        call callback_fcn(sim(:, n+1), fval(n+1), nf, tr, cval(n+1), conmat(m_lcon+1:m, n+1), terminate)
+        call callback_fcn(sim(:, n + 1), fval(n + 1), nf, tr, cval(n + 1), conmat(m_lcon + 1:m, n + 1), terminate)
         if (terminate) then
             info = CALLBACK_TERMINATE
             exit

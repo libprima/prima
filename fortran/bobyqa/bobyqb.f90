@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 03, 2023 PM02:57:45
+! Last Modified: Thursday, December 21, 2023 PM02:26:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -221,11 +221,11 @@ call initxf(calfun, iprint, maxfun, ftarget, rhobeg, xl, xu, x, ij, kopt, nf, fh
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
-    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0, terminate=terminate)
+    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, terminate=terminate)
     if (terminate) then
         subinfo = CALLBACK_TERMINATE
     end if
-endif
+end if
 
 ! Initialize X and F according to KOPT.
 x = xinbd(xbase, xpt(:, kopt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
@@ -582,16 +582,16 @@ do tr = 1, maxtr
         call shiftbase(kopt, xbase, xpt, zmat, bmat, pq, hq)
         xbase = max(xl, min(xu, xbase))
     end if
-    
+
     ! Report the current best value, and check if user asks for early termination.
     if (present(callback_fcn)) then
-        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)  
+        call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)
         if (terminate) then
             info = CALLBACK_TERMINATE
             exit
         end if
     end if
-    
+
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.

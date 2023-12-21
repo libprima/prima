@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 03, 2023 PM02:57:20
+! Last Modified: Thursday, December 21, 2023 PM03:06:15
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -171,7 +171,7 @@ call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, kopt, nf, fhist, fval, x
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
-    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0, terminate=terminate)
+    call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, 0_IK, terminate=terminate)
     if (terminate) then
         subinfo = CALLBACK_TERMINATE
     end if
@@ -470,7 +470,7 @@ do tr = 1, maxtr
     if (sum(xpt(:, kopt)**2) >= 1.0E3_RP * delta**2) then
         call shiftbase(kopt, pl, pq, xbase, xpt)
     end if
-    
+
     ! Report the current best value, and check if user asks for early termination.
     if (present(callback_fcn)) then
         call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, terminate=terminate)
