@@ -90,6 +90,12 @@ jobs:
 
     steps:
 
+      - name: Set http.postBuffer
+        # This is a workaround for random "early EOF" of checkout.
+        # See https://github.com/actions/checkout/issues/748, https://github.com/actions/checkout/issues/1379
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: git config --global http.postBuffer 1048576000
+
       - name: Clone Repository (Latest)
         uses: actions/checkout@v4
         if: github.event.inputs.git-ref == ''
@@ -122,7 +128,8 @@ jobs:
 
       - name: Install Intel oneAPI on Windows
         if: startsWith(matrix.os, 'windows')
-        run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'
+        #run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'  # As of MATLAB R2023a, oneAPI 2024 does not work. Try again later.
+        run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat 2023"'
 
       - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
         uses: actions/cache@v3.3.2
