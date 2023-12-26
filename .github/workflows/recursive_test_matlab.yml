@@ -104,11 +104,11 @@ jobs:
 
     steps:
 
-      - name: Set http.postBuffer
+      - name: Set http.postBuffer and core.compression
         # This is a workaround for random "early EOF" of checkout.
         # See https://github.com/actions/checkout/issues/748, https://github.com/actions/checkout/issues/1379
         if: startsWith(matrix.os, 'windows')
-        run: git config --global http.postBuffer 1048576000
+        run: git config --global http.postBuffer 1048576000 && git config --global core.compression 0
 
       - name: Clone Repository (Latest)
         uses: actions/checkout@v4
