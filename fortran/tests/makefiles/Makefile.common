@@ -884,6 +884,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
 	| grep -v "Absoft ANSI 1610:" \
 	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
+	| grep -v "Extension.*Stop-code is not constant" \
 	| grep -v "NAG Fortran Compiler Release [0-9]*.* Build [0-9]*" \
 	| grep -v "Questionable: ./lincoa/geometry.f90, line [0-9]*: Variable RSTAT set but never referenced" \
 	| grep -v "Expression in IF construct is constant" \

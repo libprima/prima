@@ -38,7 +38,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, October 01, 2023 PM11:55:57
+! Last Modified: Wednesday, December 27, 2023 AM05:12:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -263,7 +263,7 @@ end if
 ! the starting point. RECURSIVE_FUN2(Y) is defined by RECURSIVE_FUN1 in a similar way. Note
 ! that RECURSIVE_FUN1 is essentially a constant function.
 n = 3_IK
-print'(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
+print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
 call safealloc(x, n)
 x = randn(n)
 call newuoa(recursive_fun2, x, f, iprint=2_IK)

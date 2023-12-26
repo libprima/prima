@@ -67,7 +67,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, September 28, 2023 PM11:20:54
+! Last Modified: Wednesday, December 27, 2023 AM05:16:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -397,7 +397,7 @@ end if
 ! Aineq * X <= Bineq with Y being the starting point. RECURSIVE_FUN2(Y) is defined by
 ! RECURSIVE_FUN1 in a similar way. Note that RECURSIVE_FUN1 is essentially a constant function.
 n = 3_IK
-print'(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
+print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
 deallocate (Aineq, bineq)
 ! For unknown reason, `safealloc` does not work here with `nvfortran -O1`, nvfortran 23.7.
 allocate (Aineq(1:2_IK * n, 1:n), bineq(1:2_IK * n), x(1:n))

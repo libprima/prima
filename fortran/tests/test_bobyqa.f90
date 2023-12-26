@@ -42,7 +42,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, October 12, 2023 PM12:30:44
+! Last Modified: Wednesday, December 27, 2023 AM05:15:45
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -292,7 +292,7 @@ end if
 ! -2 <= X <= 2 with Y being the starting point. RECURSIVE_FUN2(Y) is defined by RECURSIVE_FUN1
 ! in a similar way. Note that RECURSIVE_FUN1 is essentially a constant function.
 n = 3_IK
-print'(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
+print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
 call safealloc(xl, n)
 xl = -2.0_RP
 call safealloc(xu, n)

@@ -110,6 +110,7 @@ jobs:
         uses: actions/upload-artifact@v4.0.0
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
+          name: ${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}
           path: |
             /tmp/${{ matrix.solver }}_profile_prima/*summary*.pdf
             /tmp/${{ matrix.solver }}_profile_prima/*.txt
@@ -119,3 +120,21 @@ jobs:
       - name: Remove the test data
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/${{ matrix.solver }}_profile_prima
+
+
+  merge_artifacts:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: test
+    steps:
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v4.0.0
+      - name: Unzip all artifacts
+        run: ls -al && mv */* ./ && ls -al
+      - name: Upload all files
+        uses: actions/upload-artifact@v4.0.0
+        with:
+          name: all
+          path: ./*
+      - name: Remove all files
+        run: ls -al && rm -rf ./*
