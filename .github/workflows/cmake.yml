@@ -69,6 +69,10 @@ jobs:
 
     steps:
 
+      - name: Set http.postBuffer
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: git config --global http.postBuffer 1048576000
+
       - name: Clone Repository (Latest)
         uses: actions/checkout@v4
         if: github.event.inputs.git-ref == ''
@@ -111,7 +115,7 @@ jobs:
       # that are compiled with gcc11 try to use libgfortran-5.dll from gcc12 and crash. For now we rename the gcc12 version
       # of libgfortran-5.dll so that the programs pick up the correct version in chocolatey/bin
       - name: Move libgfortran-5.dll for gcc11 windows
-        if: ${{ matrix.os == 'windows-latest' && matrix.toolchain.compiler == 'gcc' && matrix.toolchain.version == '11' }} 
+        if: ${{ matrix.os == 'windows-latest' && matrix.toolchain.compiler == 'gcc' && matrix.toolchain.version == '11' }}
         run: mv /c/mingw64/bin/libgfortran-5.dll /c/mingw64/bin/libgfortran-5.dll.old
         shell: bash
 
