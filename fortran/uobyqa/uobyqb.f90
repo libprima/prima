@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 21, 2023 PM03:06:15
+! Last Modified: Friday, December 22, 2023 PM01:20:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,8 +69,8 @@ use, non_intrinsic :: update_uobyqa_mod, only : update
 implicit none
 
 ! Inputs
-procedure(CALLBACK), optional :: callback_fcn
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
+procedure(CALLBACK), optional :: callback_fcn
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: eta1

@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, December 21, 2023 PM02:57:27
+! Last Modified: Friday, December 22, 2023 PM01:18:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -63,8 +63,8 @@ use, non_intrinsic :: update_cobyla_mod, only : updatexfc, updatepole
 implicit none
 
 ! Inputs
-procedure(CALLBACK), optional :: callback_fcn
 procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
+procedure(CALLBACK), optional :: callback_fcn
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfilt
 integer(IK), intent(in) :: maxfun

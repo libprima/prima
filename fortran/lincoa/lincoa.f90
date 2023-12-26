@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, October 19, 2023 AM10:34:35
+! Last Modified: Friday, December 22, 2023 PM01:24:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -195,7 +195,7 @@ subroutine lincoa(calfun, x, &
 !   CONSTS_MOD (see consts.F90 under the directory named "common").
 !   Use *HIST with caution! (N.B.: the algorithm is NOT designed for large problems).
 !
-! CALLBACK
+! CALLBACK_FCN
 !   Input, function to report progress and optionally request termination.
 !
 ! INFO

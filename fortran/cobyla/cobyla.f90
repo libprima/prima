@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, October 19, 2023 AM10:39:21
+! Last Modified: Friday, December 22, 2023 PM01:24:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -234,7 +234,7 @@ subroutine cobyla(calcfc, m_nlcon, x, &
 !   the returned solution; default: MAXFILT_DFT (a value lower than MIN_MAXFILT is not recommended);
 !   see common/consts.F90 for the definitions of MAXFILT_DFT and MIN_MAXFILT.
 !
-! CALLBACK
+! CALLBACK_FCN
 !   Input, function to report progress and optionally request termination.
 !
 ! INFO

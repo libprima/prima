@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, October 18, 2023 PM08:23:04
+! Last Modified: Friday, December 22, 2023 PM01:25:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -168,7 +168,7 @@ subroutine bobyqa(calfun, x, &
 !  if this requirement is not met. If HONOUR_X0 == TRUE, revise RHOBEG if needed; otherwise, revise
 !  X0 if needed. See the PREPROC subroutine for more information.
 !
-! CALLBACK
+! CALLBACK_FCN
 !   Input, function to report progress and optionally request termination.
 !
 ! INFO

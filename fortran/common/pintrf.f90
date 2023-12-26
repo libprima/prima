@@ -1,14 +1,16 @@
 module pintrf_mod
 !--------------------------------------------------------------------------------------------------!
-! This is a module specifying the abstract interfaces OBJ and OBJCON. OBJ evaluates the objective
-! function for unconstrained, bound constrained, and linearly constrained problems; OBJCON evaluates
-! the objective and constraint functions for nonlinearly constrained problems.
+! This is a module specifying the abstract interfaces OBJ, OBJCON, and CALLBACK. OBJ evaluates the
+! objective function for unconstrained, bound constrained, and linearly constrained problems; OBJCON
+! evaluates the objective and constraint functions for nonlinearly constrained problems; CALLBACK
+! is a callback function that is called after each iteration of the solvers to report the progress
+! and optionally request termination.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: July 2020.
 !
-! Last Modified: Monday, February 07, 2022 AM12:28:54
+! Last Modified: Friday, December 22, 2023 PM01:23:44
 !--------------------------------------------------------------------------------------------------!
 
 !!!!!! Users must provide the implementation of OBJ or OBJCON. !!!!!!
@@ -35,6 +37,7 @@ abstract interface
     real(RP), intent(out) :: f
     real(RP), intent(out) :: constr(:)
     end subroutine OBJCON
+
 
     subroutine CALLBACK(x, f, nf, tr, cstrv, nlconstr, terminate)
     use consts_mod, only : RP, IK

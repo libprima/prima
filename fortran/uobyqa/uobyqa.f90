@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, October 18, 2023 PM07:43:22
+! Last Modified: Friday, December 22, 2023 PM01:25:35
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -134,7 +134,7 @@ subroutine uobyqa(calfun, x, &
 !   CONSTS_MOD (see consts.F90 under the directory named "common").
 !   Use *HIST with caution!!! (N.B.: the algorithm is NOT designed for large problems).
 !
-! CALLBACK
+! CALLBACK_FCN
 !   Input, function to report progress and optionally request termination.
 !
 ! INFO

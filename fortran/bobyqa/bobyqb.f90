@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, December 21, 2023 PM02:26:49
+! Last Modified: Friday, December 22, 2023 PM01:19:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -102,8 +102,8 @@ use, non_intrinsic :: update_bobyqa_mod, only : updatexf, updateq, tryqalt, upda
 implicit none
 
 ! Inputs
-procedure(CALLBACK), optional :: callback_fcn
 procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
+procedure(CALLBACK), optional :: callback_fcn
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 integer(IK), intent(in) :: npt

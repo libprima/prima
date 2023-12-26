@@ -22,7 +22,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, October 18, 2023 PM08:14:58
+! Last Modified: Friday, December 22, 2023 PM01:25:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,7 +142,7 @@ subroutine newuoa(calfun, x, &
 !   CONSTS_MOD (see consts.F90 under the directory named "common").
 !   Use *HIST with caution! (N.B.: the algorithm is NOT designed for large problems).
 !
-! CALLBACK
+! CALLBACK_FCN
 !   Input, function to report progress and optionally request termination.
 !
 ! INFO
