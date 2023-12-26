@@ -2138,3 +2138,4 @@ chocolatey
 fcn
 BINDIR
 cmdfile
+macports
