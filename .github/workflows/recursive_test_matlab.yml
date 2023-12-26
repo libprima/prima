@@ -107,7 +107,7 @@ jobs:
       - name: Set http.postBuffer
         # This is a workaround for random "early EOF" of checkout.
         # See https://github.com/actions/checkout/issues/748, https://github.com/actions/checkout/issues/1379
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: startsWith(matrix.os, 'windows')
         run: git config --global http.postBuffer 1048576000
 
       - name: Clone Repository (Latest)
