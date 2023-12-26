@@ -1,19 +1,25 @@
-add_library (primac cintrf.f90 cobyla_c.f90 lincoa_c.f90 bobyqa_c.f90 newuoa_c.f90 uobyqa_c.f90 prima.c)
+# Fortran object files must be in a separate library as VS generator does not support mixing C and Fortran
+add_library (primafc OBJECT cintrf.f90 cobyla_c.f90 lincoa_c.f90 bobyqa_c.f90 newuoa_c.f90 uobyqa_c.f90)
+set_target_properties(primafc PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if (NOT BUILD_SHARED_LIBS)
+  target_link_libraries (primafc INTERFACE ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+endif ()
+target_link_libraries (primafc PUBLIC primaf) # must be PUBLIC for precision macros
+
+# now the C-only library
+add_library (primac prima.c)
 if (WIN32)
   set_target_properties(primac PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 endif()
-
-
 target_include_directories (primac PUBLIC
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
-target_link_libraries (primac PUBLIC primaf) # must be PUBLIC for precision macros
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>>)
+target_link_libraries (primac PRIVATE primafc)
 set_target_properties(primac PROPERTIES POSITION_INDEPENDENT_CODE ON C_STANDARD 99)
-
 if (NOT BUILD_SHARED_LIBS)
   target_compile_definitions(primac PUBLIC PRIMAC_STATIC)
-  target_link_libraries (primac INTERFACE ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
 endif ()
 
 # Export symbols on Windows. See more comments in fortran/CMakeLists.txt.
