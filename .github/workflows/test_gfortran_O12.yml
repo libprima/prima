@@ -107,6 +107,7 @@ jobs:
         # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
         # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
         with:
+          name: ${{ matrix.os }}-${{ matrix.solver }}-${{ matrix.ikind }}-${{ matrix.version }}-${{ matrix.testdim }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
