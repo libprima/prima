@@ -866,6 +866,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "/usr/bin/ld: warning: libpgmath.so.0d, needed by /home/zaikunzhang/local/flang/lib/libflang.so, not found" \
 	| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
 	| grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
+	| grep -v "Warning (165): Implicit interface 'callback_fcn' called at (1)" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'inv' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \

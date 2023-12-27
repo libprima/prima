@@ -531,6 +531,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "WARNING --  When --chk x is specified" \
 	| grep -v "Warning (165): Implicit interface 'calfun' called at (1)" \
 	| grep -v "Warning (165): Implicit interface 'calcfc' called at (1)" \
+	| grep -v "Warning (165): Implicit interface 'callback_fcn' called at (1)" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'inv' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'calfun' USEd at (1) is not referenced" \
 	| grep -v "Warning (102): MODULE PROCEDURE 'calcfc' USEd at (1) is not referenced" \
