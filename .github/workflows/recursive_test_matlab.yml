@@ -202,7 +202,7 @@ jobs:
         uses: actions/upload-artifact@v4.0.0
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ solver }}
+          name: ${{ matrix.solver }}
           path: |
             matlab_crash_dump*
 
