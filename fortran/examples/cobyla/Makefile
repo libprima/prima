@@ -30,6 +30,9 @@ COMMON := ../../common
 HEADERS := $(COMMON)/*.h
 # Solver source files.
 SOLVER_SRC := ../../$(SOLVER)
+# Overridable selection for the program to compile.
+EXAMPLE_NUM ?= 1
+EXAMPLE_SRC := $(SOLVER)_example_$(EXAMPLE_NUM).f90
 
 ####################################################################################################
 # All the tests
@@ -76,11 +79,11 @@ xtest: FC := ifx -warn all -stand f$(FS)
 
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
-%test: $(SOLVER)_example.f90 \
+%test: $(EXAMPLE_SRC) \
 	consts.o infos.o debug.o huge.o inf.o infnan.o memory.o string.o linalg.o powalg.o \
 	ratio.o redrho.o history.o selectx.o checkexit.o fprint.o message.o preproc.o pintrf.o evaluate.o \
 	update.o initialize.o trustregion.o geometry.o cobylb.o cobyla.o
-	$(FC) $(FFLAGS) -o $@ $(SOLVER)_example.f90 *.o
+	$(FC) $(FFLAGS) -o $@ $(EXAMPLE_SRC) *.o
 	./$@
 	@$(MAKE) clean
 
