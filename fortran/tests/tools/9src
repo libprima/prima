@@ -13,6 +13,10 @@ CMN_FPRINTF90="fprint.f90"
 CMN_FPRINT="$DIR/common/$CMN_FPRINTF90"
 MEX_FPRINTF90="fprint.F90"
 MEX_FPRINT="$DIR/common/$MEX_FPRINTF90"
+UOBYQB="$DIR/uobyqa/uobyqb.f90"
+NEWUOB="$DIR/newuoa/newuob.f90"
+BOBYQB="$DIR/bobyqa/bobyqb.f90"
+LINCOB="$DIR/lincoa/lincob.f90"
 COBYLB="$DIR/cobyla/cobylb.f90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
@@ -81,6 +85,15 @@ done
 if [[ -f "$COBYLB" ]] ; then
     sed -ni '1,/\s*!\s*Calculation ends\s*!/p;/end subroutine cobylb/,$p' "$COBYLB"
     sed -i "s|calcfc_internal|calcfc|" "$COBYLB"
+fi
+
+for FILE in "$NEWUOB" "$UOBYQB" "$BOBYQB" ; do
+    if [[ -f "$FILE" ]] ; then
+        sed -i "s|terminate=terminate)|0.0_RP, [0.0_RP], terminate)|g" "$FILE"
+    fi
+done
+if [[ -f "$LINCOB" ]]; then
+   sed -i "s|terminate=terminate)|[0.0_RP], terminate)|g" "$LINCOB"
 fi
 
 exit 0
