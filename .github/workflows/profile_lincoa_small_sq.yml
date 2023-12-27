@@ -166,7 +166,7 @@ jobs:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4.0.0
         with:
-          name: ${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.precision }}-0
+          name: *-0
       - name: Move all artifacts to the current directory
         run: ls -al && mv */* ./ && ls -al
       - name: Upload all files
