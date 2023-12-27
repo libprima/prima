@@ -40,8 +40,6 @@ the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at t
 The current version is ready to be used [in Fortran](#modern-fortran), [in C](#c),
 [in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md),
 and [in Julia](https://juliahub.com/ui/Packages/General/PRIMA).
-If you want to use the above-mentioned methods in Python, see the [website](https://www.pdfo.net)
-and [repository](https://github.com/pdfo/pdfo) of [PDFO](https://www.pdfo.net) instead.
 
 PRIMA was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
 the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang.
@@ -219,8 +217,8 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 #### Modern Fortran
 
-After almost **three** years of intensive coding, **the [modern Fortran version](./fortran) of
-PRIMA has been finished by December 2022.**
+After almost **three** years of intensive coding, the [modern Fortran version](./fortran) of
+PRIMA was finished by December 2022.
 It can be compiled using CMake as follows.<a name="cmake"></a>
 ```bash
 git clone --depth 1 https://github.com/libprima/prima.git
@@ -261,7 +259,7 @@ cmake --build build --target install
 #### Python
 
 - The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
-- A [Python interface for the Fortran version of PRIMA](https://github.com/libprima/prima/pull/52) is under development.
+- A [Python interface for the Fortran version of PRIMA](https://github.com/libprima/prima/pull/124) is under development.
 - A [native Python implementation of PRIMA](https://github.com/libprima/prima/pull/37) is under development.
 
 #### MATLAB
