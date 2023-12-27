@@ -155,8 +155,6 @@ jobs:
     steps:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4.0.0
-        with:
-          name: *-yes-0
       - name: Move all artifacts to the current directory
         run: ls -al && mv */* ./ && ls -al
       - name: Upload all files
