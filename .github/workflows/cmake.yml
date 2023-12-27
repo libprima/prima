@@ -29,6 +29,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # See https://github.com/fortran-lang/setup-fortran?tab=readme-ov-file#runner-compatibility
+        # for the toolchains provided by fortran-lang/setup-fortran. We test the latest three on each OS.
+        # First define the toolchains on Linux and macOS.
         os: [ubuntu-latest, macos-latest]
         toolchain:
           - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
@@ -37,13 +40,17 @@ jobs:
           - {compiler: intel-classic, version: '2021.7', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - {compiler: intel-classic, version: '2021.8', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - {compiler: intel-classic, version: '2021.9', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
+
         include:
+          # intel compiler (ifx) does not support macOS. So they are not included above but below.
           - os: ubuntu-latest
             toolchain: {compiler: intel, version: '2023.0', cflags: '', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - os: ubuntu-latest
             toolchain: {compiler: intel, version: '2023.1', cflags: '', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - os: ubuntu-latest
             toolchain: {compiler: intel, version: '2023.2', cflags: '', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
+
+          # What follows contains the toolchains for Windows, including gcc, intel classic, and intel.
           - os: windows-latest
             toolchain: {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
