@@ -151,7 +151,7 @@ jobs:
         uses: actions/upload-artifact@v4.0.0
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.precision }}-${{ matrix.with_optim_toolbox }}-${{ matrix.ctol_indicator }}
+          name: ${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.precision }}-${{ matrix.ctol_indicator }}
           path: |
             /tmp/cobyla_profile_prima/*summary*.pdf
             /tmp/cobyla_profile_prima/*.txt
@@ -170,7 +170,9 @@ jobs:
     steps:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4.0.0
-      - name: Unzip all artifacts
+        with:
+          name: ${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.precision }}-0
+      - name: Move all artifacts to the current directory
         run: ls -al && mv */* ./ && ls -al
       - name: Upload all files
         uses: actions/upload-artifact@v4.0.0
