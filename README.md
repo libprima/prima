@@ -160,7 +160,6 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 - [Tests](https://github.com/primalib/prima/actions) at [primalib/prima](https://github.com/primalib/prima)
 
-    - [![Test MATLAB](https://github.com/primalib/prima/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/test_matlab.yml)
     - [![Verification, archiva](https://github.com/primalib/prima/actions/workflows/verify_archiva.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/verify_archiva.yml)
     - [![Plot performance profiles for all problems](https://github.com/primalib/prima/actions/workflows/profile_all.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_all.yml)
     - [![Plot performance profiles, single](https://github.com/primalib/prima/actions/workflows/profile_single.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_single.yml)
@@ -168,6 +167,10 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Plot performance profiles, int16](https://github.com/primalib/prima/actions/workflows/profile_int16.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_int16.yml)
     - [![Plot performance profiles, infnan](https://github.com/primalib/prima/actions/workflows/profile_infnan.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_infnan.yml)
     - [![Plot performance profiles, various compiler options](https://github.com/primalib/prima/actions/workflows/profile_compiler_options.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_compiler_options.yml)
+
+- [Tests](https://github.com/opt4ai/prima/actions) at [opt4ai/prima](https://github.com/opt4ai/prima)
+
+    - [![Test MATLAB](https://github.com/opt4ai/prima/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab.yml)
 
 - [Tests](https://github.com/sprimalib/prima/actions) at [sprimalib/prima](https://github.com/sprimalib/prima)<a name="stress-tests"></a>
 
