@@ -189,19 +189,19 @@ jobs:
         run: bash scripts/check_success_timeout_big_test ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
 
 
-  merge_artifacts:
-    runs-on: ubuntu-latest
-    if: always()
-    needs: test
-    steps:
-      - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v4.0.0
-      - name: Move all artifacts to the current directory
-        run: ls -al && mv */* ./ && ls -al
-      - name: Upload all files
-        uses: actions/upload-artifact@v4.0.0
-        with:
-          name: all
-          path: ./*
-      - name: Remove all files
-        run: ls -al && rm -rf ./*
+  # merge_artifacts:
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   needs: test
+  #   steps:
+  #     - name: Download all workflow run artifacts
+  #       uses: actions/download-artifact@v4.0.0
+  #     - name: Move all artifacts to the current directory
+  #       run: ls -al && mv */* ./ && ls -al
+  #     - name: Upload all files
+  #       uses: actions/upload-artifact@v4.0.0
+  #       with:
+  #         name: all
+  #         path: ./*
+  #     - name: Remove all files
+  #       run: ls -al && rm -rf ./*
