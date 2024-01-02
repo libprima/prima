@@ -12,7 +12,7 @@ module fmxapi_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Thursday, October 12, 2023 PM03:18:10
+! Last Modified: Tuesday, January 02, 2024 PM02:20:24
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -675,6 +675,8 @@ if (kind(x) /= kind(x_dp)) then
     if (any(abs(x - x_dp) > cvsnTol * max(abs(x), ONE)) .or. .not. all(is_nan(x) .eqv. is_nan(x_dp))) then
         wid = 'FMXAPI:LargeConversionError'
         msg = 'WRITE_RVECTOR: Large error occurs when converting REAL(RP) to REAL(DP) (maybe due to overflow).'
+        write (*, *) 'x = ', x
+        write (*, *) 'x_dp = ', x_dp
         call mexWarnMsgIdAndTxt(wid, msg)
     end if
 end if
