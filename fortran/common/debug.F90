@@ -102,7 +102,7 @@ integer, intent(in), optional :: code
 ! `backtr` prints a backtrace. As of gfortran 12.1.0, even without calling `backtrace`, a backtrace
 ! is printed when the program is stopped by an error stop. Therefore, here, we do not call `backtr`
 ! if the compiler is gfortran.
-#if !defined __GFORTRAN__
+#if !defined(__GFORTRAN__)
 call backtr()
 #endif
 
@@ -143,10 +143,10 @@ subroutine backtr()
 !--------------------------------------------------------------------------------------------------!
 #if PRIMA_DEBUGGING == 1
 
-#if defined __GFORTRAN__
+#if defined(__GFORTRAN__)
 implicit none
 call backtrace  ! gfortran: if `-std=f20xy` is imposed, then `-fall-intrinsics` is needed.
-#elif defined __INTEL_COMPILER
+#elif defined(__INTEL_COMPILER)
 use, non_intrinsic :: ifcore, only : tracebackqq
 implicit none
 call tracebackqq(user_exit_code=-1)

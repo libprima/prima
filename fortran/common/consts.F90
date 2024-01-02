@@ -168,13 +168,13 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! Update 20231002: HUAWEI BiSheng Compiler 2.1.0.B010 (flang) cannot ensure symmetry even up to
 ! 1.0E2*EPS if invoked with -Ofast and if the floating-point numbers are in single precision.
 ! This same is observed for arm-linux-compiler-22.1 on Kunpeng.
-#if (defined __GFORTRAN__ || defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
+#if (defined(__GFORTRAN__) || defined(__INTEL_COMPILER) && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
 real(RP), parameter :: SYMTOL_DFT = REALMAX
-#elif (defined __FLANG && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
+#elif (defined(__FLANG) && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
 real(RP), parameter :: SYMTOL_DFT = max(1.0E3 * EPS, 1.0E-10_RP)
-#elif (defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64)
+#elif (defined(__INTEL_COMPILER) && PRIMA_REAL_PRECISION < 64)
 real(RP), parameter :: SYMTOL_DFT = max(5.0E1 * EPS, 1.0E-10_RP)
-#elif (defined __NAG_COMPILER_RELEASE && PRIMA_REAL_PRECISION > 64) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
+#elif (defined(__NAG_COMPILER_RELEASE) && PRIMA_REAL_PRECISION > 64) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO

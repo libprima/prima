@@ -52,7 +52,7 @@
 
 
 /******************************************************************************/
-#if !defined PRIMA_PPF_H  /* include guard to avoid double inclusion */
+#if !defined(PRIMA_PPF_H)  /* include guard to avoid double inclusion */
 #define PRIMA_PPF_H
 /******************************************************************************/
 
@@ -63,7 +63,7 @@
  * define it only for the purpose of a record.
  * 2. With gfortran, due to `error stop` and `backtrace`, we must either compile
  * with no `-std` or use `-std=f20xy -fall-intrinsics` with xy >= 18. */
-#if !defined PRIMA_FORTRAN_STANDARD
+#if !defined(PRIMA_FORTRAN_STANDARD)
 #define PRIMA_FORTRAN_STANDARD 2008  /* Default to 2018 later (in 2025?).     */
 #endif
 /******************************************************************************/
@@ -71,7 +71,7 @@
 
 /******************************************************************************/
 /* Is this a released version? Should be 1 except for the developers. */
-#if !defined PRIMA_RELEASED
+#if !defined(PRIMA_RELEASED)
 #define PRIMA_RELEASED 1
 #endif
 /******************************************************************************/
@@ -80,7 +80,7 @@
 /******************************************************************************/
 /* Are we debugging?
  * PRIMA_RELEASED == 1 and PRIMA_DEBUGGING == 1 do not conflict. User may debug.*/
-#if !defined PRIMA_DEBUGGING
+#if !defined(PRIMA_DEBUGGING)
 #define PRIMA_DEBUGGING 0
 #endif
 /******************************************************************************/
@@ -90,7 +90,7 @@
 /* Which integer kind to use?
  * 0 = default INTEGER, 16 = INTEGER*2, 32 = INTEGER*4, 64 = INTEGER*8.
  * Make sure that your compiler supports the selected kind. */
-#if !defined PRIMA_INTEGER_KIND
+#if !defined(PRIMA_INTEGER_KIND)
 #define PRIMA_INTEGER_KIND 0
 #endif
 /* Fortran standards guarantee that 0 is supported, but not the others. */
@@ -104,7 +104,7 @@
  * 1. The default REAL (i.e., 0) is the single-precision REAL.
  * 2. Fortran standards guarantee that 0, 32, and 64 are supported, but not 128.
  * 3. If you set PRIMA_REAL_PRECISION to 128, then set PRIMA_QP_AVAILABLE to 1.*/
-#if !defined PRIMA_REAL_PRECISION
+#if !defined(PRIMA_REAL_PRECISION)
 #define PRIMA_REAL_PRECISION 64
 #endif
 
@@ -118,7 +118,7 @@
  *    which is probably inefficient and unnecessary.
  * 4. Set PRIMA_QP_AVAILABLE to 1 and PRIMA_REAL_PRECISION to 128 if REAL128
  *    is available and you REALLY intend to use it. DO NOT DO IT IF NOT SURE. */
-#if !defined PRIMA_QP_AVAILABLE
+#if !defined(PRIMA_QP_AVAILABLE)
 #define PRIMA_QP_AVAILABLE 0
 #endif
 
@@ -134,7 +134,7 @@
 /* The maximal memory for recording the computation history (MB).
  * The maximal supported value is 2000, as 2000 M = 2*10^9 = maximum of INT32.
  * N.B.: A big value (even < 2000) may lead to SEGFAULTs due to large arrays. */
-#if !defined PRIMA_MAX_HIST_MEM_MB
+#if !defined(PRIMA_MAX_HIST_MEM_MB)
 #define PRIMA_MAX_HIST_MEM_MB 300  /* 1MB > 10^5*REAL64. 100 can be too small.*/
 #endif
 /******************************************************************************/
@@ -146,7 +146,7 @@
  * 1. It is OK to set PRIMA_AGGRESSIVE_OPTIONS = 0 and PRIMA_DEBUGGING = 1
  *    simultaneously.
  * 2. When compiled with aggressive options, the code may behave unexpectedly.*/
-#if !defined PRIMA_AGGRESSIVE_OPTIONS
+#if !defined(PRIMA_AGGRESSIVE_OPTIONS)
 #define PRIMA_AGGRESSIVE_OPTIONS 0
 #endif
 /******************************************************************************/
