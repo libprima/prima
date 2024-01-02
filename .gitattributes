@@ -70,3 +70,6 @@
 *.fits  binary
 *.npy   binary
 *.npz   binary
+
+# Version files for git archive
+.git-archival.txt export-subst

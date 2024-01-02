@@ -62,7 +62,29 @@ if (PRIMA_ENABLE_C)
   set(primac_target "primac")
 endif ()
 
-file (STRINGS VERSION.txt PRIMA_VERSION)
+# Get the version number
+find_package(Git)
+if(GIT_EXECUTABLE)
+  # --always means git describe will output the commit hash if no tags are found
+  # This is usually the case for forked repos since they do not clone tags by default.
+  execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE PRIMA_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+else()
+  # If git is not available, that may indicate we are building on macports which
+  # downloads the bundle from github (which uses git archive) and so the version
+  # number should be in .git-archival.txt
+  file(STRINGS .git-archival.txt PRIMA_VERSION)
+  if(PRIMA_VERSION MATCHES "describe")
+    message(WARNING "No git detected and .git-archival.txt does not contain a version number")
+    set(PRIMA_VERSION "unknown")
+  endif()
+  
+endif()
+# Remove the leading v from PRIMA_VERSION, if it contains one.
+string(REGEX REPLACE "^v" "" PRIMA_VERSION ${PRIMA_VERSION})
+message(STATUS "Setting PRIMA version to ${PRIMA_VERSION}")
 
 install(
     TARGETS primaf ${primac_target}
