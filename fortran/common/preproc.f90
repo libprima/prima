@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, October 12, 2023 PM09:03:20
+! Last Modified: Wednesday, January 03, 2024 PM12:01:37
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -399,8 +399,8 @@ if (DEBUGGING) then
     if (lower(solver) == 'bobyqa') then
         call validate(all(rhobeg <= (xu - xl) / TWO), 'RHOBEG <= MINVAL(XU-XL)/2', solver)
         call validate(all(is_finite(x0)), 'X0 is finite', solver)
-        call validate(all(x0 >= xl .and. (x0 <= xl .or. x0 >= xl + rhobeg)), 'X0 == XL or X0 >= XL + RHOBEG', solver)
-        call validate(all(x0 <= xu .and. (x0 >= xu .or. x0 <= xu - rhobeg)), 'X0 == XU or X0 >= XU - RHOBEG', solver)
+        call validate(all(x0 >= xl .and. (x0 <= xl .or. x0 - xl >= rhobeg)), 'X0 == XL or X0 - XL >= RHOBEG', solver)
+        call validate(all(x0 <= xu .and. (x0 >= xu .or. xu - x0 >= rhobeg)), 'X0 == XU or XU - X0 >= RHOBEG', solver)
     end if
     if (present(ctol)) then
         call validate(ctol >= 0, 'CTOL >= 0', solver)

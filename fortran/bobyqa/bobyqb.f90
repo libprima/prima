@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, December 22, 2023 PM01:19:34
+! Last Modified: Wednesday, January 03, 2024 AM11:58:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -202,8 +202,8 @@ if (DEBUGGING) then
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
     call assert(all(rhobeg <= (xu - xl) / TWO), 'RHOBEG <= MINVAL(XU-XL)/2', srname)
     call assert(all(is_finite(x)), 'X is finite', srname)
-    call assert(all(x >= xl .and. (x <= xl .or. x >= xl + rhobeg)), 'X == XL or X >= XL + RHOBEG', srname)
-    call assert(all(x <= xu .and. (x >= xu .or. x <= xu - rhobeg)), 'X == XU or X >= XU - RHOBEG', srname)
+    call assert(all(x >= xl .and. (x <= xl .or. x - xl >= rhobeg)), 'X == XL or X - XL >= RHOBEG', srname)
+    call assert(all(x <= xu .and. (x >= xu .or. xu - x >= rhobeg)), 'X == XU or XU - X >= RHOBEG', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
