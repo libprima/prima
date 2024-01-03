@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 03, 2024 PM01:27:02
+! Last Modified: Wednesday, January 03, 2024 PM01:29:42
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -169,7 +169,7 @@ end if
 ! Validate NPT
 if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa') &
     & .and. present(npt)) then
-    if (npt < n + 2 .or. npt >= maxfun .or. 2 * npt > (n + 2) * (n + 1)) then
+    if (npt < n + 2 .or. npt >= maxfun .or. 2 * npt > int(n + 2) * int(n + 1)) then  ! INT(*) avoids overflow when IK is 16-bit.
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
         call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2]'// &
             & ' and less than MAXFUN; it is set to '//num2str(npt))
