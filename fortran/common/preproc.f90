@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 03, 2024 PM12:01:37
+! Last Modified: Wednesday, January 03, 2024 PM01:27:02
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -71,10 +71,10 @@ real(RP), intent(inout), optional :: x0(:)
 ! Local variables
 character(len=*), parameter :: srname = 'PREPROC'
 character(len=:), allocatable :: min_maxfun_str
+integer :: min_maxfun  ! INTEGER(IK) may overflow if IK corresponds to the 16-bit integer.
+integer :: unit_memo  ! INTEGER(IK) may overflow if IK corresponds to the 16-bit integer.
 integer(IK) :: m_loc
 integer(IK) :: maxfilt_in
-integer(IK) :: min_maxfun
-integer(IK) :: unit_memo
 logical :: is_constrained_loc
 logical :: lbx(n)
 logical :: ubx(n)
@@ -128,20 +128,22 @@ if (abs(iprint) > 3) then
 end if
 
 ! Validate MAXFUN
+! N.B.: The INT(N) below converts N to the default integer kind, which is the kind of MIN_MAXFUN.
+! Fortran compilers may complain without the conversion. It is not needed in Python/MATLAB/Julia/R.
 select case (lower(solver))
 case ('uobyqa')
-    min_maxfun = (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK
+    min_maxfun = (int(n + 1) * int(n + 2)) / 2 + 1  ! INT(*) avoids overflow when IK is 16-bit.
     min_maxfun_str = '(N+1)(N+2)/2 + 1'
 case ('cobyla')
-    min_maxfun = n + 2_IK
+    min_maxfun = int(n) + 2
     min_maxfun_str = 'N + 2'
 case default  ! CASE ('NEWUOA', 'BOBYQA', 'LINCOA')
-    min_maxfun = n + 3_IK
+    min_maxfun = int(n) + 3
     min_maxfun_str = 'N + 3'
 end select
-if (maxfun <= max(0_IK, min_maxfun)) then
+if (maxfun <= max(0, min_maxfun)) then
     if (maxfun > 0) then
-        maxfun = min_maxfun
+        maxfun = int(min_maxfun, kind(maxfun))
     else  ! We assume that nonpositive values of MAXFUN are produced by overflow.
         if (MAXFUN_DIM_DFT >= huge(maxfun) / n) then  ! Avoid overflow when N is large.
             maxfun = huge(maxfun)
@@ -167,7 +169,7 @@ end if
 ! Validate NPT
 if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa') &
     & .and. present(npt)) then
-    if (npt < n + 2 .or. npt > min(maxfun - 1, ((n + 2) * (n + 1)) / 2)) then
+    if (npt < n + 2 .or. npt >= maxfun .or. 2 * npt > (n + 2) * (n + 1)) then
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
         call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2]'// &
             & ' and less than MAXFUN; it is set to '//num2str(npt))
@@ -185,9 +187,9 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     ! Further revise MAXFILT according to MAXHISTMEM.
     select case (lower(solver))
     case ('lincoa')
-        unit_memo = (n + 2_IK) * cstyle_sizeof(0.0_RP)
+        unit_memo = int(n + 2) * int(cstyle_sizeof(0.0_RP))  ! INT(*) avoids overflow when IK is 16-bit.
     case ('cobyla')
-        unit_memo = (m_loc + n + 2_IK) * cstyle_sizeof(0.0_RP)
+        unit_memo = int(m_loc + n + 2) * int(cstyle_sizeof(0.0_RP))  ! INT(*) avoids overflow when IK is 16-bit.
     case default
         unit_memo = 1
     end select
