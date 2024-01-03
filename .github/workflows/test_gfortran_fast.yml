@@ -34,6 +34,13 @@ jobs:
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [small]
 
+        # As of 20240103, windows-latest and gfortran-11 fail with Error -1073740940, which means
+        # "The system was not able to allocate enough memory to perform a stack switch" according to
+        # https://stackoverflow.com/questions/66043078/process-terminated-with-status-1073740940
+        exclude:
+          - os: windows-latest
+            version: 11
+
     steps:
 
       - name: Set http.postBuffer and core.compression
