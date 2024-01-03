@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 03, 2024 PM01:29:42
+! Last Modified: Wednesday, January 03, 2024 PM05:49:07
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -97,10 +97,14 @@ if (DEBUGGING) then
         call validate(present(xl) .and. present(xu), 'XL and XU are present if the solver is BOBYQA', srname)
         call validate(all(xu - xl >= TWO * EPS), 'MINVAL(XU-XL) > 2*EPS', srname)
     end if
-    if (present(honour_x0)) then
-        call validate(lower(solver) == 'bobyqa' .and. present(has_rhobeg) .and. present(xl) .and. present(xu) &
-            & .and. present(x0), 'If HONOUR_X0 is present, then so are XL, XU, and X0, and the solver is BOBYQA', srname)
-    end if
+    call validate((present(honour_x0) .eqv. present(x0)) .and. (present(honour_x0) .eqv. present(has_rhobeg)), &
+        & 'HONOUR_X0, X0, and HAS_RHOBEG are present or absent simultaneously', srname)
+    call validate(present(honour_x0) .eqv. lower(solver) == 'bobyqa', &
+        & 'HONOUR_X0 is present if and only if the solver is BOBYQA', srname)
+    ! N.B.: LINCOA and COBYLA will have HONOUR_X0 as well if we intend to make them respect bounds.
+    ! !call validate(present(honour_x0) .eqv. &
+    ! !    & (lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa' .or. lower(solver) == 'cobyla'), &
+    ! !    & 'HONOUR_X0 is present if and only if the solver is BOBYQA, LINCOA, or COBYLA', srname)
 end if
 
 !====================!
@@ -259,9 +263,7 @@ elseif (gamma2 < 1 .or. is_inf(gamma2)) then
     call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//num2str(gamma2))
 end if
 
-
 ! Validate RHOBEG and RHOEND
-
 if (abs(rhobeg - rhoend) < 1.0E2_RP * EPS * max(abs(rhobeg), ONE)) then
     ! When the data is passed from the interfaces (e.g., MEX) to the Fortran code, RHOBEG, and RHOEND
     ! may change a bit. It was observed in a MATLAB test that MEX passed 1 to Fortran as
@@ -309,25 +311,12 @@ if (rhoend <= 0 .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is_inf(rhoend)) th
 end if
 
 ! For BOBYQA, revise X0 or RHOBEG so that the distance between X0 and the inactive bounds is at
-! least RHOBEG. If HONOUR_X0 == TRUE, revise RHOBEG if needed; otherwise, revise HONOUR_X0 if needed.
-if (present(honour_x0)) then
-    if (honour_x0) then
-        rhobeg_old = rhobeg; 
-        lbx = (is_finite(xl) .and. x0 - xl <= EPS * max(ONE, abs(xl))) ! X0 essentially equals XL
-        ubx = (is_finite(xu) .and. x0 - xu >= -EPS * max(ONE, abs(xu))) ! X0 essentially equals XU
-        x0(trueloc(lbx)) = xl(trueloc(lbx))
-        x0(trueloc(ubx)) = xu(trueloc(ubx))
-        rhobeg = max(EPS, minval([rhobeg, x0(falseloc(lbx)) - xl(falseloc(lbx)), xu(falseloc(ubx)) - x0(falseloc(ubx))]))
-        if (rhobeg_old - rhobeg > EPS * max(ONE, rhobeg_old)) then
-            rhoend = max(EPS, min(TENTH * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
-            if (has_rhobeg) then
-                call warning(solver, 'RHOBEG is revised to '//num2str(rhobeg)//' and RHOEND to at most 0.1*RHOBEG'// &
-                    & ' so that the distance between X0 and the inactive bounds is at least RHOBEG')
-            end if
-        else
-            rhoend = min(rhoend, rhobeg)  ! This may update RHOEND slightly.
-        end if
-    else
+! least RHOBEG. If HONOUR_X0 == FALSE, revise X0 if needed; then revise RHOBEG if needed.
+! N.B.: We should do the same for LINCOA and COBYLA if we make them respect the bounds in the future.
+! !if (lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa' .or. lower(solver) == 'cobyla') then
+if (lower(solver) == 'bobyqa') then
+    ! Revise X0 if allowed and needed.
+    if (.not. honour_x0) then
         x0_old = x0  ! Recorded to see whether X0 is really revised.
         ! N.B.: The following revision is valid only if XL <= X0 <= XU and RHOBEG <= MINVAL(XU-XL)/2,
         ! which should hold at this point due to the revision of RHOBEG and moderation of X0.
@@ -354,8 +343,27 @@ if (present(honour_x0)) then
 
         if (any(abs(x0_old - x0) > 0)) then
             call warning(solver, 'X0 is revised so that the distance between X0 and the inactive bounds is at least RHOBEG; '// &
-                  & 'set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
+                & 'set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
         end if
+    end if
+
+    ! Revise RHOBEG if needed.
+    ! N.B.: If X0 has been revised above (i.e., HONOUR_X0 is FALSE), then the following revision
+    ! is unnecessary in precise arithmetic. However, it may still be needed due to rounding errors.
+    rhobeg_old = rhobeg; 
+    lbx = (is_finite(xl) .and. x0 - xl <= EPS * max(ONE, abs(xl))) ! X0 essentially equals XL
+    ubx = (is_finite(xu) .and. x0 - xu >= -EPS * max(ONE, abs(xu))) ! X0 essentially equals XU
+    x0(trueloc(lbx)) = xl(trueloc(lbx))
+    x0(trueloc(ubx)) = xu(trueloc(ubx))
+    rhobeg = max(EPS, minval([rhobeg, x0(falseloc(lbx)) - xl(falseloc(lbx)), xu(falseloc(ubx)) - x0(falseloc(ubx))]))
+    if (rhobeg_old - rhobeg > EPS * max(ONE, rhobeg_old)) then
+        rhoend = max(EPS, min(TENTH * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
+        if (has_rhobeg) then
+            call warning(solver, 'RHOBEG is revised to '//num2str(rhobeg)//' and RHOEND to at most 0.1*RHOBEG'// &
+                & ' so that the distance between X0 and the inactive bounds is at least RHOBEG')
+        end if
+    else
+        rhoend = min(rhoend, rhobeg)  ! This may update RHOEND slightly.
     end if
 end if
 

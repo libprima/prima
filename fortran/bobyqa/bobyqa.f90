@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, December 22, 2023 PM01:25:09
+! Last Modified: Wednesday, January 03, 2024 PM05:26:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -403,6 +403,7 @@ has_rhobeg = present(rhobeg)
 if (present(honour_x0)) then
     honour_x0_loc = honour_x0
 else
+    ! The default value of HONOUR_X0 is FALSE if user provides RHOBEG. Is this the best choice?
     honour_x0_loc = (.not. has_rhobeg)
 end if
 

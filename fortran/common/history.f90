@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, August 02, 2023 AM11:22:57
+! Last Modified: Wednesday, January 03, 2024 PM05:43:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -52,8 +52,8 @@ real(RP), intent(out), optional, allocatable :: conhist(:, :)
 
 ! Local variables
 character(len=*), parameter :: srname = 'PREHIST'
+integer :: unit_memo  ! INTEGER(IK) may overflow if IK corresponds to the 16-bit integer.
 integer(IK) :: maxhist_in
-integer(IK) :: unit_memo
 
 ! Preconditions
 if (DEBUGGING) then
@@ -83,7 +83,7 @@ end if
 if (present(m) .and. present(output_conhist) .and. present(conhist)) then
     unit_memo = unit_memo + int(output_conhist) * m
 end if
-unit_memo = unit_memo * cstyle_sizeof(0.0_RP)
+unit_memo = unit_memo * int(cstyle_sizeof(0.0_RP))
 if (unit_memo <= 0) then  ! No output of history is requested
     maxhist = 0
 elseif (maxhist > MAXHISTMEM / unit_memo) then
