@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 03, 2024 PM05:49:07
+! Last Modified: Friday, January 05, 2024 PM04:19:55
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -132,8 +132,9 @@ if (abs(iprint) > 3) then
 end if
 
 ! Validate MAXFUN
-! N.B.: The INT(N) below converts N to the default integer kind, which is the kind of MIN_MAXFUN.
-! Fortran compilers may complain without the conversion. It is not needed in Python/MATLAB/Julia/R.
+! N.B.: The INT(N), INT(N+1), and INT(N+2) below convert integers to the default integer kind,
+! which is the kind of MIN_MAXFUN. Fortran compilers may complain without the conversion. It is
+! not needed in Python/MATLAB/Julia/R.
 select case (lower(solver))
 case ('uobyqa')
     min_maxfun = (int(n + 1) * int(n + 2)) / 2 + 1  ! INT(*) avoids overflow when IK is 16-bit.

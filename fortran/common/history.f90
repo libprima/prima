@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 03, 2024 PM05:43:00
+! Last Modified: Friday, January 05, 2024 PM04:22:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -76,14 +76,17 @@ end if
 maxhist_in = maxhist
 
 ! Revise MAXHIST according to MAXHISTMEM, i.e., the maximal memory allowed for the history.
-unit_memo = int(output_xhist) * n + int(output_fhist)
+! N.B.: The `UNIT_MEMO = INT(*)` below converts integers to the default integer kind, which is the 
+! kind of UNIT_MEMO. Fortran compilers may complain without the conversion. It is not needed in 
+! Python/MATLAB/Julia/R. Meanwhile, INT(OUTPUT_*HIST) converts booleans to integers.
+unit_memo = int(int(output_xhist) * n + int(output_fhist))
 if (present(output_chist) .and. present(chist)) then
-    unit_memo = unit_memo + int(output_chist)
+    unit_memo = int(unit_memo + int(output_chist))
 end if
 if (present(m) .and. present(output_conhist) .and. present(conhist)) then
-    unit_memo = unit_memo + int(output_conhist) * m
+    unit_memo = int(unit_memo + int(output_conhist) * m)
 end if
-unit_memo = unit_memo * int(cstyle_sizeof(0.0_RP))
+unit_memo = unit_memo * int(cstyle_sizeof(0.0_RP))  ! INT(*) avoids overflow when IK is 16-bit.
 if (unit_memo <= 0) then  ! No output of history is requested
     maxhist = 0
 elseif (maxhist > MAXHISTMEM / unit_memo) then
