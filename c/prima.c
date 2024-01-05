@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 
 #define MAXFUN_DIM_DFT 500
 
@@ -58,7 +59,7 @@ int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], doub
              const double xl[], const double xu[],
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *info);
 
-int prima_check_problem(prima_problem_t *problem, prima_options_t *options, int alloc_bounds, int use_constr)
+int prima_check_problem(prima_problem_t *problem, prima_options_t *options, const int alloc_bounds, const int use_constr, const prima_algorithm_t algorithm)
 {
   if (!problem)
     return PRIMA_NULL_PROBLEM;
@@ -90,6 +91,20 @@ int prima_check_problem(prima_problem_t *problem, prima_options_t *options, int 
     options->maxfun = MAXFUN_DIM_DFT*problem->n;
   if (options->npt < 0)
     options->npt = 2*problem->n+1;
+
+  // warn the user if they have supplied nonlinear constraints for an algorithm that does not use them
+  if (algorithm != PRIMA_COBYLA && (problem->calcfc || problem->nlconstr0 || problem->m_nlcon > 0)) {
+    fprintf(stderr, "Warning: the provided nonlinear constraints are ignored for this algorithm\n");
+  }
+  // warn the user if they have supplied linear constraints for an algorithm that does not use them
+  if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA) &&
+      (problem->m_ineq > 0 || problem->m_eq > 0 || problem->Aineq || problem->bineq || problem->Aeq || problem->beq)) {
+    fprintf(stderr, "Warning: the provided linear constraints are ignored for this algorithm\n");
+  }
+  // warn the user if they have supplied bounds for an algorithm that does not use them
+  if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA && algorithm != PRIMA_BOBYQA) && (problem->xl || problem->xu)) {
+    fprintf(stderr, "Warning: the provided bounds are ignored for this algorithm\n");
+  }
   return 0;
 }
 
@@ -164,7 +179,7 @@ int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, 
   int alloc_bounds = (algorithm == PRIMA_COBYLA) || (algorithm == PRIMA_BOBYQA) || (algorithm == PRIMA_LINCOA);
   int use_constr = (algorithm == PRIMA_COBYLA);
 
-  int info = prima_check_problem(problem, options, alloc_bounds, use_constr);
+  int info = prima_check_problem(problem, options, alloc_bounds, use_constr, algorithm);
   if (info == 0)
     info = prima_init_result(result, problem);
 
