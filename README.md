@@ -210,9 +210,6 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Test ifort](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml)
     - [![Test ifx](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml)
 
-- [Tests](https://github.com/equipez/gitpersonal/actions) at [equipez/gitpersonal](https://github.com/equipez/gitpersonal)
-    - [all the tests](https://github.com/equipez/gitpersonal/actions) are disabled
-
 
 ### Current status
 
