@@ -113,7 +113,7 @@ jobs:
       - name: Revise fmxapi.F90
         run: |
           cd matlab/mex_gateways/
-          $SED "s|\(.*maybe due to overflow.*$\)|\1\nwrite(*,*) 'x = ', x; write(*,*) 'x_dp = ', x_dp|" fmxapi.F90
+          $SEDI "s|\(.*maybe due to overflow.*$\)|\1\nwrite(*,*) 'x = ', x; write(*,*) 'x_dp = ', x_dp|" fmxapi.F90
           cat fmxapi.F90
 
       - name: Link gfortran for MATLAB on Linux
