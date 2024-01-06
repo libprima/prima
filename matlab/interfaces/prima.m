@@ -162,7 +162,8 @@ function [x, fx, exitflag, output] = prima(varargin)
 %       mentioned above will be used as the initial and final trust region
 %       radii for the scaled problem
 %   *** honour_x0: (only for BOBYQA) a boolean value indicating whether to
-%       respect the user-defined x0; default: false
+%       respect the user-defined x0 or not; default: false if the user provides
+%       a rhobeg in (0, Inf), and true otherwise.
 %   *** iprint: a flag deciding how much information will be printed during
 %       the computation; possible values are value 0 (default), 1, -1, 2,
 %       -2, 3, or -3.
