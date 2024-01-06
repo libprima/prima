@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, January 03, 2024 PM05:26:58
+! Last Modified: Saturday, January 06, 2024 PM07:33:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -162,11 +162,11 @@ subroutine bobyqa(calfun, x, &
 !   Use *HIST with caution! (N.B.: the algorithm is NOT designed for large problems).
 !
 ! HONOUR_X0
-!  Input, LOGICAL scalar, default: .true. if RHOBEG is absent, and .false. if RHOBEG is present.
-!  HONOUR_X0 indicates whether to respect the user-defined X0 or not. The BOBYQA algorithm requires
-!  that the distance between X0 and the inactive bounds is at least RHOBEG. X0 or RHOBEG is revised
-!  if this requirement is not met. If HONOUR_X0 == TRUE, revise RHOBEG if needed; otherwise, revise
-!  X0 if needed. See the PREPROC subroutine for more information.
+!  Input, LOGICAL scalar, default: it is .false. if RHOBEG is present and 0 < RHOBEG < Inf, and it
+!  is .true. otherwise. HONOUR_X0 indicates whether to respect the user-defined X0 or not.
+!  BOBYQA requires that the distance between X0 and the inactive bounds is at least RHOBEG. X0 or
+!  RHOBEG is revised if this requirement is not met. If HONOUR_X0 == TRUE, revise RHOBEG if needed;
+!  otherwise, revise X0 if needed. See the PREPROC subroutine for more information.
 !
 ! CALLBACK_FCN
 !   Input, function to report progress and optionally request termination.
@@ -400,11 +400,12 @@ else
 end if
 
 has_rhobeg = present(rhobeg)
+honour_x0_loc = .true.
 if (present(honour_x0)) then
     honour_x0_loc = honour_x0
-else
-    ! The default value of HONOUR_X0 is FALSE if user provides RHOBEG. Is this the best choice?
-    honour_x0_loc = (.not. has_rhobeg)
+else if (has_rhobeg) then
+    ! HONOUR_X0 is FALSE if user provides a valid RHOBEG. Is this the best choice?
+    honour_x0_loc = (.not. (is_finite(rhobeg) .and. rhobeg > 0))
 end if
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
