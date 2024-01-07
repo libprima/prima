@@ -213,7 +213,8 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 ### Current status
 
-#### Modern Fortran
+#### Modern Fortran ([stardev](https://stardev.io/) ranking:
+[28 among all 30,975 Fortran repositories on GitHub](https://stardev.io/top/repos/fortran?developer=libprima&repo=prima) as of January 7, 2024)
 
 After almost **three** years of intensive coding, the [modern Fortran version](./fortran) of
 PRIMA was finished by December 2022.
