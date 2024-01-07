@@ -19,10 +19,10 @@ WARNINGS="$(grep -i "warning\|Remark\|Questionable\|attention\|F[0-9]*-W\|F[0-9]
     | grep -vi "Only the history of the last [0-9]* function evaluation(s) is recorded" \
     | grep -vi "circle\.f90(36): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
     | grep -vi "warningid\|warningmsg" \
-    | grep -vi "Warning: TRSTEP: Assertion failed: D is initialized." \
+    | grep -vi "Warning: TRSTEP: Assertion fails: D is initialized." \
 	| grep -vi "Warning: UOBYQA: \|Warning: NEWUOA: \|Warning: BOBYQA: \|Warning: LINCOA: \|Warning: COBYLA: " \
     | grep -vi "maybe due to overflow, or the input is not an integer" \
-    | grep -vi "Assertion failed: SUM(VLAG(1:NPT)) == 1" \
+    | grep -vi "Assertion fails: SUM(VLAG(1:NPT)) == 1" \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
 
 ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|segmentation\|fault\|illegal\|F[0-9]*-S\|F[0-9]*-F\|F[0-9]*-E\|Could\ not\ resolve\|not\ defined\|Cannot connect to licence server (error 113)" "$LOGFILE" \
@@ -36,10 +36,10 @@ ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|se
     | grep -vi "precaution against rounding error" \
     | grep -vi "Warning:\ Floating\ invalid\ operation\ occurred" \
     | grep -vi "Processor does not support trapping of floating-point exceptions" \
-    | grep -vi "Assertion failed: Q interpolates FVAL at XPT" \
-    | grep -vi "Assertion failed: H = W^{-1} in (3.12) of the NEWUOA paper" \
-    | grep -vi "Assertion failed: BETA_TEST == BETA" \
-    | grep -vi "Assertion failed: SUM(VLAG(1:NPT)) == 1" \
+    | grep -vi "Assertion fails: Q interpolates FVAL at XPT" \
+    | grep -vi "Assertion fails: H = W^{-1} in (3.12) of the NEWUOA paper" \
+    | grep -vi "Assertion fails: BETA_TEST == BETA" \
+    | grep -vi "Assertion fails: SUM(VLAG(1:NPT)) == 1" \
     | grep -vi "flist:.*: Invalid format" \
     | grep -vi "BAD_TRSTEP" \
     | grep -vi "moderr\|errorid\|errormsg\|errstop" \
@@ -47,7 +47,7 @@ ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|se
     | grep -vi "berr\|erres" \
     | grep -vi "violation = " \
     | grep -vi "int violation" \
-    | grep -vi "Warning: TRSTEP: Assertion failed: D is initialized." \
+    | grep -vi "Warning: TRSTEP: Assertion fails: D is initialized." \
 	| grep -vi "Warning: UOBYQA: Invalid\|Warning: NEWUOA: Invalid\|Warning: BOBYQA: Invalid\|Warning: LINCOA: Invalid\|Warning: COBYLA: Invalid" \
     | grep -vi "maybe due to overflow, or the input is not an integer" \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"

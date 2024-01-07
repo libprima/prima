@@ -11,7 +11,7 @@ module debug_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Sunday, May 21, 2023 PM05:46:15
+! Last Modified: Monday, January 08, 2024 AM04:12:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,9 +40,9 @@ subroutine assert(condition, description, srname)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine checks whether ASSERTION is true.
 ! If no but DEBUGGING is true, print the following message and then stop the program:
-! SRNAME // 'Assertion failed: ' // DESCRIPTION
-! MATLAB analogue: assert(condition, sprintf('%s: Assertion failed: %s', srname, description))
-! Python analogue: assert condition, srname + ': Assertion failed: ' + description
+! SRNAME // 'Assertion fails: ' // DESCRIPTION
+! MATLAB analogue: assert(condition, sprintf('%s: Assertion fails: %s', srname, description))
+! Python analogue: assert condition, srname + ': Assertion fails: ' + description
 ! C analogue: assert(condition)  /* An error message will be produced by the compiler */
 !--------------------------------------------------------------------------------------------------!
 ! N.B.: As in C, we design ASSERT to operate only in the debug mode, i.e., when PRIMA_DEBUGGING == 1;
@@ -56,7 +56,7 @@ logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
-    call errstop(trim(adjustl(srname)), 'Assertion failed: '//trim(adjustl(description)))
+    call errstop(trim(adjustl(srname)), 'Assertion fails: '//trim(adjustl(description)))
 end if
 end subroutine assert
 
@@ -65,8 +65,8 @@ subroutine validate(condition, description, srname)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine checks whether CONDITION is true.
 ! If no, print the following message to and then stop the program:
-! SRNAME // 'Validation failed: ' // DESCRIPTION
-! MATLAB analogue: assert(condition, sprintf('%s: Validation failed: %s', srname, description))
+! SRNAME // 'Validation fails: ' // DESCRIPTION
+! MATLAB analogue: assert(condition, sprintf('%s: Validation fails: %s', srname, description))
 ! In Python or C, VALIDATE can be implemented following the Fortran implementation below.
 ! N.B.: ASSERT checks the condition only when debugging, but VALIDATE does it always.
 !--------------------------------------------------------------------------------------------------!
@@ -75,7 +75,7 @@ logical, intent(in) :: condition  ! A condition that is expected to be true
 character(len=*), intent(in) :: description  ! Description of the condition in human language
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (.not. condition) then
-    call errstop(trim(adjustl(srname)), 'Validation failed: '//trim(adjustl(description)))
+    call errstop(trim(adjustl(srname)), 'Validation fails: '//trim(adjustl(description)))
 end if
 end subroutine validate
 
@@ -84,10 +84,10 @@ subroutine wassert(condition, description, srname)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine checks whether CONDITION is true.
 ! If no but DEBUGGING is true, print the following message to STDERR (but do not stop the program):
-! SRNAME // 'Assertion failed: ' // DESCRIPTION
+! SRNAME // 'Assertion fails: ' // DESCRIPTION
 ! MATLAB analogue:
 ! !if ~condition
-! !    warning(sprintf('%s: Assertion failed: %s', srname, description))
+! !    warning(sprintf('%s: Assertion fails: %s', srname, description))
 ! !end
 ! In Python or C, WASSERT can be implemented following the Fortran implementation below.
 ! N.B.: When DEBUGGING is true, ASSERT stops the program with an error if the condition is false,
@@ -100,7 +100,7 @@ character(len=*), intent(in) :: description  ! Description of the condition in h
 character(len=*), intent(in) :: srname  ! Name of the subroutine that calls this procedure
 if (DEBUGGING .and. .not. condition) then
     call backtr()
-    call warning(trim(adjustl(srname)), 'Assertion failed: '//trim(adjustl(description)))
+    call warning(trim(adjustl(srname)), 'Assertion fails: '//trim(adjustl(description)))
 end if
 end subroutine wassert
 

@@ -270,7 +270,7 @@ const char *prima_get_rc_string(const prima_rc_t rc)
     case PRIMA_VALIDATION_FAILS:
       return "Validation fails";
     case PRIMA_MEMORY_ALLOCATION_FAILS:
-      return "Memory allocation failed";
+      return "Memory allocation fails";
     case PRIMA_NULL_OPTIONS:
       return "NULL options";
     case PRIMA_NULL_PROBLEM:
