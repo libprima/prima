@@ -438,7 +438,7 @@ deallocate (conhist_loc)
 
 ! If NF_LOC > MAXHIST_LOC, warn that not all history is recorded.
 if ((present(xhist) .or. present(fhist) .or. present(chist) .or. present(nlchist)) .and. maxhist_loc < nf_loc) then
-    call warning(solver, 'Only the history of the last '//num2str(maxhist_loc)//' iteration(s) is recorded')
+    call warning(solver, 'Only the history of the last '//num2str(maxhist_loc)//' function evaluation(s) is recorded')
 end if
 
 
