@@ -51,7 +51,7 @@ int main(int argc, char * argv[])
   // run the solver
   const int rc = prima_minimize(PRIMA_LINCOA, &problem, &options, &result);
   printf("x*={%g, %g} f*=%g cstrv=%g rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], result.f, result.cstrv, rc, result.message, result.nf);
-  prima_free_problem(&problem);
+  int success = (fabs(result.x[0]-4.5)>2e-2 || fabs(result.x[1]-3.5)>2e-2);
   prima_free_result(&result);
-  return (fabs(result.x[0]-4.5)>2e-2 || fabs(result.x[1]-3.5)>2e-2);
+  return success;
 }

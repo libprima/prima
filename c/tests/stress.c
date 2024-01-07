@@ -146,7 +146,6 @@ int main(int argc, char * argv[])
   }
   rc = prima_minimize(algorithm, &problem, &options, &result);
   printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
-  prima_free_problem(&problem);
   prima_free_result(&result);
   return 0;
 }

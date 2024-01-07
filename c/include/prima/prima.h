@@ -153,10 +153,6 @@ typedef struct {
   double *xl;
   double *xu;
 
-  // whether prima had to allocate xl/xu (private, do not use)
-  int _allocated_xl;
-  int _allocated_xu;
-
   // Aineq*x <= bineq constraint
   // Aineq is an m_ineq-by-n matrix stored in row-major order (line by line)
   // bineq is of size m_ineq
@@ -175,11 +171,8 @@ typedef struct {
   int m_nlcon;
 
   // should be set to the objective function value and constraints values of the starting X, cobyla-only
-  double f0;
+  double *f0;
   double *nlconstr0;
-
-  // whether prima had to allocate nlconstr0 (private, do not use)
-  int _allocated_nlconstr0;
   
 } prima_problem_t;
 
@@ -187,9 +180,6 @@ typedef struct {
 /* Initialize/free problem */
 PRIMAC_API
 int prima_init_problem(prima_problem_t *problem, int n);
-
-PRIMAC_API
-int prima_free_problem(prima_problem_t *problem);
 
 
 typedef struct {

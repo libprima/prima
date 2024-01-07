@@ -15,7 +15,7 @@ contains
 
 subroutine bobyqa_c(cobj_ptr, data_ptr, n, x, f, xl, xu, nf, rhobeg, rhoend, &
     & ftarget, maxfun, npt, iprint, callback_ptr, info) bind(C)
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER, C_F_POINTER
 use, non_intrinsic :: cintrf_mod, only : COBJ, CCALLBACK
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: bobyqa_mod, only : bobyqa
@@ -28,8 +28,8 @@ integer(C_INT), intent(in), value :: n
 ! We cannot use assumed-shape arrays for C interoperability
 real(C_DOUBLE), intent(inout) :: x(n)
 real(C_DOUBLE), intent(out) :: f
-real(C_DOUBLE), intent(in) :: xl(n)
-real(C_DOUBLE), intent(in) :: xu(n)
+type(C_PTR), intent(in), value :: xl
+type(C_PTR), intent(in), value :: xu
 integer(C_INT), intent(out) :: nf
 real(C_DOUBLE), intent(in), value :: rhobeg
 real(C_DOUBLE), intent(in), value :: rhoend
@@ -51,8 +51,8 @@ real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: ftarget_loc
 real(RP) :: x_loc(n)
-real(RP) :: xl_loc(n)
-real(RP) :: xu_loc(n)
+real(RP), pointer :: xl_loc(:)
+real(RP), pointer :: xu_loc(:)
 ! The initialization to null is necessary to avoid a bug with the newer Intel compiler ifx.
 ! See details here: https://fortran-lang.discourse.group/t/strange-issue-with-ifx-compiler-and-assume-recursion/7013
 ! The bug was observed in all versions of ifx up to 2024.0.1. Once this bug is fixed we should remove the
@@ -62,8 +62,16 @@ procedure(CCALLBACK), pointer :: cb_ptr => null()
 
 ! Read the inputs and convert them to the Fortran side types
 x_loc = real(x, kind(x_loc))
-xl_loc = real(xl, kind(xl_loc))
-xu_loc = real(xu, kind(xu_loc))
+if (C_ASSOCIATED(xl)) then
+    call C_F_POINTER(xl, xl_loc, shape=[n])
+else
+    xl_loc => null()
+end if
+if (C_ASSOCIATED(xu)) then
+    call C_F_POINTER(xu, xu_loc, shape=[n])
+else
+    xu_loc => null()
+end if
 rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
 rhoend_loc = real(rhoend, kind(rhoend_loc))
 ftarget_loc = real(ftarget, kind(ftarget_loc))

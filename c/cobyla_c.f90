@@ -14,7 +14,7 @@ contains
 
 subroutine cobyla_c(m_nlcon, cobjcon_ptr, data_ptr, n, x, f, cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, &
     & xl, xu, f0, nlconstr0, nf, rhobeg, rhoend, ftarget, maxfun, iprint, callback_ptr, info) bind(C)
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER, C_F_POINTER
 use, non_intrinsic :: cintrf_mod, only : COBJCON, CCALLBACK
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: cobyla_mod, only : cobyla
@@ -36,10 +36,10 @@ real(C_DOUBLE), intent(in) :: bineq(m_ineq)
 integer(C_INT), intent(in), value :: m_eq
 real(C_DOUBLE), intent(in) :: Aeq(n, m_eq)
 real(C_DOUBLE), intent(in) :: beq(m_eq)
-real(C_DOUBLE), intent(in) :: xl(n)
-real(C_DOUBLE), intent(in) :: xu(n)
-real(C_DOUBLE), intent(in), value :: f0
-real(C_DOUBLE), intent(in) :: nlconstr0(m_nlcon)
+type(C_PTR), intent(in), value :: xl
+type(C_PTR), intent(in), value :: xu
+type(C_PTR), intent(in), value :: f0
+type(C_PTR), intent(in), value :: nlconstr0
 integer(C_INT), intent(out) :: nf
 real(C_DOUBLE), intent(in), value :: rhobeg
 real(C_DOUBLE), intent(in), value :: rhoend
@@ -66,10 +66,10 @@ real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
 real(RP) :: ftarget_loc
 real(RP) :: x_loc(n)
-real(RP) :: xl_loc(n)
-real(RP) :: xu_loc(n)
-real(RP) :: f0_loc
-real(RP) :: nlconstr0_loc(m_nlcon)
+real(RP), pointer :: xl_loc(:)
+real(RP), pointer :: xu_loc(:)
+real(RP), pointer :: f0_loc
+real(RP), pointer :: nlconstr0_loc(:)
 ! The initialization to null is necessary to avoid a bug with the newer Intel compiler ifx.
 ! See details here: https://fortran-lang.discourse.group/t/strange-issue-with-ifx-compiler-and-assume-recursion/7013
 ! The bug was observed in all versions of ifx up to 2024.0.1. Once this bug is fixed we should remove the
@@ -85,10 +85,26 @@ Aineq_loc = real(transpose(Aineq), kind(Aineq_loc))
 bineq_loc = real(bineq, kind(bineq_loc))
 Aeq_loc = real(transpose(Aeq), kind(Aeq_loc))
 beq_loc = real(beq, kind(beq_loc))
-xl_loc = real(xl, kind(xl_loc))
-xu_loc = real(xu, kind(xu_loc))
-f0_loc = real(f0, kind(f0_loc))
-nlconstr0_loc = real(nlconstr0, kind(nlconstr0_loc))
+if (C_ASSOCIATED(xl)) then
+    call C_F_POINTER(xl, xl_loc, shape=[n])
+else
+    xl_loc => null()
+end if
+if (C_ASSOCIATED(xu)) then
+    call C_F_POINTER(xu, xu_loc, shape=[n])
+else
+    xu_loc => null()
+end if
+if (C_ASSOCIATED(f0)) then
+    call C_F_POINTER(f0, f0_loc)
+else
+    f0_loc => null()
+end if
+if (C_ASSOCIATED(nlconstr0)) then
+    call C_F_POINTER(nlconstr0, nlconstr0_loc, shape=[m_nlcon])
+else
+    nlconstr0_loc => null()
+end if
 rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
 rhoend_loc = real(rhoend, kind(rhoend_loc))
 ftarget_loc = real(ftarget, kind(ftarget_loc))

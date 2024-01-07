@@ -13,7 +13,6 @@ options.rhoend= 1e-3;
 options.maxfun = 200*n;  
 prima_result result;
 const int rc = prima_bobyqa(&fun, &problem, &options, &result);
-prima_free_problem(&problem);
 prima_free_result(&result);
 ```
 Problem and result structs should be freed after use with their dedicated free function.

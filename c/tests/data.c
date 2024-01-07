@@ -127,7 +127,7 @@ int main(int argc, char * argv[])
   }
   int rc = prima_minimize(algorithm, &problem, &options, &result);
   printf("f*=%g cstrv=%g nlconstr=%g rc=%d msg='%s' evals=%d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
-  prima_free_problem(&problem);
+  int success = (fabs(result.x[0]-3)>2e-2 || fabs(result.x[1]-2)>2e-2);
   prima_free_result(&result);
-  return (fabs(result.x[0]-3)>2e-2 || fabs(result.x[1]-2)>2e-2);
+  return success;
 }
