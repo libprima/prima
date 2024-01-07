@@ -213,7 +213,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 ### Current status
 
-#### Modern Fortran ([stardev](https://stardev.io/) ranking: [28 among 30,975](https://stardev.io/top/repos/fortran?developer=libprima&repo=prima) Fortran repos as of Jan. 2024)
+#### Modern Fortran
 
 After almost **three** years of intensive coding, the [modern Fortran version](./fortran) of
 PRIMA was finished by December 2022.
@@ -508,6 +508,9 @@ Zaikun Zhang](https://www.zhangzk.net).
 
 ### <a href="https://star-history.com/#libprima/prima&Date">Star history</a>
 
+[stardev](https://stardev.io/) ranking: [28 among 30,975](https://stardev.io/top/repos/fortran?developer=libprima&repo=prima) Fortran repos as of Jan. 2024.
+
 <img src="https://api.star-history.com/svg?repos=libprima/prima&type=Date">
+
 
 <p align="center"><strong>Thank you for your support.</strong></p>
