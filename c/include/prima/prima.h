@@ -104,13 +104,13 @@ typedef void (*prima_callback_t)(const int n, const double x[], const double f, 
 
 typedef struct {
   
-  // a reasonable initial change to the variables (default=1.0)
+  // a reasonable initial change to the variables
   double rhobeg;
 
-  // required accuracy for the variables (default=1e-6)
+  // required accuracy for the variables
   double rhoend;
 
-  // maximum number of function evaluations (default=-1 interpreted as 500*n)
+  // maximum number of function evaluations (default=500*n)
   int maxfun;
 
   // verbosity level, see the prima_message_t enum (default=PRIMA_MSG_NONE)
@@ -119,7 +119,7 @@ typedef struct {
   // target function value; optimization stops when f <= ftarget for a feasible point (default=-inf)
   double ftarget;
 
-  // number of points in the interpolation set n+2<=npt<=(n+1)(n+2)/2 (default=-1 interpreted as 2*n+1)
+  // number of points in the interpolation set n+2<=npt<=(n+1)(n+2)/2 (default=2*n+1)
   // ignored for uobyqa & cobyla
   int npt;
 
@@ -171,7 +171,7 @@ typedef struct {
   int m_nlcon;
 
   // should be set to the objective function value and constraints values of the starting X, cobyla-only
-  double *f0;
+  double f0;
   double *nlconstr0;
   
 } prima_problem_t;

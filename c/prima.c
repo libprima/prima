@@ -15,8 +15,8 @@ int prima_init_options(prima_options_t *options)
   {
     memset(options, 0, sizeof(prima_options_t));
     options->maxfun = 0;  // interpreted as maxfun taking the default value MAXFUN_DIM_DFT*n
-    options->rhobeg = 1.0;
-    options->rhoend = 1e-6;
+    options->rhobeg = NAN;  // interpreted by Fortran as not present
+    options->rhoend = NAN;  // interpreted by Fortran as not present
     options->iprint = PRIMA_MSG_NONE;
     options->ftarget = -INFINITY;
     options->npt = 0;  // interpreted as npt taking the default value 2*n+1
@@ -32,6 +32,7 @@ int prima_init_problem(prima_problem_t *problem, int n)
   {
     memset(problem, 0, sizeof(prima_problem_t));
     problem->n = n;
+    problem->f0 = NAN;
     return 0;
   }
   else
@@ -43,7 +44,7 @@ int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, c
              const int m_ineq, const double Aineq[], const double bineq[],
              const int m_eq, const double Aeq[], const double beq[],
              const double xl[], const double xu[],
-             double *f0, const double nlconstr0[],
+             const double f0, const double nlconstr0[],
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *info);
 int bobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f, const double xl[], const double xu[],
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *info);
@@ -79,9 +80,9 @@ int prima_check_problem(prima_problem_t *problem, prima_options_t *options, cons
     return PRIMA_NULL_X0;
   if ((use_constr && !problem->calcfc) || (!use_constr && !problem->calfun))
     return PRIMA_NULL_FUNCTION;
-  if (options->maxfun < 0)
+  if (options->maxfun == 0)
     options->maxfun = MAXFUN_DIM_DFT*problem->n;
-  if (options->npt < 0)
+  if (options->npt == 0)
     options->npt = 2*problem->n+1;
   return 0;
 }

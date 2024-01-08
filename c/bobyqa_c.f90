@@ -16,9 +16,11 @@ contains
 subroutine bobyqa_c(cobj_ptr, data_ptr, n, x, f, xl, xu, nf, rhobeg, rhoend, &
     & ftarget, maxfun, npt, iprint, callback_ptr, info) bind(C)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER, C_F_POINTER
+use, non_intrinsic :: bobyqa_mod, only : bobyqa
 use, non_intrinsic :: cintrf_mod, only : COBJ, CCALLBACK
 use, non_intrinsic :: consts_mod, only : RP, IK
-use, non_intrinsic :: bobyqa_mod, only : bobyqa
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Compulsory arguments
@@ -47,12 +49,14 @@ integer(IK) :: maxfun_loc
 integer(IK) :: npt_loc
 integer(IK) :: nf_loc
 real(RP) :: f_loc
-real(RP) :: rhobeg_loc
-real(RP) :: rhoend_loc
+real(RP), allocatable :: rhobeg_loc
+real(RP), allocatable :: rhoend_loc
 real(RP) :: ftarget_loc
 real(RP) :: x_loc(n)
-real(RP), pointer :: xl_loc(:)
-real(RP), pointer :: xu_loc(:)
+real(C_DOUBLE), pointer :: xl_loc_interm(:)
+real(RP), allocatable :: xl_loc(:)
+real(C_DOUBLE), pointer :: xu_loc_interm(:)
+real(RP), allocatable :: xu_loc(:)
 ! The initialization to null is necessary to avoid a bug with the newer Intel compiler ifx.
 ! See details here: https://fortran-lang.discourse.group/t/strange-issue-with-ifx-compiler-and-assume-recursion/7013
 ! The bug was observed in all versions of ifx up to 2024.0.1. Once this bug is fixed we should remove the
@@ -63,17 +67,21 @@ procedure(CCALLBACK), pointer :: cb_ptr => null()
 ! Read the inputs and convert them to the Fortran side types
 x_loc = real(x, kind(x_loc))
 if (C_ASSOCIATED(xl)) then
-    call C_F_POINTER(xl, xl_loc, shape=[n])
-else
-    xl_loc => null()
+    call C_F_POINTER(xl, xl_loc_interm, shape=[n])
+    call safealloc(xl_loc, int(n, IK))
+    xl_loc = real(xl_loc_interm, kind(xl_loc))
 end if
 if (C_ASSOCIATED(xu)) then
-    call C_F_POINTER(xu, xu_loc, shape=[n])
-else
-    xu_loc => null()
+    call C_F_POINTER(xu, xu_loc_interm, shape=[n])
+    call safealloc(xu_loc, int(n, IK))
+    xu_loc = real(xu_loc_interm, kind(xu_loc))
 end if
-rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
-rhoend_loc = real(rhoend, kind(rhoend_loc))
+if (.not. is_nan(rhobeg)) then
+    rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
+end if
+if (.not. is_nan(rhoend)) then
+    rhoend_loc = real(rhoend, kind(rhoend_loc))
+end if
 ftarget_loc = real(ftarget, kind(ftarget_loc))
 maxfun_loc = int(maxfun, kind(maxfun_loc))
 npt_loc = int(npt, kind(npt_loc))

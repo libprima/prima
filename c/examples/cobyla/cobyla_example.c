@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #define M_NLCON 1
+#define PROVIDE_INITIAL_F_AND_NLCONSTR 0
 
 static void fun(const double x[], double *f, double constr[], const void *data)
 {
@@ -40,6 +41,11 @@ int main(int argc, char * argv[])
   problem.calcfc = &fun;
   problem.x0 = x0;
   problem.m_nlcon = M_NLCON;
+#if PROVIDE_INITIAL_F_AND_NLCONSTR
+  double nlconstr0[M_NLCON] = {};
+  fun(x0, &(problem.f0), nlconstr0, NULL);
+  problem.nlconstr0 = nlconstr0;
+#endif
   // set up the options
   prima_options_t options;
   prima_init_options(&options);
