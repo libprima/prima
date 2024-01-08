@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 
 #define MAXFUN_DIM_DFT 500
 
@@ -58,10 +59,21 @@ int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], doub
              const double xl[], const double xu[],
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *info);
 
-int prima_check_problem(prima_problem_t *problem, prima_options_t *options, int alloc_bounds, int use_constr)
+int prima_check_problem(prima_problem_t *problem, prima_options_t *options, const int alloc_bounds, const int use_constr, const prima_algorithm_t algorithm)
 {
   if (!problem)
     return PRIMA_NULL_PROBLEM;
+
+  // check if the user provided information inconsistent with the algorithm
+  if (algorithm != PRIMA_COBYLA && (problem->calcfc || problem->nlconstr0 || problem->m_nlcon > 0))
+    return PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS;
+  if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA) &&
+      (problem->m_ineq > 0 || problem->m_eq > 0 || problem->Aineq || problem->bineq || problem->Aeq || problem->beq)) {
+    return PRIMA_PROBLEM_SOLVER_MISMATCH_LINEAR_CONSTRAINTS;
+  }
+  if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA && algorithm != PRIMA_BOBYQA) && (problem->xl || problem->xu))
+    return PRIMA_PROBLEM_SOLVER_MISMATCH_BOUNDS;
+
   if (!options)
     return PRIMA_NULL_OPTIONS;
   if (!problem->x0)
@@ -164,7 +176,7 @@ int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, 
   int alloc_bounds = (algorithm == PRIMA_COBYLA) || (algorithm == PRIMA_BOBYQA) || (algorithm == PRIMA_LINCOA);
   int use_constr = (algorithm == PRIMA_COBYLA);
 
-  int info = prima_check_problem(problem, options, alloc_bounds, use_constr);
+  int info = prima_check_problem(problem, options, alloc_bounds, use_constr, algorithm);
   if (info == 0)
     info = prima_init_result(result, problem);
 
@@ -281,6 +293,12 @@ const char *prima_get_rc_string(const prima_rc_t rc)
       return "NULL result";
     case PRIMA_NULL_FUNCTION:
       return "NULL function";
+    case PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS:
+      return "Nonlinear constraints were provided for an algorithm that cannot handle them";
+    case PRIMA_PROBLEM_SOLVER_MISMATCH_LINEAR_CONSTRAINTS:
+      return "Linear constraints were provided for an algorithm that cannot handle them";
+    case PRIMA_PROBLEM_SOLVER_MISMATCH_BOUNDS:
+      return "Bounds were provided for an algorithm that cannot handle them";
     default:
       return "Invalid return code";
   }
