@@ -413,7 +413,7 @@ if probinfo.reduced
     xhist(~probinfo.fixedx, :) = freexhist;
 end
 
-% Include the possibly revised xhist to output if necessary.if
+% Include the possibly revised xhist to output if necessary.
 if output_has_xhist
     output.xhist = xhist;
 end

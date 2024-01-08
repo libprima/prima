@@ -117,6 +117,13 @@ jobs:
           $SEDI "s|\(.*maybe due to overflow.*$\)|\1\nwrite(*,*) 'x = ', x; write(*,*) 'x_dp = ', x_dp|" fmxapi.F90
           cat fmxapi.F90
 
+      - name: Revise postprima.m
+        shell: bash
+        run: |
+          cd matlab/interfaces/private/
+          $SEDI "s/max(\[0, chist\]) > 0)/max(\[0, chist\]) > 0)\nprobinfo.raw_data\noutput\nchist/" postprima.m
+          cat postprima.m
+
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
