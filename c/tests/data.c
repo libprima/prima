@@ -71,7 +71,6 @@ int main(int argc, char * argv[])
   double xu[] = {6.0, 6.0};
   prima_problem_t problem;
   prima_init_problem(&problem, n);
-  problem.calcfc = &fun_con;
   problem.calfun = &fun;
   problem.x0 = x0;
   prima_options_t options;
@@ -79,31 +78,39 @@ int main(int argc, char * argv[])
   options.iprint = PRIMA_MSG_RHO;
   options.maxfun = 500*n;
   options.data = data_ref;
-  problem.m_ineq = 3;
   double Aineq[3*2] = {1.0, 0.0,
                        0.0, 1.0,
                        1.0, 1.0};
   double bineq[3] = {4.0,
                      3.0,
                      10.0};
-  problem.Aineq = Aineq;
-  problem.bineq = bineq;
-  problem.xl = xl;
-  problem.xu = xu;
   prima_result_t result;
   prima_algorithm_t algorithm = 0;
   if(strcmp(algo, "bobyqa") == 0)
   {
     algorithm = PRIMA_BOBYQA;
+    problem.xl = xl;
+    problem.xu = xu;
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
     algorithm = PRIMA_COBYLA;
+    problem.xl = xl;
+    problem.xu = xu;
+    problem.m_ineq = 3;
+    problem.Aineq = Aineq;
+    problem.bineq = bineq;
     problem.m_nlcon = M_NLCON;
+    problem.calcfc = &fun_con;
   }
   else if(strcmp(algo, "lincoa") == 0)
   {
     algorithm = PRIMA_LINCOA;
+    problem.xl = xl;
+    problem.xu = xu;
+    problem.m_ineq = 3;
+    problem.Aineq = Aineq;
+    problem.bineq = bineq;
   }
   else if(strcmp(algo, "newuoa") == 0)
   {

@@ -63,6 +63,17 @@ int prima_check_problem(prima_problem_t *problem, prima_options_t *options, cons
 {
   if (!problem)
     return PRIMA_NULL_PROBLEM;
+
+  // check if the user provided information inconsistent with the algorithm
+  if (algorithm != PRIMA_COBYLA && (problem->calcfc || problem->nlconstr0 || problem->m_nlcon > 0))
+    return PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS;
+  if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA) &&
+      (problem->m_ineq > 0 || problem->m_eq > 0 || problem->Aineq || problem->bineq || problem->Aeq || problem->beq)) {
+    return PRIMA_PROBLEM_SOLVER_MISMATCH_LINEAR_CONSTRAINTS;
+  }
+  if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA && algorithm != PRIMA_BOBYQA) && (problem->xl || problem->xu))
+    return PRIMA_PROBLEM_SOLVER_MISMATCH_BOUNDS;
+
   if (!options)
     return PRIMA_NULL_OPTIONS;
   if (!problem->x0)
@@ -91,20 +102,6 @@ int prima_check_problem(prima_problem_t *problem, prima_options_t *options, cons
     options->maxfun = MAXFUN_DIM_DFT*problem->n;
   if (options->npt < 0)
     options->npt = 2*problem->n+1;
-
-  // warn the user if they have supplied nonlinear constraints for an algorithm that does not use them
-  if (algorithm != PRIMA_COBYLA && (problem->calcfc || problem->nlconstr0 || problem->m_nlcon > 0)) {
-    fprintf(stderr, "Warning: the provided nonlinear constraints are ignored for this algorithm\n");
-  }
-  // warn the user if they have supplied linear constraints for an algorithm that does not use them
-  if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA) &&
-      (problem->m_ineq > 0 || problem->m_eq > 0 || problem->Aineq || problem->bineq || problem->Aeq || problem->beq)) {
-    fprintf(stderr, "Warning: the provided linear constraints are ignored for this algorithm\n");
-  }
-  // warn the user if they have supplied bounds for an algorithm that does not use them
-  if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA && algorithm != PRIMA_BOBYQA) && (problem->xl || problem->xu)) {
-    fprintf(stderr, "Warning: the provided bounds are ignored for this algorithm\n");
-  }
   return 0;
 }
 
@@ -296,6 +293,12 @@ const char *prima_get_rc_string(const prima_rc_t rc)
       return "NULL result";
     case PRIMA_NULL_FUNCTION:
       return "NULL function";
+    case PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS:
+      return "Nonlinear constraints were provided for an algorithm that cannot handle them";
+    case PRIMA_PROBLEM_SOLVER_MISMATCH_LINEAR_CONSTRAINTS:
+      return "Linear constraints were provided for an algorithm that cannot handle them";
+    case PRIMA_PROBLEM_SOLVER_MISMATCH_BOUNDS:
+      return "Bounds were provided for an algorithm that cannot handle them";
     default:
       return "Invalid return code";
   }
