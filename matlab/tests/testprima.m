@@ -187,35 +187,16 @@ cellfun(@(solver) warning('on', [solver, ':ReviseX0']), all_solvers);
 
 return
 
-function [f, g, H]=chrosen(x)
-%CHROSEN calculates the function value, gradient, and Hessian of the
-%   Chained Rosenbrock function.
+function f = chrosen(x)
+%CHROSEN calculates the function value of the Chained Rosenbrock function.
 %   See
 %   [1] Toint (1978), 'Some numerical results using a sparse matrix
 %   updating formula in unconstrained optimization'
 %   [2] Powell (2006), 'The NEWUOA software for unconstrained
 %   optimization without derivatives'
 
-n=length(x);
-
 alpha = 4;
-
-f=0; % Function value
-g=zeros(n,1); % Gradient
-H=zeros(n,n); % Hessian
-
-for i=1:n-1
-    f = f + (x(i)-1)^2+alpha*(x(i)^2-x(i+1))^2;
-
-    g(i)   = g(i) + 2*(x(i)-1)+alpha*2*(x(i)^2-x(i+1))*2*x(i);
-    g(i+1) = g(i+1) - alpha*2*(x(i)^2-x(i+1));
-
-    H(i,i)    =  H(i,i)+2+alpha*2*2*(3*x(i)^2-x(i+1));
-    H(i,i+1)  =  H(i,i+1)-alpha*2*2*x(i);
-    H(i+1,i)  =  H(i+1,i) -alpha*2*2*x(i);
-    H(i+1,i+1)=  H(i+1,i+1)+alpha*2;
-end
-
+f = sum((x(1:end-1)-1).^2 + alpha*(x(2:end)-x(1:end-1).^2).^2);
 return
 
 function f = chebquad(x)
@@ -241,14 +222,13 @@ end
 
 return
 
-function [f, g] = hmlb(x)
-%HMLB evaluates the Himmelblau's function and its gradient
+function f = hmlb(x)
+%HMLB evaluates the Himmelblau's function.
 %
 %   See
 %   [1]  Himmelblau (1972),  'Applied Nonlinear Programming'
 
 f = (x(1)^2+x(2)-11)^2 + (x(1)+x(2)^2-7)^2;
-g = 2*[-7 + x(1) + x(2)^2 + 2*x(1)*(-11 + x(1)^2 + x(2)); -11 + x(1)^2 + x(2) + 2*x(2)*(-7 + x(1) + x(2)^2)];
 
 return
 
