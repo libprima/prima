@@ -59,7 +59,9 @@ jobs:
             cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_r4_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r4_d1_tst.${{ matrix.solver }}
             cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_r8_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r8_d1_tst.${{ matrix.solver }}
             export FS=18
-            cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make gtest
+            cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
+            export EXAMPLE_NUM=1 && make clean && make gtest
+            export EXAMPLE_NUM=2 && make clean && make gtest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.0.0

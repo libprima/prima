@@ -105,7 +105,9 @@ jobs:
                 export FFLAGS='-fast'
                 cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
-            cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make gtest
+            cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
+            export EXAMPLE_NUM=1 && make clean && make gtest
+            export EXAMPLE_NUM=2 && make clean && make gtest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.0.0

@@ -64,7 +64,9 @@ jobs:
           export TESTDIM=${{ matrix.testdim }}
           cd "$ROOT_DIR"/fortran/tests && make stest_${{ matrix.ikind }}.${{ matrix.solver }}
           # sunf95 cannot handle matrix indexing with TRUELOC or allocatable characters.
-          # cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make stest
+          # cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
+ export EXAMPLE_NUM=1 && make clean && make stest
+ export EXAMPLE_NUM=2 && make clean && make stest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.0.0

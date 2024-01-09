@@ -64,7 +64,9 @@ jobs:
           printf "\nExtensive tests are skipped due to the unavailability of date_and_time() and random_number."
           printf "\nSee the comments in the yml file.\nCheck whether they are available now."
           printf "\n********************************************************************************\n\n"
-          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make vtest
+          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
+          export EXAMPLE_NUM=1 && make clean && make vtest
+          export EXAMPLE_NUM=2 && make clean && make vtest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.0.0

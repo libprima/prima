@@ -66,7 +66,9 @@ jobs:
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
           cd "$ROOT_DIR"/fortran/tests && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
-          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }} && make ftest
+          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
+          export EXAMPLE_NUM=1 && make clean && make ftest
+          export EXAMPLE_NUM=2 && make clean && make ftest
 
       # - name: Store artifacts
       #   uses: actions/upload-artifact@v3.1.2
