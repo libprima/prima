@@ -135,13 +135,13 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
     - [![Lint the Fortran code and the MEX gateways with nagfor](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml)
 
-- [Tests](https://github.com/libsprima/prima/actions) at [libsprima/prima](https://github.com/libsprima/prima)
+- <a name="verification"></a> [Tests](https://github.com/libsprima/prima/actions) at [libsprima/prima](https://github.com/libsprima/prima)
     - [![Verification, small](https://github.com/libsprima/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_small.yml)
     - [![Verification, big](https://github.com/libsprima/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_big.yml)
     - [![Verification, large](https://github.com/libsprima/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_large.yml)
     - [![Plot performance profiles for lincoa](https://github.com/libsprima/prima/actions/workflows/profile_lincoa_small.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/profile_lincoa_small.yml)
 
-- [Tests](https://github.com/primapack/prima/actions) at [primapack/prima](https://github.com/primapack/prima)
+- <a name="profiling"></a> [Tests](https://github.com/primapack/prima/actions) at [primapack/prima](https://github.com/primapack/prima)
 
     - [![Plot performance profiles for cobyla, small](https://github.com/primapack/prima/actions/workflows/profile_cobyla_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_cobyla_small.yml)
     - [![Plot performance profiles for uobyqa, small](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml)
