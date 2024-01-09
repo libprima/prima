@@ -8,7 +8,7 @@ static void fun(const double x[], double *f, const void *data)
 {
   const double x1 = x[0];
   const double x2 = x[1];
-  *f = 5*(x1-3)*(x1-3)+7*(x2-2)*(x2-2)+0.1*(x1+x2)-10;
+  *f = pow(x1-5, 2) + pow(x2-4, 2);
   (void)data;
 }
 
@@ -47,5 +47,5 @@ int main(int argc, char * argv[])
   printf("x*={%g, %g} rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], rc, result.message, result.nf);
   prima_free_problem(&problem);
   prima_free_result(&result);
-  return (fabs(result.x[0]-3)>2e-2 || fabs(result.x[1]-2)>2e-2);
+  return (fabs(result.x[0]-5)>2e-2 || fabs(result.x[1]-4)>2e-2);
 }

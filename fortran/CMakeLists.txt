@@ -103,37 +103,42 @@ endif()
 
 install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/mod DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/prima)
 
-macro (prima_add_f_test name)
-  add_executable (example_${name}_fortran_exe EXCLUDE_FROM_ALL examples/${name}/${name}_example.f90)
-  target_link_libraries (example_${name}_fortran_exe PRIVATE primaf)
-  target_include_directories (example_${name}_fortran_exe PRIVATE ${CMAKE_BINARY_DIR}/fortran)
-  set_target_properties(example_${name}_fortran_exe PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/examples/${name}/mod)
+macro (prima_add_f_test name number)
+  add_executable (example_${name}_fortran_${number}_exe EXCLUDE_FROM_ALL examples/${name}/${name}_example_${number}.f90)
+  target_link_libraries (example_${name}_fortran_${number}_exe PRIVATE primaf)
+  target_include_directories (example_${name}_fortran_${number}_exe PRIVATE ${CMAKE_BINARY_DIR}/fortran)
+  set_target_properties(example_${name}_fortran_${number}_exe PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/examples/${name}_${number}/mod)
   if (WIN32)
-    set_target_properties(example_${name}_fortran_exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+    set_target_properties(example_${name}_fortran_${number}_exe PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
   endif()
   if (PRIMA_ENABLE_EXAMPLES)
-    set_target_properties (example_${name}_fortran_exe PROPERTIES EXCLUDE_FROM_ALL FALSE)
+    set_target_properties (example_${name}_fortran_${number}_exe PROPERTIES EXCLUDE_FROM_ALL FALSE)
   endif ()
 
   # Outside of CI we don't want to force people to run examples with gdb, so we test the executables by themselves.
   # We want these to run in CI as well, because sometimes running with gdb masks an error, so we set them up
   # before we set up the examples for CI
-  add_test (NAME example_${name}_fortran COMMAND example_${name}_fortran_exe)
+  add_test (NAME example_${name}_fortran_${number} COMMAND example_${name}_fortran_${number}_exe)
 
   # Within CI, we'd like to run with gdb so that if there's a segfault the logs will have a stacktrace we can use to investigate.
   # Of course this can be run locally as well if you define CI in your environment.
   if(NOT APPLE AND UNIX AND DEFINED ENV{CI})  # Apple security policy will not allow running gdb in CI
-    add_test (NAME example_${name}_fortran_with_gdb COMMAND gdb -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb example_${name}_fortran_exe)
+    add_test (NAME example_${name}_fortran_${number}_with_gdb COMMAND gdb -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb example_${name}_fortran_${number}_exe)
   elseif(WIN32 AND DEFINED ENV{CI})
     # For Windows we need to provide the full path to the executable since it is installed to a different directory
-    add_test (NAME example_${name}_fortran_with_gdb COMMAND gdb -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/example_${name}_fortran_exe.exe)
+    add_test (NAME example_${name}_fortran_${number}_with_gdb COMMAND gdb -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/example_${name}_fortran_${number}_exe.exe)
   endif()
 
-  add_dependencies(examples example_${name}_fortran_exe)
+  add_dependencies(examples example_${name}_fortran_${number}_exe)
 endmacro ()
 
-prima_add_f_test (cobyla)
-prima_add_f_test (bobyqa)
-prima_add_f_test (newuoa)
-prima_add_f_test (uobyqa)
-prima_add_f_test (lincoa)
+prima_add_f_test (cobyla 1)
+prima_add_f_test (cobyla 2)
+prima_add_f_test (bobyqa 1)
+prima_add_f_test (bobyqa 2)
+prima_add_f_test (newuoa 1)
+prima_add_f_test (newuoa 2)
+prima_add_f_test (uobyqa 1)
+prima_add_f_test (uobyqa 2)
+prima_add_f_test (lincoa 1)
+prima_add_f_test (lincoa 2)
