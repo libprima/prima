@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v4
         if: github.event.inputs.git-ref != ''
         with:
-          ref: ${{ github.event.inputs.git-ref }} 
+          ref: ${{ github.event.inputs.git-ref }}
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
@@ -65,8 +65,8 @@ jobs:
           cd "$ROOT_DIR"/fortran/tests && make stest_${{ matrix.ikind }}.${{ matrix.solver }}
           # sunf95 cannot handle matrix indexing with TRUELOC or allocatable characters.
           # cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
- export EXAMPLE_NUM=1 && make clean && make stest
- export EXAMPLE_NUM=2 && make clean && make stest
+          # export EXAMPLE_NUM=1 && make clean && make stest
+          # export EXAMPLE_NUM=2 && make clean && make stest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.0.0
