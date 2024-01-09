@@ -18,7 +18,7 @@ static void callback(int n, const double x[], double f, int nf, int tr, double c
   (void)cstrv;
   (void)m_nlcon;
   (void)nlconstr;
-  printf("best point so far: x=[%g;%g] f=%g nf=%d tr=%d\n", x[0], x[1], f, nf, tr);
+  printf("best point so far: x={%g, %g} f=%g nf=%d tr=%d\n", x[0], x[1], f, nf, tr);
   *terminate = 0;
 }
 
