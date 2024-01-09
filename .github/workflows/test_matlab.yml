@@ -128,7 +128,7 @@ jobs:
         shell: bash
         run: |
           cd fortran/classical/cobyla/
-          $SEDI "s/cstrv = maxval(\[ZERO, -constr\])/cstrv = maxval([\ZERO, -constr\])\nwrite(*,*) 'x = ', x(1:n)\nwrite(*,*) 'f = ', f\nwrite(*,*) 'constr = ', constr(1:m)\nwrite(*,*) 'cstrv = ', cstrv/" cobylb.f
+          $SEDI "s/\(\s*\)cstrv = maxval(\[ZERO, -constr\])\s*$/\1cstrv = maxval([\ZERO, -constr\])\n\1write(*,*) 'x = ', x(1:n)\n\1write(*,*) 'f = ', f\n\1write(*,*) 'constr = ', constr(1:m)\n\1write(*,*) 'cstrv = ', cstrv/" cobylb.f
           cat cobylb.f
 
       - name: Link gfortran for MATLAB on Linux
