@@ -43,13 +43,13 @@ real(RP), intent(in), optional :: cstrv
 real(RP), intent(in), optional :: nlconstr(:)
 logical, intent(out), optional :: terminate
 
-if(.false.) print *, nlconstr   ! Suppress compiler warning about unused variable
-if(.false.) print *, terminate  ! Suppress compiler warning about unused variable
+if (.false.) print *, nlconstr   ! Suppress compiler warning about unused variable
+if (.false.) print *, terminate  ! Suppress compiler warning about unused variable
 
-write(*, '("best point so far: x=[", F6.4, ";", F6.4, "] f=", F6.3, " cstrv=[", F6.3, "] nf=", I0, " tr=", I0, "")') &
+write (*, '("best point so far: x=[", F6.4, "; ", F6.4, "] f=", F6.3, " cstrv=", F6.3, " nf=", I0, " tr=", I0, "")') &
     & x(1), x(2), f, cstrv, nf, tr
-    
-end subroutine callback_fcn    
+
+end subroutine callback_fcn
 
 end module calfun_mod
 
@@ -60,7 +60,7 @@ program lincoa_exmp
 ! The following line makes the solver available.
 use lincoa_mod, only : lincoa
 
-! The following line specifies which module provides CALFUN.
+! The following line specifies which module provides CALFUN and CALLBACK_FCN.
 use calfun_mod, only : RP, IK, calfun, callback_fcn
 
 implicit none
@@ -74,9 +74,8 @@ x0 = 0.0_RP
 
 ! Define the constraints. We define constraints that will be active
 ! in order to demonstrate their usage. The constraint is x1 + x2 < 8
-Aineq(1, 1) = 1_IK
-Aineq(1, 2) = 1_IK
-bineq(1) = 8
+Aineq = 1.0_RP
+bineq = 8.0_RP
 
 ! The following lines illustrates how to call the solver.
 x = x0
@@ -90,4 +89,3 @@ call lincoa(calfun, x, f, cstrv, Aineq, bineq, rhobeg=1.0_RP, iprint=1, nf=nf, i
 
 
 end program lincoa_exmp
-    

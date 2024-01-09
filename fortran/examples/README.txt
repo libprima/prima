@@ -2,16 +2,21 @@ This directory contains simple examples that illustrate how to use the modernize
 implementation of Powell's derivative-free optimization solvers.
 
 N.B.:
+
 1. See the Makefiles for how to compile the examples.
+
 2. The first example in every folder, example_1, uses the same objective function:
-f(x1, x2) = (x1 - 5)**2 + (x2 - 4)**2. The minimum point is obviously (5, 4) with an
-optimal value of 0. This example uses a trivial objective function in order to let the user
-focus on understanding the PRIMA API and usage.
-2. The examples assume that the macros in ../common/ppf.h are set to their default values. In
+f(x1, x2) = (x1 - 5)**2 + (x2 - 4)**2.
+The unconstrained minimizer is obviously (5, 4) with an optimal value of 0. This example uses a
+trivial objective function in order to let the user focus on understanding the PRIMA API and usage.
+
+3. The examples assume that the macros in ../common/ppf.h are set to their default values. In
 particular, PRIMA_REAL_PRECISION = 64 (double precision) and PRIMA_INTEGER_KIND = 0 (default integer).
-3. In the Makefiles, we impose Fortran 2018 standard in the compilation. It is our intention to be
+
+4. In the Makefiles, we impose Fortran 2018 standard in the compilation. It is our intention to be
 compliant with Fortran 2008 and above.
-4. As of June 2023, the examples run successfully with the following compilers.
+
+5. As of June 2023, the examples run successfully with the following compilers.
 - AMD AOCC Flang 4.0.0
 - Arm Fortran Compiler 22.1
 - Classic Flang 15.0.3

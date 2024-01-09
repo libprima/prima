@@ -47,7 +47,7 @@ if(.false.) print *, cstrv      ! Suppress compiler warning about unused variabl
 if(.false.) print *, nlconstr   ! Suppress compiler warning about unused variable
 if(.false.) print *, terminate  ! Suppress compiler warning about unused variable
 
-write(*, '("best point so far: x=[", F6.4, ";", F6.4, "] f=", F6.3, " nf=", I0, " tr=", I0, "")') &
+write(*, '("best point so far: x=[", F6.4, "; ", F6.4, "] f=", F6.3, " nf=", I0, " tr=", I0, "")') &
     & x(1), x(2), f, nf, tr
     
 end subroutine callback_fcn    
@@ -61,7 +61,7 @@ program uobyqa_exmp
 ! The following line makes the solver available.
 use uobyqa_mod, only : uobyqa
 
-! The following line specifies which module provides CALFUN.
+! The following line specifies which module provides CALFUN and CALLBACK_FCN.
 use calfun_mod, only : RP, calfun, callback_fcn
 
 implicit none

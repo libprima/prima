@@ -50,13 +50,12 @@ real(RP), intent(in), optional :: cstrv
 real(RP), intent(in), optional :: nlconstr(:)
 logical, intent(out), optional :: terminate
 
-if(.false.) print *, cstrv      ! Suppress compiler warning about unused variable
-if(.false.) print *, terminate  ! Suppress compiler warning about unused variable
+if (.false.) print *, terminate  ! Suppress compiler warning about unused variable
 
-write(*, '("best point so far: x=[", F6.4, ";", F6.4, "] f=", F6.3, " nlc=[", F6.3, "] nf=", I0, " tr=", I0, "")') &
-    & x(1), x(2), f, nlconstr(1), nf, tr
-    
-end subroutine callback_fcn    
+write (*, '("best point so far: x=[", F6.4, "; ", F6.4, "] f=", F6.3, " cstrv=", F6.3, &
+    & " nlc=[", F6.3, "] nf=", I0, " tr=", I0, "")') x(1), x(2), f, cstrv, nlconstr(1), nf, tr
+
+end subroutine callback_fcn
 
 end module calcfc_mod
 
@@ -67,7 +66,7 @@ program cobyla_exmp
 ! The following line makes the solver available.
 use cobyla_mod, only : cobyla
 
-! The following line specifies which module provides CALcFc.
+! The following line specifies which module provides CALCFC and CALLBACK_FCN.
 use calcfc_mod, only : RP, IK, calcfc, callback_fcn
 
 implicit none
@@ -91,4 +90,3 @@ call cobyla(calcfc, 1_IK, x, f, cstrv, rhobeg=1.0D-1, iprint=1, nf=nf, info=info
 
 
 end program cobyla_exmp
-    
