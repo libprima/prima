@@ -61,7 +61,7 @@ program lincoa_exmp
 use lincoa_mod, only : lincoa
 
 ! The following line specifies which module provides CALFUN and CALLBACK_FCN.
-use calfun_mod, only : RP, IK, calfun, callback_fcn
+use calfun_mod, only : RP, calfun, callback_fcn
 
 implicit none
 
