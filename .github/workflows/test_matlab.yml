@@ -124,6 +124,13 @@ jobs:
           $SEDI "s/max(\[0, chist\]) > 0)/max(\[0, chist\]) > 0)\nprobinfo.raw_data\noutput\nchist/" postprima.m
           cat postprima.m
 
+      - name: Revise cobylb.f
+        shell: bash
+        run: |
+          cd fortran/classical/cobyla/
+          $SEDI "s/cstrv = maxval(\[ZERO, -constr\])/cstrv = maxval([\ZERO, -constr\])\nwrite(*,*) 'x = ', x(1:n)\nwrite(*,*) 'f = ', f\nwrite(*,*) 'constr = ', constr(1:m)\nwrite(*,*) 'cstrv = ', cstrv/" cobylb.f
+          cat cobylb.f
+
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
