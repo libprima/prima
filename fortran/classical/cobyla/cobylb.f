@@ -131,7 +131,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       if (nfvals > 1) then
       call evaluate(calcfc, x, f, constr)
       constr = -constr
-      cstrv = maxval([ZERO, -constr])
+      cstrv = ZERO
+      if (m > 0) cstrv = maxval([ZERO, -constr])
       end if
       con(1:m) = constr !!!
       call savehist(nfvals, x, xhist, f, fhist, cstrv, chist,
@@ -729,7 +730,8 @@ C     CONSAV are dumped into CON to be returned by COBYLA.
 !      RETURN
 !      END
       constr = con(1:m)
-      cstrv = maxval([0.0_RP, -constr])
+      cstrv = ZERO
+      if (m > 0) cstrv = maxval([ZERO, -constr])
       call rangehist(nfvals, xhist, fhist, chist, conhist)
       RETURN
       end subroutine cobylb

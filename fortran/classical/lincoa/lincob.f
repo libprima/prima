@@ -394,7 +394,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       !CALL CALFUN (N,X,F)
       call evaluate(calfun, x, f)
       nf = nf + 1
-      cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+      cstrv = ZERO
+      if (m > 0) cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
       call savehist(nf, x, xhist, f, fhist, cstrv, chist)
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
@@ -730,7 +731,8 @@ C      IF (IPRINT .GE. 1) THEN
 
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!
-      cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
+      cstrv = ZERO
+      if (m > 0) cstrv = maximum([ZERO, matprod(x, A_orig) - b_orig])
 ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
       call rangehist(nf, xhist, fhist, chist)
 !----------------------------------------------------------------------!
