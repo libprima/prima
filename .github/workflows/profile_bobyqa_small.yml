@@ -130,7 +130,7 @@ jobs:
     needs: test
     steps:
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v4.1.0
+        uses: actions/download-artifact@v4.1.1
       - name: Move all artifacts to the current directory
         run: ls -al && mv */* ./ && ls -al
       - name: Upload all files
