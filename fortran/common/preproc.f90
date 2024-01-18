@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, January 08, 2024 AM02:38:42
+! Last Modified: Thursday, January 18, 2024 PM11:26:36
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -93,6 +93,8 @@ if (DEBUGGING) then
     if (lower(solver) == 'cobyla' .and. present(m) .and. present(is_constrained)) then
         call validate(m == 0 .or. is_constrained, 'For COBYLA, M == 0 unless the problem is constrained', srname)
     end if
+    call validate(present(maxfilt) .eqv. (lower(solver) == 'lincoa' .or. lower(solver) == 'cobyla'), &
+        & 'MAXFILT is present if and only if the solver is LINCOA or COBYLA', srname)
     if (lower(solver) == 'bobyqa') then
         call validate(present(xl) .and. present(xu), 'XL and XU are present if the solver is BOBYQA', srname)
         call validate(all(xu - xl >= TWO * EPS), 'MINVAL(XU-XL) > 2*EPS', srname)
@@ -146,28 +148,32 @@ case default  ! CASE ('NEWUOA', 'BOBYQA', 'LINCOA')
     min_maxfun = int(n) + 3
     min_maxfun_str = 'N + 3'
 end select
-if (maxfun <= max(0, min_maxfun)) then
+if (maxfun == 0) then  ! We use MAXFUN = 0 to indicate that MAXFUN takes the default value MAXFUN_DIM_DFT*N.
+    if (MAXFUN_DIM_DFT >= huge(maxfun) / n) then  ! Avoid overflow when N is large.
+        maxfun = huge(maxfun)
+    else
+        maxfun = MAXFUN_DIM_DFT * n
+    end if
+elseif (maxfun <= max(0, min_maxfun)) then
     if (maxfun > 0) then
         maxfun = int(min_maxfun, kind(maxfun))
-    else  ! We assume that nonpositive values of MAXFUN are produced by overflow.
-        if (MAXFUN_DIM_DFT >= huge(maxfun) / n) then  ! Avoid overflow when N is large.
-            maxfun = huge(maxfun)
-        else
-            maxfun = MAXFUN_DIM_DFT * n
-        end if
+    else  ! We assume that negative values of MAXFUN are produced by overflow.
+        maxfun = huge(maxfun)
     end if
     call warning(solver, 'Invalid MAXFUN; it should be at least '//min_maxfun_str//'; it is set to '//num2str(maxfun))
 end if
 
 ! Validate MAXHIST
-if (maxhist < 0) then
+if (maxhist <= 0) then
     maxhist = maxfun
-    call warning(solver, 'Invalid MAXHIST; it should be a nonnegative integer; it is set to '//num2str(maxhist))
+    if (maxhist /= 0) then  ! No warning if MAXHIST = 0, we use which to indicate that MAXHIST takes the default value.
+        call warning(solver, 'Invalid MAXHIST; it should be a positive integer; it is set to '//num2str(maxhist))
+    end if
 end if
 maxhist = min(maxhist, maxfun)  ! MAXHIST > MAXFUN is never needed.
 
-! Validate FTARGET. We do not raise a warning if FTARGET is NaN.
-if (is_nan(ftarget)) then
+! Validate FTARGET.
+if (is_nan(ftarget)) then  ! No warning if FTARGET is NaN, we use which to indicate that FTARGET takes the default value.
     ftarget = FTARGET_DFT
 end if
 
@@ -176,16 +182,18 @@ if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver)
     & .and. present(npt)) then
     if (npt < n + 2 .or. npt >= maxfun .or. 2 * npt > int(n + 2) * int(n + 1)) then  ! INT(*) avoids overflow when IK is 16-bit.
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
-        call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2]'// &
-            & ' and less than MAXFUN; it is set to '//num2str(npt))
+        if (npt /= 0) then  ! No warning if NPT = 0, we use which to indicate that NPT takes the default value.
+            call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2]'// &
+                & ' and less than MAXFUN; it is set to '//num2str(npt))
+        end if
     end if
 end if
 
 ! Validate MAXFILT
 if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cobyla')) then
     maxfilt_in = maxfilt
-    if (maxfilt < 1) then
-        maxfilt = MAXFILT_DFT  ! The inputted MAXFILT is obviously wrong.
+    if (maxfilt <= 0) then
+        maxfilt = MAXFILT_DFT
     else
         maxfilt = max(MIN_MAXFILT, maxfilt)  ! The inputted MAXFILT is too small.
     end if
@@ -205,7 +213,7 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     end if
     maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
     if (is_constrained_loc) then
-        if (maxfilt_in < 1) then
+        if (maxfilt_in < 0) then  ! No warning if MAXFILT = 0, we use which to indicate that MAXFILT takes the default value.
             call warning(solver, 'Invalid MAXFILT; it should be a positive integer; it is set to ' &
                 & //num2str(maxfilt))
         elseif (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
@@ -217,26 +225,30 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
 end if
 
 ! Validate ETA1 and ETA2
-if (is_nan(eta1) .or. eta1 < 0 .or. eta1 >= 1) then
+if (.not. (eta1 >= 0 .and. eta1 < 1)) then
     ! Take ETA2 into account if it has a valid value.
     if (eta2 >= 0 .and. eta2 < 1) then
         eta1 = eta2 / 7.0_RP
     else
         eta1 = ETA1_DFT
     end if
-    call warning(solver, 'Invalid ETA1; it should be in the interval [0, 1) and not more than ETA2;'// &
-        & ' it is set to '//num2str(eta1))
+    if (.not. is_nan(eta1)) then  ! No warning if ETA1 is NaN, we use which to indicate that ETA1 takes the default value.
+        call warning(solver, 'Invalid ETA1; it should be in the interval [0, 1) and not more than ETA2;'// &
+            & ' it is set to '//num2str(eta1))
+    end if
 end if
 
-if (is_nan(eta2) .or. eta2 < eta1 .or. eta2 < 0 .or. eta2 >= 1) then
+if (.not. (eta2 >= eta1 .and. eta2 >= 0 .and. eta2 < 1)) then
     ! Take ETA1 into account if it has a valid value.
     if (eta1 >= 0 .and. eta1 < 1) then
         eta2 = (eta1 + TWO) / 3.0_RP
     else
         eta2 = ETA2_DFT
     end if
-    call warning(solver, 'Invalid ETA2; it should be in the interval [0, 1) and not less than ETA1;'// &
-        & ' it is set to '//num2str(eta2))
+    if (.not. is_nan(eta2)) then  ! No warning if ETA2 is NaN, we use which to indicate that ETA2 takes the default value.
+        call warning(solver, 'Invalid ETA2; it should be in the interval [0, 1) and not less than ETA1;'// &
+            & ' it is set to '//num2str(eta2))
+    end if
 end if
 
 ! When the difference between ETA1 and ETA2 is tiny, we force them to equal.
@@ -246,22 +258,18 @@ if (abs(eta1 - eta2) < 1.0E2_RP * EPS * max(abs(eta1), ONE)) then
 end if
 
 ! Validate GAMMA1 and GAMMA2
-if (is_nan(gamma1)) then
-    ! In this case, we take the value hard coded in Powell's original code
-    ! without any warning. It is useful when interfacing with MATLAB/Python.
+if (.not. (gamma1 > 0 .and. gamma1 < 1)) then
     gamma1 = GAMMA1_DFT
-elseif (gamma1 <= 0 .or. gamma1 >= 1) then
-    gamma1 = GAMMA1_DFT
-    call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//num2str(gamma1))
+    if (.not. is_nan(gamma1)) then  ! No warning if GAMMA1 is NaN, we use which to indicate that GAMMA1 takes the default value.
+        call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//num2str(gamma1))
+    end if
 end if
 
-if (is_nan(gamma2)) then
-    ! In this case, we take the value hard coded in Powell's original code
-    ! without any warning. It is useful when interfacing with MATLAB/Python.
+if (.not. (is_finite(gamma2) .and. gamma2 >= 1)) then
     gamma2 = GAMMA2_DFT
-elseif (gamma2 < 1 .or. is_inf(gamma2)) then
-    gamma2 = GAMMA2_DFT
-    call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//num2str(gamma2))
+    if (.not. is_nan(gamma2)) then  ! No warning if GAMMA2 is NaN, we use which to indicate that GAMMA2 takes the default value.
+        call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//num2str(gamma2))
+    end if
 end if
 
 ! Validate RHOBEG and RHOEND
@@ -294,7 +302,7 @@ if (lower(solver) == 'bobyqa') then
             & //' it is set to MINVAL(XU-XL)/4')
     end if
 end if
-if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
+if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then
     ! Take RHOEND into account if it has a valid value. We do not do this if the solver is BOBYQA,
     ! which requires that RHOBEG <= (XU-XL)/2.
     if (is_finite(rhoend) .and. rhoend > 0 .and. lower(solver) /= 'bobyqa') then
@@ -302,13 +310,17 @@ if (rhobeg <= 0 .or. is_nan(rhobeg) .or. is_inf(rhobeg)) then
     else
         rhobeg = rhobeg_default
     end if
-    call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//num2str(rhobeg))
+    if (.not. is_nan(rhobeg)) then  ! No warning if RHOBEG is NaN, we use which to indicate that RHOBEG takes the default value.
+        call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//num2str(rhobeg))
+    end if
 end if
 
-if (rhoend <= 0 .or. rhobeg < rhoend .or. is_nan(rhoend) .or. is_inf(rhoend)) then
+if (.not. (is_finite(rhoend) .and. rhoend > 0 .and. rhoend <= rhobeg)) then
     rhoend = max(EPS, min(TENTH * rhobeg, rhoend_default))
-    call warning(solver, 'Invalid RHOEND; it should be a positive number and RHOEND <= RHOBEG; '// &
-        & 'it is set to '//num2str(rhoend))
+    if (.not. is_nan(rhoend)) then  ! No warning if RHOEND is NaN, we use which to indicate that RHOEND takes the default value.
+        call warning(solver, 'Invalid RHOEND; it should be a positive number and RHOEND <= RHOBEG; '// &
+            & 'it is set to '//num2str(rhoend))
+    end if
 end if
 
 ! For BOBYQA, revise X0 or RHOBEG so that the distance between X0 and the inactive bounds is at
@@ -370,9 +382,10 @@ end if
 
 ! Validate CTOL (it can be 0)
 if (present(ctol)) then
-    if (is_nan(ctol) .or. ctol < 0) then
+    if (.not. (ctol >= 0)) then
         ctol = CTOL_DFT
-        if (is_constrained_loc) then
+        if (is_constrained_loc .and. .not. is_nan(ctol)) then
+            ! No warning if CTOL is NaN, we use which to indicate that CTOL takes the default value.
             call warning(solver, 'Invalid CTOL; it should be a nonnegative number; it is set to '//num2str(ctol))
         end if
     end if
@@ -380,9 +393,10 @@ end if
 
 ! Validate CWEIGHT (it can be +Inf)
 if (present(cweight)) then
-    if (is_nan(cweight) .or. cweight < 0) then
+    if (.not. (cweight >= 0)) then
         cweight = CWEIGHT_DFT
-        if (is_constrained_loc) then
+        if (is_constrained_loc .and. .not. is_nan(cweight)) then
+            ! No warning if CWEIGHT is NaN, we use which to indicate that CWEIGHT takes the default value.
             call warning(solver, 'Invalid CWEIGHT; it should be a nonnegative number; it is set to '//num2str(cweight))
         end if
     end if
