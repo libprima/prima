@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, January 18, 2024 PM11:26:36
+! Last Modified: Friday, January 19, 2024 AM01:00:09
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -238,7 +238,7 @@ if (.not. (eta1 >= 0 .and. eta1 < 1)) then
     end if
 end if
 
-if (.not. (eta2 >= eta1 .and. eta2 >= 0 .and. eta2 < 1)) then
+if (.not. (eta2 >= eta1 .and. eta2 < 1)) then
     ! Take ETA1 into account if it has a valid value.
     if (eta1 >= 0 .and. eta1 < 1) then
         eta2 = (eta1 + TWO) / 3.0_RP

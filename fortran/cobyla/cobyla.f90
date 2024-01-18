@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 19, 2024 AM12:25:02
+! Last Modified: Friday, January 19, 2024 AM12:54:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -412,8 +412,8 @@ if (DEBUGGING) then
     end if
     if (present(f0)) then
         call assert(is_nan(f0) .or. present(nlconstr0), 'If F0 is present and not NaN, then NLCONSTR0 is present', srname)
-        ! N.B.: We allow to use F0 = NaN to indicate that F0 is unknown. However, if F0 = NaN can
-        ! also happen if F0 is evaluated and the evaluation returns NaN.
+        ! N.B.: We allow to use F0 = NaN to indicate that F0 is not provided. However, if F0 = NaN
+        ! can also happen if F0 is evaluated and the evaluation returns NaN.
     end if
     if (present(nlconstr0)) then
         call assert(present(f0), 'If NLCONSTR0 is present, then F0 is present', srname)
