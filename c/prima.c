@@ -14,12 +14,12 @@ int prima_init_options(prima_options_t *options)
   if (options)
   {
     memset(options, 0, sizeof(prima_options_t));
-    options->maxfun = -1;// interpreted as MAXFUN_DIM_DFT*n
+    options->maxfun = 0;  // interpreted as maxfun taking the default value MAXFUN_DIM_DFT*n
     options->rhobeg = 1.0;
     options->rhoend = 1e-6;
     options->iprint = PRIMA_MSG_NONE;
     options->ftarget = -INFINITY;
-    options->npt = -1;// interpreted as 2*n+1
+    options->npt = 0;  // interpreted as npt taking the default value 2*n+1
     return 0;
   }
   else
