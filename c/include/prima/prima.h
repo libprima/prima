@@ -199,9 +199,6 @@ typedef struct {
   // non-linear constraint values, of size m_nlcon (cobyla only)
   double *nlconstr;
 
-  // size of nlconstr (private, do not use)
-  int _m_nlcon;
-
   // exit code
   int status;
   

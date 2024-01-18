@@ -122,7 +122,6 @@ int prima_free_result(prima_result_t *result)
     {
       free(result->nlconstr);
       result->nlconstr = NULL;
-      result->_m_nlcon = 0;
     }
     if (result->x)
     {
