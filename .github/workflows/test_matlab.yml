@@ -153,7 +153,7 @@ jobs:
         run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat 2023"'
 
       - name: Cache MATLAB  # N.B.: Clear the cache when the `latest` version of MATLAB changes in March and September
-        uses: actions/cache@v3.3.3
+        uses: actions/cache@v4.0.0
         with:
           path: ${{ runner.tool_cache }}/MATLAB
           key: ${{ matrix.os }}-${{ matrix.matlab }}
