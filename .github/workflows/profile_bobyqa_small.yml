@@ -109,7 +109,7 @@ jobs:
             movefile(fullfile(cd(), 'testdata', '*.txt'), '/tmp/${{ matrix.solver }}_profile_prima/');
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v4.0.0
+        uses: actions/upload-artifact@v4.2.0
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           name: ${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}
@@ -134,7 +134,7 @@ jobs:
       - name: Move all artifacts to the current directory
         run: ls -al && mv */* ./ && ls -al
       - name: Upload all files
-        uses: actions/upload-artifact@v4.0.0
+        uses: actions/upload-artifact@v4.2.0
         with:
           name: all
           path: ./*

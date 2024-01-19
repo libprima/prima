@@ -110,7 +110,7 @@ jobs:
             export EXAMPLE_NUM=2 && make clean && make gtest
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v4.0.0
+        uses: actions/upload-artifact@v4.2.0
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
         # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
