@@ -440,7 +440,7 @@ else
 	GFORT := $(GFORT) -fno-stack-arrays -fstack-check
 endif
 # -fsanitize=leak,address does not work with gdb.
-FSAN := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
+FSAN := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 && $(OSTYPE) != 'MAC' ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
 GFORT := $(GFORT) $(GFSTD) -fall-intrinsics -frecursive \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized \
 	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
@@ -526,6 +526,7 @@ itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d
 # In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
 # It is necessary to use "-I $(TESTSUITE_DIR)"; otherwise, the INCLUDE lines in the test suite will not work.
 NFORT := nagfor
+NFORT := $(NFORT) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.
 NFORT := $(NFORT) -I $(TESTSUITE_DIR)
 NFORT := $(NFORT) -colour=error:red,warn:magenta,info:cyan
 NFORT := $(NFORT) -f$(FSTD) -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
@@ -886,6 +887,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "Absoft ANSI 1610:" \
 	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
 	| grep -v "Extension.*Stop-code is not constant" \
+	| grep -v "Option warning: Due to MacOS/Silicon limitations, this may not work reliably" \
 	| grep -v "NAG Fortran Compiler Release [0-9]*.* Build [0-9]*" \
 	| grep -v "Questionable: ./lincoa/geometry.f90, line [0-9]*: Variable RSTAT set but never referenced" \
 	| grep -v "Expression in IF construct is constant" \
