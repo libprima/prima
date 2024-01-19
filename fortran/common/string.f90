@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Monday, October 02, 2023 PM10:46:01
+! Last Modified: Friday, January 19, 2024 PM11:20:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -15,8 +15,8 @@ public :: lower, upper, strip, istr, num2str
 
 ! MAX_NUM_STR_LEN is the maximum length of a string that is needed to represent a real or integer
 ! number. Assuming that such a number is represented by at most 128 bits, it is safe to set this
-! maximum length to 128. We set this number to 256 to be on the safe side.
-integer, parameter :: MAX_NUM_STR_LEN = 256
+! maximum length to 128. We set this number to 1024 to be on the safe side.
+integer, parameter :: MAX_NUM_STR_LEN = 1024
 ! MAX_WIDTH is the maximum number of characters printed in each row when printing arrays.
 integer, parameter :: MAX_WIDTH = 100
 
