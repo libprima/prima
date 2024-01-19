@@ -386,7 +386,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
           GOTO 600
       END IF
       IF (KSAVE <= 0) IFEAS=1
-      F=DFLOAT(IFEAS)
+      F=DBLE(IFEAS)
 
 
 !----------------------------------------------------------------------!
@@ -727,7 +727,7 @@ C      IF (IPRINT .GE. 1) THEN
           PRINT 590, F,(X(I),I=1,N)
       END IF
       W(1)=F
-      W(2)=DFLOAT(NF)+HALF
+      W(2)=DBLE(NF)+HALF
 
 !----------------------------------------------------------------------!
 !----------------------------------------------------------------------!

@@ -299,7 +299,7 @@ C      IU=17.0D0*ANGBD+3.1D0
       IU=INT(17.0D0*ANGBD+3.1D0)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       DO I=1,IU
-          ANGT=ANGBD*DFLOAT(I)/DFLOAT(IU)
+          ANGT=ANGBD*DBLE(I)/DBLE(IU)
           STH=(ANGT+ANGT)/(ONE+ANGT*ANGT)
           TEMP=SHS+ANGT*(ANGT*DHD-DHS-DHS)
           REDNEW=STH*(ANGT*DREDG-SREDG-HALF*STH*TEMP)
@@ -319,7 +319,7 @@ C
       IF (ISAV == 0) GOTO 190
       IF (ISAV < IU) THEN
           TEMP=(RDNEXT-RDPREV)/(REDMAX+REDMAX-RDPREV-RDNEXT)
-          ANGT=ANGBD*(DFLOAT(ISAV)+HALF*TEMP)/DFLOAT(IU)
+          ANGT=ANGBD*(DBLE(ISAV)+HALF*TEMP)/DBLE(IU)
       END IF
       CTH=(ONE-ANGT*ANGT)/(ONE+ANGT*ANGT)
       STH=(ANGT+ANGT)/(ONE+ANGT*ANGT)

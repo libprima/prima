@@ -155,9 +155,9 @@ C
       QMIN=QBEG
       ISAVE=0
       IU=49
-      TEMP=TWOPI/DFLOAT(IU+1)
+      TEMP=TWOPI/DBLE(IU+1)
       DO I=1,IU
-          ANGLE=DFLOAT(I)*TEMP
+          ANGLE=DBLE(I)*TEMP
           CTH=COS(ANGLE)
           STH=SIN(ANGLE)
           QNEW=(SG+CF*CTH)*CTH+(DG+DHS*CTH)*STH
@@ -178,7 +178,7 @@ C
           TEMPB=TEMPB-QMIN
           ANGLE=HALF*(TEMPA-TEMPB)/(TEMPA+TEMPB)
       END IF
-      ANGLE=TEMP*(DFLOAT(ISAVE)+ANGLE)
+      ANGLE=TEMP*(DBLE(ISAVE)+ANGLE)
 C
 C     Calculate the new STEP and HS. Then test for convergence.
 C

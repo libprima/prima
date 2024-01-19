@@ -83,7 +83,7 @@ C
       ONE=1.0D0
       ZERO=0.0D0
       NP=N+1
-      SFRAC=HALF/DFLOAT(NP)
+      SFRAC=HALF/DBLE(NP)
       NPTM=NPT-NP
 C
 C     Shift the interpolation points so that XOPT becomes the origin, and set
@@ -156,9 +156,9 @@ C
       DO J=1,N
           JP=J+1
           JPN=JP+N
-          PTSID(JP)=DFLOAT(J)+SFRAC
+          PTSID(JP)=DBLE(J)+SFRAC
           IF (JPN <= NPT) THEN
-              PTSID(JPN)=DFLOAT(J)/DFLOAT(NP)+SFRAC
+              PTSID(JPN)=DBLE(J)/DBLE(NP)+SFRAC
               TEMP=ONE/(PTSAUX(1,J)-PTSAUX(2,J))
               BMAT(JP,J)=-TEMP+ONE/PTSAUX(1,J)
               BMAT(JPN,J)=TEMP+ONE/PTSAUX(2,J)
@@ -178,13 +178,13 @@ C
       IF (NPT >= N+NP) THEN
           DO K=2*NP,NPT
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C          IW=(DFLOAT(K-NP)-HALF)/DFLOAT(N)
-              IW=INT((DFLOAT(K-NP)-HALF)/DFLOAT(N))
+C          IW=(DBLE(K-NP)-HALF)/DBLE(N)
+              IW=INT((DBLE(K-NP)-HALF)/DBLE(N))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               IP=K-NP-IW*N
               IQ=IP+IW
               IF (IQ > N) IQ=IQ-N
-              PTSID(K)=DFLOAT(IP)+DFLOAT(IQ)/DFLOAT(NP)+SFRAC
+              PTSID(K)=DBLE(IP)+DBLE(IQ)/DBLE(NP)+SFRAC
               TEMP=ONE/(PTSAUX(1,IP)*PTSAUX(1,IQ))
               ZMAT(1,K-NP)=TEMP
               ZMAT(IP+1,K-NP)=-TEMP
@@ -265,8 +265,8 @@ C          IP=PTSID(K)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               IF (IP > 0) SUM=W(NPT+IP)*PTSAUX(1,IP)
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C          IQ=DFLOAT(NP)*PTSID(K)-DFLOAT(IP*NP)
-              IQ=INT(DFLOAT(NP)*PTSID(K)-DFLOAT(IP*NP))
+C          IQ=DBLE(NP)*PTSID(K)-DBLE(IP*NP)
+              IQ=INT(DBLE(NP)*PTSID(K)-DBLE(IP*NP))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               IF (IQ > 0) THEN
                   IW=1
@@ -371,9 +371,9 @@ C
           PQ(KPT)=ZERO
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C      IP=PTSID(KPT)
-C      IQ=DFLOAT(NP)*PTSID(KPT)-DFLOAT(IP*NP)
+C      IQ=DBLE(NP)*PTSID(KPT)-DBLE(IP*NP)
           IP=INT(PTSID(KPT))
-          IQ=INT(DFLOAT(NP)*PTSID(KPT)-DFLOAT(IP*NP))
+          IQ=INT(DBLE(NP)*PTSID(KPT)-DBLE(IP*NP))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           IF (IP > 0) THEN
               XP=PTSAUX(1,IP)
@@ -451,9 +451,9 @@ C
               ELSE
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C          IP=PTSID(K)
-C          IQ=DFLOAT(NP)*PTSID(K)-DFLOAT(IP*NP)
+C          IQ=DBLE(NP)*PTSID(K)-DBLE(IP*NP)
                   IP=INT(PTSID(K))
-                  IQ=INT(DFLOAT(NP)*PTSID(K)-DFLOAT(IP*NP))
+                  IQ=INT(DBLE(NP)*PTSID(K)-DBLE(IP*NP))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                   IHQ=(IQ*IQ+IQ)/2
                   IF (IP == 0) THEN

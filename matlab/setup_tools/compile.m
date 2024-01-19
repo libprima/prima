@@ -72,6 +72,7 @@ end
 % Otherwise, the solvers will not work properly in recursive invocations. See
 % https://fortran-lang.discourse.group/t/frecursive-assume-recursion-and-recursion-thread-safety
 compiler_configurations = mex.getCompilerConfigurations('fortran', 'selected');
+extra_compiler_options = '';
 if contains(compiler_configurations.Manufacturer, 'gnu', 'IgnoreCase', true)  % gfortran
     extra_compiler_options = '-fno-stack-arrays -frecursive';
 elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', true)  % Intel compiler
@@ -83,7 +84,6 @@ elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', tru
 elseif ~contains(compiler_configurations.Manufacturer, 'nag', 'IgnoreCase', true)  % NAG compiler
     warning('prima:UnrecognizedCompiler', 'Unrecognized compiler %s. The package may not work.', ...
         compiler_configurations.Name);
-    extra_compiler_options = '';
 end
 if ispc  % Windows
     compiler_options = ['COMPFLAGS="$COMPFLAGS ', extra_compiler_options, '"'];

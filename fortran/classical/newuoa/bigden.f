@@ -251,10 +251,10 @@ C
       DENMAX=SUM
       ISAVE=0
       IU=49
-      TEMP=TWOPI/DFLOAT(IU+1)
+      TEMP=TWOPI/DBLE(IU+1)
       PAR(1)=ONE
       DO I=1,IU
-          ANGLE=DFLOAT(I)*TEMP
+          ANGLE=DBLE(I)*TEMP
           PAR(2)=COS(ANGLE)
           PAR(3)=SIN(ANGLE)
           DO J=4,8,2
@@ -282,7 +282,7 @@ C
           TEMPB=TEMPB-DENMAX
           STEP=HALF*(TEMPA-TEMPB)/(TEMPA+TEMPB)
       END IF
-      ANGLE=TEMP*(DFLOAT(ISAVE)+STEP)
+      ANGLE=TEMP*(DBLE(ISAVE)+STEP)
 C
 C     Calculate the new parameters of the denominator, the new VLAG vector
 C     and the new D. Then test for convergence.
