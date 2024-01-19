@@ -66,5 +66,5 @@ jobs:
       #     $SEDI "s/cstrv = maxval(\[ZERO, -constr\])/cstrv = maxval([\ZERO, -constr\])\n       write(*,*) 'x = ', x(1:n)\n       write(*,*) 'f = ', f\n       write(*,*) 'constr = ', constr(1:m)\n       write(*,*) 'cstrv = ', cstrv/" cobylb.f
       #     cat cobylb.f
 
-      - name: Conduct the test
-        run: matlab -batch "cd matlab/tests; testprima_ex();"
+      - name: Conduct the test  # We do not use matlab-actions/run-command, which is not supported on macOS ARM64 as of 20240119
+        run: /Applications/MATLAB_R2023b.app/bin/matlab -batch "cd matlab/tests; testprima_ex();"
