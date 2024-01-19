@@ -64,8 +64,12 @@ try
             for idbg = 1 : length(debug_flags)
                 options.debug = debug_flags{idbg};
                 for ivar = 1 : length(variants)
+                    options.classical = strcmp(variants{ivar}, 'classical');
+                    if ismac && strcmp(func2str(solver), 'bobyqa') && strcmp(options.precision, 'quadruple') && options.classical
+                        % Skip the classical bobyqa in quadruple precision on macOS, as it will encounter a segmentation fault.
+                        continue;
+                    end
                     for iprint = -4 : 4
-                        options.classical = strcmp(variants{ivar}, 'classical');
                         options.output_xhist = true;
                         options.iprint = iprint;
                         options
