@@ -19,7 +19,7 @@ extern "C" {
 
 #ifdef PRIMAC_STATIC
 # define PRIMAC_API
-#elif defined primac_EXPORTS
+#elif defined PRIMAC_EXPORTS
 # define PRIMAC_API PRIMAC_HELPER_DLL_EXPORT
 #else
 # define PRIMAC_API PRIMAC_HELPER_DLL_IMPORT

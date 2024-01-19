@@ -1,7 +1,28 @@
 
 set(CMAKE_C_STANDARD 99)
 
-add_library (primac cintrf.f90 cobyla_c.f90 lincoa_c.f90 bobyqa_c.f90 newuoa_c.f90 uobyqa_c.f90 prima.c)
+include_directories(include)
+
+if (WIN32 AND BUILD_SHARED_LIBS)
+  add_compile_definitions(PRIMAC_EXPORTS)
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
+    get_filename_component(Fortran_COMPILER_PATH ${CMAKE_Fortran_COMPILER} DIRECTORY)
+    link_directories(${Fortran_COMPILER_PATH}/../../compiler/lib/intel64) # works for oneAPI 2023
+  endif ()
+  get_property(PRIMAF_MODULE_DIR TARGET primaf PROPERTY Fortran_MODULE_DIRECTORY)
+  set(MOD_DIR ${CMAKE_CURRENT_BINARY_DIR}/../fortran/${PRIMAF_MODULE_DIR})
+  if (CMAKE_CONFIGURATION_TYPES)
+    set(MOD_DIR ${MOD_DIR}/${CMAKE_CFG_INTDIR})
+  endif ()
+  include_directories(${MOD_DIR})
+endif ()
+
+add_library(primac_f OBJECT cintrf.f90 cobyla_c.f90 lincoa_c.f90 bobyqa_c.f90 newuoa_c.f90 uobyqa_c.f90)
+add_library(primac_c OBJECT prima.c)
+add_library(primac $<TARGET_OBJECTS:primac_f> $<TARGET_OBJECTS:primac_c>)
+add_dependencies(primac_f primaf)
+add_dependencies(primac_c primaf)
+
 if (WIN32)
   set_target_properties(primac PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 endif()
