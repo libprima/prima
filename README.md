@@ -135,7 +135,9 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
     - [![Lint the Fortran code and the MEX gateways with nagfor](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml)
     - [![Test matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_matlab_mac.yml)
-    - [![Test nagfor, macOS ARM64](https://github.com/libprima/prima/actions/workflows/test_matlab_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_matlab_nagfor.yml)
+    - [![Test nagfor, macOS ARM64](https://github.com/libprima/prima/actions/workflows/test_nagfor_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor_mac.yml)
+    - [![Test gfortran, macOS ARM64, small](https://github.com/libprima/prima/actions/workflows/test_gfortran_mac_small.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_gfortran_mac_small.yml)
+    - [![Test gfortran, macOS ARM64, big](https://github.com/libprima/prima/actions/workflows/test_gfortran_mac_big.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_gfortran_mac_big.yml)
 
 - <a name="verification"></a> [Tests](https://github.com/libsprima/prima/actions) at [libsprima/prima](https://github.com/libsprima/prima)
     - [![Verification, small](https://github.com/libsprima/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_small.yml)
