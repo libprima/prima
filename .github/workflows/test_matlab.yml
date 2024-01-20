@@ -164,4 +164,7 @@ jobs:
           release: ${{ matrix.matlab }}
 
       - name: Conduct the test
-        run: matlab -batch "cd matlab/tests; testprima_ex();"
+        uses: matlab-actions/run-command@v1.2.3
+        with:
+          command: |
+            cd matlab/tests; testprima_ex();
