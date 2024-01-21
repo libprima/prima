@@ -62,18 +62,18 @@ jobs:
         shell: bash
         run: |
           export CC=${{ matrix.cc }}
-          export CMAKE_C_FLAGS='-Wall -Wextra -Wpedantic -Werror'
+          export CFLAGS='-Wall -Wextra -Wpedantic -Werror'
           export FC=${{ matrix.fc }}
 
           if [[ "$FC"=="nagfor" ]] ; then
               source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
-              export CMAKE_Fortran_FLAGS='-fpp -nan -ieee=stop -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=constant_coindexing -Warn=subnormal'
+              export FFLAGS='-fpp -nan -ieee=stop -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=constant_coindexing -Warn=subnormal'
           else
-              export CMAKE_Fortran_FLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'
+              export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'
           fi
 
           cmake --version
-          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH .
+          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
           cmake --build . --target install
           cmake --build . --target tests
           ctest --output-on-failure -V -E stress

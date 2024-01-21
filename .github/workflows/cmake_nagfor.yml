@@ -13,9 +13,12 @@ on:
       git-ref:
         description: Git Ref (Optional)
         required: false
+      stress:
+        description: Stress Test (Optional, true or false)
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , {1}', inputs.git-ref, inputs.stress-test) || '' }}
 
 
 jobs:
@@ -46,16 +49,20 @@ jobs:
 
       - name: Conduct the test
         run: |
-          export PATH=$PATH:"~/local/bin"
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
-          # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
-          FFLAGS=-O$(($(date +%-d) % 5))
-          export FFLAGS
           export FC=nagfor
-          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
+          export FFLAGS='-fpp -nan -ieee=stop -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=constant_coindexing -Warn=subnormal'
+          export CFLAGS='-Wall -Wextra -Wpedantic -Werror'
+          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
           cmake --build . --target install
           cmake --build . --target tests
           ctest --output-on-failure -V -E stress
+
+      - name: Stress test
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.stress-test == 'true' }}
+        shell: bash
+        run: |
+          ctest --output-on-failure -V -R stress
 
 
   # The following job check whether the tests were successful or cancelled due to timeout.
