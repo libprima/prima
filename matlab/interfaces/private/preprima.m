@@ -907,7 +907,8 @@ precision = 'double'; % The precision of the real calculation within the solver
 fortran = true; % Call the Fortran code?
 scale = false; % Scale the problem according to bounds? Scale only if the bounds reflect well the scale of the problem
 scale = (scale && max(ub-lb)<inf); % ! NEVER remove this ! Scale only if all variables are with finite lower and upper bounds
-% honour_x0: Respect the user-defined x0? It is default to false if the user provides a valid rhobeg. Needed only by bobyqa as of 20230121.
+% honour_x0: Respect the user-defined x0? It is default to false if the user provides a valid rhobeg.
+% honour_x0 is needed by solvers that intend to respect bound constraints. Only BOBYQA as of 20240121.
 honour_x0 = ~(isfield(options, 'rhobeg') && isrealscalar(options.rhobeg) && isfinite(options.rhobeg) && options.rhobeg > 0);
 iprint = 0;
 quiet = true;
@@ -1941,10 +1942,10 @@ end
 constrviolation = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq);
 return
 
-%%%%%% Function for revising x0 or rhobeg when the solver is BOBYQA %%%%
+%%%%%% Function for revising x0 or rhobeg according to the bound constraints. %%%%%%
 function [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, user_options_fields, options, warnings)
 % Revise x0 so that the distance between x0 and the inactive bounds is at least rhobeg.
-% As of 20240121, this is needed by BOBYQA only.
+% This is needed by solvers that intend to respect bound constraints. Only BOBYQA as of 20240121.
 % The revision scheme is slightly different from the one by Powell in his Fortran code,
 % which sets
 % x0 (lb < x0 < lb + rhobeg) = lb + rhobeg
@@ -1953,7 +1954,7 @@ function [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, user_optio
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 
-solver_list = {'bobyqa'}; % Only BOBYQA needs pre_rhobeg_x0. May have others in the future.
+solver_list = {'bobyqa'}; % Only BOBYQA needs pre_rhobeg_x0 as of 20240121. May have others in the future.
 
 if ~ismember(lower(options.solver), solver_list)
     % Private/unexpected error
