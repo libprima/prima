@@ -290,6 +290,8 @@ else
 end
 solver = options.solver;
 
+options
+
 % Solve the problem, starting with special cases.
 if ~strcmp(invoker, 'prima') && probinfo.infeasible % The problem turned out infeasible during preprima
     output.x = x0;
