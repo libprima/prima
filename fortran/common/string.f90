@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, January 19, 2024 PM11:20:07
+! Last Modified: Sunday, January 21, 2024 PM03:59:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -321,7 +321,10 @@ integer(IK), intent(in) :: x
 character(len=*), parameter :: srname = 'INT2STR'
 character(len=:), allocatable :: s
 character(len=MAX_NUM_STR_LEN) :: str
-write (str, *) x
+! In the following, 'I0' means to use the minimum number of digits needed to print.
+! It should work also if we use * instead of I0. However, this sometimes lead to a segmentation
+! fault on Windows Server 2022 with gcc/gfortran 13.
+write (str, '(I0)') x
 s = strip(str)
 if (DEBUGGING) then
     call assert(len(s) > 0 .and. len(s) <= MAX_NUM_STR_LEN, '0 < LEN(S) <= MAX_NUM_STR_LEN', srname)
