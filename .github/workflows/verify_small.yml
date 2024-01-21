@@ -30,8 +30,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         matlab: [latest]
-          #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        solver: [bobyqa]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         dim: [small]
 
     steps:
@@ -100,8 +99,7 @@ jobs:
             end
             options.nr = 6;
             options
-            %verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
-            verify('${{ matrix.solver }}', options, 'LEVYMONT9', 0);
+            verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
 

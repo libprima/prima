@@ -408,7 +408,6 @@ else if (has_rhobeg) then
     honour_x0_loc = (.not. (is_finite(rhobeg) .and. rhobeg > 0))
 end if
 
-write (16, *) 'honour_x0_loc = ', honour_x0_loc, 'rhobeg_loc = ', rhobeg_loc, 'x0 = ', x
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
     & npt=npt_loc, eta1=eta1_loc, eta2=eta2_loc, gamma1=gamma1_loc, gamma2=gamma2_loc, &

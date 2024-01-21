@@ -907,7 +907,7 @@ precision = 'double'; % The precision of the real calculation within the solver
 fortran = true; % Call the Fortran code?
 scale = false; % Scale the problem according to bounds? Scale only if the bounds reflect well the scale of the problem
 scale = (scale && max(ub-lb)<inf); % ! NEVER remove this ! Scale only if all variables are with finite lower and upper bounds
-% honour_x0: Respect the user-defined x0? It is default to false if the user provides a valid rhobeg. Needed only by bobyqa.
+% honour_x0: Respect the user-defined x0? It is default to false if the user provides a valid rhobeg. Needed only by bobyqa as of 20230121.
 honour_x0 = ~(isfield(options, 'rhobeg') && isrealscalar(options.rhobeg) && isfinite(options.rhobeg) && options.rhobeg > 0);
 iprint = 0;
 quiet = true;
@@ -1943,9 +1943,10 @@ return
 
 %%%%%% Function for revising x0 or rhobeg when the solver is BOBYQA %%%%
 function [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, user_options_fields, options, warnings)
-% BOBYQA will revise x0 so that the distance between x0 and the inactive bounds
-% is at least rhobeg. The revision scheme is slightly different from the one by
-% Powell in his Fortran code, which sets
+% Revise x0 so that the distance between x0 and the inactive bounds is at least rhobeg.
+% As of 20240121, this is needed by BOBYQA only.
+% The revision scheme is slightly different from the one by Powell in his Fortran code,
+% which sets
 % x0 (lb < x0 < lb + rhobeg) = lb + rhobeg
 % x0 (ub > x0 > ub - rhobeg) = ub - rhobeg
 % Note that lb <= x0 <= ub and rhobeg <= (ub-lb)/2 after pre_options and project.
