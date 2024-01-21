@@ -61,7 +61,7 @@ ftest: FC := flang -Wall -Wextra -std=f$(FSTD) -Mstandard
 gtest: FC := gfortran -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
 
 # Intel ifort
-itest: FC := ifort -warn all -stand f$(FS)
+itest: FC := ifort -warn all -stand f$(FS) -diag-disable=10448  # 10448: suppress the warning about deprecation of ifort.
 
 # NAG nagfor
 ntest: FC := nagfor -C -f$(FSTD) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.

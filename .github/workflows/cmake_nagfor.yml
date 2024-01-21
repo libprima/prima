@@ -58,11 +58,11 @@ jobs:
           if [[ -n "${{ github.event.inputs.fflags }}" ]]; then
               export FFLAGS="${{ github.event.inputs.fflags }}"
           else
-              export FFLAGS='-fpp -nan -ieee=stop -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -kind=unique -Warn=constant_coindexing -Warn=subnormal'
-              # Zaikun 20240121: With gcc 11.4.0 and nagfor 7.1.7143, if '-C=undefined' is included
-              # in FFLAGS, then the C tests will encounter a segmentation fault, although the Fortran
-              # tests work correctly.
-              #export FFLAGS='-fpp -nan -ieee=stop -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=constant_coindexing -Warn=subnormal'
+              export FFLAGS='-fpp -nan -ieee=stop -recursive -gline -u -C -C=alias -C=dangling -C=intovf -kind=unique -Warn=constant_coindexing -Warn=subnormal'
+              # Zaikun 20240121: With gcc 13.2 or AppleClang 1.5.0 and nagfor 7.1.7143, if '-C=undefined'
+              # is included in FFLAGS, then the C tests will encounter a segmentation fault, although
+              # the Fortran tests work correctly.
+              #export FFLAGS='-fpp -nan -ieee=stop -recursive -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=constant_coindexing -Warn=subnormal'
           fi
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
           cmake --build . --target install
