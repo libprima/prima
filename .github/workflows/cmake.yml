@@ -105,6 +105,12 @@ jobs:
       - name: Miscellaneous setup
         run: bash .github/scripts/misc_setup
 
+      - name: Revise string.f90
+        run: |
+          cd fortran/common/ || exit 42
+          $SEDI "s|\(write (str, '(I0)') x\)|write (*, *) '---> x = ', x, '<---'\n\1|" string.f90
+          cat string.f90
+
       - name: Install Ninja / Ubuntu
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: sudo apt update && sudo apt install ninja-build
