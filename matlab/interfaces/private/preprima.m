@@ -1942,7 +1942,7 @@ end
 constrviolation = get_cstrv(x, Aineq, bineq, Aeq, beq, lb, ub, nlcineq, nlceq);
 return
 
-%%%%%% Function for revising x0 or rhobeg according to the bound constraints. %%%%%%
+%%%%%% Function for revising x0 or rhobeg according to the bound constraints %%%%%%
 function [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, user_options_fields, options, warnings)
 % Revise x0 so that the distance between x0 and the inactive bounds is at least rhobeg.
 % This is needed by solvers that intend to respect bound constraints. Only BOBYQA as of 20240121.
