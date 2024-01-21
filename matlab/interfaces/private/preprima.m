@@ -1943,10 +1943,9 @@ return
 
 %%%%%% Function for revising x0 or rhobeg when the solver is BOBYQA %%%%
 function [x0, options, warnings] = pre_rhobeg_x0(invoker, x0, lb, ub, user_options_fields, options, warnings)
-% The Fortran code of BOBYQA will revise x0 so that the distance between x0
-% and the inactive bounds is at least rhobeg. We do the revision here in
-% order to raise a warning when such a revision occurs. The revision scheme
-% is slightly different from the one by Powell in his Fortran code, which sets
+% BOBYQA will revise x0 so that the distance between x0 and the inactive bounds
+% is at least rhobeg. The revision scheme is slightly different from the one by
+% Powell in his Fortran code, which sets
 % x0 (lb < x0 < lb + rhobeg) = lb + rhobeg
 % x0 (ub > x0 > ub - rhobeg) = ub - rhobeg
 % Note that lb <= x0 <= ub and rhobeg <= (ub-lb)/2 after pre_options and project.
@@ -1960,7 +1959,8 @@ if ~ismember(lower(options.solver), solver_list)
     error(sprintf('%s:InvalidSolver', funname), '%s: UNEXPECTED ERROR: %s serves only %s.', funname, funname, strjoin(solver_list, ', '));
 end
 
-if isfield(options, 'honour_x0') && ~options.honour_x0  % In this case, we respect the user-defined x0 and revise rhobeg
+% Revise x0 if allowed.
+if isfield(options, 'honour_x0') && ~options.honour_x0
     % N.B.: The following code is valid only if lb <= x0 <= ub and rhobeg <= min(ub-lb)/2, which
     % hold after `pre_options` and `project` are invoked.
     x0_old = x0;
