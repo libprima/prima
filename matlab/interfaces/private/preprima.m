@@ -1853,12 +1853,12 @@ end
 
 % Revise options.rhobeg and options.rhoend according to the selected solver.
 % For the moment, only BOBYQA needs such a revision.
-if strcmp(solver, 'bobyqa') && options.rhobeg > min(probinfo.refined_data.ub-probinfo.refined_data.lb)/2
+if strcmp(solver, 'bobyqa') && ~probinfo.nofreex && options.rhobeg > min(probinfo.refined_data.ub-probinfo.refined_data.lb)/2
     options.rhobeg = max(eps, min(probinfo.refined_data.ub-probinfo.refined_data.lb)/4);
     options.rhoend = max(eps, min(0.1*options.rhobeg, options.rhoend));
     if ismember('rhobeg', probinfo.user_options_fields) || ismember('rhoend', probinfo.user_options_fields)
         wid = sprintf('%s:InvalidRhobeg', invoker);
-        wmsg = sprintf('%s: rhobeg is set to %g and rhoend to %g according to the selected solver bobyqa, which requires rhoend <= rhobeg <= min(ub-lb)/2.', invoker, options.rhobeg, options.rhoend);
+        wmsg = sprintf('%s: rhobeg is set to %g and rhoend to %g according to the selected solver %s, which requires rhoend <= rhobeg <= min(ub-lb)/2.', invoker, options.rhobeg, options.rhoend, solver);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     end

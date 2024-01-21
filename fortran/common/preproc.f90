@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, January 19, 2024 PM05:27:55
+! Last Modified: Sunday, January 21, 2024 AM10:50:44
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -372,7 +372,7 @@ if (lower(solver) == 'bobyqa') then
     if (rhobeg_old - rhobeg > EPS * max(ONE, rhobeg_old)) then
         rhoend = max(EPS, min(TENTH * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
         if (has_rhobeg) then
-            call warning(solver, 'RHOBEG is revised to '//num2str(rhobeg)//' and RHOEND to at most 0.1*RHOBEG'// &
+            call warning(solver, 'RHOBEG is revised to '//num2str(rhobeg)//' and RHOEND to '//num2str(rhoend)// &
                 & ' so that the distance between X0 and the inactive bounds is at least RHOBEG')
         end if
     else
