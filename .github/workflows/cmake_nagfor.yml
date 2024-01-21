@@ -16,6 +16,12 @@ on:
       stress-test:
         description: Stress Test (Optional, true or false)
         required: false
+      cflags:
+        description: CFLAGS
+        required: false
+      fflags:
+        description: FFLAGS
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
 run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , {1}', inputs.git-ref, inputs.stress-test) || '' }}
@@ -51,8 +57,10 @@ jobs:
         run: |
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
           export FC=nagfor
-          export FFLAGS='-fpp -nan -ieee=stop -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=constant_coindexing -Warn=subnormal'
-          export CFLAGS='-Wall -Wextra -Wpedantic -Werror'
+          #export FFLAGS='-fpp -nan -ieee=stop -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=constant_coindexing -Warn=subnormal'
+          #export CFLAGS='-Wall -Wextra -Wpedantic -Werror'
+          export FFLAGS="${{ github.event.inputs.fflags }}"
+          export CFLAGS="${{ github.event.inputs.cflags }}"
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
           cmake --build . --target install
           cmake --build . --target tests
