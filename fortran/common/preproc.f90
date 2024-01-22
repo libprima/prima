@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 21, 2024 AM10:50:44
+! Last Modified: Monday, January 22, 2024 PM09:56:38
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -172,7 +172,7 @@ if (maxhist <= 0) then
 end if
 maxhist = min(maxhist, maxfun)  ! MAXHIST > MAXFUN is never needed.
 
-! Validate FTARGET.
+! Validate FTARGET
 if (is_nan(ftarget)) then  ! No warning if FTARGET is NaN, we use which to indicate that FTARGET takes the default value.
     ftarget = FTARGET_DFT
 end if
@@ -302,6 +302,7 @@ if (lower(solver) == 'bobyqa') then
             & //' it is set to MINVAL(XU-XL)/4')
     end if
 end if
+
 if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then
     ! Take RHOEND into account if it has a valid value. We do not do this if the solver is BOBYQA,
     ! which requires that RHOBEG <= (XU-XL)/2.
