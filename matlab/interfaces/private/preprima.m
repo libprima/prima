@@ -1243,6 +1243,10 @@ if ~validated % options.rhoend has not got a valid value yet
 end
 options.rhoend = double(max(options.rhoend, eps));
 
+% The following revision may update rhoend slightly. It prevents rhoend > rhobeg due to rounding
+% errors, which would not be accepted by the solvers.
+options.rhoend = min(options.rhoend, options.rhobeg);
+
 % Validate options.ftarget
 validated = false;
 if isfield(options, 'ftarget')
@@ -1651,6 +1655,10 @@ if ~validated
 end
 options.eta2 = double(options.eta2);
 
+% The following revision may update eta1 slightly. It prevents eta1 > eta2 due to rounding
+% errors, which would not be accepted by the solvers.
+options.eta1 = min(options.eta1, options.eta2);
+
 % Validate options.gamma1
 validated = false;
 if isfield(options, 'gamma1')
@@ -1999,9 +2007,8 @@ if rhobeg_old - options.rhobeg > eps*max(1, rhobeg_old)
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     end
-else
-    options.rhoend = min(options.rhoend, options.rhobeg);  % This may update rhoend slightly
 end
+options.rhoend = min(options.rhoend, options.rhobeg);  % This may update rhoend slightly
 return
 
 

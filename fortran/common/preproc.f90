@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, January 22, 2024 PM09:56:38
+! Last Modified: Monday, January 22, 2024 PM10:08:49
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -251,11 +251,9 @@ if (.not. (eta2 >= eta1 .and. eta2 < 1)) then
     end if
 end if
 
-! When the difference between ETA1 and ETA2 is tiny, we force them to equal.
-! See the explanation around RHOBEG and RHOEND for the reason.
-if (abs(eta1 - eta2) < 1.0E2_RP * EPS * max(abs(eta1), ONE)) then
-    eta2 = eta1
-end if
+! The following revision may update ETA1 slightly. It prevents ETA1 > ETA2 due to rounding
+! errors, which would not be accepted by the solvers.
+eta1 = min(eta1, eta2)
 
 ! Validate GAMMA1 and GAMMA2
 if (.not. (gamma1 > 0 .and. gamma1 < 1)) then
@@ -273,14 +271,6 @@ if (.not. (is_finite(gamma2) .and. gamma2 >= 1)) then
 end if
 
 ! Validate RHOBEG and RHOEND
-if (abs(rhobeg - rhoend) < 1.0E2_RP * EPS * max(abs(rhobeg), ONE)) then
-    ! When the data is passed from the interfaces (e.g., MEX) to the Fortran code, RHOBEG, and RHOEND
-    ! may change a bit. It was observed in a MATLAB test that MEX passed 1 to Fortran as
-    ! 0.99999999999999978. Therefore, if we set RHOEND = RHOBEG in the interfaces, then it may happen
-    ! that RHOEND > RHOBEG, which is considered as an invalid input. To avoid this situation, we
-    ! force RHOBEG and RHOEND to equal when the difference is tiny.
-    rhoend = rhobeg
-end if
 
 ! Revise the default values for RHOBEG/RHOEND according to the solver.
 if (lower(solver) == 'bobyqa') then
@@ -376,10 +366,12 @@ if (lower(solver) == 'bobyqa') then
             call warning(solver, 'RHOBEG is revised to '//num2str(rhobeg)//' and RHOEND to '//num2str(rhoend)// &
                 & ' so that the distance between X0 and the inactive bounds is at least RHOBEG')
         end if
-    else
-        rhoend = min(rhoend, rhobeg)  ! This may update RHOEND slightly.
     end if
 end if
+
+! The following revision may update RHOEND slightly. It prevents RHOEND > RHOBEG due to rounding
+! errors, which would not be accepted by the solvers.
+rhoend = min(rhoend, rhobeg)
 
 ! Validate CTOL (it can be 0)
 if (present(ctol)) then
