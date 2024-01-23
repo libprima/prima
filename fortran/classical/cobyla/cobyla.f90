@@ -163,7 +163,12 @@ if (DEBUGGING) then
             & .or. (size(Aeq, 1) == 0 .and. size(Aeq, 2) == 0 .and. meq == 0), &
             & 'SIZE(Aeq) == [Meq, N] unless Aeq and Beq are both empty', srname)
     end if
-    call assert(present(f0) .eqv. present(nlconstr0), 'F0 and NLCONSTR0 are both present or both absent', srname)
+    if (present(nlconstr0)) then
+        call assert(present(f0), 'If NLCONSTR0 is present, then F0 is present', srname)
+    end if
+    if (present(f0)) then
+        call assert(is_nan(f0) .or. present(nlconstr0), 'If F0 is present and not NaN, then NLCONSTR0 is present', srname)
+    end if
 end if
 
 ! Exit if the size of NLCONSTR0 is inconsistent with M_NLCON.
