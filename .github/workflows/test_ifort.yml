@@ -28,11 +28,16 @@ jobs:
       fail-fast: false
       matrix:
         # Windows does not work. On Windows, the options for ifort/ifx starts with "/" instead of "-".
-        os: [ubuntu-latest, macos-latest]
-        ikind: [i2, i8]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O1, -O2, -O3, -g, -fast]
-        testdim: [small, big]
+        # os: [ubuntu-latest, macos-latest]
+        # ikind: [i2, i8]
+        # solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        # fflags: [-O1, -O2, -O3, -g, -fast]
+        # testdim: [small, big]
+        os: [ubuntu-latest]
+        ikind: [i8]
+        solver: [cobyla]
+        fflags: [-O3]
+        testdim: [small]
         exclude:
           - os: macos-latest
             ikind: i8
@@ -63,6 +68,17 @@ jobs:
       - name: Miscellaneous setup
         shell: bash
         run: bash .github/scripts/misc_setup
+
+      - name: Revise cobyla/trustregion.f90 to see what is wrong with ubuntu-latest, i8, cobyla, -O3, small
+        shell: bash
+        run: |
+          cd fortran/cobyla || exit 42
+          sed -i 's|\(vmultc = cviol + b\)|\1;write(\*,\*) 253, vmultc|' trustregion.f90
+          sed -i "s|\(call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)\)|write(\*,\*) 304, vmultc;\1|" trustregion.f90
+          sed -i 's|\(vmultc(1:nact) = max(ZERO, vmultc(1:nact) - frac \* vmultd(1:nact))\)|\1;write(\*,\*) 367, vmultc|' trustregion.f90
+          sed -i 's|\(vmultc(\[icon, nact\]) = \[ZERO, frac\]\)|\1;write(\*,\*) 377, vmultc|' trustregion.f90
+          sed -i 's|\(vmultc = max(ZERO, (ONE - frac) \* vmultc + frac \* vmultd)\)|\1;write(\*,\*) 557, vmultc|' trustregion.f90
+          cat trustregion.f90
 
       - name: Conduct the test
         shell: bash
