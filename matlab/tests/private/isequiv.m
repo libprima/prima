@@ -270,8 +270,14 @@ orig_rng_state = rng();  % Save the current random number generator settings
 rng(rseed);  % Set the random seed for reproducibility
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
-test_options.rhobeg = 1 + 0.5*(2*rand-1);
-test_options.rhoend = 1e-3*(1 + 0.5*(2*rand-1));
+test_options.rhobeg = rand-0.5;
+test_options.rhoend = 1e-3*(rand-0.5);
+test_options.eta1 = randn;
+test_options.eta2 = randn;
+test_options.gamma1 = randn;
+test_options.gamma2 = randn;
+test_options.ctol = 1e-3*randn;
+test_options.cweight = 1e3*randn;
 test_options.npt = max(min(floor(6*rand*n), (n+2)*(n+1)/2), n+2);
 test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);  % For reproducibility, do not remove this even if `options` contains `maxfun`.
 if isfield(options, 'maxfun')
