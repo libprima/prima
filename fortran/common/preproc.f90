@@ -6,13 +6,29 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, January 22, 2024 PM10:08:49
+! Last Modified: Tuesday, January 23, 2024 AM11:10:28
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
 ! 1. If all the inputs are valid, then PREPROC should do nothing.
 ! 2. In PREPROC, we use VALIDATE instead of ASSERT, so that the parameters are validated even if we
-! are not in debug mode.
+!    are not in debug mode.
+!
+! Remarks on the default values of scalar inputs:
+! 1. For any real scalar input, we interpret NaN as "this input will take the default value".
+! 2. For any integer scalar input, we interpret 0 as "this input will take the default value", which
+!    is reasonable as all the integer inputs are expected to take positive values (as of 20240123).
+! 3. No warning will be raised in case 1 or 2 takes effect.
+! 4. These interpretations are used when interfacing with C, which does not support optional inputs.
+! 5. We should not rely on 1 and 2 within Fortran or when interfacing with Python/MATLAB/Julia/R.
+!    First of all, these language have better support for optional inputs; if an input is supposed
+!    to take the default value, we should simply omit it and then set its value properly in a
+!    preprocessing procedure (see prima/matlab/interfaces/private/preprima.m for an example) rather
+!    than setting it to NaN or 0. Secondly, 1 relies on the behavior of Fortran compilers regarding
+!    NaN, which may not work as expected when compilers are invoked with aggressive optimization
+!    options. Thirdly, 1 and 2 assigns artificial meanings to invalid inputs (NaN and 0), which may
+!    cause confusion and should be avoided whenever possible.
+
 
 implicit none
 private
@@ -225,7 +241,7 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
 end if
 
 ! Validate ETA1 and ETA2
-if (.not. (eta1 >= 0 .and. eta1 < 1)) then
+if (.not. (eta1 >= 0 .and. eta1 < 1)) then  ! ETA1 = NaN falls into this case.
     ! Take ETA2 into account if it has a valid value.
     if (eta2 >= 0 .and. eta2 < 1) then
         eta1 = eta2 / 7.0_RP
@@ -238,7 +254,7 @@ if (.not. (eta1 >= 0 .and. eta1 < 1)) then
     end if
 end if
 
-if (.not. (eta2 >= eta1 .and. eta2 < 1)) then
+if (.not. (eta2 >= eta1 .and. eta2 < 1)) then  ! ETA2 = NaN falls into this case.
     ! Take ETA1 into account if it has a valid value.
     if (eta1 >= 0 .and. eta1 < 1) then
         eta2 = (eta1 + TWO) / 3.0_RP
@@ -256,14 +272,14 @@ end if
 eta1 = min(eta1, eta2)
 
 ! Validate GAMMA1 and GAMMA2
-if (.not. (gamma1 > 0 .and. gamma1 < 1)) then
+if (.not. (gamma1 > 0 .and. gamma1 < 1)) then  ! GAMMA1 = NaN falls into this case.
     gamma1 = GAMMA1_DFT
     if (.not. is_nan(gamma1)) then  ! No warning if GAMMA1 is NaN, we use which to indicate that GAMMA1 takes the default value.
         call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//num2str(gamma1))
     end if
 end if
 
-if (.not. (is_finite(gamma2) .and. gamma2 >= 1)) then
+if (.not. (is_finite(gamma2) .and. gamma2 >= 1)) then  ! GAMMA2 = NaN falls into this case.
     gamma2 = GAMMA2_DFT
     if (.not. is_nan(gamma2)) then  ! No warning if GAMMA2 is NaN, we use which to indicate that GAMMA2 takes the default value.
         call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//num2str(gamma2))
@@ -293,7 +309,7 @@ if (lower(solver) == 'bobyqa') then
     end if
 end if
 
-if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then
+if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then  ! RHOBEG = NaN falls into this case.
     ! Take RHOEND into account if it has a valid value. We do not do this if the solver is BOBYQA,
     ! which requires that RHOBEG <= (XU-XL)/2.
     if (is_finite(rhoend) .and. rhoend > 0 .and. lower(solver) /= 'bobyqa') then
@@ -306,7 +322,7 @@ if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then
     end if
 end if
 
-if (.not. (is_finite(rhoend) .and. rhoend > 0 .and. rhoend <= rhobeg)) then
+if (.not. (is_finite(rhoend) .and. rhoend > 0 .and. rhoend <= rhobeg)) then  ! RHOEND = NaN falls into this case.
     rhoend = max(EPS, min(TENTH * rhobeg, rhoend_default))
     if (.not. is_nan(rhoend)) then  ! No warning if RHOEND is NaN, we use which to indicate that RHOEND takes the default value.
         call warning(solver, 'Invalid RHOEND; it should be a positive number and RHOEND <= RHOBEG; '// &
@@ -375,7 +391,7 @@ rhoend = min(rhoend, rhobeg)
 
 ! Validate CTOL (it can be 0)
 if (present(ctol)) then
-    if (.not. (ctol >= 0)) then
+    if (.not. (ctol >= 0)) then  ! CTOL = NaN falls into this case.
         ctol = CTOL_DFT
         if (is_constrained_loc .and. .not. is_nan(ctol)) then
             ! No warning if CTOL is NaN, we use which to indicate that CTOL takes the default value.
@@ -386,7 +402,7 @@ end if
 
 ! Validate CWEIGHT (it can be +Inf)
 if (present(cweight)) then
-    if (.not. (cweight >= 0)) then
+    if (.not. (cweight >= 0)) then  ! CWEIGHT = NaN falls into this case.
         cweight = CWEIGHT_DFT
         if (is_constrained_loc .and. .not. is_nan(cweight)) then
             ! No warning if CWEIGHT is NaN, we use which to indicate that CWEIGHT takes the default value.
