@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, January 23, 2024 AM11:10:28
+! Last Modified: Tuesday, January 23, 2024 AM11:41:32
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -21,13 +21,13 @@ module preproc_mod
 ! 3. No warning will be raised in case 1 or 2 takes effect.
 ! 4. These interpretations are used when interfacing with C, which does not support optional inputs.
 ! 5. We should not rely on 1 and 2 within Fortran or when interfacing with Python/MATLAB/Julia/R.
-!    First of all, these language have better support for optional inputs; if an input is supposed
-!    to take the default value, we should simply omit it and then set its value properly in a
-!    preprocessing procedure (see prima/matlab/interfaces/private/preprima.m for an example) rather
-!    than setting it to NaN or 0. Secondly, 1 relies on the behavior of Fortran compilers regarding
-!    NaN, which may not work as expected when compilers are invoked with aggressive optimization
-!    options. Thirdly, 1 and 2 assigns artificial meanings to invalid inputs (NaN and 0), which may
-!    cause confusion and should be avoided whenever possible.
+!    First, 1 and 2 assigns artificial meanings to invalid inputs (NaN and 0), which may cause
+!    confusion and should be avoided whenever possible. Second, those language have better support
+!    for optional inputs; if an input is supposed to take the default value, we should simply omit
+!    it and then set its value properly in a preprocessing procedure (the current subroutine and
+!    prima/matlab/interfaces/private/preprima.m are examples), rather than setting it to NaN or 0.
+!    Third, 1 depends on the behavior of Fortran compilers regarding NaN, which is not reliable when
+!    the compilers are invoked with aggressive optimization options.
 
 
 implicit none
