@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, January 21, 2024 PM02:44:35
+! Last Modified: Wednesday, January 24, 2024 AM12:35:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -407,6 +407,7 @@ else if (has_rhobeg) then
     ! HONOUR_X0 is FALSE if user provides a valid RHOBEG. Is this the best choice?
     honour_x0_loc = (.not. (is_finite(rhobeg) .and. rhobeg > 0))
 end if
+
 
 ! Preprocess the inputs in case some of them are invalid. It does nothing if all inputs are valid.
 call preproc(solver, n, iprint_loc, maxfun_loc, maxhist_loc, ftarget_loc, rhobeg_loc, rhoend_loc, &
