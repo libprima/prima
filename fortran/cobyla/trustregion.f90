@@ -8,7 +8,7 @@ module trustregion_cobyla_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Sunday, September 03, 2023 PM06:19:23
+! Last Modified: Tuesday, January 23, 2024 PM08:37:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -233,7 +233,7 @@ if (DEBUGGING) then
             & 'D is finite and ||D|| <= 2*DELTA at the beginning of stage 2', srname)
         call assert((nact >= 0 .and. nact <= min(mcon, n)), &
             & '0 <= NACT <= MIN(MCON, N) at the beginning of stage 2', srname)
-        call assert(all(vmultc(1:mcon - 1) >= 0), 'VMULTC >= 0 at the beginning of stage 2', srname)
+        call assert(RP == kind(0.0) .or. all(vmultc(1:mcon - 1) >= 0), 'VMULTC >= 0 at the beginning of stage 2', srname)
         ! N.B.: Stage 1 defines only VMULTC(1:M); VMULTC(M+1) is undefined!
     end if
 end if
@@ -301,7 +301,7 @@ nfail = 0
 maxiter = int(min(10**min(4, range(0_IK)), 100 * int(max(m, n))), IK)
 do iter = 1, maxiter
     if (DEBUGGING) then
-        call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)
+        call assert(RP == kind(0.0) .or. all(vmultc >= 0), 'VMULTC >= 0', srname)
     end if
     if (stage == 1) then
         optnew = cviol
@@ -548,13 +548,13 @@ do iter = 1, maxiter
     ! Update D, VMULTC and CVIOL.
     dold = d
     d = (ONE - frac) * d + frac * dnew
-    ! Exit in case of Inf/NaN in D.
-    if (.not. is_finite(sum(abs(d)))) then
+    vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
+    ! Exit in case of Inf/NaN in D or VMULTC.
+    if (.not. (is_finite(sum(abs(d))) .and. is_finite(sum(abs(vmultc))))) then
         d = dold  ! Should we restore also IACT, NACT, VMULTC, and Z?
         exit
     end if
 
-    vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     if (stage == 1) then
         !cviol = (ONE - frac) * cvold + frac * cviol  ! Powell's version
         ! In theory, CVIOL = MAXVAL([MATPROD(D, A) - B, ZERO]), yet the CVIOL updated as above
@@ -577,7 +577,7 @@ end do
 if (DEBUGGING) then
     call assert(size(iact) == mcon, 'SIZE(IACT) == MCON', srname)
     call assert(size(vmultc) == mcon, 'SIZE(VMULTC) == MCON', srname)
-    call assert(all(vmultc >= 0), 'VMULTC >= 0', srname)
+    call assert(RP == kind(0.0) .or. all(vmultc >= 0), 'VMULTC >= 0', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
     call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
