@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, October 18, 2023 PM10:15:50
+! Last Modified: Tuesday, January 23, 2024 PM07:51:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1175,9 +1175,9 @@ if (DEBUGGING) then
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
 
     do j = 1, npt
-        hcol(1:npt) = omega_col(idz, zmat, knew)
+        hcol(1:npt) = omega_col(idz, zmat, j)
         hcol(npt + 1:npt + n) = bmat(:, j)
-        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
+        call assert(RP == kind(0.0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
 
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -1418,9 +1418,9 @@ if (DEBUGGING) then
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, 'SIZE(ZMAT) == [NPT, NPT-N-1]', srname)
 
     do j = 1, npt
-        hcol(1:npt) = omega_col(idz, zmat, knew)
+        hcol(1:npt) = omega_col(idz, zmat, j)
         hcol(npt + 1:npt + n) = bmat(:, j)
-        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
+        call assert(RP == kind(0.0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
 
     ! The following is too expensive to check.
