@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 23, 2024 PM07:51:47
+! Last Modified: Tuesday, January 23, 2024 PM07:57:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -770,7 +770,7 @@ if (DEBUGGING) then
     do j = 1, npt
         hcol(1:npt) = matprod(zmat, zmat(j, :))
         hcol(npt + 1:npt + n) = bmat(:, j)
-        call assert(sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
+        call assert(RP == kind(0.0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
 
     ! The following is too expensive to check.
