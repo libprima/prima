@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 19, 2024 AM12:54:27
+! Last Modified: Tuesday, January 23, 2024 AM11:30:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -410,13 +410,15 @@ if (DEBUGGING) then
     if (present(xu)) then
         call assert(size(xu) == n .or. size(xu) == 0, 'SIZE(XU) == N unless XU is empty', srname)
     end if
-    if (present(f0)) then
-        call assert(is_nan(f0) .or. present(nlconstr0), 'If F0 is present and not NaN, then NLCONSTR0 is present', srname)
-        ! N.B.: We allow to use F0 = NaN to indicate that F0 is not provided. However, if F0 = NaN
-        ! can also happen if F0 is evaluated and the evaluation returns NaN.
-    end if
+
+    ! N.B.: If NLCONSTR0 is present, then F0 must be present, and we assume that F(X0) = F0 even if
+    ! F0 is NaN; if NLCONSTR0 is absent, then F0 must be either absent or NaN, both of which will
+    ! be interpreted as F(X0) is not provided.
     if (present(nlconstr0)) then
         call assert(present(f0), 'If NLCONSTR0 is present, then F0 is present', srname)
+    end if
+    if (present(f0)) then
+        call assert(is_nan(f0) .or. present(nlconstr0), 'If F0 is present and not NaN, then NLCONSTR0 is present', srname)
     end if
 end if
 
@@ -487,6 +489,10 @@ call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 
 ! Set [F_LOC, CONSTR_LOC] to [F(X0), CONSTR(X0)] after evaluating the latter if needed. In this way,
 ! COBYLB only needs one interface.
+! N.B.: Due to the preconditions above, there are two possibilities for F0 and NLCONSTR0.
+! If NLCONSTR0 is present, then F0 must be present, and we assume that F(X0) = F0 even if F0 is NaN.
+! If NLCONSTR0 is absent, then F0 must be either absent or NaN, both of which will be interpreted as
+! F(X0) is not provided and we have to evaluate F(X0) and NLCONSTR(X0) now.
 constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)
 if (present(f0) .and. present(nlconstr0) .and. all(is_finite(x))) then
     f_loc = f0
