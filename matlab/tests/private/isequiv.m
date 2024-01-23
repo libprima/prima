@@ -270,16 +270,16 @@ orig_rng_state = rng();  % Save the current random number generator settings
 rng(rseed);  % Set the random seed for reproducibility
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
-test_options.rhobeg = rand-0.5;
-test_options.rhoend = 1e-3*(rand-0.5);
+test_options.rhobeg = randn;
+test_options.rhoend = 1e-3*randn;
 test_options.eta1 = randn;
 test_options.eta2 = randn;
 test_options.gamma1 = randn;
 test_options.gamma2 = randn;
 test_options.ctol = 1e-3*randn;
 test_options.cweight = 1e3*randn;
-test_options.npt = max(min(floor(6*rand*n), (n+2)*(n+1)/2), n+2);
-test_options.maxfun = max(ceil(20*n*(1+rand)), n+3);  % For reproducibility, do not remove this even if `options` contains `maxfun`.
+test_options.npt = floor(10*randn*n);
+test_options.maxfun = floor(10*randn*n);  % For reproducibility, do not remove this even if `options` contains `maxfun`.
 if isfield(options, 'maxfun')
     test_options.maxfun = options.maxfun;
 end
@@ -289,7 +289,7 @@ test_options.fortran = true;
 test_options.output_xhist = (rand > 0.5);
 %test_options.output_xhist = 1;
 test_options.output_nlchist = (rand > 0.5);
-test_options.maxhist = ceil(randn*1.5*test_options.maxfun);
+test_options.maxhist = floor(randn*1.5*test_options.maxfun);
 %test_options.maxhist = test_options.maxfun;
 if single_test
     % DO NOT INVOKE ANY RANDOMIZATION WITHIN THIS IF. Otherwise, a single test cannot reproduce the
@@ -298,7 +298,7 @@ if single_test
     test_options.output_xhist = true;
     test_options.output_nlchist = true;
 end
-test_options.maxfilt = ceil(randn*500);
+test_options.maxfilt = floor(randn*500);
 test_options.iprint = floor(3*rand);
 test_options.quiet = (rand < 0.9);
 % Test all precisions. For unavailable precisions, the double-precision version will be called.
