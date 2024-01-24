@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 24, 2024 PM04:12:40
+! Last Modified: Wednesday, January 24, 2024 PM04:22:39
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -165,8 +165,8 @@ end if
 maxhist = min(maxhist, maxfun)  ! MAXHIST > MAXFUN is never needed.
 
 ! Validate FTARGET
-if (is_nan(ftarget)) then  ! No warning if FTARGET is NaN, which is interpreted as no FTARGET is provided.
-    ftarget = FTARGET_DFT
+if (is_nan(ftarget)) then  ! No warning if FTARGET is NaN, which is interpreted as no target function value is provided.
+    ftarget = -huge(ftarget)
 end if
 
 ! Validate NPT
