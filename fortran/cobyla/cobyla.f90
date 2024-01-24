@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, January 23, 2024 AM11:30:41
+! Last Modified: Wednesday, January 24, 2024 PM03:51:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -261,7 +261,7 @@ use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, TEN, TENTH, EPS, REALMAX
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
-use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex, moderatec
+use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex, moderatec, moderatef
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INVALID_INPUT
@@ -495,8 +495,8 @@ call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 ! F(X0) is not provided and we have to evaluate F(X0) and NLCONSTR(X0) now.
 constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)
 if (present(f0) .and. present(nlconstr0) .and. all(is_finite(x))) then
-    f_loc = f0
-    constr_loc(m - m_nlcon + 1:m) = nlconstr0
+    f_loc = moderatef(f0)
+    constr_loc(m - m_nlcon + 1:m) = moderatec(nlconstr0)
 else
     x = moderatex(x)
     call evaluate(calcfc, x, f_loc, constr_loc(m - m_nlcon + 1:m))

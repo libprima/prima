@@ -8,7 +8,7 @@ module initialize_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, August 07, 2023 AM03:54:18
+! Last Modified: Wednesday, January 24, 2024 PM03:53:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,7 @@ subroutine initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate, moderatef, moderatec
+use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT
@@ -148,8 +148,8 @@ do k = 1, n + 1_IK
     ! We will evaluate F corresponding to SIM(:, J).
     if (k == 1) then
         j = n + 1_IK
-        f = moderatef(f0)
-        constr = moderatec(constr0)
+        f = f0
+        constr = constr0
     else
         j = k - 1_IK
         x(j) = x(j) + rhobeg

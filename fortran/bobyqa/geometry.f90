@@ -8,7 +8,7 @@ module geometry_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, October 13, 2023 PM02:27:42
+! Last Modified: Wednesday, January 24, 2024 PM04:15:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -511,7 +511,7 @@ do uphill = 0, 1
     ! In Powell's code, the subroutine returns immediately if GGFREE is 0. However, GGFREE depends
     ! on GLAG, which in turn depends on UPHILL. It can happen that GGFREE is 0 when UPHILL = 0 but
     ! not so when UPHILL= 1. Thus we skip the iteration for the current UPHILL but do not return.
-    if (ggfree <= 0) then
+    if (ggfree <= 0 .or. is_nan(ggfree)) then
         cycle
     end if
 

@@ -6,29 +6,13 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, January 23, 2024 AM11:43:29
+! Last Modified: Wednesday, January 24, 2024 PM04:12:40
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
 ! 1. If all the inputs are valid, then PREPROC should do nothing.
 ! 2. In PREPROC, we use VALIDATE instead of ASSERT, so that the parameters are validated even if we
 !    are not in debug mode.
-!
-! Remarks on the default values of scalar inputs:
-! 1. For any real scalar input, we interpret NaN as "this input will take the default value".
-! 2. For any integer scalar input, we interpret 0 as "this input will take the default value", which
-!    is reasonable as all the integer inputs are expected to take positive values (as of 20240123).
-! 3. No warning will be raised in case 1 or 2 takes effect.
-! 4. These interpretations are used when interfacing with C, which does not support optional inputs.
-! 5. We should not rely on 1 and 2 within Fortran or when interfacing with Python/MATLAB/Julia/R.
-!    First, 1 and 2 assign artificial meanings to invalid inputs (NaN and 0), which may cause
-!    confusion and should be avoided whenever possible. Second, the aforementioned language have
-!    better support for optional inputs; if an input is supposed to take the default value, we
-!    should simply omit it and then set its value properly in a preprocessing procedure (the PREPROC
-!    subroutine and prima/matlab/interfaces/private/preprima.m are examples), rather than setting it
-!    to NaN or 0. Third, 1 depends on the behavior of Fortran compilers regarding NaN, which is not
-!    reliable when the compilers are invoked with aggressive optimization options.
-
 
 implicit none
 private
@@ -43,7 +27,7 @@ subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, 
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, HALF, EPS, MAXFUN_DIM_DFT, MAXHISTMEM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, HALF, EPS, MAXHISTMEM, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 use, non_intrinsic :: consts_mod, only : CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT, IPRINT_DFT, MIN_MAXFILT, MAXFILT_DFT
 use, non_intrinsic :: debug_mod, only : validate, warning
@@ -164,16 +148,10 @@ case default  ! CASE ('NEWUOA', 'BOBYQA', 'LINCOA')
     min_maxfun = int(n) + 3
     min_maxfun_str = 'N + 3'
 end select
-if (maxfun == 0) then  ! We use MAXFUN = 0 to indicate that MAXFUN takes the default value MAXFUN_DIM_DFT*N.
-    if (MAXFUN_DIM_DFT >= huge(maxfun) / n) then  ! Avoid overflow when N is large.
-        maxfun = huge(maxfun)
-    else
-        maxfun = MAXFUN_DIM_DFT * n
-    end if
-elseif (maxfun <= max(0, min_maxfun)) then
+if (maxfun <= max(0, min_maxfun)) then
     if (maxfun > 0) then
         maxfun = int(min_maxfun, kind(maxfun))
-    else  ! We assume that negative values of MAXFUN are produced by overflow.
+    else  ! We assume that non-positive values of MAXFUN are produced by overflow.
         maxfun = huge(maxfun)
     end if
     call warning(solver, 'Invalid MAXFUN; it should be at least '//min_maxfun_str//'; it is set to '//num2str(maxfun))
@@ -182,14 +160,12 @@ end if
 ! Validate MAXHIST
 if (maxhist <= 0) then
     maxhist = maxfun
-    if (maxhist /= 0) then  ! No warning if MAXHIST = 0, we use which to indicate that MAXHIST takes the default value.
-        call warning(solver, 'Invalid MAXHIST; it should be a positive integer; it is set to '//num2str(maxhist))
-    end if
+    call warning(solver, 'Invalid MAXHIST; it should be a positive integer; it is set to '//num2str(maxhist))
 end if
 maxhist = min(maxhist, maxfun)  ! MAXHIST > MAXFUN is never needed.
 
 ! Validate FTARGET
-if (is_nan(ftarget)) then  ! No warning if FTARGET is NaN, we use which to indicate that FTARGET takes the default value.
+if (is_nan(ftarget)) then  ! No warning if FTARGET is NaN, which is interpreted as no FTARGET is provided.
     ftarget = FTARGET_DFT
 end if
 
@@ -198,10 +174,8 @@ if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver)
     & .and. present(npt)) then
     if (npt < n + 2 .or. npt >= maxfun .or. 2 * npt > int(n + 2) * int(n + 1)) then  ! INT(*) avoids overflow when IK is 16-bit.
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
-        if (npt /= 0) then  ! No warning if NPT = 0, we use which to indicate that NPT takes the default value.
-            call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2]'// &
-                & ' and less than MAXFUN; it is set to '//num2str(npt))
-        end if
+        call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2]'// &
+            & ' and less than MAXFUN; it is set to '//num2str(npt))
     end if
 end if
 
@@ -229,7 +203,7 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     end if
     maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
     if (is_constrained_loc) then
-        if (maxfilt_in < 0) then  ! No warning if MAXFILT = 0, we use which to indicate that MAXFILT takes the default value.
+        if (maxfilt_in <= 0) then
             call warning(solver, 'Invalid MAXFILT; it should be a positive integer; it is set to ' &
                 & //num2str(maxfilt))
         elseif (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
@@ -248,10 +222,8 @@ if (.not. (eta1 >= 0 .and. eta1 < 1)) then  ! ETA1 = NaN falls into this case.
     else
         eta1 = ETA1_DFT
     end if
-    if (.not. is_nan(eta1)) then  ! No warning if ETA1 is NaN, we use which to indicate that ETA1 takes the default value.
-        call warning(solver, 'Invalid ETA1; it should be in the interval [0, 1) and not more than ETA2;'// &
-            & ' it is set to '//num2str(eta1))
-    end if
+    call warning(solver, 'Invalid ETA1; it should be in the interval [0, 1) and not more than ETA2;'// &
+        & ' it is set to '//num2str(eta1))
 end if
 
 if (.not. (eta2 >= eta1 .and. eta2 < 1)) then  ! ETA2 = NaN falls into this case.
@@ -261,10 +233,8 @@ if (.not. (eta2 >= eta1 .and. eta2 < 1)) then  ! ETA2 = NaN falls into this case
     else
         eta2 = ETA2_DFT
     end if
-    if (.not. is_nan(eta2)) then  ! No warning if ETA2 is NaN, we use which to indicate that ETA2 takes the default value.
-        call warning(solver, 'Invalid ETA2; it should be in the interval [0, 1) and not less than ETA1;'// &
-            & ' it is set to '//num2str(eta2))
-    end if
+    call warning(solver, 'Invalid ETA2; it should be in the interval [0, 1) and not less than ETA1;'// &
+        & ' it is set to '//num2str(eta2))
 end if
 
 ! The following revision may update ETA1 slightly. It prevents ETA1 > ETA2 due to rounding
@@ -274,16 +244,12 @@ eta1 = min(eta1, eta2)
 ! Validate GAMMA1 and GAMMA2
 if (.not. (gamma1 > 0 .and. gamma1 < 1)) then  ! GAMMA1 = NaN falls into this case.
     gamma1 = GAMMA1_DFT
-    if (.not. is_nan(gamma1)) then  ! No warning if GAMMA1 is NaN, we use which to indicate that GAMMA1 takes the default value.
-        call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//num2str(gamma1))
-    end if
+    call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//num2str(gamma1))
 end if
 
 if (.not. (is_finite(gamma2) .and. gamma2 >= 1)) then  ! GAMMA2 = NaN falls into this case.
     gamma2 = GAMMA2_DFT
-    if (.not. is_nan(gamma2)) then  ! No warning if GAMMA2 is NaN, we use which to indicate that GAMMA2 takes the default value.
-        call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//num2str(gamma2))
-    end if
+    call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//num2str(gamma2))
 end if
 
 ! Validate RHOBEG and RHOEND
@@ -317,17 +283,13 @@ if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then  ! RHOBEG = NaN falls into 
     else
         rhobeg = rhobeg_default
     end if
-    if (.not. is_nan(rhobeg)) then  ! No warning if RHOBEG is NaN, we use which to indicate that RHOBEG takes the default value.
-        call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//num2str(rhobeg))
-    end if
+    call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//num2str(rhobeg))
 end if
 
 if (.not. (is_finite(rhoend) .and. rhoend > 0 .and. rhoend <= rhobeg)) then  ! RHOEND = NaN falls into this case.
     rhoend = max(EPS, min(TENTH * rhobeg, rhoend_default))
-    if (.not. is_nan(rhoend)) then  ! No warning if RHOEND is NaN, we use which to indicate that RHOEND takes the default value.
-        call warning(solver, 'Invalid RHOEND; it should be a positive number and RHOEND <= RHOBEG; '// &
-            & 'it is set to '//num2str(rhoend))
-    end if
+    call warning(solver, 'Invalid RHOEND; it should be a positive number and RHOEND <= RHOBEG; '// &
+        & 'it is set to '//num2str(rhoend))
 end if
 
 ! For BOBYQA, revise X0 or RHOBEG so that the distance between X0 and the inactive bounds is at
@@ -393,8 +355,7 @@ rhoend = min(rhoend, rhobeg)
 if (present(ctol)) then
     if (.not. (ctol >= 0)) then  ! CTOL = NaN falls into this case.
         ctol = CTOL_DFT
-        if (is_constrained_loc .and. .not. is_nan(ctol)) then
-            ! No warning if CTOL is NaN, we use which to indicate that CTOL takes the default value.
+        if (is_constrained_loc) then
             call warning(solver, 'Invalid CTOL; it should be a nonnegative number; it is set to '//num2str(ctol))
         end if
     end if
@@ -404,8 +365,7 @@ end if
 if (present(cweight)) then
     if (.not. (cweight >= 0)) then  ! CWEIGHT = NaN falls into this case.
         cweight = CWEIGHT_DFT
-        if (is_constrained_loc .and. .not. is_nan(cweight)) then
-            ! No warning if CWEIGHT is NaN, we use which to indicate that CWEIGHT takes the default value.
+        if (is_constrained_loc) then
             call warning(solver, 'Invalid CWEIGHT; it should be a nonnegative number; it is set to '//num2str(cweight))
         end if
     end if
