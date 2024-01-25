@@ -39,7 +39,7 @@ integer(C_INT), intent(out) :: info
 ! Local variables
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
-integer(IK) :: maxfun_loc
+integer(IK), allocatable :: maxfun_loc
 integer(IK) :: nf_loc
 real(RP) :: f_loc
 real(RP), allocatable :: rhobeg_loc
@@ -62,7 +62,9 @@ if (.not. is_nan(rhoend)) then
     rhoend_loc = real(rhoend, kind(rhoend_loc))
 end if
 ftarget_loc = real(ftarget, kind(ftarget_loc))
-maxfun_loc = int(maxfun, kind(maxfun_loc))
+if (maxfun /= 0) then
+    maxfun_loc = int(maxfun, kind(maxfun_loc))
+end if
 iprint_loc = int(iprint, kind(iprint_loc))
 call C_F_PROCPOINTER(cobj_ptr, obj_ptr)
 

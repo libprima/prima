@@ -55,7 +55,7 @@ integer(C_INT), intent(out) :: info
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: m_nlcon_loc
-integer(IK) :: maxfun_loc
+integer(IK), allocatable :: maxfun_loc
 integer(IK) :: nf_loc
 real(RP) :: Aineq_loc(m_ineq, n)
 real(RP) :: bineq_loc(m_ineq)
@@ -100,13 +100,12 @@ if (C_ASSOCIATED(xu)) then
     call safealloc(xu_loc, int(n, IK))
     xu_loc = real(xu_loc_interm, kind(xu_loc))
 end if
-if (.not. is_nan(f0)) then
-    f0_loc = real(f0, kind(f0_loc))
-end if
 if (C_ASSOCIATED(nlconstr0)) then
     call C_F_POINTER(nlconstr0, nlconstr0_loc_interm, shape=[m_nlcon])
     call safealloc(nlconstr0_loc, int(m_nlcon, IK))
     nlconstr0_loc = real(nlconstr0_loc_interm, kind(nlconstr0_loc))
+    ! We assume that if nlconstr0 was provided, that the f0 provided is valid
+    f0_loc = real(f0, kind(f0_loc))
 end if
 if (.not. is_nan(rhobeg)) then
     rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
@@ -115,7 +114,9 @@ if (.not. is_nan(rhoend)) then
     rhoend_loc = real(rhoend, kind(rhoend_loc))
 end if
 ftarget_loc = real(ftarget, kind(ftarget_loc))
-maxfun_loc = int(maxfun, kind(maxfun_loc))
+if (maxfun /= 0) then
+    maxfun_loc = int(maxfun, kind(maxfun_loc))
+end if
 iprint_loc = int(iprint, kind(iprint_loc))
 m_nlcon_loc = int(m_nlcon, kind(m_nlcon_loc))
 call C_F_PROCPOINTER(cobjcon_ptr, objcon_ptr)

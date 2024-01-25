@@ -7,19 +7,39 @@
 #include <string.h>
 #include <stdio.h>
 
-#define MAXFUN_DIM_DFT 500
+
+/**
+ * A NOTE ON DEFAULT VALUES IN OPTIONS AND PROBLEM STRUCTURES
+ * 
+ * Certain values of the variables in the options and problems structures
+ * are interpreted by the Fortran code as "not present". This is not by default,
+ * it is done by us intentionally so that we may signal to the Fortran code that
+ * these values were not provided. This is so that the Fortran code may then properly
+ * set the default values for those variables.
+ * 
+ * In order to accomplish this we take advantage of a certain part of the Fortran
+ * standard that basically says that if an allocatable value which has not been
+ * allocated is passed to a function, `present` will return false.
+ * 
+ * Our convention is as follows
+ * double  - NaN  is to be interpreted as not present
+ * int     - 0    is to be interpreted as not present (as of 20240124 all ints are expected to be non-negative)
+ * pointer - NULL is to be interpreted as not present
+ * 
+ * If variables are added to options/problems that are optional, the algorithm_c.f90 files must
+ * be updated to treat the default values appropriately. For examples see rhobeg/rhoend(double), maxfun/npt(int),
+ * and xl/xu (array/pointer).
+*/
 
 int prima_init_options(prima_options_t *options)
 {
   if (options)
   {
     memset(options, 0, sizeof(prima_options_t));
-    options->maxfun = 0;  // interpreted as maxfun taking the default value MAXFUN_DIM_DFT*n
     options->rhobeg = NAN;  // interpreted by Fortran as not present
     options->rhoend = NAN;  // interpreted by Fortran as not present
     options->iprint = PRIMA_MSG_NONE;
     options->ftarget = -INFINITY;
-    options->npt = 0;  // interpreted as npt taking the default value 2*n+1
     return 0;
   }
   else
@@ -80,10 +100,6 @@ int prima_check_problem(prima_problem_t *problem, prima_options_t *options, cons
     return PRIMA_NULL_X0;
   if ((use_constr && !problem->calcfc) || (!use_constr && !problem->calfun))
     return PRIMA_NULL_FUNCTION;
-  if (options->maxfun == 0)
-    options->maxfun = MAXFUN_DIM_DFT*problem->n;
-  if (options->npt == 0)
-    options->npt = 2*problem->n+1;
   return 0;
 }
 

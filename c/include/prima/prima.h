@@ -104,13 +104,16 @@ typedef void (*prima_callback_t)(const int n, const double x[], const double f, 
 
 typedef struct {
   
-  // a reasonable initial change to the variables
+  // a reasonable initial change to the variables (by default this is NaN, which will be
+  // interpreted in Fortran as not present, in which case a default value will be used)
   double rhobeg;
 
-  // required accuracy for the variables
+  // required accuracy for the variables (by default this is NaN, which will be
+  // interpreted in Fortran as not present, in which case a default value will be used)
   double rhoend;
 
-  // maximum number of function evaluations (default=500*n)
+  // maximum number of function evaluations (by default this is 0, which will be
+  // interpreted in Fortran as not present, in which case a default value based on the algorithm will be used)
   int maxfun;
 
   // verbosity level, see the prima_message_t enum (default=PRIMA_MSG_NONE)
@@ -119,7 +122,8 @@ typedef struct {
   // target function value; optimization stops when f <= ftarget for a feasible point (default=-inf)
   double ftarget;
 
-  // number of points in the interpolation set n+2<=npt<=(n+1)(n+2)/2 (default=2*n+1)
+  // number of points in the interpolation set n+2<=npt<=(n+1)(n+2)/2 (by default this is 0, which will be
+  // interpreted by Fortran as not present, in which case a default value based on the algorithm will be used)
   // ignored for uobyqa & cobyla
   int npt;
 
