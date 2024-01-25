@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 25, 2024 PM06:04:00
+! Last Modified: Thursday, January 25, 2024 PM06:24:02
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -463,19 +463,21 @@ if (present(beq)) then
     beq_loc = beq
 end if
 
-if (present(xl) .and. size(xl) > 0) then
-    xl_loc = xl
-else
-    xl_loc = -REALMAX
+xl_loc = -REALMAX
+if (present(xl)) then
+    if (size(xl) > 0) then
+        xl_loc = xl
+    end if
 end if
 xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -REALMAX)) = -REALMAX
 call safealloc(ixl, mxl)
 ixl = trueloc(xl_loc > -REALMAX)
 
-if (present(xu) .and. size(xu) > 0) then
-    xu_loc = xu
-else
-    xu_loc = REALMAX
+xu_loc = REALMAX
+if (present(xu)) then
+    if (size(xu) > 0) then
+        xu_loc = xu
+    end if
 end if
 xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > REALMAX)) = REALMAX
 call safealloc(ixu, mxu)
