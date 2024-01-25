@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 25, 2024 PM08:03:33
+! Last Modified: Thursday, January 25, 2024 PM08:12:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -304,7 +304,7 @@ gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
 ! MAXTR is the maximal number of trust-region iterations. Here, we set it to HUGE(MAXTR) so that
 ! the algorithm will not terminate due to MAXTR. However, this may not be allowed in other languages
 ! such as MATLAB. In that case, we can set MAXTR to 10*MAXFUN, which is unlikely to reach because
-! each trust-region teration takes 1 or 2 function evaluations unless the trust-region step is short
+! each trust-region iteration takes 1 or 2 function evaluations unless the trust-region step is short
 ! or fails to reduce the trust-region model but the geometry step is not invoked.
 maxtr = huge(maxtr)  !!MATLAB: maxtr = 10 * maxfun;
 info = MAXTR_REACHED
