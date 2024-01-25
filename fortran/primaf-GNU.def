@@ -7,3 +7,5 @@ EXPORTS
   __newuoa_mod_MOD_newuoa
   __uobyqa_mod_MOD_uobyqa
   __debug_mod_MOD_assert
+  __infnan_mod_MOD_is_nan_dp
+  __infnan_mod_MOD_is_nan_sp

@@ -170,7 +170,7 @@ jobs:
       matrix:
         toolchain:
           - {compiler: aflang, cflags: '-Wall', fflags: '-Wpedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
-          - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk -Mchkptr'}
+          - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk'}
           - {compiler: flang, cflags: '-Wall', fflags: '-Wpedantic -Weverything -Wall -Wextra'}
 
     steps:

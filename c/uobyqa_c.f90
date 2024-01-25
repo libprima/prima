@@ -16,6 +16,7 @@ subroutine uobyqa_c(cobj_ptr, data_ptr, n, x, f, nf, rhobeg, rhoend, ftarget, ma
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER
 use, non_intrinsic :: cintrf_mod, only : COBJ, CCALLBACK
 use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: infnan_mod, only : is_nan
 use, non_intrinsic :: uobyqa_mod, only : uobyqa
 implicit none
 
@@ -38,11 +39,11 @@ integer(C_INT), intent(out) :: info
 ! Local variables
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
-integer(IK) :: maxfun_loc
+integer(IK), allocatable :: maxfun_loc
 integer(IK) :: nf_loc
 real(RP) :: f_loc
-real(RP) :: rhobeg_loc
-real(RP) :: rhoend_loc
+real(RP), allocatable :: rhobeg_loc
+real(RP), allocatable :: rhoend_loc
 real(RP) :: ftarget_loc
 real(RP) :: x_loc(n)
 ! The initialization to null is necessary to avoid a bug with the newer Intel compiler ifx.
@@ -54,10 +55,16 @@ procedure(CCALLBACK), pointer :: cb_ptr => null()
 
 ! Read the inputs and convert them to the Fortran side types
 x_loc = real(x, kind(x_loc))
-rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
-rhoend_loc = real(rhoend, kind(rhoend_loc))
+if (.not. is_nan(rhobeg)) then
+    rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
+end if
+if (.not. is_nan(rhoend)) then
+    rhoend_loc = real(rhoend, kind(rhoend_loc))
+end if
 ftarget_loc = real(ftarget, kind(ftarget_loc))
-maxfun_loc = int(maxfun, kind(maxfun_loc))
+if (maxfun /= 0) then
+    maxfun_loc = int(maxfun, kind(maxfun_loc))
+end if
 iprint_loc = int(iprint, kind(iprint_loc))
 call C_F_PROCPOINTER(cobj_ptr, obj_ptr)
 

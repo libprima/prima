@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #define M_NLCON 1
+#define PROVIDE_INITIAL_F_AND_NLCONSTR 1
 
 static void fun(const double x[], double *f, double constr[], const void *data)
 {
@@ -40,6 +41,11 @@ int main(int argc, char * argv[])
   problem.calcfc = &fun;
   problem.x0 = x0;
   problem.m_nlcon = M_NLCON;
+#if PROVIDE_INITIAL_F_AND_NLCONSTR
+  double nlconstr0[M_NLCON] = {0};
+  fun(x0, &(problem.f0), nlconstr0, NULL);
+  problem.nlconstr0 = nlconstr0;
+#endif
   // set up the options
   prima_options_t options;
   prima_init_options(&options);
@@ -52,7 +58,7 @@ int main(int argc, char * argv[])
   // run the solver
   const int rc = prima_minimize(PRIMA_COBYLA, &problem, &options, &result);
   printf("x*={%g, %g} f*=%g cstrv=%g nlconstr={%g} rc=%d msg='%s' evals=%d\n", result.x[0], result.x[1], result.f, result.cstrv, result.nlconstr[0], rc, result.message, result.nf);
-  prima_free_problem(&problem);
+  int success = (fabs(result.x[0]-3)>2e-2 || fabs(result.x[1]-4)>2e-2);
   prima_free_result(&result);
-  return (fabs(result.x[0]-3)>2e-2 || fabs(result.x[1]-4)>2e-2);
+  return success;
 }

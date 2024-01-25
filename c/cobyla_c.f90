@@ -14,10 +14,12 @@ contains
 
 subroutine cobyla_c(m_nlcon, cobjcon_ptr, data_ptr, n, x, f, cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, &
     & xl, xu, f0, nlconstr0, nf, rhobeg, rhoend, ftarget, maxfun, iprint, callback_ptr, info) bind(C)
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER, C_F_POINTER
 use, non_intrinsic :: cintrf_mod, only : COBJCON, CCALLBACK
-use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: cobyla_mod, only : cobyla
+use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Compulsory arguments
@@ -36,10 +38,10 @@ real(C_DOUBLE), intent(in) :: bineq(m_ineq)
 integer(C_INT), intent(in), value :: m_eq
 real(C_DOUBLE), intent(in) :: Aeq(n, m_eq)
 real(C_DOUBLE), intent(in) :: beq(m_eq)
-real(C_DOUBLE), intent(in) :: xl(n)
-real(C_DOUBLE), intent(in) :: xu(n)
+type(C_PTR), intent(in), value :: xl
+type(C_PTR), intent(in), value :: xu
 real(C_DOUBLE), intent(in), value :: f0
-real(C_DOUBLE), intent(in) :: nlconstr0(m_nlcon)
+type(C_PTR), intent(in), value :: nlconstr0
 integer(C_INT), intent(out) :: nf
 real(C_DOUBLE), intent(in), value :: rhobeg
 real(C_DOUBLE), intent(in), value :: rhoend
@@ -53,7 +55,7 @@ integer(C_INT), intent(out) :: info
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: m_nlcon_loc
-integer(IK) :: maxfun_loc
+integer(IK), allocatable :: maxfun_loc
 integer(IK) :: nf_loc
 real(RP) :: Aineq_loc(m_ineq, n)
 real(RP) :: bineq_loc(m_ineq)
@@ -62,14 +64,17 @@ real(RP) :: beq_loc(m_eq)
 real(RP) :: cstrv_loc
 real(RP) :: nlconstr_loc(m_nlcon)
 real(RP) :: f_loc
-real(RP) :: rhobeg_loc
-real(RP) :: rhoend_loc
+real(RP), allocatable :: rhobeg_loc
+real(RP), allocatable :: rhoend_loc
 real(RP) :: ftarget_loc
 real(RP) :: x_loc(n)
-real(RP) :: xl_loc(n)
-real(RP) :: xu_loc(n)
-real(RP) :: f0_loc
-real(RP) :: nlconstr0_loc(m_nlcon)
+real(C_DOUBLE), pointer :: xl_loc_interm(:)
+real(RP), allocatable :: xl_loc(:)
+real(C_DOUBLE), pointer :: xu_loc_interm(:)
+real(RP), allocatable :: xu_loc(:)
+real(RP), allocatable :: f0_loc
+real(C_DOUBLE), pointer :: nlconstr0_loc_interm(:)
+real(RP), allocatable :: nlconstr0_loc(:)
 ! The initialization to null is necessary to avoid a bug with the newer Intel compiler ifx.
 ! See details here: https://fortran-lang.discourse.group/t/strange-issue-with-ifx-compiler-and-assume-recursion/7013
 ! The bug was observed in all versions of ifx up to 2024.0.1. Once this bug is fixed we should remove the
@@ -85,14 +90,33 @@ Aineq_loc = real(transpose(Aineq), kind(Aineq_loc))
 bineq_loc = real(bineq, kind(bineq_loc))
 Aeq_loc = real(transpose(Aeq), kind(Aeq_loc))
 beq_loc = real(beq, kind(beq_loc))
-xl_loc = real(xl, kind(xl_loc))
-xu_loc = real(xu, kind(xu_loc))
-f0_loc = real(f0, kind(f0_loc))
-nlconstr0_loc = real(nlconstr0, kind(nlconstr0_loc))
-rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
-rhoend_loc = real(rhoend, kind(rhoend_loc))
+if (C_ASSOCIATED(xl)) then
+    call C_F_POINTER(xl, xl_loc_interm, shape=[n])
+    call safealloc(xl_loc, int(n, IK))
+    xl_loc = real(xl_loc_interm, kind(xl_loc))
+end if
+if (C_ASSOCIATED(xu)) then
+    call C_F_POINTER(xu, xu_loc_interm, shape=[n])
+    call safealloc(xu_loc, int(n, IK))
+    xu_loc = real(xu_loc_interm, kind(xu_loc))
+end if
+if (C_ASSOCIATED(nlconstr0)) then
+    call C_F_POINTER(nlconstr0, nlconstr0_loc_interm, shape=[m_nlcon])
+    call safealloc(nlconstr0_loc, int(m_nlcon, IK))
+    nlconstr0_loc = real(nlconstr0_loc_interm, kind(nlconstr0_loc))
+    ! We assume that if nlconstr0 was provided, that the f0 provided is valid
+    f0_loc = real(f0, kind(f0_loc))
+end if
+if (.not. is_nan(rhobeg)) then
+    rhobeg_loc = real(rhobeg, kind(rhobeg_loc))
+end if
+if (.not. is_nan(rhoend)) then
+    rhoend_loc = real(rhoend, kind(rhoend_loc))
+end if
 ftarget_loc = real(ftarget, kind(ftarget_loc))
-maxfun_loc = int(maxfun, kind(maxfun_loc))
+if (maxfun /= 0) then
+    maxfun_loc = int(maxfun, kind(maxfun_loc))
+end if
 iprint_loc = int(iprint, kind(iprint_loc))
 m_nlcon_loc = int(m_nlcon, kind(m_nlcon_loc))
 call C_F_PROCPOINTER(cobjcon_ptr, objcon_ptr)

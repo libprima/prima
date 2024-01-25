@@ -104,13 +104,16 @@ typedef void (*prima_callback_t)(const int n, const double x[], const double f, 
 
 typedef struct {
   
-  // a reasonable initial change to the variables (default=1.0)
+  // a reasonable initial change to the variables (by default this is NaN, which will be
+  // interpreted in Fortran as not present, in which case a default value will be used)
   double rhobeg;
 
-  // required accuracy for the variables (default=1e-6)
+  // required accuracy for the variables (by default this is NaN, which will be
+  // interpreted in Fortran as not present, in which case a default value will be used)
   double rhoend;
 
-  // maximum number of function evaluations (default=-1 interpreted as 500*n)
+  // maximum number of function evaluations (by default this is 0, which will be
+  // interpreted in Fortran as not present, in which case a default value based on the algorithm will be used)
   int maxfun;
 
   // verbosity level, see the prima_message_t enum (default=PRIMA_MSG_NONE)
@@ -119,7 +122,8 @@ typedef struct {
   // target function value; optimization stops when f <= ftarget for a feasible point (default=-inf)
   double ftarget;
 
-  // number of points in the interpolation set n+2<=npt<=(n+1)(n+2)/2 (default=-1 interpreted as 2*n+1)
+  // number of points in the interpolation set n+2<=npt<=(n+1)(n+2)/2 (by default this is 0, which will be
+  // interpreted by Fortran as not present, in which case a default value based on the algorithm will be used)
   // ignored for uobyqa & cobyla
   int npt;
 
@@ -153,10 +157,6 @@ typedef struct {
   double *xl;
   double *xu;
 
-  // whether prima had to allocate xl/xu (private, do not use)
-  int _allocated_xl;
-  int _allocated_xu;
-
   // Aineq*x <= bineq constraint
   // Aineq is an m_ineq-by-n matrix stored in row-major order (line by line)
   // bineq is of size m_ineq
@@ -177,9 +177,6 @@ typedef struct {
   // should be set to the objective function value and constraints values of the starting X, cobyla-only
   double f0;
   double *nlconstr0;
-
-  // whether prima had to allocate nlconstr0 (private, do not use)
-  int _allocated_nlconstr0;
   
 } prima_problem_t;
 
@@ -187,9 +184,6 @@ typedef struct {
 /* Initialize/free problem */
 PRIMAC_API
 int prima_init_problem(prima_problem_t *problem, int n);
-
-PRIMAC_API
-int prima_free_problem(prima_problem_t *problem);
 
 
 typedef struct {
@@ -208,9 +202,6 @@ typedef struct {
 
   // non-linear constraint values, of size m_nlcon (cobyla only)
   double *nlconstr;
-
-  // size of nlconstr (private, do not use)
-  int _m_nlcon;
 
   // exit code
   int status;
