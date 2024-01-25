@@ -156,7 +156,6 @@ info = int(info_loc, kind(info))
 nlconstr = real(nlconstr_loc, kind(nlconstr))
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
-if (allocated(npt_loc)) deallocate (npt_loc)
 if (allocated(maxfun_loc)) deallocate (maxfun_loc)
 if (allocated(rhoend_loc)) deallocate (rhoend_loc)
 if (allocated(rhobeg_loc)) deallocate (rhobeg_loc)
