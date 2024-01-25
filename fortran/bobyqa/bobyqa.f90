@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, January 25, 2024 PM06:21:56
+! Last Modified: Thursday, January 25, 2024 PM06:36:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -91,6 +91,8 @@ subroutine bobyqa(calfun, x, &
 !   precision. XU is similar.
 !   N.B.: It is required that XU - XL > 2*EPSILON(X), which is about 2.4E-7 for single precision and
 !   4.5E-16 for double precision. Otherwise, the solver will return after printing a warning.
+!   N.B.: Why don't we set BOUNDMAX to REALMAX? Because we want to avoid overflow when calculating
+!   XU - XL and when defining/updating SU and SL. This is not a problem in MATLAB/Python/Julia/R.
 !
 ! NF
 !   Output, INTEGER(IK) scalar.
