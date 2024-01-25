@@ -27,8 +27,7 @@ integer(C_INT), intent(in), value :: m_nlcon
 type(C_FUNPTR), intent(in), value :: cobjcon_ptr
 type(C_PTR), intent(in), value :: data_ptr
 integer(C_INT), intent(in), value :: n
-! We cannot use assumed-shape arrays for C interoperability
-real(C_DOUBLE), intent(inout) :: x(n)
+real(C_DOUBLE), intent(inout) :: x(n)  ! We cannot use assumed-shape arrays for C interoperability
 real(C_DOUBLE), intent(out) :: f
 real(C_DOUBLE), intent(out) :: cstrv
 real(C_DOUBLE), intent(out) :: nlconstr(m_nlcon)
@@ -55,53 +54,65 @@ integer(C_INT), intent(out) :: info
 integer(IK) :: info_loc
 integer(IK) :: iprint_loc
 integer(IK) :: m_nlcon_loc
-integer(IK), allocatable :: maxfun_loc
 integer(IK) :: nf_loc
-real(RP) :: Aineq_loc(m_ineq, n)
-real(RP) :: bineq_loc(m_ineq)
-real(RP) :: Aeq_loc(m_eq, n)
-real(RP) :: beq_loc(m_eq)
-real(RP) :: cstrv_loc
-real(RP) :: nlconstr_loc(m_nlcon)
-real(RP) :: f_loc
-real(RP), allocatable :: rhobeg_loc
-real(RP), allocatable :: rhoend_loc
-real(RP) :: ftarget_loc
-real(RP) :: x_loc(n)
-real(C_DOUBLE), pointer :: xl_loc_interm(:)
-real(RP), allocatable :: xl_loc(:)
-real(C_DOUBLE), pointer :: xu_loc_interm(:)
-real(RP), allocatable :: xu_loc(:)
-real(RP), allocatable :: f0_loc
-real(C_DOUBLE), pointer :: nlconstr0_loc_interm(:)
-real(RP), allocatable :: nlconstr0_loc(:)
-! The initialization to null is necessary to avoid a bug with the newer Intel compiler ifx.
+integer(IK), allocatable :: maxfun_loc
+! The initialization below to null is necessary to avoid a bug with the newer Intel compiler ifx.
 ! See details here: https://fortran-lang.discourse.group/t/strange-issue-with-ifx-compiler-and-assume-recursion/7013
 ! The bug was observed in all versions of ifx up to 2024.0.1. Once this bug is fixed we should remove the
 ! initialization to null because it implies the 'save' attribute, which is undesirable.
-procedure(COBJCON), pointer :: objcon_ptr => null()
 procedure(CCALLBACK), pointer :: cb_ptr => null()
+procedure(COBJCON), pointer :: objcon_ptr => null()
+real(C_DOUBLE), pointer :: nlconstr0_loc_interm(:)
+real(C_DOUBLE), pointer :: xl_loc_interm(:)
+real(C_DOUBLE), pointer :: xu_loc_interm(:)
+real(RP) :: Aeq_loc(m_eq, n)
+real(RP) :: Aineq_loc(m_ineq, n)
+real(RP) :: beq_loc(m_eq)
+real(RP) :: bineq_loc(m_ineq)
+real(RP) :: cstrv_loc
+real(RP) :: f_loc
+real(RP) :: ftarget_loc
+real(RP) :: nlconstr_loc(m_nlcon)
+real(RP) :: x_loc(n)
+real(RP), allocatable :: f0_loc
+real(RP), allocatable :: nlconstr0_loc(:)
+real(RP), allocatable :: rhobeg_loc
+real(RP), allocatable :: rhoend_loc
+real(RP), allocatable :: xl_loc(:)
+real(RP), allocatable :: xu_loc(:)
 
 ! Read the inputs and convert them to the Fortran side types
 ! Note that `transpose` is needed when reading 2D arrays, since they are stored in the row-major
 ! order in c but column-major in Fortran.
+
+! The following inputs correspond to compulsory arguments in the Fortran code.
 x_loc = real(x, kind(x_loc))
+m_nlcon_loc = int(m_nlcon, kind(m_nlcon_loc))
+call c_f_procpointer(cobjcon_ptr, objcon_ptr)
+
+! The following inputs correspond to optional arguments in the Fortran code.
+! Since C does not support optional arguments, we use NaN to represent an absent real scalar, 0 to
+! represent an absent integer scalar (all integer arguments are expected positive), and an
+! unassociated pointer to represent an absent array. In case of NaN, 0, and unassociated pointers,
+! the allocatable variables such as RHOBEG_LOC will be left uninitialized and hence unallocated, and
+! then treated as an absent argument when passed to the Fortran code.
+! See Sec. 9.7.1.3 and 15.5.2.13 of J3/24-007 (Fortran 2023 Interpretation Document).
 Aineq_loc = real(transpose(Aineq), kind(Aineq_loc))
 bineq_loc = real(bineq, kind(bineq_loc))
 Aeq_loc = real(transpose(Aeq), kind(Aeq_loc))
 beq_loc = real(beq, kind(beq_loc))
-if (C_ASSOCIATED(xl)) then
-    call C_F_POINTER(xl, xl_loc_interm, shape=[n])
+if (c_associated(xl)) then
+    call c_f_pointer(xl, xl_loc_interm, shape=[n])
     call safealloc(xl_loc, int(n, IK))
     xl_loc = real(xl_loc_interm, kind(xl_loc))
 end if
-if (C_ASSOCIATED(xu)) then
-    call C_F_POINTER(xu, xu_loc_interm, shape=[n])
+if (c_associated(xu)) then
+    call c_f_pointer(xu, xu_loc_interm, shape=[n])
     call safealloc(xu_loc, int(n, IK))
     xu_loc = real(xu_loc_interm, kind(xu_loc))
 end if
-if (C_ASSOCIATED(nlconstr0)) then
-    call C_F_POINTER(nlconstr0, nlconstr0_loc_interm, shape=[m_nlcon])
+if (c_associated(nlconstr0)) then
+    call c_f_pointer(nlconstr0, nlconstr0_loc_interm, shape=[m_nlcon])
     call safealloc(nlconstr0_loc, int(m_nlcon, IK))
     nlconstr0_loc = real(nlconstr0_loc_interm, kind(nlconstr0_loc))
     ! We assume that if nlconstr0 was provided, that the f0 provided is valid
@@ -118,14 +129,12 @@ if (maxfun /= 0) then
     maxfun_loc = int(maxfun, kind(maxfun_loc))
 end if
 iprint_loc = int(iprint, kind(iprint_loc))
-m_nlcon_loc = int(m_nlcon, kind(m_nlcon_loc))
-call C_F_PROCPOINTER(cobjcon_ptr, objcon_ptr)
 
 ! Call the Fortran code
-if (C_ASSOCIATED(callback_ptr)) then
+if (c_associated(callback_ptr)) then
     ! If a C callback function is provided, we convert it to a Fortran procedure pointer and capture
     ! that pointer in the closure below.
-    call C_F_PROCPOINTER(callback_ptr, cb_ptr)
+    call c_f_procpointer(callback_ptr, cb_ptr)
     ! We then provide the closure to the algorithm.
     call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, Aineq=Aineq_loc, &
         & bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, &
@@ -145,6 +154,14 @@ cstrv = real(cstrv_loc, kind(cstrv))
 nf = int(nf_loc, kind(nf))
 info = int(info_loc, kind(info))
 nlconstr = real(nlconstr_loc, kind(nlconstr))
+
+! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
+if (allocated(npt_loc)) deallocate (npt_loc)
+if (allocated(maxfun_loc)) deallocate (maxfun_loc)
+if (allocated(rhoend_loc)) deallocate (rhoend_loc)
+if (allocated(rhobeg_loc)) deallocate (rhobeg_loc)
+if (allocated(xu_loc)) deallocate (xu_loc)
+if (allocated(xu_loc)) deallocate (xl_loc)
 
 contains
 
@@ -239,12 +256,12 @@ end if
 call cb_ptr(n_sub_loc, x_sub_loc, f_sub_loc, nf_sub_loc, tr_loc, cstrv_sub_loc, m_nlconstr, nlconstr_sub_loc, terminate_loc)
 
 ! Write the output
-if ( present(terminate) ) then
+if (present(terminate)) then
     terminate = logical(terminate_loc, kind(terminate))
 end if
 
-! Deallocate resources
-if (allocated(nlconstr_sub_loc)) deallocate(nlconstr_sub_loc)
+! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
+if (allocated(nlconstr_sub_loc)) deallocate (nlconstr_sub_loc)
 
 end subroutine callback_fcn
 
