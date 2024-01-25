@@ -10,25 +10,25 @@
 
 /**
  * A NOTE ON DEFAULT VALUES IN OPTIONS AND PROBLEM STRUCTURES
- * 
+ *
  * Certain values of the variables in the options and problems structures
  * are interpreted by the Fortran code as "not present". This is not by default,
  * it is done by us intentionally so that we may signal to the Fortran code that
  * these values were not provided. This is so that the Fortran code may then properly
  * set the default values for those variables.
- * 
+ *
  * In order to accomplish this we take advantage of a certain part of the Fortran
  * standard that basically says that if an allocatable value which has not been
- * allocated is passed to a function, `present` will return false.
- * 
+ * allocated is passed to a procedure, `present` will return false.
+ *
  * Our convention is as follows
  * double  - NaN  is to be interpreted as not present
  * int     - 0    is to be interpreted as not present (as of 20240124 all ints are expected to be non-negative)
  * pointer - NULL is to be interpreted as not present
- * 
+ *
  * If variables are added to options/problems that are optional, the algorithm_c.f90 files must
- * be updated to treat the default values appropriately. For examples see rhobeg/rhoend(double), maxfun/npt(int),
- * and xl/xu (array/pointer).
+ * be updated to treat the default values appropriately. For examples see rhobeg/rhoend(double),
+ * maxfun/npt(int), and xl/xu (array/pointer).
 */
 
 int prima_init_options(prima_options_t *options)
@@ -59,7 +59,7 @@ int prima_init_problem(prima_problem_t *problem, int n)
     return PRIMA_NULL_PROBLEM;
 }
 
-/* implemented in fortran (*_c.f90) */
+/* implemented in Fortran (*_c.f90) */
 int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, const int n, double x[], double *f, double *cstrv, double nlconstr[],
              const int m_ineq, const double Aineq[], const double bineq[],
              const int m_eq, const double Aeq[], const double beq[],
@@ -150,7 +150,7 @@ int prima_free_result(prima_result_t *result)
     return PRIMA_NULL_RESULT;
 }
 
-/* these functions just call the fortran compatibility layer and return the status code */
+/* these functions just call the Fortran compatibility layer and return the status code */
 int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, prima_result_t *result)
 {
   int use_constr = (algorithm == PRIMA_COBYLA);

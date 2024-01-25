@@ -115,7 +115,7 @@ if (c_associated(nlconstr0)) then
     call c_f_pointer(nlconstr0, nlconstr0_loc_interm, shape=[m_nlcon])
     call safealloc(nlconstr0_loc, int(m_nlcon, IK))
     nlconstr0_loc = real(nlconstr0_loc_interm, kind(nlconstr0_loc))
-    ! We assume that if nlconstr0 was provided, that the f0 provided is valid
+    !!! N.B.: We require that NLCONSTR0 and F0 are either both provided or both absent !!!
     f0_loc = real(f0, kind(f0_loc))
 end if
 if (.not. is_nan(rhobeg)) then

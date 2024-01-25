@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, January 24, 2024 PM03:51:23
+! Last Modified: Thursday, January 25, 2024 PM06:04:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -346,6 +346,8 @@ real(RP) :: gamma1_loc
 real(RP) :: gamma2_loc
 real(RP) :: rhobeg_loc
 real(RP) :: rhoend_loc
+real(RP) :: xl_loc(size(x))
+real(RP) :: xu_loc(size(x))
 real(RP), allocatable :: Aeq_loc(:, :)  ! Aeq_LOC(Meq, N)
 real(RP), allocatable :: Aineq_loc(:, :)  ! Aineq_LOC(Mineq, N)
 real(RP), allocatable :: amat(:, :)  ! AMAT(N, M_LCON); each column corresponds to a linear constraint
@@ -357,8 +359,6 @@ real(RP), allocatable :: conhist_loc(:, :)  ! CONHIST_LOC(M, MAXCONHIST)
 real(RP), allocatable :: constr_loc(:)  ! CONSTR_LOC(M)
 real(RP), allocatable :: fhist_loc(:)   ! FHIST_LOC(MAXFHIST)
 real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
-real(RP), allocatable :: xl_loc(:)  ! XL_LOC(N)
-real(RP), allocatable :: xu_loc(:)  ! XU_LOC(N)
 
 ! Sizes
 if (present(bineq)) then
@@ -463,21 +463,21 @@ if (present(beq)) then
     beq_loc = beq
 end if
 
-call safealloc(xl_loc, n)  ! NOT removable even in F2003, as XL may be absent.
-if (present(xl)) then
+if (present(xl) .and. size(xl) > 0) then
     xl_loc = xl
 else
     xl_loc = -REALMAX
 end if
+xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -REALMAX)) = -REALMAX
 call safealloc(ixl, mxl)
 ixl = trueloc(xl_loc > -REALMAX)
 
-call safealloc(xu_loc, n)  ! NOT removable even in F2003, as XU may be absent.
-if (present(xu)) then
+if (present(xu) .and. size(xu) > 0) then
     xu_loc = xu
 else
     xu_loc = REALMAX
 end if
+xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > REALMAX)) = REALMAX
 call safealloc(ixu, mxu)
 ixu = trueloc(xu_loc < REALMAX)
 
@@ -630,7 +630,7 @@ end if
 !--------------------------------------------------------------------------------------------------!
 
 ! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
-deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec, xl_loc, xu_loc)
+deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec)
 
 
 ! Write the outputs.

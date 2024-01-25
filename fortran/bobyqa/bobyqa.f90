@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, January 25, 2024 AM11:07:49
+! Last Modified: Thursday, January 25, 2024 PM05:58:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -281,14 +281,14 @@ end if
 
 ! Read the inputs
 
-if (present(xl)) then
+if (present(xl) .and. size(xl) > 0) then
     xl_loc = xl
 else
     xl_loc = -BOUNDMAX
 end if
 xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -BOUNDMAX)) = -BOUNDMAX
 
-if (present(xu)) then
+if (present(xu) .and. size(xu) > 0) then
     xu_loc = xu
 else
     xu_loc = BOUNDMAX
