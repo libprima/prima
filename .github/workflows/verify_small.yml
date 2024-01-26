@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           cd matlab/tests/private || exit 42
-          $SEDI 's|\(prob.options = test_options;\)|\1\nprob.options|' isequiv.m
+          $SEDI 's|\(prob.options = test_options;\)|\1\nformat long; prob.options|' isequiv.m
           cat isequiv.m
 
       # Revise cobyla/trustregion.f90 for debugging.
