@@ -1,4 +1,0 @@
-1. Why  "We copy problem->x0 into result->x so that problem->x0 does not get overwritten by the
-   solver"?
-
-2. Why define accept_nlconstr?
