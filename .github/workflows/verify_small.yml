@@ -110,7 +110,7 @@ jobs:
             end
             options.nr = 6;
             options
-            %erify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
+            %verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             verify('${{ matrix.solver }}', 'SIPOW4', 19, options);
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
