@@ -41,7 +41,7 @@ jobs:
         run: /Applications/MATLAB_R2023b.app/bin/matlab -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); stress('${{ matrix.solver }}'); copy_crash_dump_files(root_dir);"
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v4.2.0
+        uses: actions/upload-artifact@v4.3.0
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           name: ${{ matrix.solver }}
