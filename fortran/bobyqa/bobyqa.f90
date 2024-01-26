@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, January 25, 2024 PM06:36:17
+! Last Modified: Saturday, January 27, 2024 AM02:40:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -89,7 +89,7 @@ subroutine bobyqa(calfun, x, &
 !   effectively means there is no lower bound for the corresponding entry of X. The value of
 !   BOUNDMAX is 0.25*HUGE(X), which is about 8.6E37 for single precision and 4.5E307 for double
 !   precision. XU is similar.
-!   N.B.: 
+!   N.B.:
 !   1. It is required that XU - XL > 2*EPSILON(X), which is about 2.4E-7 for single precision and
 !   4.5E-16 for double precision. Otherwise, the solver will return after printing a warning.
 !   2. Why don't we set BOUNDMAX to REALMAX? Because we want to avoid overflow when calculating
