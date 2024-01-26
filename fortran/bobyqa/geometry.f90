@@ -8,7 +8,7 @@ module geometry_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, January 24, 2024 PM04:15:39
+! Last Modified: Friday, January 26, 2024 PM05:53:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -307,7 +307,7 @@ glag = bmat(:, knew) + hess_mul(xopt, xpt, pqlag)
 ! In case GLAG contains NaN, set D to a displacement from XOPT to XPT(:, KNEW) and return. Powell's
 ! code does not have this, and D may be NaN in the end. Note that it is crucial to ensure that a
 ! geometry step is nonzero.
-if (is_nan(sum(abs(glag)))) then
+if (.not. is_finite(sum(abs(glag)))) then
     d = xpt(:, knew) - xopt
     d = min(HALF, delbar / norm(d)) * d  ! Since XPT respects the bounds, so does XOPT + D.
     return
