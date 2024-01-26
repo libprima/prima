@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, January 25, 2024 PM08:11:43
+! Last Modified: Friday, January 26, 2024 PM07:20:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -73,7 +73,7 @@ subroutine lincob(calfun, iprint, maxfilt, maxfun, npt, Aeq, Aineq, amat, beq, b
 
 ! Generic models
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, REALMAX, MIN_MAXFILT, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, REALMAX, BOUNDMAX, MIN_MAXFILT, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -176,7 +176,7 @@ logical :: ximproved
 real(RP) :: b(size(bvec))
 real(RP) :: bmat(size(x), npt + size(x))
 real(RP) :: cfilt(maxfilt)
-real(RP) :: constr(count(xl > -REALMAX) + count(xu < REALMAX) + 2 * size(beq) + size(bineq))
+real(RP) :: constr(count(xl > -BOUNDMAX) + count(xu < BOUNDMAX) + 2 * size(beq) + size(bineq))
 real(RP) :: constr_leq(size(beq))
 real(RP) :: cval(npt)
 real(RP) :: d(size(x))
@@ -245,10 +245,10 @@ end if
 !====================!
 
 ! IXL and IXU are the indices of the nontrivial lower and upper bounds, respectively.
-call safealloc(ixl, int(count(xl > -REALMAX), IK))  ! Removable in F2003.
-call safealloc(ixu, int(count(xu < REALMAX), IK))   ! Removable in F2003.
-ixl = trueloc(xl > -REALMAX)
-ixu = trueloc(xu < REALMAX)
+call safealloc(ixl, int(count(xl > -BOUNDMAX), IK))  ! Removable in F2003.
+call safealloc(ixu, int(count(xu < BOUNDMAX), IK))   ! Removable in F2003.
+ixl = trueloc(xl > -BOUNDMAX)
+ixu = trueloc(xu < BOUNDMAX)
 
 ! Initialize B, XBASE, XPT, FVAL, CVAL, and KOPT, together with the history, NF, IJ, and EVALUATED.
 b = bvec

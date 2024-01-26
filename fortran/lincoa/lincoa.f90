@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, January 25, 2024 PM06:23:04
+! Last Modified: Friday, January 26, 2024 PM07:28:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -115,7 +115,11 @@ subroutine lincoa(calfun, x, &
 !
 ! XL, XU
 !   Input, REAL(RP) vectors of size N unless they are both empty, default: [] and [].
-!   XL and XU represent the lower and upper bounds of the variables: XL <= X <= XU.
+!   XL is the lower bound for X. Its size is either N or 0, the latter signifying that X has no
+!   lower bound. Any entry of XL that is NaN or below -BOUNDMAX will be taken as -BOUNDMAX, which
+!   effectively means there is no lower bound for the corresponding entry of X. The value of
+!   BOUNDMAX is 0.25*HUGE(X), which is about 8.6E37 for single precision and 4.5E307 for double
+!   precision. XU is similar.
 !
 ! NF
 !   Output, INTEGER(IK) scalar.
@@ -221,7 +225,7 @@ subroutine lincoa(calfun, x, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, REALMAX
+use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS, BOUNDMAX
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
@@ -378,21 +382,21 @@ if (present(beq)) then
     beq_loc = beq
 end if
 
-xl_loc = -REALMAX
+xl_loc = -BOUNDMAX
 if (present(xl)) then
     if (size(xl) > 0) then
         xl_loc = xl
     end if
 end if
-xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -REALMAX)) = -REALMAX
+xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -BOUNDMAX)) = -BOUNDMAX
 
-xu_loc = REALMAX
+xu_loc = BOUNDMAX
 if (present(xu)) then
     if (size(xu) > 0) then
         xu_loc = xu
     end if
 end if
-xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > REALMAX)) = REALMAX
+xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > BOUNDMAX)) = BOUNDMAX
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if
@@ -643,7 +647,7 @@ subroutine get_lincon(Aeq, Aineq, beq, bineq, rhoend, xl, xu, x0, amat, bvec)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, REALMAX, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, BOUNDMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: linalg_mod, only : matprod, eye, trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -701,8 +705,8 @@ end if
 !====================!
 
 ! Decide the number of nontrivial and valid (gradient is nonzero) constraints.
-mxl = int(count(xl > -REALMAX), kind(mxl))
-mxu = int(count(xu < REALMAX), kind(mxu))
+mxl = int(count(xl > -BOUNDMAX), kind(mxl))
+mxu = int(count(xu < BOUNDMAX), kind(mxu))
 Aeq_norm = sqrt(sum(Aeq**2, dim=2))
 meq = int(count(Aeq_norm > 0), kind(meq))
 Aineq_norm = sqrt(sum(Aineq**2, dim=2))
@@ -724,8 +728,8 @@ call safealloc(bvec, m)
 call safealloc(Anorm, 2_IK * meq + mineq)
 
 ! Define the indices of the valid and nontrivial constraints.
-ixl = trueloc(xl > -REALMAX)
-ixu = trueloc(xu < REALMAX)
+ixl = trueloc(xl > -BOUNDMAX)
+ixu = trueloc(xu < BOUNDMAX)
 ieq = trueloc(Aeq_norm > 0)
 iineq = trueloc(Aineq_norm > 0)
 

@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, January 25, 2024 PM06:24:02
+! Last Modified: Friday, January 26, 2024 PM07:29:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -143,7 +143,11 @@ subroutine cobyla(calcfc, m_nlcon, x, &
 !
 ! XL, XU
 !   Input, REAL(RP) vectors of size N unless they are both empty, default: [] and [].
-!   XL and XU represent the lower and upper bounds of the variables: XL <= X <= XU.
+!   XL is the lower bound for X. Its size is either N or 0, the latter signifying that X has no
+!   lower bound. Any entry of XL that is NaN or below -BOUNDMAX will be taken as -BOUNDMAX, which
+!   effectively means there is no lower bound for the corresponding entry of X. The value of
+!   BOUNDMAX is 0.25*HUGE(X), which is about 8.6E37 for single precision and 4.5E307 for double
+!   precision. XU is similar.
 !
 ! F0
 !   Input, REAL(RP) scalar.
@@ -259,7 +263,7 @@ subroutine cobyla(calcfc, m_nlcon, x, &
 use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT, MAXFILT_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, CTOL_DFT, CWEIGHT_DFT, FTARGET_DFT
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, TEN, TENTH, EPS, REALMAX
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, HALF, TEN, TENTH, EPS, BOUNDMAX
 use, non_intrinsic :: debug_mod, only : assert, errstop, warning
 use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex, moderatec, moderatef
 use, non_intrinsic :: history_mod, only : prehist
@@ -372,12 +376,12 @@ else
     meq = 0
 end if
 if (present(xl)) then
-    mxl = int(count(xl > -REALMAX), kind(mxl))
+    mxl = int(count(xl > -BOUNDMAX), kind(mxl))
 else
     mxl = 0
 end if
 if (present(xu)) then
-    mxu = int(count(xu < REALMAX), kind(mxu))
+    mxu = int(count(xu < BOUNDMAX), kind(mxu))
 else
     mxu = 0
 end if
@@ -463,25 +467,25 @@ if (present(beq)) then
     beq_loc = beq
 end if
 
-xl_loc = -REALMAX
+xl_loc = -BOUNDMAX
 if (present(xl)) then
     if (size(xl) > 0) then
         xl_loc = xl
     end if
 end if
-xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -REALMAX)) = -REALMAX
+xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -BOUNDMAX)) = -BOUNDMAX
 call safealloc(ixl, mxl)
-ixl = trueloc(xl_loc > -REALMAX)
+ixl = trueloc(xl_loc > -BOUNDMAX)
 
-xu_loc = REALMAX
+xu_loc = BOUNDMAX
 if (present(xu)) then
     if (size(xu) > 0) then
         xu_loc = xu
     end if
 end if
-xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > REALMAX)) = REALMAX
+xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > BOUNDMAX)) = BOUNDMAX
 call safealloc(ixu, mxu)
-ixu = trueloc(xu_loc < REALMAX)
+ixu = trueloc(xu_loc < BOUNDMAX)
 
 ! Wrap the linear and bound constraints into a single constraint: AMAT^T*X <= BVEC.
 call get_lincon(Aeq_loc, Aineq_loc, beq_loc, bineq_loc, xl_loc, xu_loc, amat, bvec)
@@ -767,7 +771,7 @@ subroutine get_lincon(Aeq, Aineq, beq, bineq, xl, xu, amat, bvec)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, REALMAX, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, BOUNDMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : eye, trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -813,8 +817,8 @@ end if
 !====================!
 
 ! Decide the number of nontrivial constraints.
-mxl = int(count(xl > -REALMAX), kind(mxl))
-mxu = int(count(xu < REALMAX), kind(mxu))
+mxl = int(count(xl > -BOUNDMAX), kind(mxl))
+mxu = int(count(xu < BOUNDMAX), kind(mxu))
 meq = int(size(beq), kind(meq))
 mineq = int(size(bineq), kind(mineq))
 m_lcon = mxl + mxu + 2_IK * meq + mineq  ! The final number of linear inequality constraints.
@@ -826,8 +830,8 @@ call safealloc(amat, n, m_lcon)
 call safealloc(bvec, m_lcon)
 
 ! Define the indices of the nontrivial bound constraints.
-ixl = trueloc(xl > -REALMAX)
-ixu = trueloc(xu < REALMAX)
+ixl = trueloc(xl > -BOUNDMAX)
+ixu = trueloc(xu < BOUNDMAX)
 
 ! Wrap the linear constraints.
 ! The bound constraint XL <= X <= XU is handled as two constraints -X <= -XL, X <= XU.
