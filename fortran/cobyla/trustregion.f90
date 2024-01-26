@@ -8,7 +8,7 @@ module trustregion_cobyla_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, January 27, 2024 AM02:59:31
+! Last Modified: Saturday, January 27, 2024 AM03:48:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -142,7 +142,7 @@ if (DEBUGGING) then
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
     ! Due to rounding, it may happen that ||D|| > DELTA, but ||D|| > 2*DELTA is highly improbable.
-    write(16, *) 'Delta = ', delta, 'norm(d) = ', norm(d), 'd = ', d; close(16); write(16, *) 'Delta = ', delta, 'norm(d) = ', norm(d), 'd = ', d; close(16); call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
+    call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
 end if
 end function trstlp
 
@@ -511,7 +511,7 @@ do iter = 1, maxiter
 
     ! Set DNEW to the new variables if STEP is the steplength, and reduce CVIOL to the corresponding
     ! maximum residual if stage 1 is being done.
-    dnew = d + step * sdirn; write(16,*) 'step = ', step, 'sdirn = ', stirn, 'dnew = ', dnew
+    dnew = d + step * sdirn
     if (stage == 1) then
         !cvold = cviol
         cviol = maxval([matprod(dnew, A(:, iact(1:nact))) - b(iact(1:nact)), ZERO])
@@ -547,7 +547,7 @@ do iter = 1, maxiter
 
     ! Update D, VMULTC and CVIOL.
     dold = d
-    d = (ONE - frac) * d + frac * dnew; write(16, *) 'frac = ', frac, 'd = ', d
+    d = (ONE - frac) * d + frac * dnew
     vmultc = max(ZERO, (ONE - frac) * vmultc + frac * vmultd)
     ! Exit in case of Inf/NaN in D or VMULTC.
     if (.not. (is_finite(sum(abs(d))) .and. is_finite(sum(abs(vmultc))))) then
@@ -580,7 +580,7 @@ if (DEBUGGING) then
     call assert(RP == kind(0.0) .or. all(vmultc >= 0), 'VMULTC >= 0', srname)
     call assert(size(d) == n, 'SIZE(D) == N', srname)
     call assert(all(is_finite(d)), 'D is finite', srname)
-    write(16, *) 'Delta = ', delta, 'norm(d) = ', norm(d), 'd = ', d; close(16); write(16, *) 'Delta = ', delta, 'norm(d) = ', norm(d), 'd = ', d; close(16); call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
+    call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
     call assert(size(z, 1) == n .and. size(z, 2) == n, 'SIZE(Z) == [N, N]', srname)
     call assert(nact >= 0 .and. nact <= min(mcon, n), '0 <= NACT <= MIN(MCON, N)', srname)
 end if

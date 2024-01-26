@@ -58,9 +58,9 @@ jobs:
         shell: bash
         run: |
           cd fortran/cobyla/ || exit 42
-          $SEDI "s|\(dnew = d + step \* sdirn\)|\1; write(16,*) 'step = ', step, 'sdirn = ', stirn, 'dnew = ', dnew|" trustregion.f90
+          $SEDI "s|\(dnew = d + step \* sdirn\)|\1; write(16,*) 'step = ', step, 'sdirn = ', sdirn, 'dnew = ', dnew|" trustregion.f90
           $SEDI "s|\(d = (ONE - frac) \* d + frac \* dnew\)|\1; write(16, \*) 'frac = ', frac, 'd = ', d|"  trustregion.f90
-          $SEDI "s|\(call assert(norm(d) <= TWO \* delta.*$\)|write(16, *) 'Delta = ', delta, 'norm(d) = ', norm(d), 'd = ', d; close(16); \1|" trustregion.f90
+          $SEDI "s|\(call assert(norm(d) <= TWO \* delta.*$\)|write(16, *) 'Delta = ', delta, 'norm(d) = ', norm(d), 'd = ', d; close(16); \n\1|" trustregion.f90
           cat trustregion.f90
 
       - name: Clone MatCUTEst
