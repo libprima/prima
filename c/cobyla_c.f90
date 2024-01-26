@@ -93,10 +93,10 @@ call c_f_procpointer(cobjcon_ptr, objcon_ptr)
 ! The following inputs correspond to optional arguments in the Fortran code.
 ! Since C does not support optional arguments, we use NaN to represent an absent real scalar, 0 to
 ! represent an absent integer scalar (all integer arguments are expected positive), and an
-! unassociated pointer to represent an absent array. In case of NaN, 0, and unassociated pointers,
+! unassociated pointer to represent an absent array. In case of NaN, 0, or unassociated pointers,
 ! the allocatable variables such as RHOBEG_LOC will be left uninitialized and hence unallocated, and
 ! then treated as an absent argument when passed to the Fortran code.
-! See Sec. 9.7.1.3 and 15.5.2.13 of J3/24-007 (Fortran 2023 Interpretation Document).
+! See Sec. 9.7.1.3 (4) and 15.5.2.13 (1) of J3/24-007 (Fortran 2023 Interpretation Document).
 Aineq_loc = real(transpose(Aineq), kind(Aineq_loc))
 bineq_loc = real(bineq, kind(bineq_loc))
 Aeq_loc = real(transpose(Aeq), kind(Aeq_loc))
