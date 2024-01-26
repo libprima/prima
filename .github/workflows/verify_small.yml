@@ -61,6 +61,15 @@ jobs:
           $SEDI 's|\(prob.options = test_options;\)|\1\nformat long; prob.options|' isequiv.m
           cat isequiv.m
 
+      # Revise preproc.f90 for debugging.
+      - name: Revise preproc.f90
+        shell: bash
+        run: |
+          cd fortran/common || exit 42
+          $SEDI "s|\(rhoend = .*$\)|\1\nwrite(18, \*) 'rhoend, rhobeg = ', rhoend, rhobeg|" preproc.f90
+          $SEDI "s|\(end subroutine preproc\)|close(18)\n\1|" preproc.f90
+          cat preproc.f90
+
       # Revise cobyla/trustregion.f90 for debugging.
       - name: Revise cobyla/trustregion.f90
         shell: bash
