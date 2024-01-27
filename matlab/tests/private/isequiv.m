@@ -549,7 +549,9 @@ if ~isempty(exception)
         equiv = true;
         return
     else
-        fprintf('\n\n>>> !%s encounters an error during test %d of %s! <<<\n\n', regexprep(solvers{1}, '_norma', ''), ir, pname);
+        fprintf('\n\n>>> !%s encounters an error during test %d of %s with the following options! <<<\n\n', regexprep(solvers{1}, '_norma', ''), ir, pname);
+        format long;
+        test_options
         rethrow(exception)
     end
 end
@@ -583,13 +585,13 @@ if ~equiv
         chist2 = output2.chist(end-nhist+1:end);
         chist1 == chist2
     end
+    fprintf('\nThe solvers produce different results on %s at the %dth run with the following options.\n\n', pname, ir);
+    test_options
     if single_test && options.sequential
-    %if options.sequential
-        fprintf('\nThe solvers produce different results on %s at the %dth run.\n\n', pname, ir);
         cd(options.olddir);
         keyboard
     end
-    error('\nThe solvers produce different results on %s at the %dth run.\n', pname, ir);
+    error('PRIMA:VerificationFailure', 'Verification failed!');
 end
 
 return
@@ -733,6 +735,7 @@ case 'bobyqa'
         'DMN15333LS', ...
         'DMN37142LS', ...
         'DMN37143LS', ...
+        'ERRINROS', ...
         'HOLMES', ...
         'HYDC20LS', ...
         'LEVYMONT', ...

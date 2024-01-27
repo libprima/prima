@@ -30,8 +30,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         matlab: [latest]
-        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        solver: [cobyla]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         dim: [small]
 
     steps:
@@ -52,33 +51,6 @@ jobs:
 
       - name: Miscellaneous setup
         run: bash .github/scripts/misc_setup
-
-      # Revise isequiv.m for debugging.
-      - name: Revise isequiv.m
-        shell: bash
-        run: |
-          cd matlab/tests/private || exit 42
-          $SEDI 's|\(prob.options = test_options;\)|\1\nformat long; prob.options|' isequiv.m
-          cat isequiv.m
-
-      # Revise preproc.f90 for debugging.
-      - name: Revise preproc.f90
-        shell: bash
-        run: |
-          cd fortran/common || exit 42
-          $SEDI "s|\(rhoend = .*$\)|\1\nwrite(18, \*) 'RP, EPS, rhoend, rhobeg = ', RP, EPS, rhoend, rhobeg|" preproc.f90
-          $SEDI "s|\(end subroutine preproc\)|close(18)\n\1|" preproc.f90
-          cat preproc.f90
-
-      # Revise cobyla/trustregion.f90 for debugging.
-      - name: Revise cobyla/trustregion.f90
-        shell: bash
-        run: |
-          cd fortran/cobyla/ || exit 42
-          $SEDI "s|\(dnew = d + step \* sdirn\)|\1; write(16,*) 'step = ', step, 'sdirn = ', sdirn, 'dnew = ', dnew|" trustregion.f90
-          $SEDI "s|\(d = (ONE - frac) \* d + frac \* dnew\)|\1; write(16, \*) 'frac = ', frac, 'd = ', d|"  trustregion.f90
-          $SEDI "s|\(call assert(norm(d) <= TWO \* delta.*$\)|write(16, *) 'RP = ', RP, 'Delta = ', delta, 'norm(d) = ', norm(d), 'd = ', d; close(16); \n\1|" trustregion.f90
-          cat trustregion.f90
 
       - name: Clone MatCUTEst
         uses: actions/checkout@v4
@@ -127,8 +99,7 @@ jobs:
             end
             options.nr = 6;
             options
-            %verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
-            verify('${{ matrix.solver }}', 'SIPOW4', 19, options);
+            verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
 
