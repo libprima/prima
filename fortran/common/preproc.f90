@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 24, 2024 PM04:25:37
+! Last Modified: Saturday, January 27, 2024 AM10:48:44
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -347,9 +347,10 @@ if (lower(solver) == 'bobyqa') then
     end if
 end if
 
-! The following revision may update RHOEND slightly. It prevents RHOEND > RHOBEG due to rounding
-! errors, which would not be accepted by the solvers.
-rhoend = min(rhoend, rhobeg)
+! The following revision may update RHOBEG and RHOEND slightly. It particularly prevents
+! RHOEND > RHOBEG due to rounding errors, which would not be accepted by the solvers.
+rhobeg = max(rhobeg, EPS)
+rhoend = min(max(rhoend, EPS), rhobeg)
 
 ! Validate CTOL (it can be 0)
 if (present(ctol)) then
