@@ -66,7 +66,7 @@ jobs:
         shell: bash
         run: |
           cd fortran/common || exit 42
-          $SEDI "s|\(rhoend = .*$\)|\1\nwrite(18, \*) 'rhoend, rhobeg = ', rhoend, rhobeg|" preproc.f90
+          $SEDI "s|\(rhoend = .*$\)|\1\nwrite(18, \*) 'RP, EPS, rhoend, rhobeg = ', RP, EPS, rhoend, rhobeg|" preproc.f90
           $SEDI "s|\(end subroutine preproc\)|close(18)\n\1|" preproc.f90
           cat preproc.f90
 
