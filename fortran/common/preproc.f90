@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, January 27, 2024 AM10:48:44
+! Last Modified: Sunday, January 28, 2024 PM05:21:55
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -286,9 +286,9 @@ if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then  ! RHOBEG = NaN falls into 
     call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//num2str(rhobeg))
 end if
 
-if (.not. (is_finite(rhoend) .and. rhoend > 0 .and. rhoend <= rhobeg)) then  ! RHOEND = NaN falls into this case.
+if (.not. (is_finite(rhoend) .and. rhoend >= 0 .and. rhoend <= rhobeg)) then  ! RHOEND = NaN falls into this case.
     rhoend = max(EPS, min(TENTH * rhobeg, rhoend_default))
-    call warning(solver, 'Invalid RHOEND; it should be a positive number and RHOEND <= RHOBEG; '// &
+    call warning(solver, 'Invalid RHOEND; we should have RHOBEG >= RHOEND >= 0; '// &
         & 'it is set to '//num2str(rhoend))
 end if
 

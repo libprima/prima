@@ -112,8 +112,8 @@ function [x, fx, exitflag, output] = lincoa(varargin)
 %       of the trust region radius. Roughly speaking, the trust region radius
 %       is contracted by a factor of gamma1 when the reduction ratio is below
 %       eta1, and  enlarged by a factor of gamma2 when the reduction ratio is
-%       above eta2. It is required that 0 < eta1 <= eta2 < 1 and
-%       0 < gamma1 < 1 < gamma2. Normally, eta1 <= 0.25. It is not recommended
+%       above eta2. It is required that 0 <= eta1 <= eta2 < 1 and
+%       0 < gamma1 < 1 <= gamma2. Normally, eta1 <= 0.25. It is not recommended
 %       to set eta1 >= 0.5. Default: eta1 = 0.1, eta2 = 0.7, gamma1 = 0.5,
 %       and gamma2 = 2.
 %   *** scale: a boolean value indicating whether to scale the problem

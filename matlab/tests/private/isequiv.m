@@ -382,7 +382,6 @@ else
 end
 prob.options = test_options;
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BEGIN: Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % N.B.: In some tests, we may invoke this function with solvers{1} == solvers{2}. So do NOT assume
 % that one of the solvers is 'SOLVER' and the other is 'SOLVER_norma'.
