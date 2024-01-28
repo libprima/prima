@@ -116,7 +116,7 @@ jobs:
           diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck
           printf "\n\n>>>>>>>>>>>>>>>>\nProblems that started but did not end:\n\n"
           cat ${solver}_stuck
-          printf "\n<<<<<<<<<<<<<<<<\n\n
+          printf "\n<<<<<<<<<<<<<<<<\n\n"
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.3.0
