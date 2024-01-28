@@ -112,7 +112,7 @@ jobs:
           cd /tmp/${solver}_verify_prima/
           ls ${solver}*_start -1 > ${solver}_prob_start
           ls ${solver}*_end -1 > ${solver}_prob_end
-          diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck
+          diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck || :
           printf "\n\n>>>>>>>>>>>>>>>>\nProblems that started but did not end:\n\n"
           cat ${solver}_stuck
           printf "\n<<<<<<<<<<<<<<<<\n\n"
