@@ -108,8 +108,8 @@ jobs:
         if: always()
         shell: bash
         run: |
-          cd /tmp/${solver}_verify_prima/
           solver=${{ matrix.solver }}
+          cd /tmp/${solver}_verify_prima/
           ls ${solver}*_start -1 > ${solver}_prob_start
           ls ${solver}*_end -1 > ${solver}_prob_end
           diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck
