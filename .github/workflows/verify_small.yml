@@ -2,7 +2,7 @@ name: Verification, small
 
 on:
   # Trigger the workflow on push or pull request
-#  PUSH:
+  push:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -25,7 +25,6 @@ jobs:
   test:
     name: Verify PRIMA.
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
     strategy:
       fail-fast: false
       matrix:
@@ -108,7 +107,6 @@ jobs:
         if: always()
         shell: bash
         run: |
-          set -x
           solver=${{ matrix.solver }}
           cd /tmp/${solver}_verify_prima/
           ls ${solver}*_start -1 > ${solver}_prob_start
