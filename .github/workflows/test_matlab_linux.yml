@@ -1,4 +1,4 @@
-name: Test MATLAB, macOS
+name: Test MATLAB, Linux
 
 on:
   # Trigger the workflow on push or pull request
@@ -20,8 +20,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
-        matlab: [latest]
+        os: [ubuntu-latest]
+        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, latest]
 
     steps:
 

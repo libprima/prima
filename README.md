@@ -179,6 +179,12 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 - [Tests](https://github.com/opt4ai/prima/actions) at [opt4ai/prima](https://github.com/opt4ai/prima)
 
     - [![Test MATLAB](https://github.com/opt4ai/prima/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab.yml)
+    - [![Test MATLAB, Linux](https://github.com/opt4ai/prima/actions/workflows/test_matlab_linux.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab_linux.yml)
+
+- [Tests](https://github.com/opt2ai/prima/actions) at [opt4ai/prima](https://github.com/opt4ai/prima)
+
+    - [![Test MATLAB, Linux](https://github.com/opt2ai/prima/actions/workflows/test_matlab_mac.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab_mac.yml)
+    - [![Test MATLAB, Linux](https://github.com/opt2ai/prima/actions/workflows/test_matlab_windows.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab_windows.yml)
 
 - [Tests](https://github.com/sprimalib/prima/actions) at [sprimalib/prima](https://github.com/sprimalib/prima)<a name="stress-tests"></a>
 

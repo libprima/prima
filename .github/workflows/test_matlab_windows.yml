@@ -1,4 +1,4 @@
-name: Test MATLAB, macOS
+name: Test MATLAB, Windows
 
 on:
   # Trigger the workflow on push or pull request
@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
+        os: [windows-latest]
         matlab: [latest]
 
     steps:

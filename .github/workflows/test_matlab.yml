@@ -2,11 +2,11 @@ name: Test MATLAB
 
 on:
   # Trigger the workflow on push or pull request
-  push:
+  #push:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 1 * * *'
+    - cron: '0 16 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
     inputs:
@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, ubuntu-latest, windows-2019, windows-latest, macos-11, macos-latest, macos-13]
-        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, latest]
+        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, latest]
 
         exclude:
 
