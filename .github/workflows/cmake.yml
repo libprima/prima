@@ -1,7 +1,7 @@
 name: CMake build
 
 on:
-  push:
+#  PUSH:
   pull_request:
   schedule:
     - cron: '0 0 * * 1'  # 0h mondays
