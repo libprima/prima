@@ -104,6 +104,19 @@ jobs:
             verify('${{ matrix.solver }}', '${{ matrix.dim }}', options);
             cd(root_dir); setup path; setup clean; setup uninstall  % Test that `setup` works properly.
 
+      - name: List problems that started but did not end
+        # The solver got stuck when solving these problems. Investigate what happened.
+        if: always()
+        shell: bash
+        run: |
+          cd /tmp/${solver}_verify_prima/
+          solver=${{ matrix.solver }}
+          ls ${solver}*_start -1 > ${solver}_prob_start
+          ls ${solver}*_end -1 > ${solver}_prob_end
+          diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck
+          printf "\n\n>>>>>>>>>>>>>>>>\nProblems that started but did not end:\n\n"
+          cat ${solver}_stuck
+          printf "\n<<<<<<<<<<<<<<<<\n\n
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.3.0
@@ -113,6 +126,8 @@ jobs:
           path: |
             /tmp/${{ matrix.solver }}_verify_prima/*start*
             /tmp/${{ matrix.solver }}_verify_prima/*end*
+            /tmp/${{ matrix.solver }}_verify_prima/*stuck
+            /tmp/${{ matrix.solver }}_verify_prima/fort.*
 
   # The following job check whether the tests were successful or cancelled due to timeout.
   # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.

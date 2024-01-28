@@ -124,7 +124,7 @@ jobs:
             options.nr = 1; % Since the code will not change along the time, big nr is not needed.
             options.no_classical = true;  % Starting from 20230212, we do not verify the classical version for the archiva.
             options
-            verify('${{ matrix.solver }}', '${{ matrix.dim }}', 'seq', options);  % Zaikun 20230328: Conduct the verification in sequential to avoid the debugging pain.
+            verify('${{ matrix.solver }}', '${{ matrix.dim }}', 'seq', options);  % Zaikun 20230328: Conduct the verification sequentially to avoid the debugging pain.
             delete([upper('${{ matrix.solver }}'), '_output.txt']);
             delete('fort.6');
             cd(root_dir); setup clean; setup uninstall;
