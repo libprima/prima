@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Make PRIMA available
 #include "prima/prima.h"
 
 #define M_NLCON 1
@@ -14,6 +15,7 @@ int debug = 0;
 static int int_data = 0xff;
 void * data_ref = &int_data;
 
+// Objective function for unconstrained, bound constrained, and linearly-constrained problems
 static void fun(const double x[], double *f, const void *data)
 {
   const double x1 = x[0];
@@ -35,6 +37,7 @@ static void fun(const double x[], double *f, const void *data)
   }
 }
 
+// Objective & constraint function for nonlinearly-constrained problems
 static void fun_con(const double x[], double *f, double constr[], const void *data)
 {
   const double x1 = x[0];
@@ -57,6 +60,7 @@ static void fun_con(const double x[], double *f, double constr[], const void *da
   }
 }
 
+// Main function
 int main(int argc, char * argv[])
 {
   char *algo = "uobyqa";
@@ -67,8 +71,16 @@ int main(int argc, char * argv[])
 
   if (argc > 2)
     debug = (strcmp(argv[2], "debug") == 0);
-  printf("debug = %d\n", debug);
+  printf("Debug = %d\n", debug);
 
+  // Define the options for the algorithm
+  prima_options_t options;
+  prima_init_options(&options);
+  options.iprint = PRIMA_MSG_RHO;
+  options.maxfun = 500*n;
+  options.data = data_ref;
+
+  // Data for the problem
   double x0[] = {0.0,
                  0.0};
   double xl[] = {-6.0,
@@ -82,19 +94,10 @@ int main(int argc, char * argv[])
                      3.0,
                      10.0};
 
+  // Define the algorithm and the problem according to `algo`
   prima_problem_t problem;
   prima_init_problem(&problem, n);
   problem.x0 = x0;
-
-  prima_options_t options;
-  prima_init_options(&options);
-  options.iprint = PRIMA_MSG_RHO;
-  options.maxfun = 500*n;
-  options.data = data_ref;
-
-  prima_result_t result;
-
-  // Define the algorithm and the problem according to `algo`
   if(strcmp(algo, "uobyqa") == 0)
   {
     algorithm = PRIMA_UOBYQA;
@@ -135,11 +138,13 @@ int main(int argc, char * argv[])
   }
   else
   {
-    printf("Invalid algorithm!\n");
+    printf("Invalid algorithm %s!\n", algo);
     return 1;
   }
 
   // Call the solver
+  prima_result_t result;
+
   int rc = prima_minimize(algorithm, &problem, &options, &result);
 
   // Print the result

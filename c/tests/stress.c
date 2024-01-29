@@ -1,11 +1,13 @@
-// A stress test on excessively large problems.
+// A stress test on excessively large problems
 
-#include "prima/prima.h"
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+// Make PRIMA available
+#include "prima/prima.h"
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
@@ -23,53 +25,58 @@ static double random_gen(double a, double b)
   return a + rand() * (b - a) / RAND_MAX;
 }
 
+// Objective function for unconstrained, bound constrained, and linearly-constrained problems
 static void fun(const double x[], double *f, const void *data)
 {
-  // Rosenbrock function
+  // Objective: Rosenbrock function
   *f = 0.0;
   for (int i = 0; i < n-1; ++ i)
     *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]*x[i]) * (x[i+1] - x[i]*x[i]);
 
-  static int count = 0;
+  static int nf = 0;
   if (debug)
   {
-    ++ count;
-    printf("count=%d\n", count);
+    ++ nf;
+    printf("Number of function evaluations = %d\n", nf);
   }
   (void)data;
 }
 
+// Objective & constraint function for nonlinearly-constrained problems
 static void fun_con(const double x[], double *f, double constr[], const void *data)
 {
-  // Rosenbrock function
+  // Objective: Rosenbrock function
   *f = 0.0;
   for (int i = 0; i < n-1; ++ i)
     *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]*x[i]) * (x[i+1] - x[i]*x[i]);
-  // x_{i+1} <= x_i^2
+
+  // Constraint: x_{i+1} <= x_i^2
   for (int i = 0; i < MIN(M_NLCON, n-1); ++ i)
     constr[i] = x[i+1] - x[i] * x[i];
 
-  static int count = 0;
+  static int nf = 0;
   if (debug)
   {
-    ++ count;
-    printf("count=%d\n", count);
+    ++ nf;
+    printf("Number of function evaluations = %d\n", nf);
   }
   (void)data;
 }
 
+// Main function
 int main(int argc, char * argv[])
 {
-  char *algo = "bobyqa";
+  char *algo = "uobyqa";
+  prima_algorithm_t algorithm = PRIMA_UOBYQA;
   if (argc > 1)
     algo = argv[1];
-  printf("algo=%s\n", algo);
+  printf("Algorithm = %s\n", algo);
 
   if (argc > 2)
     debug = (strcmp(argv[2], "debug") == 0);
-  printf("debug=%d\n", debug);
+  printf("Debug = %d\n", debug);
 
-  // set seed to year/week
+  // Set the random seed to year/week
   char buf[10] = {0};
   time_t t = time(NULL);
   struct tm *tmp = localtime(&t);
@@ -77,44 +84,69 @@ int main(int argc, char * argv[])
   if (!rc)
     return 1;
   unsigned seed = atoi(buf);
-  printf("seed=%d\n", seed);
+  printf("Random seed = %d\n", seed);
   srand(seed);
 
-  double x0[N_MAX];
-  double xl[N_MAX];
-  double xu[N_MAX];
-  prima_problem_t problem;
-  prima_init_problem(&problem, N_MAX);
-  problem.x0 = x0;
-  problem.calcfc = &fun_con;
-  problem.calfun = &fun;
+  // Define the options for the algorithm
   prima_options_t options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_RHO;
   options.maxfun = 500*N_MAX;
-  double *Aineq = malloc(N_MAX*M_INEQ_MAX*sizeof(double));
-  double bineq[M_INEQ_MAX];
-  problem.Aineq = Aineq;
-  problem.bineq = bineq;
-  problem.xl = xl;
-  problem.xu = xu;
-  for (int j = 0; j < M_INEQ_MAX; ++ j)
-    bineq[j] = random_gen(-1.0, 1.0);
 
+  // Data for the problem
+  double x0[N_MAX];
+  double xl[N_MAX];
+  double xu[N_MAX];
+  for (int i = 0; i < N_MAX; ++ i)
+  {
+    x0[i] = random_gen(-1.0, 1.0);
+    xl[i] = random_gen(-2.0, -1.0);
+    xu[i] = random_gen(1.0, 2.0);
+  }
+  double *Aineq = malloc(N_MAX*M_INEQ_MAX*sizeof(double));
   for (int i = 0; i < N_MAX; ++ i)
   {
     for (int j = 0; j < m_ineq; ++ j)
       Aineq[j*N_MAX+i] = random_gen(-1.0, 1.0);
-    x0[i] = random_gen(-1.0, 1.0);
-    xl[i] = -1.0;
-    xu[i] = 1.0;
   }
-  prima_algorithm_t algorithm = 0;
-  prima_result_t result;
-  if(strcmp(algo, "bobyqa") == 0)
+  double bineq[M_INEQ_MAX];
+  for (int j = 0; j < M_INEQ_MAX; ++ j)
+    bineq[j] = random_gen(-1.0, 1.0);
+
+  // Define the algorithm and the problem according to `algo`
+  prima_problem_t problem;
+  prima_init_problem(&problem, N_MAX);
+  problem.x0 = x0;
+  if(strcmp(algo, "uobyqa") == 0)
+  {
+    algorithm = PRIMA_UOBYQA;
+    problem.n = 100;
+    problem.calfun = &fun;
+  }
+  else if(strcmp(algo, "newuoa") == 0)
+  {
+    algorithm = PRIMA_NEWUOA;
+    problem.n = 1600;
+    problem.calfun = &fun;
+  }
+  else if(strcmp(algo, "bobyqa") == 0)
   {
     algorithm = PRIMA_BOBYQA;
     problem.n = 1600;
+    problem.calfun = &fun;
+    problem.xl = xl;
+    problem.xu = xu;
+  }
+  else if(strcmp(algo, "lincoa") == 0)
+  {
+    algorithm = PRIMA_LINCOA;
+    problem.n = 1000;
+    problem.m_ineq = 1000;
+    problem.calfun = &fun;
+    problem.xl = xl;
+    problem.xu = xu;
+    problem.Aineq = Aineq;
+    problem.bineq = bineq;
   }
   else if(strcmp(algo, "cobyla") == 0)
   {
@@ -122,30 +154,27 @@ int main(int argc, char * argv[])
     problem.n = 800;
     problem.m_nlcon = M_NLCON;
     problem.m_ineq = 600;
-  }
-  else if(strcmp(algo, "lincoa") == 0)
-  {
-    algorithm = PRIMA_LINCOA;
-    problem.n = 1000;
-    problem.m_ineq = 1000;
-  }
-  else if(strcmp(algo, "newuoa") == 0)
-  {
-    algorithm = PRIMA_NEWUOA;
-    problem.n = 1600;
-  }
-  else if(strcmp(algo, "uobyqa") == 0)
-  {
-    algorithm = PRIMA_UOBYQA;
-    problem.n = 100;
+    problem.calcfc = &fun_con;
+    problem.xl = xl;
+    problem.xu = xu;
+    problem.Aineq = Aineq;
+    problem.bineq = bineq;
   }
   else
   {
-    printf("incorrect algo\n");
+    printf("Invalid algorithm %s!\n", algo);
     return 1;
   }
+
+  // Call the solver
+  prima_result_t result;
   rc = prima_minimize(algorithm, &problem, &options, &result);
-  printf("f*=%g cstrv=%g nlconstr={%g} rc=%d msg='%s' evals=%d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
+
+  // Print the result
+  printf("f* = %g, cstrv = %g, nlconstr = {%g}, rc = %d, msg = '%s', evals = %d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
+
+  // Free the result
   prima_free_result(&result);
+
   return 0;
 }
