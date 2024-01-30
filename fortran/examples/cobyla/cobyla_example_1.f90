@@ -50,8 +50,8 @@ real(RP), intent(in), optional :: cstrv
 real(RP), intent(in), optional :: nlconstr(:)
 logical, intent(out), optional :: terminate
 
-write (*, '("best point so far: x=[", F6.4, ", ", F6.4, "] f=", F6.3, " cstrv=", F6.3, &
-    & " nlc=[", F6.3, "] nf=", I0, " tr=", I0, "")') x(1), x(2), f, cstrv, nlconstr(1), nf, tr
+write (*, '("Best point so far: x = [", F6.4, ", ", F6.4, "], f = ", F6.3, ", cstrv=", F6.3, &
+    & ", nlconstr = [", F6.3, "], nf = ", I0, ", tr = ", I0, "")') x(1), x(2), f, cstrv, nlconstr(1), nf, tr
 
 terminate = .false.
 
