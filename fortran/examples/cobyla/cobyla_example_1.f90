@@ -1,9 +1,7 @@
 !--------------------------------------------------------------------------------------------------!
 ! This is an example to illustrate the usage of the solver.
 !
-! The objective function is trivial, this is intentional so that the focus may be on how to use
-! the API.
-!
+! The objective function is trivial. This is intentional, as the focus is how to use the API.
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -20,7 +18,7 @@ contains
 
 ! Objective function
 ! This one is slightly different from the other example_1 files since COBYLA
-! requires a slightly different signature for the objective function.
+! requires a different signature for the objective function.
 subroutine calcfc(x, f, constr)
 implicit none
 
@@ -50,7 +48,7 @@ real(RP), intent(in), optional :: cstrv
 real(RP), intent(in), optional :: nlconstr(:)
 logical, intent(out), optional :: terminate
 
-write (*, '("Best point so far: x = [", F6.4, ", ", F6.4, "], f = ", F6.3, ", cstrv=", F6.3, &
+write (*, '("Best point so far: x = [", F6.4, ", ", F6.4, "], f = ", F6.3, ", cstrv = ", F6.3, &
     & ", nlconstr = [", F6.3, "], nf = ", I0, ", tr = ", I0, "")') x(1), x(2), f, cstrv, nlconstr(1), nf, tr
 
 terminate = .false.

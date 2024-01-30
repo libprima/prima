@@ -1,9 +1,7 @@
 !--------------------------------------------------------------------------------------------------!
 ! This is an example to illustrate the usage of the solver.
 !
-! The objective function is trivial, this is intentional so that the focus may be on how to use
-! the API.
-!
+! The objective function is trivial. This is intentional, as the focus is how to use the API.
 !--------------------------------------------------------------------------------------------------!
 
 
