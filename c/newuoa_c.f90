@@ -159,7 +159,7 @@ integer(IK), intent(in) :: tr
 real(RP), intent(in), optional :: cstrv_sub
 real(RP), intent(in), optional :: nlconstr_sub(:)
 
-! Output
+! Outputs
 logical, intent(out), optional :: terminate
 
 ! Local variables
