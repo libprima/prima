@@ -113,15 +113,14 @@ for irun = 1 : nrun
                     fopt = fopt_list{ifun}{itype};
                     n = length(x0);
 
+                    % `problem` will be used below when we test `prima(problem)`.
                     problem = struct();
                     problem.objective = fun;
                     problem.x0 = x0;
                     options.solver = solver;
                     options.classical = clflag;
                     problem.options = options;
-                    if ~release  % 20230508: Test the newly implemented iprint.
-                        problem.options.iprint = round(4*(2*rand() - 1));
-                    end
+                    problem.options.iprint = round(4*(2*rand() - 1)) * release;
 
                     switch type
                     case 'unconstrained'
@@ -130,6 +129,7 @@ for irun = 1 : nrun
                         lb = -0.5*ones(n,1);
                         ub = 0.5*ones(n,1);
                         [x, fx] = prima(fun, x0, [], [], [], [], lb, ub, options);
+
                         problem.lb = lb;
                         problem.ub = ub;
                     case 'linearly-constrained' % simplex
@@ -137,6 +137,7 @@ for irun = 1 : nrun
                         bineq = 1;
                         lb = zeros(n,1);
                         [x, fx] = prima(fun, x0, Aineq, bineq, [], [], lb, [], options);
+
                         problem.Aineq = Aineq;
                         problem.bineq = bineq;
                         problem.lb = lb;
@@ -144,6 +145,7 @@ for irun = 1 : nrun
                         nonlcon = @(x) ballcon(x, zeros(n,1), 1);
                         lb = zeros(n,1);
                         [x, fx] = prima(fun, x0, [], [], [], [], lb, [], nonlcon, options);
+
                         problem.lb = lb;
                         problem.nonlcon = nonlcon;
                     end
@@ -190,10 +192,9 @@ return
 function f = chrosen(x)
 %CHROSEN calculates the function value of the Chained Rosenbrock function.
 %   See
-%   [1] Toint (1978), 'Some numerical results using a sparse matrix
-%   updating formula in unconstrained optimization'
-%   [2] Powell (2006), 'The NEWUOA software for unconstrained
-%   optimization without derivatives'
+%   [1] Toint (1978), 'Some numerical results using a sparse matrix updating formula in
+%   unconstrained optimization'
+%   [2] Powell (2006), 'The NEWUOA software for unconstrained optimization without derivatives'
 
 alpha = 4;
 f = sum((x(1:end-1)-1).^2 + alpha*(x(2:end)-x(1:end-1).^2).^2);
@@ -236,7 +237,8 @@ function f = goldp(x)
 %GOLDP evaluates the Goldstein-Price function
 %
 %   See
-%   [1] Dixon, L. C. W., & Szego, G. P. (1978). The global optimization problem: an introduction. Towards global optimization, 2, 1-15.
+%   [1] Dixon, L. C. W., & Szego, G. P. (1978). The global optimization problem: an introduction.
+%   Towards global optimization, 2, 1-15.
 
 f1a = (x(1) + x(2) + 1)^2;
 f1b = 19 - 14*x(1) + 3*x(1)^2 - 14*x(2) + 6*x(1)*x(2) + 3*x(2)^2;
