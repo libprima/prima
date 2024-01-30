@@ -148,6 +148,7 @@ int prima_init_options(prima_options_t *options);
 
 
 // Structure to hold the problem
+// FIXME: What about the default values of xl, xu, m_ineq, Aineq, bineq, m_eq, Aeq, and beq?
 typedef struct {
 
   // dimension of the problem
@@ -180,7 +181,7 @@ typedef struct {
   double *Aeq;
   double *beq;
 
-  // number of nonlinear constraints for COBYLA; default: 0
+  // number of nonlinear constraints (COBYLA only); default: 0
   int m_nlcon;
 
   // initial objective function value and constraint values (COBYLA only)
