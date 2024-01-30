@@ -104,6 +104,7 @@ int prima_check_problem(prima_problem_t *problem, prima_options_t *options, cons
 }
 
 int prima_init_result(prima_result_t *result, prima_problem_t *problem)
+// FIXME: The initialization seems not appropriate. Why should we set f and cstrv to 0, and x to x0?
 {
   if (result)
   {

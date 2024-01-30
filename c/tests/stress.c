@@ -10,7 +10,6 @@
 #include "prima/prima.h"
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
-
 #define N_MAX 2000
 #define M_INEQ_MAX 1000
 #define M_NLCON 200
@@ -77,6 +76,7 @@ int main(int argc, char * argv[])
   printf("Debug = %d\n", debug);
 
   // Set the random seed to year/week
+  // FIXME: Implement this as a function
   char buf[10] = {0};
   time_t t = time(NULL);
   struct tm *tmp = localtime(&t);
@@ -87,7 +87,7 @@ int main(int argc, char * argv[])
   printf("Random seed = %d\n", seed);
   srand(seed);
 
-  // Define the options for the algorithm
+  // Set up the options 
   prima_options_t options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_RHO;

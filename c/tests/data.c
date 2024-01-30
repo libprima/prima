@@ -1,4 +1,4 @@
-// Test for the `data` argument in the objective/constraint callback function.
+// A test for the `data` argument in the objective/constraint callback function.
 
 #include <math.h>
 #include <stdio.h>
@@ -73,7 +73,7 @@ int main(int argc, char * argv[])
     debug = (strcmp(argv[2], "debug") == 0);
   printf("Debug = %d\n", debug);
 
-  // Define the options for the algorithm
+  // Set up the options
   prima_options_t options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_RHO;
@@ -144,7 +144,6 @@ int main(int argc, char * argv[])
 
   // Call the solver
   prima_result_t result;
-
   int rc = prima_minimize(algorithm, &problem, &options, &result);
 
   // Print the result
