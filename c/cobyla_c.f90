@@ -208,24 +208,28 @@ use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_BOOL
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
+
+! Inputs
 real(RP), intent(in) :: x_sub(:) ! We name some variables _sub to avoid masking the parent variables
 real(RP), intent(in) :: f_sub
 integer(IK), intent(in) :: nf_sub
 integer(IK), intent(in) :: tr
 real(RP), intent(in), optional :: cstrv_sub
 real(RP), intent(in), optional :: nlconstr_sub(:)
+
+! Outputs
 logical, intent(out), optional :: terminate
 
 ! Local variables
+integer(C_INT) :: m_nlconstr
 integer(C_INT) :: n_sub_loc
-real(C_DOUBLE) :: x_sub_loc(size(x_sub))
-real(C_DOUBLE) :: f_sub_loc
 integer(C_INT) :: nf_sub_loc
 integer(C_INT) :: tr_loc
-real(C_DOUBLE) :: cstrv_sub_loc
-integer(C_INT) :: m_nlconstr
-real(C_DOUBLE), allocatable :: nlconstr_sub_loc(:)
 logical(C_BOOL) :: terminate_loc
+real(C_DOUBLE) :: cstrv_sub_loc
+real(C_DOUBLE) :: f_sub_loc
+real(C_DOUBLE) :: x_sub_loc(size(x_sub))
+real(C_DOUBLE), allocatable :: nlconstr_sub_loc(:)
 
 ! Read the inputs and convert them to the types specified in CCALLBACK
 n_sub_loc = size(x_sub)
