@@ -1,14 +1,13 @@
+// Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 
-/* Dedicated to the late Professor M. J. D. Powell FRS (1936--2015). */
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "prima/prima.h"
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
-#include <stdio.h>
 
-
-/**
+/*
  * A NOTE ON DEFAULT VALUES IN OPTIONS AND PROBLEM STRUCTURES
  *
  * Certain values of the variables in the options and problems structures
@@ -22,22 +21,24 @@
  * allocated is passed to a procedure, `present` will return false.
  *
  * Our convention is as follows
- * double  - NaN  is to be interpreted as not present
- * int     - 0    is to be interpreted as not present (as of 20240124 all ints are expected to be non-negative)
- * pointer - NULL is to be interpreted as not present
+ * double  - NaN  is interpreted as not present
+ * int     - 0    is interpreted as not present (as of 20240124 all ints are expected nonnegative)
+ * pointer - NULL is interpreted as not present
  *
  * If variables are added to options/problems that are optional, the algorithm_c.f90 files must
  * be updated to treat the default values appropriately. For examples see rhobeg/rhoend(double),
  * maxfun/npt(int), and xl/xu (array/pointer).
 */
 
+
+// Function to initialize the options
 int prima_init_options(prima_options_t *options)
 {
   if (options)
   {
     memset(options, 0, sizeof(prima_options_t));
-    options->rhobeg = NAN;  // interpreted by Fortran as not present
-    options->rhoend = NAN;  // interpreted by Fortran as not present
+    options->rhobeg = NAN;  // will be interpreted by Fortran as not present
+    options->rhoend = NAN;  // will be interpreted by Fortran as not present
     options->iprint = PRIMA_MSG_NONE;
     options->ftarget = -INFINITY;
     return 0;
@@ -46,6 +47,8 @@ int prima_init_options(prima_options_t *options)
     return PRIMA_NULL_OPTIONS;
 }
 
+
+// Function to initialize the problem
 int prima_init_problem(prima_problem_t *problem, int n)
 {
   if (problem)
@@ -59,7 +62,8 @@ int prima_init_problem(prima_problem_t *problem, int n)
     return PRIMA_NULL_PROBLEM;
 }
 
-/* implemented in Fortran (*_c.f90) */
+
+// Functions implemented in Fortran (*_c.f90)
 int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, const int n, double x[], double *f, double *cstrv, double nlconstr[],
              const int m_ineq, const double Aineq[], const double bineq[],
              const int m_eq, const double Aeq[], const double beq[],
@@ -79,6 +83,8 @@ int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], doub
              const double xl[], const double xu[],
              int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *info);
 
+
+// Function to check whether the problem matches the algorithm
 int prima_check_problem(prima_problem_t *problem, prima_options_t *options, const int use_constr, const prima_algorithm_t algorithm)
 {
   if (!problem)
@@ -103,8 +109,10 @@ int prima_check_problem(prima_problem_t *problem, prima_options_t *options, cons
   return 0;
 }
 
-int prima_init_result(prima_result_t *result, prima_problem_t *problem)
+
+// Function to initialize the result
 // FIXME: The initialization seems not appropriate. Why should we set f and cstrv to 0, and x to x0?
+int prima_init_result(prima_result_t *result, prima_problem_t *problem)
 {
   if (result)
   {
@@ -131,6 +139,8 @@ int prima_init_result(prima_result_t *result, prima_problem_t *problem)
     return PRIMA_NULL_RESULT;
 }
 
+
+// Function to free the result
 int prima_free_result(prima_result_t *result)
 {
   if (result)
@@ -151,7 +161,8 @@ int prima_free_result(prima_result_t *result)
     return PRIMA_NULL_RESULT;
 }
 
-/* these functions just call the Fortran compatibility layer and return the status code */
+
+// The function that does the minimization using a PRIMA solver
 int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, prima_result_t *result)
 {
   int use_constr = (algorithm == PRIMA_COBYLA);
@@ -197,6 +208,8 @@ int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, 
   return info;
 }
 
+
+// Function to get the string corresponding to the return code
 const char *prima_get_rc_string(const prima_rc_t rc)
 {
   switch (rc)
