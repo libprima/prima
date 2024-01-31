@@ -201,6 +201,7 @@ const char *prima_get_rc_string(const prima_rc_t rc)
     }
 }
 
+
 // Functions implemented in Fortran (*_c.f90)
 int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, const int n, double x[], double *f, double *cstrv, double nlconstr[],
             const int m_ineq, const double Aineq[], const double bineq[],
@@ -208,12 +209,16 @@ int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, c
             const double xl[], const double xu[],
             const double f0, const double nlconstr0[],
             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *info);
+
 int bobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f, const double xl[], const double xu[],
             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *info);
+
 int newuoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f,
             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *info);
+
 int uobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f,
             int *nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *info);
+
 int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *f,
             double *cstrv,
             const int m_ineq, const double Aineq[], const double bineq[],

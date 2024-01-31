@@ -32,7 +32,7 @@ typedef enum {
     PRIMA_NEWUOA,  // Unconstrained
     PRIMA_BOBYQA,  // Bound-constrained
     PRIMA_LINCOA,  // Linearly constrained
-    PRIMA_COBYLA   // Nonlinearly constrained
+    PRIMA_COBYLA,  // Nonlinearly constrained
 } prima_algorithm_t;
 
 
