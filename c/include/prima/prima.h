@@ -25,6 +25,18 @@ extern "C" {
 #define PRIMAC_API PRIMAC_HELPER_DLL_IMPORT
 #endif
 
+
+// Possible algorithms
+typedef enum
+{
+  PRIMA_UOBYQA,  // Unconstrained
+  PRIMA_NEWUOA,  // Unconstrained
+  PRIMA_BOBYQA,  // Bound-constrained
+  PRIMA_LINCOA,  // Linearly constrained
+  PRIMA_COBYLA   // Nonlinearly constrained
+} prima_algorithm_t;
+
+
 // Verbosity level
 typedef enum {
   PRIMA_MSG_NONE = 0,  // Do not print any message
@@ -91,8 +103,9 @@ typedef void (*prima_obj_t)(const double x[], double *f, const void *data);
 */
 typedef void (*prima_objcon_t)(const double x[], double *f, double constr[], const void *data);
 
+
 /*
- * An optional callback function to report algorithm progress
+ * Callback function to report algorithm progress
  * n     : number of variables
  * x     : the current best point
  * f     : the function value of the current best point
@@ -106,88 +119,64 @@ typedef void (*prima_objcon_t)(const double x[], double *f, double constr[], con
 typedef void (*prima_callback_t)(const int n, const double x[], const double f, int nf, int tr,
                                const double cstrv, int m_nlcon, const double nlconstr[], bool *terminate);
 
-// Structure to hold the options
-typedef struct {
-
-  // rhobeg: a reasonable initial change to the variables; by default this is NaN, which will be
-  // interpreted in Fortran as not present, in which case a default value will be used
-  double rhobeg;
-
-  // rhoend: required accuracy for the variables; by default this is NaN, which will be interpreted
-  // in Fortran as not present, in which case a default value will be used
-  double rhoend;
-
-  // maxfun: maximum number of function evaluations; by default this is 0, which will be interpreted
-  // in Fortran as not present, in which case a default value will be used
-  int maxfun;
-
-  // iprint: verbosity level, see the prima_message_t enum; default = PRIMA_MSG_NONE
-  int iprint;
-
-  // ftarget: target function value; solver stops when f <= ftarget for a feasible point; default: -Inf
-  double ftarget;
-
-  // npt: number of points in the interpolation set for NEWUOA, BOBYQA, and LINCOA; it should
-  // satisfy n+2 <= npt <= (n+1)(n+2)/2; by default this is 0, which will be interpreted by Fortran
-  // as not present, in which case a default value based on the algorithm will be used;
-  // it is not used by UOBYQA or COBYLA.
-  int npt;
-
-  // user data, will be passed through the objective function callback; default: NULL
-  void *data;
-
-  // callback function to report algorithm progress; default: NULL
-  prima_callback_t callback;
-
-} prima_options_t;
-
-
-// Function to initialize the options
-PRIMAC_API
-int prima_init_options(prima_options_t *options);
-
 
 // Structure to hold the problem
-// FIXME: What about the default values of xl, xu, m_ineq, Aineq, bineq, m_eq, Aeq, and beq?
+// In the following, "Default" refers to the value set by `prima_init_problem`.
 typedef struct {
 
-  // dimension of the problem
+  // n: number of variables, n >= 1
+  // Default: 0
   int n;
 
-  // objective function to minimize (not COBYLA)
+  // calfun: pointer to the objective function to minimize
+  // Should not be NULL for UOBYQA, NEWUOA, BOBYQA, and LINCOA; should be NULL for COBYLA
+  // Default: NULL
   prima_obj_t calfun;
 
-  // objective function to minimize with constraints (COBYLA only)
+  // calcfc: pointer to the objective & constraint function to minimize
+  // Should not be NULL for COBYLA; should be NULL for UOBYQA, NEWUOA, BOBYQA, and LINCOA
+  // Default: NULL
   prima_objcon_t calcfc;
 
   // starting point
+  // Should not be NULL
+  // Default: NULL
   double *x0;
 
-  // bound constraints: xl <= x <= xu
+  // Bound constraints: xl <= x <= xu
+  // Should be NULL for UOBYQA and NEWUOA
+  // Default: xl = NULL and xu = NULL
   double *xl;
   double *xu;
 
-  // linear inequality constraints: Aineq*x <= bineq
+  // Linear inequality constraints: Aineq*x <= bineq
   // Aineq is an m_ineq-by-n matrix stored in row-major order (row by row)
   // bineq is of size m_ineq
+  // Should be m_ineq = 0, Aineq = NULL, and bineq = NULL for UOBYQA, NEWUOA, and BOBYQA
+  // Default: m_ineq = 0, Aineq = NULL, and bineq = NULL
   int m_ineq;
   double *Aineq;
   double *bineq;
 
-  // linear equality constraints: Aeq*x = beq
+  // Linear equality constraints: Aeq*x = beq
   // Aeq is an m_eq-by-n matrix stored in row-major order (row by row)
   // beq is of size m_eq
+  // Should be m_eq = 0, Aeq = NULL, and beq = NULL for UOBYQA, NEWUOA, and BOBYQA
+  // Default: m_eq = 0, Aeq = NULL, and beq = NULL
   int m_eq;
   double *Aeq;
   double *beq;
 
-  // number of nonlinear constraints (COBYLA only); default: 0
+  // m_nlcon: number of nonlinear constraints
+  // Should be 0 for UOBYQA, NEWUOA, BOBYQA, and LINCOA
+  // Default: 0
   int m_nlcon;
 
-  // initial objective function value and constraint values (COBYLA only)
-  // They are OPTIONAL and should ONLY be used when interfacing with MATLAB/Python/Julia/R,
-  // where we need to evaluate the constraints at the initial point to get m_nlcon.
-  // C end users should leave them as default, i.e., f0 = NAN and nlconstr0 = NULL.
+  // f0, nlconstr0: initial objective function value and constraint values (COBYLA only)
+  // Should ONLY be used when interfacing with MATLAB/Python/Julia/R, where we need to evaluate
+  // the constraints at the initial point to get m_nlcon
+  // C end users should leave them as the default, i.e., f0 = NAN and nlconstr0 = NULL.
+  // Default: f0 = NAN and nlconstr0 = NULL
   double f0;
   double *nlconstr0;
 
@@ -199,28 +188,78 @@ PRIMAC_API
 int prima_init_problem(prima_problem_t *problem, int n);
 
 
+// Structure to hold the options
+// In the following, "Default" refers to the value set by `prima_init_options`.
+typedef struct {
+
+  // rhobeg: a reasonable initial change to the variables
+  // Default: NaN, which will be interpreted in Fortran as not present, in which case a default
+  // value will be used
+  double rhobeg;
+
+  // rhoend: required accuracy for the variables
+  // Default: NaN, which will be interpreted in Fortran as not present, in which case a default
+  // value will be used
+  double rhoend;
+
+  // maxfun: maximum number of function evaluations
+  // Default: 0, which will be interpreted in Fortran as not present, in which case a default value
+  // will be used
+  int maxfun;
+
+  // iprint: verbosity level (see the prima_message_t enum)
+  // Default: PRIMA_MSG_NONE, which means that no message will be printed
+  int iprint;
+
+  // ftarget: target function value; solver stops when f <= ftarget for a feasible point
+  // Default: -Inf
+  double ftarget;
+
+  // npt: number of points in the interpolation set for NEWUOA, BOBYQA, and LINCOA
+  // Should satisfy n+2 <= npt <= (n+1)(n+2)/2
+  // It will be ignored by UOBYQA or COBYLA if provided
+  // Default: 0, which will be interpreted by Fortran as not present, in which case a default value
+  // based on the algorithm that will be used
+  int npt;
+
+  // data: user data, will be passed through the objective function callback
+  // Default: NULL
+  void *data;
+
+  // callback: pointer to the callback function to report algorithm progress
+  // Default: NULL, which means that no callback will be called
+  prima_callback_t callback;
+
+} prima_options_t;
+
+
+// Function to initialize the options
+PRIMAC_API
+int prima_init_options(prima_options_t *options);
+
+
 // Structure to hold the result
 typedef struct {
 
-  // returned point
+  // x: returned point
   double *x;
 
-  // objective function value at the returned point
+  // f: objective function value at the returned point
   double f;
 
-  // number of objective function evaluations
+  // nf: number of objective function evaluations
   int nf;
 
-  // constraint violation at the returned point (COBYLA and LINCOA only)
+  // cstrv: constraint violation at the returned point (COBYLA and LINCOA only)
   double cstrv;
 
-  // nonlinear constraint values at the returned point, of size m_nlcon (COBYLA only)
+  // nlconstr: nonlinear constraint values at the returned point, of size m_nlcon (COBYLA only)
   double *nlconstr;
 
-  // exit code
+  // status: return code
   int status;
 
-  // exit message
+  // message: exit message
   const char *message;
 
 } prima_result_t;
@@ -229,17 +268,6 @@ typedef struct {
 // Function to free the result
 PRIMAC_API
 int prima_free_result(prima_result_t *result);
-
-
-// Algorithm
-typedef enum
-{
-  PRIMA_BOBYQA,
-  PRIMA_COBYLA,
-  PRIMA_LINCOA,
-  PRIMA_NEWUOA,
-  PRIMA_UOBYQA
-} prima_algorithm_t;
 
 
 /*
