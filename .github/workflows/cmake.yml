@@ -141,6 +141,7 @@ jobs:
           cmake --build . --target install
           cmake --build . --target tests
           ctest --output-on-failure -V -E stress
+          cat D:/a/prima/prima/cmdfile.gdb ||:
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
         shell: bash
@@ -201,7 +202,6 @@ jobs:
           cmake --build . --target tests
           # cobyla test does not pass on AOCC: https://github.com/libprima/prima/issues/41
           ctest --output-on-failure -V -E "stress|cobyla"
-          cat D:/a/prima/prima/cmdfile.gdb ||:
         shell: bash
         env:
           FC: ${{ matrix.toolchain.compiler }}
