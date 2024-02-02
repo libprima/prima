@@ -139,7 +139,7 @@ jobs:
           cmake --version
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
           cmake --build . --target install
-          cmake --build . --target test】s
+          cmake --build . --target tests
           ctest --output-on-failure -V -E stress
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
