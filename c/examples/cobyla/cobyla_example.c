@@ -1,14 +1,15 @@
 // An example to illustrate the use of COBYLA.
 
+
+#include "prima/prima.h"
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 
-// Make PRIMA available
-#include "prima/prima.h"
 
 #define M_NLCON 1
 #define PROVIDE_INITIAL_F_AND_NLCONSTR 1
+
 
 // Objective & constraint function
 static void fun(const double x[], double *f, double constr[], const void *data)
@@ -20,6 +21,7 @@ static void fun(const double x[], double *f, double constr[], const void *data)
     (void)data;
 }
 
+
 // Callback function
 static void callback(const int n, const double x[], const double f, const int nf, const int tr, const double cstrv, const int m_nlcon, const double nlconstr[], bool *terminate)
 {
@@ -28,6 +30,7 @@ static void callback(const int n, const double x[], const double f, const int nf
     printf("Best point so far: x = {%g, %g}, f = %g, cstrv = %g, nlconstr = {%g}, nf = %d, tr = %d\n", x[0], x[1], f, cstrv, nlconstr[0], nf, tr);
     *terminate = 0;
 }
+
 
 // Main function
 int main(int argc, char * argv[])

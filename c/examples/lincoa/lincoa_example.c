@@ -1,10 +1,10 @@
 // An example to illustrate the use of LINCOA.
 
+
+#include "prima/prima.h"
 #include <math.h>
 #include <stdio.h>
 
-// Make PRIMA available
-#include "prima/prima.h"
 
 // Objective function
 static void fun(const double x[], double *f, const void *data)
@@ -15,6 +15,7 @@ static void fun(const double x[], double *f, const void *data)
     (void)data;
 }
 
+
 // Callback function
 static void callback(int n, const double x[], double f, int nf, int tr, double cstrv, int m_nlcon, const double nlconstr[], bool *terminate)
 {
@@ -24,6 +25,7 @@ static void callback(int n, const double x[], double f, int nf, int tr, double c
     printf("Best point so far: x = {%g, %g}, f = %g, cstrv = %g, nf = %d, tr = %d\n", x[0], x[1], f, cstrv, nf, tr);
     *terminate = 0;
 }
+
 
 // Main function
 int main(int argc, char * argv[])

@@ -1,10 +1,10 @@
 // An example to illustrate the use of NEWUOA.
 
+
+#include "prima/prima.h"
 #include <math.h>
 #include <stdio.h>
 
-// Make PRIMA available
-#include "prima/prima.h"
 
 // Objective function
 static void fun(const double x[], double *f, const void *data)
@@ -14,6 +14,7 @@ static void fun(const double x[], double *f, const void *data)
     *f = pow(x1-5, 2) + pow(x2-4, 2);
     (void)data;
 }
+
 
 // Callback function
 static void callback(int n, const double x[], double f, int nf, int tr, double cstrv, int m_nlcon, const double nlconstr[], bool *terminate)
@@ -25,6 +26,7 @@ static void callback(int n, const double x[], double f, int nf, int tr, double c
     printf("Best point so far: x = {%g, %g}, f = %g, nf = %d, tr = %d\n", x[0], x[1], f, nf, tr);
     *terminate = 0;
 }
+
 
 // Main function
 int main(int argc, char * argv[])
