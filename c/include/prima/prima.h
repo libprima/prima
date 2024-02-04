@@ -245,14 +245,14 @@ typedef struct {
     // f: objective function value at the returned point
     double f;
 
-    // nf: number of objective function evaluations
-    int nf;
-
     // cstrv: constraint violation at the returned point (COBYLA and LINCOA only)
     double cstrv;
 
     // nlconstr: nonlinear constraint values at the returned point, of size m_nlcon (COBYLA only)
     double *nlconstr;
+
+    // nf: number of function evaluations
+    int nf;
 
     // status: return code
     int status;

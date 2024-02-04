@@ -2,6 +2,7 @@
 
 
 #include "prima/prima.h"
+#include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,30 +36,28 @@
 // Function to initialize the problem
 int prima_init_problem(prima_problem_t *problem, int n)
 {
-    if (problem) {
-        memset(problem, 0, sizeof(prima_problem_t));
-        problem->n = n;
-        problem->f0 = NAN;
-        return 0;
-    }
-    else
+    if (!problem)
         return PRIMA_NULL_PROBLEM;
+
+    memset(problem, 0, sizeof(prima_problem_t));
+    problem->n = n;
+    problem->f0 = NAN;
+    return 0;
 }
 
 
 // Function to initialize the options
 int prima_init_options(prima_options_t *options)
 {
-    if (options) {
-        memset(options, 0, sizeof(prima_options_t));
-        options->rhobeg = NAN;  // Will be interpreted by Fortran as not present
-        options->rhoend = NAN;  // Will be interpreted by Fortran as not present
-        options->iprint = PRIMA_MSG_NONE;
-        options->ftarget = -INFINITY;
-        return 0;
-    }
-    else
+    if (!options)
         return PRIMA_NULL_OPTIONS;
+
+    memset(options, 0, sizeof(prima_options_t));
+    options->rhobeg = NAN;  // Will be interpreted by Fortran as not present
+    options->rhoend = NAN;  // Will be interpreted by Fortran as not present
+    options->iprint = PRIMA_MSG_NONE;
+    options->ftarget = -INFINITY;
+    return 0;
 }
 
 
@@ -92,55 +91,68 @@ int prima_check_problem(prima_problem_t *problem, prima_options_t *options, cons
 
 
 // Function to initialize the result
-// FIXME: The initialization seems not appropriate. Why should we set f and cstrv to 0, and x to x0?
 int prima_init_result(prima_result_t *result, prima_problem_t *problem)
 {
-    if (result) {
-        memset(result, 0, sizeof(prima_result_t));
-        result->f = 0.0;
-        result->cstrv = 0.0;
-
-        if (!problem)
-            return PRIMA_NULL_PROBLEM;
-
-        if (!problem->x0)
-            return PRIMA_NULL_X0;
-
-        result->x = (double*)malloc(problem->n * sizeof(double));
-        if (!result->x)
-            return PRIMA_MEMORY_ALLOCATION_FAILS;
-
-        // We copy problem->x0 into result->x so that problem->x0 does not get overwritten by the solver.
-        memcpy(result->x, problem->x0, problem->n * sizeof(double));
-
-        if (problem->m_nlcon > 0) {
-            result->nlconstr = (double*)calloc(problem->m_nlcon, sizeof(double));
-            if (!result->nlconstr)
-                return PRIMA_MEMORY_ALLOCATION_FAILS;
-        }
-        return 0;
-    }
-    else
+    if (!result)
         return PRIMA_NULL_RESULT;
+
+    memset(result, 0, sizeof(prima_result_t));
+
+    if (!problem)
+        return PRIMA_NULL_PROBLEM;
+
+    // x: returned point
+    result->x = (double*)malloc(problem->n * sizeof(double));
+    if (!result->x)
+        return PRIMA_MEMORY_ALLOCATION_FAILS;
+    for (int i = 0; i < problem->n; i++)
+        result->x[i] = NAN;
+
+    // f: objective function value at the returned point
+    f = NAN;
+
+    // cstrv: constraint violation at the returned point (COBYLA and LINCOA only)
+    cstrv = NAN;
+
+    // nlconstr: nonlinear constraint values at the returned point, of size m_nlcon (COBYLA only)
+    if (problem->m_nlcon <= 0)
+        result->nlconstr = NULL;
+    else {
+        result->nlconstr = (double*)malloc(problem->m_nlcon * sizeof(double));
+        if (!result->nlconstr)
+            return PRIMA_MEMORY_ALLOCATION_FAILS;
+        for (int i = 0; i < problem->m_nlcon; i++)
+            result->nlconstr[i] = NAN;
+    }
+
+    // nf: number of function evaluations
+    nf = INT_MIN;
+
+    // status: return code
+    status = INT_MIN;
+
+    // message: exit message
+    message = NULL;
+
+    return 0;
 }
 
 
 // Function to free the result
 int prima_free_result(prima_result_t *result)
 {
-    if (result) {
-        if (result->nlconstr) {
-            free(result->nlconstr);
-            result->nlconstr = NULL;
-        }
-        if (result->x) {
-            free(result->x);
-            result->x = NULL;
-        }
-        return 0;
-    }
-    else
+    if (!result)
         return PRIMA_NULL_RESULT;
+
+    if (result->nlconstr) {
+        free(result->nlconstr);
+        result->nlconstr = NULL;
+    }
+    if (result->x) {
+        free(result->x);
+        result->x = NULL;
+    }
+    return 0;
 }
 
 
@@ -232,14 +244,16 @@ int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, 
 {
     int use_constr = (algorithm == PRIMA_COBYLA);
 
-    int info = prima_check_problem(problem, options, use_constr, algorithm);
+    int info = prima_init_result(result, problem);
+
     if (info == 0)
-        info = prima_init_result(result, problem);
+        info = prima_check_problem(problem, options, use_constr, algorithm);
 
     if (info == 0) {
         switch (algorithm) {
             case PRIMA_BOBYQA:
                 bobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, options->callback, &info);
+                result->cstrv = 0.0;
                 break;
 
             case PRIMA_COBYLA:
@@ -256,10 +270,12 @@ int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, 
 
             case PRIMA_NEWUOA:
                 newuoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, options->callback, &info);
+                result->cstrv = 0.0;
                 break;
 
             case PRIMA_UOBYQA:
                 uobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, options->callback, &info);
+                result->cstrv = 0.0;
                 break;
 
             default:
