@@ -8,7 +8,7 @@ module trustregion_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, January 27, 2024 AM02:34:44
+! Last Modified: Sunday, February 04, 2024 AM09:44:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -532,7 +532,7 @@ do iter = 1, maxiter
     qred = qred + sdec
     if (iact >= 1 .and. iact <= n .and. hangt >= hangt_bd) then  ! D(IACT) reaches lower/upper bound.
         xbdi(iact) = nint(sign(ONE, xopt(iact) + d(iact) - HALF * (sl(iact) + su(iact))), kind(xbdi))
-        !!MATLAB: xbdi(iact) = sign(xopt(iact)+d(iact) - (sl+su)/2);
+        !!MATLAB: xbdi(iact) = sign(xopt(iact)+d(iact) - 0.5*(sl+su));
     elseif (.not. sdec > tol * qred) then  ! SDEC is small or NaN occurs
         exit
     end if
