@@ -109,10 +109,10 @@ int prima_init_result(prima_result_t *result, prima_problem_t *problem)
         result->x[i] = NAN;
 
     // f: objective function value at the returned point
-    f = NAN;
+    result->f = NAN;
 
     // cstrv: constraint violation at the returned point (COBYLA and LINCOA only)
-    cstrv = NAN;
+    result->cstrv = NAN;
 
     // nlconstr: nonlinear constraint values at the returned point, of size m_nlcon (COBYLA only)
     if (problem->m_nlcon <= 0)
@@ -126,13 +126,13 @@ int prima_init_result(prima_result_t *result, prima_problem_t *problem)
     }
 
     // nf: number of function evaluations
-    nf = INT_MIN;
+    result->nf = INT_MIN;
 
     // status: return code
-    status = INT_MIN;
+    result->status = INT_MIN;
 
     // message: exit message
-    message = NULL;
+    result->message = NULL;
 
     return 0;
 }
