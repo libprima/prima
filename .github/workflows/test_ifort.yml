@@ -88,7 +88,7 @@ jobs:
           export EXAMPLE_NUM=2 && make clean && make itest
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v4.3.0
+        uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           name: ${{ matrix.os }}-${{ matrix.solver }}-${{ matrix.ikind }}-${{ matrix.fflags }}-${{ matrix.testdim }}
