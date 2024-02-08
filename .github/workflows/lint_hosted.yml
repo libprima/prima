@@ -66,7 +66,7 @@ jobs:
       - name: Set up MATLAB
         id: set-up-matlab
         if: ${{ matrix.linter == 'mlint' }}
-        uses: matlab-actions/setup-matlab@v2-beta
+        uses: matlab-actions/setup-matlab@v2.0.0
         with:
           release: latest
 
