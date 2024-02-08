@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, January 28, 2024 PM05:21:55
+! Last Modified: Tuesday, February 06, 2024 PM03:31:32
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -332,7 +332,7 @@ if (lower(solver) == 'bobyqa') then
     ! Revise RHOBEG if needed.
     ! N.B.: If X0 has been revised above (i.e., HONOUR_X0 is FALSE), then the following revision
     ! is unnecessary in precise arithmetic. However, it may still be needed due to rounding errors.
-    rhobeg_old = rhobeg; 
+    rhobeg_old = rhobeg
     lbx = (is_finite(xl) .and. x0 - xl <= EPS * max(ONE, abs(xl))) ! X0 essentially equals XL
     ubx = (is_finite(xu) .and. x0 - xu >= -EPS * max(ONE, abs(xu))) ! X0 essentially equals XU
     x0(trueloc(lbx)) = xl(trueloc(lbx))

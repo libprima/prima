@@ -53,3 +53,22 @@ In addition, we may use statehist and radhist to improve fmsg, invoking it unifo
 ```
 To this end, we will need to modify fmsg so that it can translate the state index (0, 1, 2, 3) to
 the state name as mentioned above.
+
+13. Try scaling the matrices H and PQ to avoid huge or tiny values.
+
+14. Instead of requiring that each component of X0 is either on the boundary or is away from the
+boundary by at least RHOBEG, we require that each component is away from one boundary by at least
+RHOBEG or away from the other boundary by at least 2*RHOBEG. In other words,
+
+(XU - X0 >= RHOBEG .OR. X0 - XL >= 2*RHOBEG) .AND. (X0 - XL >= RHOBEG .OR. XU - X0 >= 2*RHOBEG) .AND.
+
+X0 - XL >= 2*RHOBEG .OR. XU - X0 >= 2*RHOBEG .OR. X0 - XL >= 2*RHOBEG .AND. XU - X0 >= 2*RHOBEG
+
+
+When HONOUR_X0 is TRUE, instead of setting
+
+RHOBEG = MINVAL([X-XL, XU-X]),
+
+use
+
+RHOBEG = MINVAL([MAX(X-XL, (XU-X) / 2), MAX(XU-X, (X-XL) / 2)]).

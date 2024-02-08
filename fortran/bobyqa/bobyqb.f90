@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, January 27, 2024 AM02:34:58
+! Last Modified: Wednesday, February 07, 2024 AM10:23:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -299,7 +299,7 @@ do tr = 1, maxtr
     shortd = (dnorm < HALF * rho)
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
-    ! should be positive If it is nonpositive due to rounding errors, we will not take this step.
+    ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
     trfail = (.not. qred > 1.0E-5_RP * rho**2)  ! QRED is tiny/negative or NaN.
 
