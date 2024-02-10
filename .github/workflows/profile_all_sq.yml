@@ -177,6 +177,20 @@ jobs:
                 movefile(file, newfile);
             end
 
+      - name: List problems that started but did not end
+        # The solver got stuck when solving these problems. Investigate what happened.
+        if: always()
+        shell: bash
+        run: |
+          solver=${{ matrix.solver }}
+          cd /tmp/${solver}_profile_prima/
+          ls ${solver}*_start -1 > ${solver}_prob_start
+          ls ${solver}*_end -1 > ${solver}_prob_end
+          diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck || :
+          printf "\n\n>>>>>>>>>>>>>>>>\nProblems that started but did not end:\n\n"
+          cat ${solver}_stuck
+          printf "\n<<<<<<<<<<<<<<<<\n\n"
+
       - name: Store artifacts
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
