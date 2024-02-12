@@ -119,5 +119,5 @@ jobs:
           path: |
             /tmp/${{ matrix.solver }}_verify_prima/*start*
             /tmp/${{ matrix.solver }}_verify_prima/*end*
-            /tmp/${{ matrix.solver }}_verify_prima/*stuck
+            /tmp/${{ matrix.solver }}_verify_prima/*stuck*
             /tmp/${{ matrix.solver }}_verify_prima/fort.*

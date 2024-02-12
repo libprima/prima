@@ -166,6 +166,7 @@ jobs:
             /tmp/cobyla_profile_prima/*.txt
             /tmp/cobyla_profile_prima/*start*
             /tmp/cobyla_profile_prima/*end*
+            /tmp/cobyla_profile_prima/*stuck*
 
       - name: Remove the test data
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
