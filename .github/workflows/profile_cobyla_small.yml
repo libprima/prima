@@ -85,7 +85,7 @@ jobs:
         with:
           release: ${{ matrix.matlab }}
           cache: true
-          products: Optimization_Toolbox
+          products: Optimization_Toolbox Parallel_Computing_Toolbox
 
       - name: Set up MATLAB without optimization toolbox
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox != 'yes' }}
@@ -93,6 +93,7 @@ jobs:
         with:
           release: ${{ matrix.matlab }}
           cache: true
+          products: Parallel_Computing_Toolbox
 
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.0.0

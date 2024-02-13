@@ -70,6 +70,7 @@ jobs:
         with:
           release: latest
           cache: true
+          products: Parallel_Computing_Toolbox
 
       - name: Get fintrf.h and remove MATLAB
         if: ${{ matrix.linter == 'mlint' }}

@@ -96,6 +96,7 @@ jobs:
         with:
           release: ${{ matrix.matlab }}
           cache: true
+          products: Parallel_Computing_Toolbox
 
       - name: List problems that started but did not end
         # The solver got stuck when solving these problems. Investigate what happened.

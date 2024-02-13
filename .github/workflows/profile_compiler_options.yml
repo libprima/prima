@@ -94,7 +94,7 @@ jobs:
         with:
           release: ${{ matrix.matlab }}
           cache: true
-          products: Optimization_Toolbox
+          products: Optimization_Toolbox Parallel_Computing_Toolbox
 
       - name: Revise setup_compiler_options to print the revised mexopt file
         run: |

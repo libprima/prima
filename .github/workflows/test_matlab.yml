@@ -157,6 +157,7 @@ jobs:
         with:
           release: ${{ matrix.matlab }}
           cache: true
+          products: Parallel_Computing_Toolbox
 
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.0.0
