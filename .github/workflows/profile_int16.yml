@@ -160,7 +160,7 @@ jobs:
         shell: bash
         run: |
           solver=${{ matrix.solver }}
-          cd /tmp/${solver}_profile_prima/
+          cd /tmp/${{ env.SOLNAME }}_profile_prima/
           ls *${solver}*_start -1 > ${solver}_prob_start
           ls *${solver}*_end -1 > ${solver}_prob_end
           diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck || :
