@@ -132,8 +132,8 @@ jobs:
         run: |
           solver=${{ matrix.solver }}
           cd /tmp/${solver}_profile_prima/
-          ls ${solver}*_start -1 > ${solver}_prob_start
-          ls ${solver}*_end -1 > ${solver}_prob_end
+          ls *${solver}*_start -1 > ${solver}_prob_start
+          ls *${solver}*_end -1 > ${solver}_prob_end
           diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck || :
           printf "\n\n>>>>>>>>>>>>>>>>\nProblems that started but did not end:\n\n"
           cat ${solver}_stuck
@@ -165,7 +165,7 @@ jobs:
   #     - name: Download all workflow run artifacts
   #       uses: actions/download-artifact@v4.0.0
   #     - name: Move all artifacts to the current directory
-  #       run: ls -al && mv */* ./ && ls -al
+  #       run: ls -al && mv */*.pdf ./ && ls -al
   #     - name: Upload all files
   #       uses: actions/upload-artifact@v4.3.1
   #       with:
