@@ -160,8 +160,8 @@ jobs:
         if: always()
         shell: bash
         run: |
-          solver=${{ matrix.solver }}
-          cd /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/
+          solver=${{ env.SOLNAME }}
+          cd /tmp/${solver}_profile_${{ env.BENCHMARK }}/
           ls *${solver}*_start -1 > ${solver}_prob_start
           ls *${solver}*_end -1 > ${solver}_prob_end
           diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck || :
