@@ -130,8 +130,8 @@ jobs:
         run: |
           solver=${{ matrix.solver }}
           cd /tmp/${solver}_profile_prima/
-          ls *${solver}*_start -1 > ${solver}_prob_start
-          ls *${solver}*_end -1 > ${solver}_prob_end
+          ls -R1 *${solver}*_start > ${solver}_prob_start
+          ls -R1 *${solver}*_end > ${solver}_prob_end
           diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck || :
           printf "\n\n>>>>>>>>>>>>>>>>\nProblems that started but did not end:\n\n"
           cat ${solver}_stuck
