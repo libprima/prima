@@ -32,7 +32,7 @@ jobs:
         # See https://github.com/fortran-lang/setup-fortran?tab=readme-ov-file#runner-compatibility
         # for the toolchains provided by fortran-lang/setup-fortran. We test the latest three on each OS.
         # First define the toolchains on Linux and macOS.
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, macos-13]
         toolchain:
           - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}

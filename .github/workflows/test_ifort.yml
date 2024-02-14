@@ -28,12 +28,14 @@ jobs:
       fail-fast: false
       matrix:
         # Windows does not work. On Windows, the options for ifort/ifx starts with "/" instead of "-".
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, macos-13]
         ikind: [i2, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
         exclude:
+          - os: macos-13
+            ikind: i8
           - os: macos-latest
             ikind: i8
 
