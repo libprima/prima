@@ -37,9 +37,9 @@ jobs:
           - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: intel-classic, version: '2021.7', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - {compiler: intel-classic, version: '2021.8', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
           - {compiler: intel-classic, version: '2021.9', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
+          - {compiler: intel-classic, version: '2021.10', cflags: '-diag-disable=10441', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
 
         include:
           # intel compiler (ifx) does not support macOS. So they are not included above but below.
@@ -66,13 +66,13 @@ jobs:
           - os: windows-latest
             toolchain: {compiler: intel, version: '2023.2', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.7', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
-          - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.8', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
+            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+          - os: windows-latest
+            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
 
     steps:
 
