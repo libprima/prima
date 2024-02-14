@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, macos-13]
         compiler: [g, i, v, s, f, x, d]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [large]
@@ -40,6 +40,18 @@ jobs:
           - os: macos-latest
             compiler: x
           - os: macos-latest
+            compiler: d
+          - compiler: s  # BOBYQA fails stest for unknown reason
+            solver: bobyqa
+          - os: macos-13
+            compiler: v
+          - os: macos-13
+            compiler: s
+          - os: macos-13
+            compiler: f
+          - os: macos-13
+            compiler: x
+          - os: macos-13
             compiler: d
           - compiler: s  # BOBYQA fails stest for unknown reason
             solver: bobyqa
