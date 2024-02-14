@@ -80,7 +80,7 @@ elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', tru
         extra_compiler_options = '/heap-arrays /assume:recursion';
     else
         %extra_compiler_options = '-heap-arrays -assume recursion';
-        extra_compiler_options = '-heap-arrays -assume recursion -undefined dynamic_lookup';
+        extra_compiler_options = '-heap-arrays -assume recursion';
     end
 elseif ~contains(compiler_configurations.Manufacturer, 'nag', 'IgnoreCase', true)  % NAG compiler
     warning('prima:UnrecognizedCompiler', 'Unrecognized compiler %s. The package may not work.', ...
@@ -90,6 +90,7 @@ if ispc  % Windows
     compiler_options = ['COMPFLAGS="$COMPFLAGS ', extra_compiler_options, '"'];
 else
     compiler_options = ['FFLAGS="$FFLAGS ', extra_compiler_options, '"'];
+    compiler_options = [compiler_options, ' LINKFLAGS="$LINKFLAGS ', '-undefined dynamic_lookup', '"'];
 end
 
 % Name of the file that contains the list of Fortran files. There should be such a file in each
