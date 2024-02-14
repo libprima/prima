@@ -79,7 +79,8 @@ elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', tru
     if ispc
         extra_compiler_options = '/heap-arrays /assume:recursion';
     else
-        extra_compiler_options = '-heap-arrays -assume recursion';
+        %extra_compiler_options = '-heap-arrays -assume recursion';
+        extra_compiler_options = '-heap-arrays -assume recursion -undefined dynamic_lookup';
     end
 elseif ~contains(compiler_configurations.Manufacturer, 'nag', 'IgnoreCase', true)  % NAG compiler
     warning('prima:UnrecognizedCompiler', 'Unrecognized compiler %s. The package may not work.', ...
