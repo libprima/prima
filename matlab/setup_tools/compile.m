@@ -90,7 +90,6 @@ if ispc  % Windows
     compiler_options = ['COMPFLAGS="$COMPFLAGS ', extra_compiler_options, '"'];
 else
     compiler_options = ['FFLAGS="$FFLAGS ', extra_compiler_options, '"'];
-    compiler_options = [compiler_options, ' LINKFLAGS="$LINKFLAGS ', '-undefined dynamic_lookup', '"'];
 end
 
 % Name of the file that contains the list of Fortran files. There should be such a file in each
@@ -120,7 +119,7 @@ copyfile(header_file, header_file_bak);
 
 fprintf('Compiling the common files ... ');
 for idbg = 1 : length(debug_flags)
-    mex_options = {verbose_option, ['-', dbgstr(debug_flags{idbg})], compiler_options};
+    mex_options = {verbose_option, ['-', dbgstr(debug_flags{idbg})], compiler_options, 'LINKFLAGS="$LINKFLAGS -undefined dynamic_lookup"'};
     for iprc = 1 : length(precisions)
         prepare_header(header_file, precisions{iprc}, debug_flags{idbg});
         work_dir = fullfile(common, pdstr(precisions{iprc}, debug_flags{idbg}));
