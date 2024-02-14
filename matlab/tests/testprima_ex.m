@@ -6,7 +6,8 @@ ver;
 root_dir = fileparts(fileparts(pwd()));
 cd(root_dir);
 options = struct();
-options.debug=true;
+options.debug = true;
+options.verbose = true;
 setup(options);
 prima('info')
 testprima(false, 1.0e-10, 100);
