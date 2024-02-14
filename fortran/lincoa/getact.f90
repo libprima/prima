@@ -12,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, September 08, 2023 PM07:25:41
+! Last Modified: Wednesday, February 14, 2024 PM01:47:26
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -202,11 +202,11 @@ ddsav = TWO * gg  ! By Powell. This value is used at iteration 1 to test whether
 ! What is the theoretical maximal number of iterations in the following procedure? Powell's code for
 ! this part is essentially a `DO WHILE (NACT < N) ... END DO` loop. We enforce the following maximal
 ! number of iterations, which is never reached in our tests (indeed, even 2*N cannot be reached).
-! N.B.: 1. The MAX below is a precaution against overflow, which will make 2*(m+n) < 0, which can
-! happen if the integer being used is 2-byte. This precaution is UNNEEDED in MATLAB/Python/Julia/R.
+! N.B.: 1. The formulation of MAXITER below contains a precaution against overflow. In
+! MATLAB/Python/Julia/R, we can write maxiter = min(10000, 2*(m + n))
 ! 2. The iteration counter ITER never appears in the code of the iterations, as its purpose is
 ! merely to impose an upper bound on the number of iterations.
-maxiter = max(2_IK * (m + n), m)
+maxiter = int(min(10**min(4, range(0_IK)), 2 * int(m + n)), IK)
 do iter = 1, maxiter
     ! When NACT == N, exit with PSD = 0. Indeed, with a correctly implemented matrix product, the
     ! lines below this IF should render DD = 0 and trigger an exit. We make it explicit for clarity.
