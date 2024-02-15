@@ -35,8 +35,8 @@ for imf = 1 : length(mex_files)
     % Note that `mex_files` contains full path, but we only need the `mexname`, without the path or
     % extension. Thus we need to use `fileparts` to retrieve the `mexname` first. Otherwise, `clear`
     % will do nothing (it does not raise a warning when requested to clear something nonexistent).
-    [~, mexename] = fileparts(mex_files{imf});
-    clear(mexename);
+    [~, mexname] = fileparts(mex_files{imf});
+    clear(mexname);
 end
 
 % Remove the compiled MEX files
