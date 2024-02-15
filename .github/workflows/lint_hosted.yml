@@ -69,7 +69,7 @@ jobs:
         uses: matlab-actions/setup-matlab@v2.0.0
         with:
           release: latest
-          cache: true
+          cache: false  # We should not cache MATLAB; otherwise, an empty directory will be cached since we remove $MATLABROOT in the next step
           products: Parallel_Computing_Toolbox
 
       - name: Get fintrf.h and remove MATLAB
