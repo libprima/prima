@@ -100,10 +100,7 @@ end
 % the latter is suggested at https://www.mathworks.com/help/matlab/ref/mex.html.
 linker_options = '';
 if ismac && contains(compiler_manufacturer, 'intel')  % macOS with Intel compiler
-    [status, ~] = system('type echo && type sed');  % Check if `echo` and `sed` are available.
-    if status == 0
-        linker_options = 'LDFLAGSVER="$(echo $LDFLAGSVER | sed "s/-undefined error//g") -undefined dynamic_lookup"';
-    end
+    linker_options = 'LDFLAGSVER="$LDFLAGSVER -undefined dynamic_lookup"';
 end
 
 % MEX options shared by all compiling processes below.
