@@ -41,8 +41,7 @@ endif ()
 # implemented in Xcode 15 on macOS. It happens only if the Fortran compiler is ifort.  
 # An alternative is `add_link_options("-ld_classic")`, which forces Xcode to use the old linker.
 if((APPLE) AND (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel"))
-    #add_link_options("-Wl,-undefined,dynamic_lookup")
-    add_link_options("-ld_classic")
+    add_link_options("-Wl,-undefined,dynamic_lookup")
 endif()
 
 # For running tests with gdb. $_exitcode != 0 means the program ran without exiting
