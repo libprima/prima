@@ -92,17 +92,17 @@ else
 end
 
 % Zaikun 20240216: The following is a workaround for https://github.com/libprima/prima/issues/161,
-% where MEX fails due to incompatibility between the new linker of Xcode 15 on macOS and Intel oneAPI 2023. 
+% where MEX fails due to incompatibility between the new linker of Xcode 15 on macOS and Intel oneAPI 2023.
 % The fix is to replace the linker option "-undefined error" with "-undefined dynamic_lookup".
-% See also https://github.com/libprima/prima/issues/158. 
-% Note that we have to modify `LDFLAGSVER`. Setting `LDFLAGS` or `LINKFLAGS` does not work, although 
-% the latter is suggested at https://www.mathworks.com/help/matlab/ref/mex.html.  
+% See also https://github.com/libprima/prima/issues/158.
+% Note that we have to modify `LDFLAGSVER`. Setting `LDFLAGS` or `LINKFLAGS` does not work, although
+% the latter is suggested at https://www.mathworks.com/help/matlab/ref/mex.html.
 linker_options = '';
 if ismac && contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', true)  % macOS with Intel compiler
-    linker_options = 'LDFLAGSVER=$(echo $LDFLAGSVER | sed "s/-undefined error/-undefined dynamic_lookup/g")';
+    linker_options = 'LDFLAGSVER=$(echo $LDFLAGSVER | sed "s/-undefined error//g") -undefined dynamic_lookup';
 end
 
-% MEX options shared by all compiling processes below. 
+% MEX options shared by all compiling processes below.
 common_mex_options = {verbose_option, compiler_options, linker_options};
 
 
