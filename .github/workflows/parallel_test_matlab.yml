@@ -39,15 +39,6 @@ jobs:
         matlab: [R2023a, latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
 
-        # Exclude some versions of OS and MATLAB.
-        exclude:
-          # The following combinations are not available as of 20230928.
-          - os: windows-latest
-            matlab: latest
-          - os: macos-13
-            matlab: latest
-          - os: macos-latest
-            matlab: latest
 
     steps:
 
