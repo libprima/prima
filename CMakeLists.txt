@@ -36,8 +36,15 @@ if (PRIMA_HEAP_ARRAYS)
   endif ()
 endif ()
 
-#add_link_options("-ld_classic")
-add_link_options("-undefined,dynamic_lookup")
+# Set additional linker flags
+# Fix https://github.com/libprima/prima/issues/158
+if(APPLE)
+    # Check if the Fortran compiler is Intel ifort
+    if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+        # Add the link options for macOS and Intel Fortran compiler
+        add_link_options("-undefined,dynamic_lookup")
+    endif()
+endif()
 
 # For running tests with gdb. $_exitcode != 0 means the program ran without exiting
 # normally, and in this case we want to show a stack trace
