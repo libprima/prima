@@ -36,6 +36,19 @@ if (PRIMA_HEAP_ARRAYS)
   endif ()
 endif ()
 
+# Set additional linker flags
+# Zaikun 20230217: Fix https://github.com/libprima/prima/issues/158, which is due to the new linker 
+# implemented in Xcode 15 on macOS. It happens only if the Fortran compiler is ifort.  
+# An alternative is `add_link_options("-ld_classic")`, which forces Xcode to use the old linker.
+# Will CMake adapt itself to the new linker later? Will a newer version of CMake make the fix unnecessary?
+# See
+# https://developer.apple.com/documentation/xcode-release-notes/xcode-15-release-notes#Linking
+# https://stackoverflow.com/questions/77525544/apple-linker-warning-ld-warning-undefined-error-is-deprecated
+# https://medium.com/@hackingwithcode/cmake-and-xcode-15-solving-the-undefined-error-puzzle-3c847e6d1008
+if((APPLE) AND (CMAKE_Fortran_COMPILER_ID MATCHES "Intel"))
+    add_link_options("-Wl,-undefined,dynamic_lookup")
+endif()
+
 # For running tests with gdb. $_exitcode != 0 means the program ran without exiting
 # normally, and in this case we want to show a stack trace
 file(WRITE ${CMAKE_BINARY_DIR}/cmdfile.gdb "init-if-undefined $_exitcode = 0
