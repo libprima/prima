@@ -42,7 +42,7 @@ if(APPLE)
     # Check if the Fortran compiler is Intel ifort
     if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
         # Add the link options for macOS and Intel Fortran compiler
-        add_link_options("-undefined dynamic_lookup")
+        add_link_options("-Wl,-undefined,dynamic_lookup")
     endif()
 endif()
 
