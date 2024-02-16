@@ -37,7 +37,7 @@ if (PRIMA_HEAP_ARRAYS)
 endif ()
 
 #add_link_options("-ld_classic")
-add_link_options("-Wl,-undefined,dynamic_lookup")
+add_link_options("-undefined,dynamic_lookup")
 
 # For running tests with gdb. $_exitcode != 0 means the program ran without exiting
 # normally, and in this case we want to show a stack trace
