@@ -36,7 +36,7 @@ if (PRIMA_HEAP_ARRAYS)
   endif ()
 endif ()
 
-set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ld_classic)"
+set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ld_classic")
 
 # For running tests with gdb. $_exitcode != 0 means the program ran without exiting
 # normally, and in this case we want to show a stack trace
