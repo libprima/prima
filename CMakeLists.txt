@@ -37,13 +37,12 @@ if (PRIMA_HEAP_ARRAYS)
 endif ()
 
 # Set additional linker flags
-# Fix https://github.com/libprima/prima/issues/158
-if(APPLE)
-    # Check if the Fortran compiler is Intel ifort
-    if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-        # Add the link options for macOS and Intel Fortran compiler
-        add_link_options("-Wl,-undefined,dynamic_lookup")
-    endif()
+# Fix https://github.com/libprima/prima/issues/158, which is a failure due to the new linker 
+# implemented in Xcode 15 on macOS. It happens only if the Fortran compiler is ifort.  
+if((APPLE) AND
+   (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel") AND
+   (NOT XCODE_VERSION VERSION_LESS "15.0.1"))
+    add_link_options("-Wl,-undefined,dynamic_lookup")
 endif()
 
 # For running tests with gdb. $_exitcode != 0 means the program ran without exiting
