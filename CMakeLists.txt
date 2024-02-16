@@ -40,7 +40,7 @@ endif ()
 # Fix https://github.com/libprima/prima/issues/158, which is a failure due to the new linker 
 # implemented in Xcode 15 on macOS. It happens only if the Fortran compiler is ifort.  
 # An alternative is `add_link_options("-ld_classic")`, which forces Xcode to use the old linker.
-if((APPLE) AND (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel") AND (XCODE_VERSION VERSION_GREATER_EQUAL 15.0.1))
+if((CMAKE_GENERATOR STREQUAL "Xcode") AND (APPLE) AND (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel"))
     #add_link_options("-Wl,-undefined,dynamic_lookup")
     add_link_options("-ld_classic")
 endif()
