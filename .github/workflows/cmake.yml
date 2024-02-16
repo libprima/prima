@@ -103,6 +103,7 @@ jobs:
           fetch-tags: true
 
       - name: Miscellaneous setup
+        shell: bash
         run: |
           # Get the latest version of github_actions_scripts. Needed if the last step did not clone the latest version of the repository.
           rm -rf .github/scripts && git clone https://github.com/equipez/github_actions_scripts.git .github/scripts && ls -al .github/scripts
