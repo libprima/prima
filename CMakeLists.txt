@@ -37,8 +37,8 @@ if (PRIMA_HEAP_ARRAYS)
 endif ()
 
 # Set additional linker flags
-# Zaikun 20230217: Fix https://github.com/libprima/prima/issues/158, which is due to the new linker 
-# implemented in Xcode 15 on macOS. It happens only if the Fortran compiler is ifort.  
+# Zaikun 20240217: Fix https://github.com/libprima/prima/issues/158, which is due to the new linker
+# implemented in Xcode 15 on macOS. It happens only if the Fortran compiler is ifort.
 # An alternative is `add_link_options("-ld_classic")`, which forces Xcode to use the old linker.
 # Will CMake adapt itself to the new linker later? Will a newer version of CMake make the fix unnecessary?
 # See
@@ -95,7 +95,7 @@ else()
     message(WARNING "No git detected and .git-archival.txt does not contain a version number")
     set(PRIMA_VERSION "unknown")
   endif()
-  
+
 endif()
 # Remove the leading v from PRIMA_VERSION, if it contains one.
 string(REGEX REPLACE "^v" "" PRIMA_VERSION ${PRIMA_VERSION})

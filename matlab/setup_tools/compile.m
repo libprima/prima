@@ -73,15 +73,16 @@ end
 % https://fortran-lang.discourse.group/t/frecursive-assume-recursion-and-recursion-thread-safety
 compiler_configurations = mex.getCompilerConfigurations('fortran', 'selected');
 extra_compiler_options = '';
-if contains(compiler_configurations.Manufacturer, 'gnu', 'IgnoreCase', true)  % gfortran
+compiler_manufacturer = lower(compiler_configurations.Manufacturer);
+if contains(compiler_manufacturer, 'gnu')  % gfortran
     extra_compiler_options = '-fno-stack-arrays -frecursive';
-elseif contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', true)  % Intel compiler
+elseif contains(compiler_manufacturer, 'intel')  % Intel compiler
     if ispc
         extra_compiler_options = '/heap-arrays /assume:recursion';
     else
         extra_compiler_options = '-heap-arrays -assume recursion';
     end
-elseif ~contains(compiler_configurations.Manufacturer, 'nag', 'IgnoreCase', true)  % NAG compiler
+elseif ~contains(compiler_manufacturer, 'nag')  % NAG compiler
     warning('prima:UnrecognizedCompiler', 'Unrecognized compiler %s. The package may not work.', ...
         compiler_configurations.Name);
 end
@@ -98,8 +99,11 @@ end
 % Note that we have to modify `LDFLAGSVER`. Setting `LDFLAGS` or `LINKFLAGS` does not work, although
 % the latter is suggested at https://www.mathworks.com/help/matlab/ref/mex.html.
 linker_options = '';
-if ismac && contains(compiler_configurations.Manufacturer, 'intel', 'IgnoreCase', true)  % macOS with Intel compiler
-    linker_options = 'LDFLAGSVER=$(echo $LDFLAGSVER | sed "s/-undefined error//g") -undefined dynamic_lookup';
+if ismac && contains(compiler_manufacturer, 'intel')  % macOS with Intel compiler
+    [status, ~] = system('type echo && type sed');  % Check if `echo` and `sed` are available.
+    if status == 0
+        linker_options = 'LDFLAGSVER="$(echo $LDFLAGSVER | sed "s/-undefined error//g") -undefined dynamic_lookup"';
+    end
 end
 
 % MEX options shared by all compiling processes below.
