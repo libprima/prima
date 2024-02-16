@@ -105,7 +105,7 @@ jobs:
       - name: Miscellaneous setup
         run: |
           # Get the latest version of github_actions_scripts. Needed if the last step did not clone the latest version of the repository.
-          rm -rf .github/scripts && git clone git@github.com:equipez/github_actions_scripts.git .github/scripts && ls -al .github/scripts
+          rm -rf .github/scripts && git clone https://github.com/equipez/github_actions_scripts.git .github/scripts && ls -al .github/scripts
           bash .github/scripts/misc_setup
 
       # Revise string.f90 in order to print the value of `x` in case segmentation fault happens
