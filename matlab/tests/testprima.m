@@ -120,7 +120,7 @@ for irun = 1 : nrun
                     options.solver = solver;
                     options.classical = clflag;
                     problem.options = options;
-                    problem.options.iprint = round(4*(2*rand() - 1)) * release;
+                    problem.options.iprint = round(4*(2*rand() - 1)) * (1 - release);
 
                     switch type
                     case 'unconstrained'
