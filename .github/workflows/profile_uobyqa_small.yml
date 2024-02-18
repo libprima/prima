@@ -118,7 +118,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}
+          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}
           path: |
             /tmp/${{ matrix.solver }}_profile_prima/*summary*.pdf
             /tmp/${{ matrix.solver }}_profile_prima/*.txt
@@ -139,5 +139,5 @@ jobs:
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v4
         with:
-          name: merged-artifacts
-          pattern: *-*-*
+          name: 00-merged-artifacts
+          pattern: artifact-*-*

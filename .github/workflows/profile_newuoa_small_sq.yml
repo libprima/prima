@@ -139,7 +139,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.precision }}
+          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.precision }}
           path: |
             /tmp/${{ matrix.solver }}_profile_prima/*summary*.pdf
             /tmp/${{ matrix.solver }}_profile_prima/*.txt
