@@ -134,18 +134,12 @@ jobs:
 
 
   merge_artifacts:
-    runs-on: ubuntu-latest
     if: always()
+    runs-on: ubuntu-latest
     needs: test
     steps:
-      - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v4.1.2
-      - name: Move all artifacts to the current directory
-        run: ls -al && mv */*.pdf ./ && ls -al
-      - name: Upload all files
-        uses: actions/upload-artifact@v4.3.1
+      - name: Merge Artifacts
+        uses: actions/upload-artifact/merge@v4
         with:
-          name: all
-          path: ./*
-      - name: Remove all files
-        run: ls -al && rm -rf ./*
+          name: 00-merged-artifacts
+          pattern: artifact-*
