@@ -152,6 +152,11 @@ for irun = 1 : nrun
 
                     xs = prima(problem);
 
+                    % Remove the *_output.txt files produced when iprint < 0.
+                    if ~isempty(dir('*_output.txt'))
+                        delete('*_output.txt');
+                    end
+
                     if strcmp(solver, 'cobyla') % The precision of cobyla is lower
                         prec = max(1e3*precision, 1e-2);
                     else
