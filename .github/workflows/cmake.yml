@@ -119,7 +119,8 @@ jobs:
           $SEDI "s|\(write (str, '(I0)') x\)|write (*, *) '---> x = ', x, '<---'\n\1|" string.f90
           cat string.f90
 
-      - uses: fortran-lang/setup-fortran@main
+      - name: Set up Fortran
+        uses: fortran-lang/setup-fortran@main
         id: setup-fortran
         with:
           compiler: ${{ matrix.toolchain.compiler }}

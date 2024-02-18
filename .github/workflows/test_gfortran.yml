@@ -65,13 +65,13 @@ jobs:
         if: runner.os == 'Windows'
         run: $env:Path += ";C:\Program Files\Git\usr\bin;C:\Program Files\Git\bin;C:\ProgramData\Chocolatey\bin"
 
-      - name: Setup Fortran
+      - name: Set up Fortran
         if: ${{ matrix.os != 'macos-14' }}
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: ${{ matrix.compiler }}
           version: ${{ matrix.version }}
-      - name: Setup Fortran for macOS 14
+      - name: Set up Fortran for macOS 14
         if: ${{ matrix.os == 'macos-14' }}
         run: brew install gfortran-${{ matrix.version }} && which gfortran-${{ matrix.version }} && which gfortran && gfortran --version
 

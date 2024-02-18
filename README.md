@@ -133,6 +133,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![CMake build](https://github.com/libprima/prima/actions/workflows/cmake.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake.yml)
     - [![CMake build, nagfor](https://github.com/libprima/prima/actions/workflows/cmake_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake_nagfor.yml)
     - [![CMake build, macOS ARM64](https://github.com/libprima/prima/actions/workflows/cmake_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake_mac.yml)
+    - [![CMake build, macOS ARM64, nagfor](https://github.com/libprima/prima/actions/workflows/cmake_mac_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake_mac_nagfor.yml)
     - [![Test nagfor, macOS ARM64](https://github.com/libprima/prima/actions/workflows/test_nagfor_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor_mac.yml)
     - [![Test matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_matlab_mac.yml)
     - [![Stress test, matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/stress_test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/stress_test_matlab_mac.yml)
