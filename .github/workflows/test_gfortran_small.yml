@@ -106,6 +106,7 @@ jobs:
                 FFLAGS=-O$(($(date +%-d) % 5))
                 FFLAGS=${FFLAGS/O0/g}
                 FFLAGS=${FFLAGS/O4/fast}
+                export FFLAGS
                 cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}

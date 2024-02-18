@@ -217,9 +217,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 - [Tests](https://github.com/s-prima/prima/actions) at [s-prima/prima](https://github.com/s-prima/prima)
 
     - [![Lint the Fortran code and the MEX gateways on GitHub hosted runners](https://github.com/s-prima/prima/actions/workflows/lint_hosted.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/lint_hosted.yml)
-    - [![Test gfortran, O1, O2](https://github.com/s-prima/prima/actions/workflows/test_gfortran_O12.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_O12.yml)
-    - [![Test gfortran, g, O3](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_gO3.yml)
-    - [![Test gfortran, fast](https://github.com/s-prima/prima/actions/workflows/test_gfortran_fast.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_fast.yml)
+    - [![Test gfortran, small](https://github.com/s-prima/prima/actions/workflows/test_gfortran_small.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_small.yml)
     - [![Test gfortran, big](https://github.com/s-prima/prima/actions/workflows/test_gfortran_big.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran_big.yml)
     - [![Test ifort](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml)
     - [![Test ifx](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml)
