@@ -140,4 +140,4 @@ jobs:
         uses: actions/upload-artifact/merge@v4
         with:
           name: merged-artifacts
-          pattern: *
+          pattern: *-*-*
