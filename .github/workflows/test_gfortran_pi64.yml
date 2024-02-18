@@ -58,10 +58,12 @@ jobs:
             else
                 export TESTDIM=big
             fi
+            echo $TESTDIM
             FFLAGS=-O$(($(date +%-d) % 5))
             FFLAGS=${FFLAGS/O0/g}
             FFLAGS=${FFLAGS/O4/fast}
             export FFLAGS
+            echo $FFLAGS
             cd "$ROOT_DIR"/fortran/tests
             make gtest_${{ matrix.ikind }}_r4_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r4_d1_tst.${{ matrix.solver }}
             make gtest_${{ matrix.ikind }}_r8_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r8_d1_tst.${{ matrix.solver }}
