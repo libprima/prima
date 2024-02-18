@@ -73,7 +73,10 @@ jobs:
           version: ${{ matrix.version }}
       - name: Set up Fortran for macOS 14
         if: ${{ matrix.os == 'macos-14' }}
-        run: brew install gfortran-${{ matrix.version }} && which gfortran-${{ matrix.version }} && which gfortran && gfortran --version
+        run: |
+          brew install gcc-${{ matrix.version }}
+          which gcc-${{ matrix.version }} && which gcc && gcc --version
+          which gfortran-${{ matrix.version }} && which gfortran && gfortran --version
 
       - name: Conduct the test
         shell: bash  # Important; otherwise, `<` will not work on Windows.

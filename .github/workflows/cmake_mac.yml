@@ -2,7 +2,7 @@ name: CMake build, macOS ARM64
 
 on:
   # Trigger the workflow on push or pull request
-  #push:
+  push:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
@@ -61,8 +61,7 @@ jobs:
 
       - name: Set up Fortran for macOS 14
         run: |
-          brew install gcc && which gcc && gcc --version
-          brew install gfortran && which gfortran && gfortran --version
+          brew install gcc && which gcc && gcc --version && which gfortran && gfortran --version
 
       - name: Build
         shell: bash
