@@ -1,4 +1,4 @@
-name: Test gfortran, -O1, -O2
+name: Test gfortran, small
 
 on:
   # Trigger the workflow on push or pull request
@@ -6,7 +6,7 @@ on:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-    - cron: '0 16 3-31/4 * *'
+    - cron: '0 16 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
     inputs:
@@ -102,9 +102,10 @@ jobs:
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
                 export TESTDIM=${{ matrix.testdim }}
-                export FFLAGS='-O1'
-                cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
-                export FFLAGS='-O2'
+                # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
+                FFLAGS=-O$(($(date +%-d) % 5))
+                FFLAGS=${FFLAGS/O0/g}
+                FFLAGS=${FFLAGS/O4/fast}
                 cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
