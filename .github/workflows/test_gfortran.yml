@@ -96,13 +96,18 @@ jobs:
                     export TESTDIM=big
                 fi
                 echo $TESTDIM
+                echo "TESTDIM=$TESTDIM" >> "$GITHUB_ENV"
+
                 FFLAGS=-O$(($(date +%-d) % 5))
                 FFLAGS=${FFLAGS/O0/g}
                 FFLAGS=${FFLAGS/O4/fast}
                 export FFLAGS
                 echo $FFLAGS
+                echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
+
                 cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
             fi
+
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
             export EXAMPLE_NUM=1 && make clean && make gtest
             export EXAMPLE_NUM=2 && make clean && make gtest
