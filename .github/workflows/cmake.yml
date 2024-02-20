@@ -130,7 +130,7 @@ jobs:
         if: ${{ matrix.toolchain.cc }}
         run: echo "CC=${{ matrix.toolchain.cc }}" >> $env:GITHUB_ENV
 
-      - name: Build
+      - name: Build and test
         run: |
           cmake --version
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
@@ -191,7 +191,7 @@ jobs:
         if: ${{ matrix.toolchain.compiler == 'flang' }}
         run: bash .github/scripts/install_flang
 
-      - name: Build
+      - name: Build and test
         run: |
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
           cmake --build . --target install
