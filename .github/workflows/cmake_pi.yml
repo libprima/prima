@@ -57,7 +57,11 @@ jobs:
         run: |
           export CC=gcc
           CFLAGS="-Wall -Wextra -Wpedantic -Werror"
+
           export FC="${{ matrix.toolchain.fc }}"
+          if [[ $FC == "armflang" ]] ; then
+              export FC=$(find /opt/arm/ -name 'armflang' | sort | tail -n 1)
+          fi
           FFLAGS="${{ matrix.toolchain.fflags }}"
 
           cmake --version
