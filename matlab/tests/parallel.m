@@ -69,14 +69,14 @@ solver_options.rhoend = 1.0e-5;
 % We conduct two parallel tests, in case something does not finish correctly during the first run.
 for i = 1 : 2
 
-    ticBytes(gcp)
+    %ticBytes(gcp)
 
     parfor i = 1:np
         fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
         test(solver, n, solver_options, random_seed + i);
     end
 
-    tocBytes(gcp)
+    %tocBytes(gcp)
 
 end
 
