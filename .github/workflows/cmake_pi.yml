@@ -29,9 +29,10 @@ jobs:
       matrix:
         toolchain:
           - {fc: gfortran, fflags: '-Wall -Wextra -Wpedantic -Werror -pedantic -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {fc: nvfortran, fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk'}  # -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
-          - {fc: flang, fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mrecursive -Mchkptr'}
-          - {fc: armflang, fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkptr'}
+          # Flang family with -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
+          - {fc: nvfortran, fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk'}
+          - {fc: flang, fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mrecursive'}
+          - {fc: armflang, fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds'}
 
     steps:
 

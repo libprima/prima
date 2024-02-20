@@ -155,8 +155,9 @@ jobs:
       fail-fast: false
       matrix:
         toolchain:
+          # Flang family with -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
           - {compiler: aflang, cflags: '-Wall', fflags: '-Wpedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
-          - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk'}  # -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
+          - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk'}
           - {compiler: flang, cflags: '-Wall', fflags: '-Wpedantic -Weverything -Wall -Wextra'}
 
     steps:
