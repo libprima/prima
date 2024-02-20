@@ -21,6 +21,9 @@ on:
 run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , {1}', inputs.git-ref, inputs.stress-test) || '' }}
 
 
+permissions:
+  contents: read
+
 jobs:
 
   cmake:
@@ -63,7 +66,7 @@ jobs:
         shell: bash
         run: |
           export CC=${{ matrix.cc }}
-          export CFLAGS='-Wall -Wextra -Wpedantic -Werror'
+          CFLAGS="-Wall -Wextra -Wpedantic -Werror"
 
           export FC=${{ matrix.fc }}
           export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'
