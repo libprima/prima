@@ -156,7 +156,7 @@ jobs:
       matrix:
         toolchain:
           - {compiler: aflang, cflags: '-Wall', fflags: '-Wpedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
-          - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk'}
+          - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk'}  # -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
           - {compiler: flang, cflags: '-Wall', fflags: '-Wpedantic -Weverything -Wall -Wextra'}
 
     steps:
