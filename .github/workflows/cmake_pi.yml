@@ -23,7 +23,7 @@ permissions:
 jobs:
 
   cmake:
-    runs-on: [self-hosted, pi]
+    runs-on: [self-hosted, cmake_pi]
     strategy:
       fail-fast: false
       matrix:
