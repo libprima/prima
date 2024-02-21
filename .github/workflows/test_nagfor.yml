@@ -57,6 +57,7 @@ jobs:
           FFLAGS=${FFLAGS/O0/g}
           FFLAGS=${FFLAGS/O4/fast}
           export FFLAGS
+          echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
           export TESTDIM=${{ matrix.testdim }}
           cd "$ROOT_DIR"/fortran/tests && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
@@ -67,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.solver }}-${{ matrix.ikind }}-${{ matrix.testdim }}
+          name: ${{ matrix.solver }}-${{ matrix.ikind }}-${{ matrix.testdim }}-${{ env.FFLAGS }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
