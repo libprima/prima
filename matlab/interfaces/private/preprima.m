@@ -899,6 +899,7 @@ end
 maxfun = 500*lenx0;
 rhobeg = 1; % The default rhobeg and rhoend will be revised if solver = 'bobyqa'
 rhoend = 1e-6;
+rho_ratio = rhoend/rhobeg;
 ftarget = -inf;
 ctol = sqrt(eps); % Tolerance for constraint violation; a point with a constraint violation at most ctol is considered feasible
 cweight = 1e8;  % The weight of constraint violation in the selection of the returned x
@@ -1078,11 +1079,11 @@ options.scale = logical(options.scale);
 % Revise default rhobeg and rhoend according to options.scale and solver
 if options.scale
     rhobeg = 0.5;  % This value cannot be bigger than 1. Otherwise, BOBYQA will complain.
-    rhoend = 1e-6;
+    rhoend = max(eps, min(rho_ratio*rhobeg, rhoend));
 end
 if strcmpi(solver, 'bobyqa') && ~options.scale
     rhobeg = max(eps, min(rhobeg, min(ub-lb)/4));
-    rhoend = max(eps, min(0.1*rhobeg, rhoend));
+    rhoend = max(eps, min(rho_ratio*rhobeg, rhoend));
 end
 
 
@@ -1193,7 +1194,7 @@ validated = false;
 if isfield(options, 'rhobeg')
     if ~(isrealscalar(options.rhobeg) && isfinite(options.rhobeg) && options.rhobeg > 0)
         wid = sprintf('%s:InvalidRhobeg', invoker);
-        wmsg = sprintf('%s: invalid rhobeg; it should be a positive number; it is set to max(%g, rhoend).', invoker, rhobeg);
+        wmsg = sprintf('%s: invalid rhobeg; it should be a positive number; it is set to max(%g, 10*rhoend).', invoker, rhobeg);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     elseif strcmpi(solver, 'bobyqa')  % Validate options.rhobeg for bobyqa
@@ -1231,7 +1232,7 @@ validated = false;
 if isfield(options, 'rhoend')
     if ~(isrealscalar(options.rhoend) && isfinite(options.rhoend) && options.rhoend >= 0 && options.rhoend <= options.rhobeg)
         wid = sprintf('%s:InvalidRhoend', invoker);
-        wmsg = sprintf('%s: invalid rhoend; we should have rhobeg >= rhoend >= 0; it is set to min(0.1*rhobeg, %g).', invoker, rhoend);
+        wmsg = sprintf('%s: invalid rhoend; we should have rhobeg >= rhoend >= 0; it is set to min(%g*rhobeg, %g).', invoker, rho_ratio, rhoend);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1239,7 +1240,7 @@ if isfield(options, 'rhoend')
     end
 end
 if ~validated % options.rhoend has not got a valid value yet
-    options.rhoend = min(0.1*options.rhobeg, rhoend);
+    options.rhoend = min(rho_ratio*options.rhobeg, rhoend);
 end
 options.rhoend = double(max(options.rhoend, eps));
 
@@ -1867,7 +1868,7 @@ end
 % For the moment, only BOBYQA needs such a revision.
 if strcmp(solver, 'bobyqa') && ~probinfo.nofreex && options.rhobeg > min(probinfo.refined_data.ub-probinfo.refined_data.lb)/2
     options.rhobeg = max(eps, min(probinfo.refined_data.ub-probinfo.refined_data.lb)/4);
-    options.rhoend = max(eps, min(0.1*options.rhobeg, options.rhoend));
+    options.rhoend = max(eps, min(rho_ratio*options.rhobeg, options.rhoend));
     if ismember('rhobeg', probinfo.user_options_fields) || ismember('rhoend', probinfo.user_options_fields)
         wid = sprintf('%s:InvalidRhobeg', invoker);
         wmsg = sprintf('%s: rhobeg is set to %g and rhoend to %g according to the selected solver %s, which requires rhoend <= rhobeg <= min(ub-lb)/2.', invoker, options.rhobeg, options.rhoend, solver);
@@ -2003,7 +2004,7 @@ x0(lbx) = lb(lbx);
 x0(ubx) = ub(ubx);
 options.rhobeg = max(eps, min([options.rhobeg; x0(~lbx) - lb(~lbx); ub(~ubx) - x0(~ubx)]));
 if rhobeg_old - options.rhobeg > eps*max(1, rhobeg_old)
-    options.rhoend = max(eps, min(0.1*options.rhobeg, options.rhoend));  % We do not revise rhoend unless rhobeg is revised
+    options.rhoend = max(eps, min(rho_ratio*options.rhobeg, options.rhoend));  % We do not revise rhoend unless rhobeg is revised
     if ismember('rhobeg', user_options_fields) || ismember('rhoend', user_options_fields)
         wid = sprintf('%s:ReviseRhobeg', invoker);
         wmsg = sprintf('%s: rhobeg is revised to %g and rhoend to %g so that the distance between x0 and the inactive bounds is at least rhobeg.', invoker, options.rhobeg, options.rhoend);

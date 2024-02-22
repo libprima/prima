@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, February 06, 2024 PM03:31:32
+! Last Modified: Thursday, February 22, 2024 PM08:41:51
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -27,7 +27,7 @@ subroutine preproc(solver, n, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend, 
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, TENTH, HALF, EPS, MAXHISTMEM, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TWO, TEN, HALF, EPS, MAXHISTMEM, DEBUGGING
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
 use, non_intrinsic :: consts_mod, only : CTOL_DFT, CWEIGHT_DFT, IPRINT_DFT, MIN_MAXFILT, MAXFILT_DFT
 use, non_intrinsic :: debug_mod, only : validate, warning
@@ -257,7 +257,7 @@ end if
 ! Revise the default values for RHOBEG/RHOEND according to the solver.
 if (lower(solver) == 'bobyqa') then
     rhobeg_default = max(EPS, min(RHOBEG_DFT, minval(xu - xl) / 4.0_RP))
-    rhoend_default = max(EPS, min(TENTH * rhobeg_default, RHOEND_DFT))
+    rhoend_default = max(EPS, min((RHOEND_DFT / RHOBEG_DFT) * rhobeg_default, RHOEND_DFT))
 else
     rhobeg_default = RHOBEG_DFT
     rhoend_default = RHOEND_DFT
@@ -287,7 +287,7 @@ if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then  ! RHOBEG = NaN falls into 
 end if
 
 if (.not. (is_finite(rhoend) .and. rhoend >= 0 .and. rhoend <= rhobeg)) then  ! RHOEND = NaN falls into this case.
-    rhoend = max(EPS, min(TENTH * rhobeg, rhoend_default))
+    rhoend = max(EPS, min((RHOEND_DFT / RHOBEG_DFT) * rhobeg, rhoend_default))
     call warning(solver, 'Invalid RHOEND; we should have RHOBEG >= RHOEND >= 0; '// &
         & 'it is set to '//num2str(rhoend))
 end if
@@ -339,7 +339,7 @@ if (lower(solver) == 'bobyqa') then
     x0(trueloc(ubx)) = xu(trueloc(ubx))
     rhobeg = max(EPS, minval([rhobeg, x0(falseloc(lbx)) - xl(falseloc(lbx)), xu(falseloc(ubx)) - x0(falseloc(ubx))]))
     if (rhobeg_old - rhobeg > EPS * max(ONE, rhobeg_old)) then
-        rhoend = max(EPS, min(TENTH * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
+        rhoend = max(EPS, min((RHOEND_DFT / RHOBEG_DFT) * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
         if (has_rhobeg) then
             call warning(solver, 'RHOBEG is revised to '//num2str(rhobeg)//' and RHOEND to '//num2str(rhoend)// &
                 & ' so that the distance between X0 and the inactive bounds is at least RHOBEG')

@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script pre-processes the Fortran source code for Classic Flang 15.0.3, Huawei Bisheng flang
+# This script pre-processes the Fortran source code for Classic Flang 17.0.2, Huawei Bisheng flang
 # 2.1.0, Arm Fortran Compiler 22.1, and AOCC 4.1.0 flang, which raise a false positive error about
 # out-bound subscripts when invoked with the -Mbounds flag.
 # See https://github.com/flang-compiler/flang/issues/1238 and
