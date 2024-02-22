@@ -132,12 +132,6 @@ jobs:
 
       - name: Build and test
         run: |
-          if [[ "$RUNNER_OS" == "Windows" && ("${{ matrix.toolchain.compiler }}" == intel || "${{ matrix.toolchain.compiler }}" == intel-classic) ]] ; then
-              $FC /version
-          else
-              $FC --version
-          fi
-          #$CC --version
           cmake --version
 
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
