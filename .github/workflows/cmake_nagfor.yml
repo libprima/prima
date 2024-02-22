@@ -68,7 +68,7 @@ jobs:
               # the Fortran tests work correctly. According to NAG support, -C=undefined "is not compatible with calling C code via a BIND(C) interface".
           fi
 
-          $FC --version
+          $FC -V
           $CC --version
           cmake --version
 

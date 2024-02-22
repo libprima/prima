@@ -132,7 +132,7 @@ jobs:
 
       - name: Build and test
         run: |
-          $FC --version
+          $FC --version || $FC -V || $FC /version
           #$CC --version
           cmake --version
 
