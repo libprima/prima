@@ -16,8 +16,8 @@ rhoend = 1e-6;
 % problems to be tested in the current experiment.
 maxn = 200;
 %maxfun_dim = 100;
-%maxfun_dim = 500;
-maxfun_dim = 200;
+%maxfun_dim = 200;
+maxfun_dim = 500;
 maxfun = maxfun_dim*maxn;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
