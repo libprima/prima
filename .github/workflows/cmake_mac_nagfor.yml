@@ -71,6 +71,8 @@ jobs:
           # the Fortran tests work correctly.
           #export FFLAGS='-fpp -nan -ieee=stop -recursive -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=constant_coindexing -Warn=subnormal'
 
+          $FC --version
+          $CC --version
           cmake --version
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
           cmake --build . --target install

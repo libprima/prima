@@ -66,7 +66,10 @@ jobs:
           fi
           FFLAGS="${{ matrix.toolchain.fflags }}"
 
+          $FC --version
+          $CC --version
           cmake --version
+
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
           cmake --build . --target install
           cmake --build . --target tests

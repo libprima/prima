@@ -71,7 +71,10 @@ jobs:
           export FC=${{ matrix.fc }}
           export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'
 
+          $FC --version
+          $CC --version
           cmake --version
+
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
           cmake --build . --target install
           cmake --build . --target tests

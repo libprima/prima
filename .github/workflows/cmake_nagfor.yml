@@ -67,7 +67,10 @@ jobs:
               # the Fortran tests work correctly. According to NAG support, -C=undefined "is not compatible with calling C code via a BIND(C) interface".
           fi
 
+          $FC --version
+          $CC --version
           cmake --version
+
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
           cmake --build . --target install
           cmake --build . --target tests
