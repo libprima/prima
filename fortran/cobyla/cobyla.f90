@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Friday, January 26, 2024 PM07:29:52
+! Last Modified: Thursday, February 22, 2024 PM03:32:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -71,8 +71,8 @@ subroutine cobyla(calcfc, m_nlcon, x, &
 !
 ! or
 !
-! ! First define CALCFC, M_NLCON, and X, and then do the following.
-! call cobyla(calcfc, m_nlcon, x, f, cstrv, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! ! First define CALCFC, M_NLCON, X, Aineq, and Bineq, and then do the following.
+! call cobyla(calcfc, m_nlcon, x, f, cstrv, Aineq = Aineq, bineq = bineq, rhobeg = 1.0D0, rhoend = 1.0D-6)
 !
 ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! ! IMPORTANT NOTICE: The user must set M_NLCON correctly to the number of nonlinear constraints,

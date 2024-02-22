@@ -25,7 +25,7 @@ module bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, January 27, 2024 AM02:40:59
+! Last Modified: Thursday, February 22, 2024 PM03:30:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,7 +51,7 @@ subroutine bobyqa(calfun, x, &
 ! or
 !
 ! ! First define CALFUN, X, and XL, and then do the following.
-! call bobyqa(calfun, x, f, xl = xl, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! call bobyqa(calfun, x, f, xl = xl, rhobeg = 1.0D0, rhoend = 1.0D-6)
 !
 ! See examples/bobyqa_exmp.f90 for a concrete example.
 !

@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, December 22, 2023 PM01:25:35
+! Last Modified: Thursday, February 22, 2024 PM03:29:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -44,7 +44,7 @@ subroutine uobyqa(calfun, x, &
 ! or
 !
 ! ! First define CALFUN and X, and then do the following.
-! call uobyqa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! call uobyqa(calfun, x, f, rhobeg = 1.0D0, rhoend = 1.0D-6)
 !
 ! See examples/uobyqa_exmp.f90 for a concrete example.
 !

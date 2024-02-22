@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, January 26, 2024 PM07:28:49
+! Last Modified: Thursday, February 22, 2024 PM03:28:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -65,7 +65,7 @@ subroutine lincoa(calfun, x, &
 ! or
 !
 ! ! First define CALFUN, X, Aineq, and Bineq, and then do the following.
-! call lincoa(calfun, x, f, cstrv, Aineq = Aineq, bineq = bineq, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! call lincoa(calfun, x, f, cstrv, Aineq = Aineq, bineq = bineq, rhobeg = 1.0D0, rhoend = 1.0D-6)
 !
 ! See examples/lincoa_exmp.f90 for a concrete example.
 !

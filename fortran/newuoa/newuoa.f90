@@ -22,7 +22,7 @@ module newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, January 25, 2024 AM11:08:23
+! Last Modified: Thursday, February 22, 2024 PM03:30:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,7 @@ subroutine newuoa(calfun, x, &
 ! or
 !
 ! ! First define CALFUN and X, and then do the following.
-! call newuoa(calfun, x, f, rhobeg = 0.5D0, rhoend = 1.0D-3, maxfun = 100)
+! call newuoa(calfun, x, f, rhobeg = 1.0D0, rhoend = 1.0D-6)
 !
 ! See examples/newuoa_exmp.f90 for a concrete example.
 !

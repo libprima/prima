@@ -46,8 +46,8 @@ int main(int argc, char * argv[])
     prima_options_t options;
     prima_init_options(&options);
     options.iprint = PRIMA_MSG_EXIT;
-    options.rhoend= 1e-3;
-    options.maxfun = 200*n;
+    options.rhoend = 1e-6;
+    options.maxfun = 500*n;
     options.callback = &callback;
 
     // Run the solver
