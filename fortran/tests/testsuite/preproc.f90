@@ -7,7 +7,7 @@ module preproc_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Thursday, February 22, 2024 PM08:43:23
+! Last Modified: Thursday, February 22, 2024 PM09:43:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -313,7 +313,7 @@ if (present(honour_x0)) then
         x0(trueloc(ubx)) = xu(trueloc(ubx))
         rhobeg = max(EPS, minval([rhobeg, x0(falseloc(lbx)) - xl(falseloc(lbx)), xu(falseloc(ubx)) - x0(falseloc(ubx))]))
         if (rhobeg_old - rhobeg > EPS * max(ONE, rhobeg_old)) then
-            rhoend = max(EPS, min((RHOEND_DFT / RHOBEG_DFT) * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
+            rhoend = max(EPS, min((rhoend / rhobeg_old) * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
             if (has_rhobeg) then
                 call warning(solver, 'RHOBEG is revised to '//num2str(rhobeg)//' and RHOEND to at most 0.1*RHOBEG'// &
                     & ' so that the distance between X0 and the inactive bounds is at least RHOBEG')

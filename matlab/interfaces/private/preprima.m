@@ -2004,6 +2004,7 @@ x0(lbx) = lb(lbx);
 x0(ubx) = ub(ubx);
 options.rhobeg = max(eps, min([options.rhobeg; x0(~lbx) - lb(~lbx); ub(~ubx) - x0(~ubx)]));
 if rhobeg_old - options.rhobeg > eps*max(1, rhobeg_old)
+    rho_ratio = options.rhoend / rhobeg_old;
     options.rhoend = max(eps, min(rho_ratio*options.rhobeg, options.rhoend));  % We do not revise rhoend unless rhobeg is revised
     if ismember('rhobeg', user_options_fields) || ismember('rhoend', user_options_fields)
         wid = sprintf('%s:ReviseRhobeg', invoker);
