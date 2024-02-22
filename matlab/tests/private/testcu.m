@@ -1005,7 +1005,7 @@ case 'cobyla'
         'VESUVIOU', ...
          }];
     % For the following problems, the classical cobyla encounters SEGFAULT.
-    blacklist = [blacklist, {'ERRINBAR', 'HS118', 'LAKES', 'ODFITS', 'TENBARS1', 'TENBARS2', 'TENBARS3', 'TENBARS4', 'VANDERM4', 'VANDANIUMS'}];
+    blacklist = [blacklist, {'ERRINBAR', 'HS118', 'LAKES', 'ODFITS', 'TENBARS1', 'TENBARS2', 'TENBARS3', 'TENBARS4', 'TRUSPYR2', 'VANDERM4', 'VANDANIUMS'}];
     % For the following problems, the classical cobyla (single-precision) encounters infinite cycling.
     blacklist = [blacklist, {'HS101', 'HS112', 'MESH'}];
 end

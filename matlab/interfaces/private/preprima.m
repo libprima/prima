@@ -1867,6 +1867,7 @@ end
 % Revise options.rhobeg and options.rhoend according to the selected solver.
 % For the moment, only BOBYQA needs such a revision.
 if strcmp(solver, 'bobyqa') && ~probinfo.nofreex && options.rhobeg > min(probinfo.refined_data.ub-probinfo.refined_data.lb)/2
+    rho_ratio = options.rhoend / options.rhobeg;
     options.rhobeg = max(eps, min(probinfo.refined_data.ub-probinfo.refined_data.lb)/4);
     options.rhoend = max(eps, min(rho_ratio*options.rhobeg, options.rhoend));
     if ismember('rhobeg', probinfo.user_options_fields) || ismember('rhoend', probinfo.user_options_fields)
@@ -1998,13 +1999,13 @@ end
 % N.B.: If x0 has been revised above (i.e., options.honour_x0 is false), then the following revision
 % is unnecessary in precise arithmetic. However, it may still be needed due to rounding errors.
 rhobeg_old = options.rhobeg;
+rho_ratio = options.rhoend / options.rhobeg;
 lbx = (lb > -inf & x0 - lb <= eps*max(abs(lb), 1));  % x0 essentially equals lb
 ubx = (ub < inf & x0 - ub >= -eps*max(abs(ub), 1));  % x0 essentially equals ub
 x0(lbx) = lb(lbx);
 x0(ubx) = ub(ubx);
 options.rhobeg = max(eps, min([options.rhobeg; x0(~lbx) - lb(~lbx); ub(~ubx) - x0(~ubx)]));
 if rhobeg_old - options.rhobeg > eps*max(1, rhobeg_old)
-    rho_ratio = options.rhoend / rhobeg_old;
     options.rhoend = max(eps, min(rho_ratio*options.rhobeg, options.rhoend));  % We do not revise rhoend unless rhobeg is revised
     if ismember('rhobeg', user_options_fields) || ismember('rhoend', user_options_fields)
         wid = sprintf('%s:ReviseRhobeg', invoker);
