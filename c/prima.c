@@ -106,7 +106,7 @@ int prima_init_result(prima_result_t *result, prima_problem_t *problem)
     if (!result->x)
         return PRIMA_MEMORY_ALLOCATION_FAILS;
     for (int i = 0; i < problem->n; i++)
-        result->x[i] = NAN;
+        result->x[i] = problem->x0[i];
 
     // f: objective function value at the returned point
     result->f = NAN;
@@ -119,8 +119,10 @@ int prima_init_result(prima_result_t *result, prima_problem_t *problem)
         result->nlconstr = NULL;
     else {
         result->nlconstr = (double*)malloc(problem->m_nlcon * sizeof(double));
-        if (!result->nlconstr)
+        if (!result->nlconstr) {
+            free(result->x);
             return PRIMA_MEMORY_ALLOCATION_FAILS;
+        }
         for (int i = 0; i < problem->m_nlcon; i++)
             result->nlconstr[i] = NAN;
     }
@@ -244,10 +246,10 @@ int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, 
 {
     int use_constr = (algorithm == PRIMA_COBYLA);
 
-    int info = prima_init_result(result, problem);
+    int info = prima_check_problem(problem, options, use_constr, algorithm);
 
     if (info == 0)
-        info = prima_check_problem(problem, options, use_constr, algorithm);
+        info = prima_init_result(result, problem);
 
     if (info == 0) {
         switch (algorithm) {
