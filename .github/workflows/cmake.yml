@@ -133,7 +133,7 @@ jobs:
       - name: Build and test
         run: |
           $FC --version
-          $CC --version
+          #$CC --version
           cmake --version
 
           cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
@@ -200,7 +200,7 @@ jobs:
       - name: Build and test
         run: |
           $FC --version
-          $CC --version
+          #$CC --version
           cmake --version
 
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .

@@ -56,6 +56,7 @@ jobs:
       - name: Build and test
         run: |
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
+          export CC=gcc
           export CFLAGS="-Wall -Wextra -Wpedantic -Werror"
           export FC=nagfor
           if [[ -n "${{ github.event.inputs.fflags }}" ]]; then
