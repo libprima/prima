@@ -132,7 +132,7 @@ jobs:
 
       - name: Build and test
         run: |
-          if [[ "$RUNNER_OS" == "Windows" && "${{ matrix.toolchain.compiler }}" == "intel*" ]] ; then
+          if [[ "$RUNNER_OS" == "Windows" && "${{ matrix.toolchain.compiler }}" == intel* ]] ; then
               $FC /version
           else
               $FC --version
