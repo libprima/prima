@@ -133,6 +133,9 @@ try
         solvers = solvers(end:-1:1);  % Reverse order
     end
 
+    % Be verbose if required or in CI.
+    options.verbose = ((isfield(options, 'verbose') && options.verbose) || (isenv('CI') && strcmpi(getenv('CI'), 'true')));
+
     % Make the solvers available. Note that the solvers are under `test_dir`.
     get_solvers(solvers, test_dir, options);
 

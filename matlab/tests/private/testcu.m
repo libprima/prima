@@ -52,11 +52,13 @@ sequential = false;
 % the returned X, there may be a slight difference between this X and the one that is used to
 % evaluate the function value by the Fortran code. Consequently, the function values may differ.
 debug = true;
+debug = debug && ~(isfield(options, 'compiler_options') && contains(options.compiler_options, 'fast'));
 chkfunval = ~(isfield(options, 'eval_options') && ~isempty(options.eval_options) && ...
     (isfield(options.eval_options, 'noise') && ~isempty(options.eval_options.noise) && ...
     isnumeric(options.eval_options.noise) && abs(options.eval_options.noise) > 0 || ...
     isfield(options.eval_options, 'dnoise') && ~isempty(options.eval_options.dnoise) && ...
     isnumeric(options.eval_options.dnoise) && abs(options.eval_options.dnoise) > 0));
+%chkfunval = chkfunval && ~(isfield(options, 'compiler_options') && contains(options.compiler_options, 'fast'));
 output_xhist = true;
 output_nlchist = true;
 thorough_test = 0;
@@ -65,6 +67,8 @@ thorough_test = 0;
 minip = 1;
 maxip = 2^32 - 1;
 strict = 2;
+
+verbose = false;
 
 % Directories for recording the starting/ending of problems (tic/toc are unavailable in parfor).
 stamp = options.stamp;
@@ -90,7 +94,7 @@ disp(['prob_end_runs_dir = ', prob_end_runs_dir]);
 % Set options
 options = setopt(options, precision, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
     eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
-    sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict);
+    sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict, verbose);
 
 assert(options.maxdim <= maxn);
 
@@ -129,6 +133,7 @@ sequential = options.sequential;
 minip = options.minip;
 maxip = min(np, options.maxip);
 strict = options.strict;
+verbose = options.verbose;
 
 % These arrays will record the function values and constraint values during the tests.
 pdim = NaN(np, 1);  % Data profile needs the dimension of the problem.
@@ -181,7 +186,11 @@ if sequential
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_start_dir, pname)]);
-        fprintf('\n%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
+        if verbose
+            fprintf('%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
+        else
+            fprintf('%3d. \t%s\n', ip, pname);
+        end
 
         prob = macup(pname);
         orig_prob = prob;
@@ -201,7 +210,9 @@ if sequential
 
         for ir = 1 : nr
             system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
-            fprintf('\n     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
+            if verbose
+                fprintf('     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
+            end
 
             if have_eval_options
                 prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
@@ -222,11 +233,13 @@ if sequential
             end
 
             for is = 1 : ns
-                [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options);
+                [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options, ir);
             end
 
             system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
-            fprintf('\n     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
+            if verbose
+                fprintf('     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
+            end
         end
 
         decup(prob);
@@ -234,7 +247,9 @@ if sequential
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_end_dir, pname)]);
-        fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
+        if verbose
+            fprintf('%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
+        end
 
         % Restore the behavior of displaying warnings
         warning(orig_warning_state);
@@ -250,7 +265,11 @@ else
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_start_dir, pname)]);
-        fprintf('\n%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
+        if verbose
+            fprintf('%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
+        else
+            fprintf('%3d. \t%s\n', ip, pname);
+        end
 
         prob = macup(pname);
         orig_prob = prob;
@@ -270,7 +289,9 @@ else
 
         for ir = 1 : nr
             system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
-            fprintf('\n     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
+            if verbose
+                fprintf('     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
+            end
 
             if have_eval_options
                 prob.objective = @(x) evalfun(prob.orig_objective, x, eval_options, ir);
@@ -291,11 +312,13 @@ else
             end
 
             for is = 1 : ns
-                [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options);
+                [frec(ip, is, ir, :), crec(ip, is, ir, :)] = testsolv(solvers{is}, prob, options, ir);
             end
 
             system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
-            fprintf('\n     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
+            if verbose
+                fprintf('     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
+            end
         end
 
         decup(prob);
@@ -303,7 +326,9 @@ else
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_end_dir, pname)]);
-        fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
+        if verbose
+            fprintf('%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
+        end
 
         % Restore the behavior of displaying warnings
         warning(orig_warning_state);
@@ -402,9 +427,14 @@ return
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [fval_history, cv_history, output] = testsolv(solver, prob, options)
+function [fval_history, cv_history, output] = testsolv(solver, prob, options, ir)
 
 prob.options = setsolvopt(solver, length(prob.x0), options); % Set the options for the solver
+
+solver_name = solver;
+if isa(solver, 'function_handle')
+    solver_name = func2str(solver);
+end
 
 if ischarstr(solver) && ~strcmp(solver, 'fmincon') && ~strcmpi(solver, 'fminunc') && ~strcmpi(solver, 'fminsearch')
     prob.options.classical = endsWith(solver, '_classical');
@@ -433,7 +463,22 @@ cv_history = NaN(1, maxfun + 1);
 %have_eval_options = isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options));
 prob.options.output_xhist = true;  % We always need xhist to recover the history of the computation.
 
-[x, ~, ~, output] = solver(prob);
+exception = [];
+try
+    [x, ~, ~, output] = solver(prob);
+catch exception
+    % Do nothing for the moment
+end
+
+if ~isempty(exception)
+    fprintf('\n\n>>> !%s encounters an error during test %d of %s with the following options! <<<\n\n', solver_name, ir, prob.name);
+    format long;
+    options
+    prob
+    prob.options
+    rethrow(exception)
+end
+
 % Solvers (e.g., fmincon) may not respect maxfun. Indeed, PRIMA solvers may also increase maxfun
 % if it is too small (e.g., <= npt for NEWUOA). In addition, nhist may be smaller than maxfun due to
 % memory limitation.
@@ -485,7 +530,7 @@ return
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function options = setopt(options, precision, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, ...
         randomizex0, eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
-        sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict) % Set options
+        sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict, verbose) % Set options
 
 if (~isfield(options, 'precision'))
     options.precision = precision;
@@ -574,6 +619,9 @@ if (~isfield(options, 'maxip'))
 end
 if (~isfield(options, 'strict'))
     options.strict = strict;
+end
+if (~isfield(options, 'verbose'))
+    options.verbose = verbose;
 end
 
 % Set eval_options

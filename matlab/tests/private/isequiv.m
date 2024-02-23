@@ -77,6 +77,12 @@ else
     maxip = 2^32 - 1;
 end
 
+if isfield(options, 'verbose')
+    verbose = options.verbose;
+else
+    verbose = false;
+end
+
 requirements = struct();
 if isfield(options, 'list')
     requirements.list = options.list;  % Only test problems in this list
@@ -171,7 +177,11 @@ if sequential
         system(['touch ', fullfile(prob_start_dir, pname)]);
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
         system(['touch ', fullfile(prob_start_runs_dir, pname)]);
-        fprintf('\n%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
+        if verbose
+            fprintf('%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
+        else
+            fprintf('%3d. \t%s\n', ip, pname);
+        end
 
         prob = macup(pname);
 
@@ -180,10 +190,16 @@ if sequential
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
             system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
-            fprintf('\n     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
+            if verbose
+                fprintf('     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
+            end
+
             compare(solvers, prob, ir, prec, single_test, options);
+
             system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
-            fprintf('\n     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
+            if verbose
+                fprintf('     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
+            end
         end
 
         decup(prob);
@@ -191,7 +207,9 @@ if sequential
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_end_dir, pname)]);
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
-        fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
+        if verbose
+            fprintf('%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
+        end
 
         % Restore the behavior of displaying warnings
         warning(orig_warning_state);
@@ -206,7 +224,11 @@ else
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_start_dir, pname)]);
         system(['touch ', fullfile(prob_start_time_dir, [pname, '.', strtrim(time)])]);
-        fprintf('\n%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
+        if verbose
+            fprintf('%3d. \t%s starts at %s\n', ip, pname, char(datetime()));
+        else
+            fprintf('%3d. \t%s\n', ip, pname);
+        end
 
         prob = macup(pname);
 
@@ -215,10 +237,16 @@ else
             % `prec` is the precision of the comparison (should be 0). The function will raise an error
             % if the solvers behave differently.
             system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
-            fprintf('\n     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
+            if verbose
+                fprintf('     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
+            end
+
             compare(solvers, prob, ir, prec, single_test, options);
+
             system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
-            fprintf('\n     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
+            if verbose
+                fprintf('     \t%s Run No. %3d ends at %s\n', pname, ir, char(datetime()));
+            end
         end
 
         decup(prob);
@@ -226,7 +254,9 @@ else
         [~, time] = system('date +%y%m%d_%H%M%S');
         system(['touch ', fullfile(prob_end_dir, pname)]);
         system(['touch ', fullfile(prob_end_time_dir, [pname, '.', strtrim(time)])]);
-        fprintf('\n%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
+        if verbose
+            fprintf('%3d. \t%s ends at %s\n', ip, pname, char(datetime()));
+        end
 
         % Restore the behavior of displaying warnings
         warning(orig_warning_state);

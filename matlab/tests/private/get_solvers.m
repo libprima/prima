@@ -48,7 +48,7 @@ mexopts = cell(length(solvers), 1);
 for is = 1 : length(solvers)
     mexopts{is} = struct();
     if compile_flag
-        % Do we compile the debugged version?
+        % Do we compile the debug version?
         % Yes if we are in verification or if options.debug is true.
         mexopts{is}.debug = isverify || (isfield(options, 'debug') && options.debug);
 
@@ -77,7 +77,8 @@ for is = 1 : length(solvers)
 
 
         % Should we be verbose?
-        mexopts{is}.verbose = (isfield(options, 'verbose') && options.verbose || with_compiler_options);
+        mexopts{is}.verbose = (isfield(options, 'verbose') && options.verbose || ...
+            (with_compiler_options && ~(isfield(options, 'verbose') && ~options.verbose && ~isprofile)));
     end
 end
 
