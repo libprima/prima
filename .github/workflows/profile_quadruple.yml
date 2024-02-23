@@ -105,6 +105,8 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct(); options.nr = 2;  % 2 random runs for each problem, as quadruple is slow
 
+            options.blacklist = {'TENBARS1'};
+
             if strcmp('${{ matrix.solver }}', 'cobylal')
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
