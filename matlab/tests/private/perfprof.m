@@ -24,6 +24,8 @@ colors  = {bleu, 'k', 'b', 'r', vert, bleu, 'k', 'b', 'r', vert};
 lines   = {'-', '-.', '--', ':', '-', '-.', '--', ':', '-', '-.'};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+assert(numel(frec) > 0, 'frec is empty.');
+
 [np, ns, nr, maxfun] = size(frec);
 
 % nf_return(ip, is, ir) is the number of function evaluations that the is-th solver uses when it
