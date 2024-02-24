@@ -72,17 +72,19 @@ end
 % Otherwise, the solvers will not work properly in recursive invocations. See
 % https://fortran-lang.discourse.group/t/frecursive-assume-recursion-and-recursion-thread-safety
 compiler_configurations = mex.getCompilerConfigurations('fortran', 'selected');
-extra_compiler_options = '-g';
+extra_compiler_options = '';
 compiler_manufacturer = lower(compiler_configurations.Manufacturer);
 if contains(compiler_manufacturer, 'gnu')  % gfortran
-    extra_compiler_options = [extra_compiler_options, ' -fno-stack-arrays -frecursive'];
+    extra_compiler_options = '-g -fno-stack-arrays -frecursive';
 elseif contains(compiler_manufacturer, 'intel')  % Intel compiler
     if ispc
-        extra_compiler_options = [extra_compiler_options, ' /heap-arrays /assume:recursion'];
+        extra_compiler_options = '/Z7 /heap-arrays /assume:recursion';
     else
-        extra_compiler_options = [extra_compiler_options, ' -heap-arrays -assume recursion'];
+        extra_compiler_options = '-g -heap-arrays -assume recursion';
     end
-elseif ~contains(compiler_manufacturer, 'nag')  % NAG compiler
+elseif contains(compiler_manufacturer, 'nag')  % NAG compiler
+    extra_compiler_options = '-g';
+else
     warning('prima:UnrecognizedCompiler', 'Unrecognized compiler %s. The package may not work.', ...
         compiler_configurations.Name);
 end
