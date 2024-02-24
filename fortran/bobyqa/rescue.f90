@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 23, 2024 PM07:57:03
+! Last Modified: Saturday, February 24, 2024 PM10:40:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -210,6 +210,11 @@ if (DEBUGGING) then
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+    do k = 1, min(nf, maxxhist)
+        call assert(all(xhist(:, k) >= xl) .and. all(xhist(:, k) <= xu), 'XL <= XHIST <= XU', srname)
+    end do
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
         & all(xpt <= spread(su, dim=2, ncopies=npt)), 'SL <= XPT <= SU', srname)
@@ -598,6 +603,11 @@ if (DEBUGGING) then
     call assert(all(xbase >= xl .and. xbase <= xu), 'XL <= XBASE <= XU', srname)
     call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
         & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
+    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+    do k = 1, min(nf, maxxhist)
+        call assert(all(xhist(:, k) >= xl) .and. all(xhist(:, k) <= xu), 'XL <= XHIST <= XU', srname)
+    end do
     call assert(size(xpt, 1) == n .and. size(xpt, 2) == npt, 'SIZE(XPT) == [N, NPT]', srname)
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
     call assert(all(xpt >= spread(sl, dim=2, ncopies=npt)) .and. &
@@ -611,9 +621,6 @@ if (DEBUGGING) then
         hcol(npt + 1:npt + n) = bmat(:, j)
         call assert(RP == kind(0.0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
-
-    call assert(size(xhist, 1) == n .and. maxxhist * (maxxhist - maxhist) == 0, &
-        & 'SIZE(XHIST, 1) == N, SIZE(XHIST, 2) == 0 or MAXHIST', srname)
 end if
 
 end subroutine rescue

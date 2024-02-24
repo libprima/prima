@@ -8,7 +8,7 @@ module initialize_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, January 03, 2024 AM11:54:51
+! Last Modified: Saturday, February 24, 2024 PM10:36:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -294,6 +294,11 @@ if (DEBUGGING) then
     call assert(.not. any(evaluated .and. fval < fval(kopt)), 'FVAL(KOPT) = MINVAL(FVAL)', srname)
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+    call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+    ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+    do k = 1, min(nf, maxxhist)
+        call assert(all(xhist(:, k) >= xl) .and. all(xhist(:, k) <= xu), 'XL <= XHIST <= XU', srname)
+    end do
 end if
 
 end subroutine initxf
