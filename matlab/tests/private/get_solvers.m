@@ -118,7 +118,20 @@ try
         cd(solver_dir);
         fprintf('\nDirectory changed to: %s\n', pwd());
 
+
         if compile_flag  % Compilation requested.
+
+            % Revise the header file to use the intended integer kind.
+            header_file = fullfile(cd(), 'fortran', 'common', 'ppf.h');
+            integer_kind = 0;
+            if isfield(options, 'integer_kind')
+                integer_kind = options.integer_kind;
+            end
+            rep_str(header_file, '#define PRIMA_INTEGER_KIND 0', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
+            rep_str(header_file, '#define PRIMA_INTEGER_KIND 16', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
+            rep_str(header_file, '#define PRIMA_INTEGER_KIND 32', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
+            rep_str(header_file, '#define PRIMA_INTEGER_KIND 64', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
+
             setup(solver, mexopts{is});
         else  % No compilation. Set up the path only.
             setup('path');

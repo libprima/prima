@@ -6,8 +6,6 @@ if ~isunix || ismac
 end
 
 mfilepath = fileparts(mfilename('fullpath')); % The directory containing this setup script
-setup_tools = fullfile(fileparts(fileparts(mfilepath)), 'setup_tools');
-addpath(setup_tools);  % We use `rep_str` from `setup_tools`.
 
 % Modify mexopts files in `config_dir` after making backups.
 config_dir = fullfile(matlabroot, 'bin', 'glnxa64', 'mexopts');
@@ -38,8 +36,6 @@ for ifile = 1 : length(config_files)
     rep_str(cfile, 'LDOPTIMFLAGS="-O"', ['LDOPTIMFLAGS="', compiler_options, '"']);
     rep_str(cfile, 'LDDEBUGFLAGS="-g"', ['LDDEBUGFLAGS="', compiler_options, '"']);
 end
-
-rmpath(setup_tools);  % Remove `setup_tools` from path since it has finishes its job.
 
 % If MEX has been set up before, then the configuration is already written in the following file.
 % We delete it so that MEX will be reconfigured according to `config_files`.

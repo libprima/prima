@@ -64,6 +64,20 @@ try
     % Be verbose if required or in CI.
     options.verbose = ((isfield(options, 'verbose') && options.verbose) || (isenv('CI') && strcmpi(getenv('CI'), 'true')));
 
+    % Determine the integer kind to use: 0, 16, 32, or 64, alternating every 4 weeks.
+    if isfield(options, 'yw')
+        yw = options.yw;
+    elseif isfield(options, 'seed')
+        yw = options.seed;
+    else
+        yw = year_week('Asia/Shanghai');
+    end
+    if mod(yw, 4) == 0
+        options.integer_kind = 0;
+    else
+        options.integer_kind = 2^(mod(yw, 4) + 3);
+    end
+
     % Make the solvers available. Note that the solvers are under `test_dir`.
     get_solvers(solvers, test_dir, options);
 

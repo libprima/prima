@@ -75,6 +75,16 @@ jobs:
           cache: true
           products: Parallel_Computing_Toolbox
 
+      - name: Revise get_solvers.m to print the revised header file
+        run: |
+          cd matlab/tests/private || exit 1
+          sed -i "s|\(^.*\)\(setup(solver.*$\)|\1header_file\n\1system(['cat ', header_file]);\n\1\2|" get_solvers.m
+
+      - name: Revise setup_compiler_options.m to print the revised mexopt file
+        run: |
+          cd matlab/tests/private || exit 1
+          sed -i "s|return|for ifile = 1 : length(config_files), ifile, cfile = fullfile(config_dir, config_files{ifile}) , system(['cat ', cfile]); end|" set_compiler_options.m
+
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.0.0
         with:
