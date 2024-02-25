@@ -127,10 +127,14 @@ try
             if isfield(options, 'integer_kind')
                 integer_kind = options.integer_kind;
             end
-            rep_str(header_file, '#define PRIMA_INTEGER_KIND 0', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
-            rep_str(header_file, '#define PRIMA_INTEGER_KIND 16', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
-            rep_str(header_file, '#define PRIMA_INTEGER_KIND 32', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
-            rep_str(header_file, '#define PRIMA_INTEGER_KIND 64', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
+            if integer_kind ~= 0
+                % Do not change the integer kind if it is 0!!! This enables us to test two solvers
+                % with different integer kinds by modifying their respective header files manually.
+                rep_str(header_file, '#define PRIMA_INTEGER_KIND 0', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
+                rep_str(header_file, '#define PRIMA_INTEGER_KIND 16', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
+                rep_str(header_file, '#define PRIMA_INTEGER_KIND 32', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
+                rep_str(header_file, '#define PRIMA_INTEGER_KIND 64', ['#define PRIMA_INTEGER_KIND ', num2str(integer_kind)]);
+            end
 
             setup(solver, mexopts{is});
         else  % No compilation. Set up the path only.
