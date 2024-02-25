@@ -11,7 +11,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Friday, August 11, 2023 PM05:55:38
+! Last Modified: Sunday, February 25, 2024 AM11:26:21
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -161,13 +161,12 @@ call fmxWriteMPtr(cstrv, poutput(3))
 call fmxWriteMPtr(nlconstr, poutput(4))
 call fmxWriteMPtr(info, poutput(5))
 call fmxWriteMPtr(nf, poutput(6))
-call fmxWriteMPtr(xhist(:, 1:min(int(nf), size(xhist, 2))), poutput(7))
-call fmxWriteMPtr(fhist(1:min(int(nf), size(fhist))), poutput(8), 'row')
-call fmxWriteMPtr(chist(1:min(int(nf), size(chist))), poutput(9), 'row')
-call fmxWriteMPtr(nlchist(:, 1:min(int(nf), size(nlchist, 2))), poutput(10))
+call fmxWriteMPtr(xhist(:, 1:min(nf, int(size(xhist, 2), IK))), poutput(7))
+call fmxWriteMPtr(fhist(1:min(nf, int(size(fhist), IK))), poutput(8), 'row')
+call fmxWriteMPtr(chist(1:min(nf, int(size(chist), IK))), poutput(9), 'row')
+call fmxWriteMPtr(nlchist(:, 1:min(nf, int(size(nlchist, 2), IK))), poutput(10))
 ! N.B.:
-! 1. INT(NF) converts NF to the default integer type; if not, MIN may complain.
-! 2. It can happen that 0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST due to the memory
+! It can happen that 0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST due to the memory
 ! limit in the Fortran code. Similar for CHIST and CONHIST.
 
 ! Free memory. Indeed, automatic deallocation would take place.

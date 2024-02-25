@@ -11,7 +11,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Saturday, January 28, 2023 PM11:55:58
+! Last Modified: Sunday, February 25, 2024 AM11:38:39
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -113,12 +113,11 @@ call fmxWriteMPtr(x, poutput(1))
 call fmxWriteMPtr(f, poutput(2))
 call fmxWriteMPtr(info, poutput(3))
 call fmxWriteMPtr(nf, poutput(4))
-call fmxWriteMPtr(xhist(:, 1:min(int(nf), size(xhist, 2))), poutput(5))
-call fmxWriteMPtr(fhist(1:min(int(nf), size(fhist))), poutput(6), 'row')
+call fmxWriteMPtr(xhist(:, 1:min(nf, int(size(xhist, 2), IK))), poutput(5))
+call fmxWriteMPtr(fhist(1:min(nf, int(size(fhist), IK))), poutput(6), 'row')
 ! N.B.:
-! 1. INT(NF) converts NF to the default integer type; if not, MIN may complain.
-! 2. It can happen that 0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST due to the memory
-! limit in the Fortran code. Similar for CHIST.
+! It can happen that 0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST due to the memory
+! limit in the Fortran code.
 
 ! Free memory. Indeed, automatic deallocation would take place.
 deallocate (x) ! Allocated by fmxReadMPtr.

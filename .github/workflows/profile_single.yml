@@ -150,6 +150,7 @@ jobs:
             /tmp/${{ env.SOLNAME }}_profile_prima/*start*
             /tmp/${{ env.SOLNAME }}_profile_prima/*end*
             /tmp/${{ env.SOLNAME }}_profile_prima/*stuck*
+            /tmp/${{ env.SOLNAME }}_profile_prima/fort.*
 
       - name: Remove the test data
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
