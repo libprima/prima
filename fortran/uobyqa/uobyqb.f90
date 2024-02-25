@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, January 25, 2024 PM08:11:57
+! Last Modified: Sunday, February 25, 2024 PM05:58:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -232,7 +232,11 @@ gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
 ! such as MATLAB. In that case, we can set MAXTR to 10*MAXFUN, which is unlikely to reach because
 ! each trust-region iteration takes 1 or 2 function evaluations unless the trust-region step is short
 ! or fails to reduce the trust-region model but the geometry step is not invoked.
-maxtr = huge(maxtr)  !!MATLAB: maxtr = 10 * maxfun;
+! N.B.: Do NOT set MAXTR to HUGE(MAXTR), as it may cause overflow and infinite cycling in the DO
+! loop. See
+! https://fortran-lang.discourse.group/t/loop-variable-reaching-integer-huge-causes-infinite-loop
+! https://fortran-lang.discourse.group/t/loops-dont-behave-like-they-should
+maxtr = huge(maxtr) - 1_IK  !!MATLAB: maxtr = 10 * maxfun;
 info = MAXTR_REACHED
 
 ! Begin the iterative procedure.

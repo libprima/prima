@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, February 22, 2024 PM08:36:09
+! Last Modified: Sunday, February 25, 2024 PM06:00:24
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -196,7 +196,7 @@ integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 ! Maximal amount of memory (Byte) allowed for XHIST, FHIST, CONHIST, CHIST, and the filters.
 integer, parameter :: MHM = PRIMA_MAX_HIST_MEM_MB * 10**6
 ! Make sure that MAXHISTMEM does not exceed HUGE(0) to avoid overflow and memory errors.
-integer, parameter :: MAXHISTMEM = min(MHM, huge(0))
+integer, parameter :: MAXHISTMEM = min(MHM, (huge(0) - 1) / 2)
 
 ! Maximal length of the filter used in constrained solvers.
 integer(IK), parameter :: MIN_MAXFILT = 200  ! Should be positive; < 200 is not recommended.

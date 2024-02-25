@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 24, 2024 PM10:53:02
+! Last Modified: Sunday, February 25, 2024 PM05:56:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -325,10 +325,14 @@ nprov = npt - 1_IK
 ! Originally, it is a WHILE loop, but we change it to a DO loop to avoid infinite cycling.
 ! N.B.: Overflow will occur in NPT^2 if NPT > 180 and IK = 16. The following is a workaround, which
 ! is **not needed in Python/MATLAB/Julia/R. In MATLAB, we can just take maxiter = npt^2**.
-if (2.0 * log10(real(npt)) < range(maxiter)) then
+if (2.0 * log10(real(npt)) < range(maxiter)) then  !!MATLAB: maxiter = npt^2;
     maxiter = npt * npt
 else
-    maxiter = huge(maxiter) - 2_IK
+    maxiter = huge(maxiter) - 1_IK
+    ! N.B.: Do NOT set MAXITER to HUGE(MAXITER), as it may cause overflow and infinite cycling in
+    ! the DO loop. See
+    ! https://fortran-lang.discourse.group/t/loop-variable-reaching-integer-huge-causes-infinite-loop
+    ! https://fortran-lang.discourse.group/t/loops-dont-behave-like-they-should
 end if
 do iter = 1, maxiter
     ! !DO WHILE (ANY(SCORE > 0) .AND. NPROV > 1)   ! WHILE version.

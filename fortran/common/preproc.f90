@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, February 22, 2024 PM09:42:46
+! Last Modified: Sunday, February 25, 2024 PM05:55:09
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -152,7 +152,11 @@ if (maxfun <= max(0, min_maxfun)) then
     if (maxfun > 0) then
         maxfun = int(min_maxfun, kind(maxfun))
     else  ! We assume that non-positive values of MAXFUN are produced by overflow.
-        maxfun = huge(maxfun)
+        maxfun = huge(maxfun) - 1_IK
+        ! N.B.: Do NOT set MAXFUN to HUGE(MAXFUN), as it may cause overflow and infinite cycling
+        ! when used as the upper bound of DO loops. This occurred on 20240225 with gfortran 13. See
+        ! https://fortran-lang.discourse.group/t/loop-variable-reaching-integer-huge-causes-infinite-loop
+        ! https://fortran-lang.discourse.group/t/loops-dont-behave-like-they-should
     end if
     call warning(solver, 'Invalid MAXFUN; it should be at least '//min_maxfun_str//'; it is set to '//num2str(maxfun))
 end if
