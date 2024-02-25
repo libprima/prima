@@ -100,7 +100,6 @@ jobs:
       - name: Revise the Fortran code to use the intended integer kind. Do NOT use `options.integer_kind`, because it will change the integer kind for the competitor as well.
         run: |
           sed -i "s|#define PRIMA_INTEGER_KIND 0|#define PRIMA_INTEGER_KIND ${{ matrix.ik }}|g" fortran/common/ppf.h
-          cat fortran/common/ppf.h
 
       - name: Revise get_solvers.m to print the revised header file
         run: |
