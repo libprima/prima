@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 26, 2024 PM10:22:58
+! Last Modified: Monday, February 26, 2024 PM11:23:34
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -325,7 +325,7 @@ nprov = npt - 1_IK
 ! Originally, it is a WHILE loop, but we change it to a DO loop to avoid infinite cycling.
 ! N.B.: Overflow will occur in NPT^2 if NPT > 180 and IK = 16. The following is a workaround, which
 ! is **not needed in Python/MATLAB/Julia/R. In MATLAB, we can just take maxiter = npt^2**.
-maxiter = int(min(10**range(0_IK), int(npt)**2), IK)  !!MATLAB: maxiter = npt^2;
+maxiter = int(min(10**min(range(0), range(0_IK)), int(npt)**2), IK)  !!MATLAB: maxiter = npt^2;
 do iter = 1, maxiter
     ! !DO WHILE (ANY(SCORE > 0) .AND. NPROV > 1)   ! WHILE version.
     ! !IF (ALL(SCORE <= 0) .AND. NPROV <= 0) THEN ! Powell's code. May not take any provisional point.
