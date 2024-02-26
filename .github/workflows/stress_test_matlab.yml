@@ -140,6 +140,12 @@ jobs:
           cache: true
           products: Optimization_Toolbox Parallel_Computing_Toolbox
 
+      - name: Revise the Fortran code to alternate the integer kind.
+        run: |
+          IK=$(( 2**(4 + $(date +%-d) % 3) ))
+          sed -i "s|#define PRIMA_INTEGER_KIND 0|#define PRIMA_INTEGER_KIND ${IK}|g" fortran/common/ppf.h
+          cat fortran/common/ppf.h
+
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.0.0
         with:
