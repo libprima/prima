@@ -54,6 +54,7 @@ if ~isfield(options, 'compile') || options.compile
     compile_options.debug = (rand() < 0.5);
     compile_options.single = strcmpi(precision, 'single');
     compile_options.quadruple = strcmpi(precision, 'quadruple');
+    compile_options.classical = false;
     setup(solver, compile_options);
     cd(old_directory);
 end
