@@ -396,7 +396,7 @@ C
               IHQ=(IQ+IQ*IQ)/2
               VQUAD=VQUAD+XQ*(GOPT(IQ)+HALF*XQ*HQ(IHQ))
               IF (IP > 0) THEN
-                  IW=MAX0(IHP,IHQ)-IABS(IP-IQ)
+                  IW=MAX0(IHP,IHQ)-ABS(IP-IQ)
                   VQUAD=VQUAD+XP*XQ*HQ(IW)
               END IF
           END IF
@@ -463,7 +463,7 @@ C          IQ=DBLE(NP)*PTSID(K)-DBLE(IP*NP)
                       HQ(IHP)=HQ(IHP)+TEMP*PTSAUX(1,IP)**2
                       IF (IQ > 0) THEN
                           HQ(IHQ)=HQ(IHQ)+TEMP*PTSAUX(1,IQ)**2
-                          IW=MAX0(IHP,IHQ)-IABS(IQ-IP)
+                          IW=MAX0(IHP,IHQ)-ABS(IQ-IP)
                           HQ(IW)=HQ(IW)+TEMP*PTSAUX(1,IP)*PTSAUX(1,IQ)
                       END IF
                   END IF
