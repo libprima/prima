@@ -112,6 +112,9 @@ jobs:
         # As of 231227, checkout with ssh fails frequently on Windows runners.
           submodules: recursive
 
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
+
       - name: Link gfortran for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
@@ -144,7 +147,7 @@ jobs:
         shell: bash
         run: |
           IK=$(( 2**(4 + $(date +%-d) % 3) ))
-          sed -i "s|#define PRIMA_INTEGER_KIND 0|#define PRIMA_INTEGER_KIND ${IK}|g" fortran/common/ppf.h
+          $SEDI "s|#define PRIMA_INTEGER_KIND 0|#define PRIMA_INTEGER_KIND ${IK}|g" fortran/common/ppf.h
           cat fortran/common/ppf.h
 
       - name: Conduct the test
