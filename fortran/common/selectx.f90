@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, August 02, 2023 AM11:24:31
+! Last Modified: Friday, March 01, 2024 PM06:00:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -378,10 +378,11 @@ end if
 is_better = .false.
 ! Even though NaN/+Inf should not occur in FC1 or FC2 due to the moderated extreme barrier, for
 ! security and robustness, the code below does not make this assumption.
-is_better = is_better .or. (any(is_nan([f1, c1])) .and. .not. any(is_nan([f2, c2])))
+is_better = is_better .or. (any(is_nan([f2, c2]) .or. is_posinf([f2, c2])) .and. .not. &
+    & any(is_nan([f1, c1]) .or. is_posinf([f1, c1])))
 is_better = is_better .or. (f1 < f2 .and. c1 <= c2)
 is_better = is_better .or. (f1 <= f2 .and. c1 < c2)
-! If C1 <= CTOL and C2 is significantly larger/worse than CTOL, i.e., C2 > MAX(CTOL,CREF),
+! If C1 <= CTOL and C2 is significantly larger/worse than CTOL, i.e., C2 > MAX(CTOL, CREF),
 ! then FC1 is better than FC2 as long as F1 < REALMAX. Normally CREF >= CTOL so MAX(CTOL, CREF)
 ! is indeed CREF. However, this may not be true if CTOL > 1E-1*CONSTRMAX.
 cref = TEN * max(EPS, min(ctol, 1.0E-2_RP * CONSTRMAX))  ! The MIN avoids overflow.
@@ -393,6 +394,13 @@ is_better = is_better .or. (f1 < REALMAX .and. c1 <= ctol .and. (c2 > max(ctol, 
 
 ! Postconditions
 if (DEBUGGING) then
+    ! Even though NaN/+Inf should not occur in FC1 due to moderated extreme barrier, for security
+    ! and robustness, the code below does not make this assumption.
+    call assert(.not. (is_better .and. any(is_nan([f1, c1]) .or. is_posinf([f1, c1]))), &
+        & 'IS_BETTER cannot be true if FC1 contains NaN/+Inf', srname)
+    call assert(is_better .or. any(is_nan([f1, c1]) .or. is_posinf([f1, c1])) .or. &
+        & .not. any(is_nan([f2, c2]) .or. is_posinf([f2, c2])), &
+        & 'if [F2, C2] contains NaN/+Inf, then either IS_BETTER is true or [F1, C1] contains NaN/+Inf as well', srname)
     call assert(.not. (is_better .and. f1 >= f2 .and. c1 >= c2), &
         & '[F1, C1] >= [F2, C2] and IS_BETTER cannot be both true', srname)
     call assert(is_better .or. .not. (f1 <= f2 .and. c1 < c2), &
