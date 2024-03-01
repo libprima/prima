@@ -8,7 +8,7 @@ module selectx_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Friday, March 01, 2024 PM06:00:58
+! Last Modified: Saturday, March 02, 2024 AM12:42:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -120,8 +120,11 @@ end if
 ! Calculation starts !
 !====================!
 
-! Return immediately if any column of XFILT is better than X.
-if (any(isbetter(ffilt(1:nfilt), cfilt(1:nfilt), f, cstrv, ctol))) then
+! Return immediately if any column of XFILT is better than X. Note that ISBETTER checks "strictly
+! better", handling NaN/Inf properly, but we need "non-strictly better" here, allowing equality.
+! This is why we need to supplement ISBETTER with (FFILT <= F .AND. CFILT <= CSTRV).
+if (any(isbetter(ffilt(1:nfilt), cfilt(1:nfilt), f, cstrv, ctol)) .or. &
+    & any(ffilt(1:nfilt) <= f .and. cfilt(1:nfilt) <= cstrv)) then
     return
 end if
 
@@ -397,10 +400,10 @@ if (DEBUGGING) then
     ! Even though NaN/+Inf should not occur in FC1 due to moderated extreme barrier, for security
     ! and robustness, the code below does not make this assumption.
     call assert(.not. (is_better .and. any(is_nan([f1, c1]) .or. is_posinf([f1, c1]))), &
-        & 'IS_BETTER cannot be true if FC1 contains NaN/+Inf', srname)
+        & 'IS_BETTER cannot be true if [F1, C1] contains NaN/+Inf', srname)
     call assert(is_better .or. any(is_nan([f1, c1]) .or. is_posinf([f1, c1])) .or. &
         & .not. any(is_nan([f2, c2]) .or. is_posinf([f2, c2])), &
-        & 'if [F2, C2] contains NaN/+Inf, then either IS_BETTER is true or [F1, C1] contains NaN/+Inf as well', srname)
+        & 'if [F2, C2] contains NaN/+Inf, then either IS_BETTER is true or [F1, C1] contains NaN/+Inf', srname)
     call assert(.not. (is_better .and. f1 >= f2 .and. c1 >= c2), &
         & '[F1, C1] >= [F2, C2] and IS_BETTER cannot be both true', srname)
     call assert(is_better .or. .not. (f1 <= f2 .and. c1 < c2), &
