@@ -30,11 +30,6 @@ if nargin == 1
     options = struct();
 end
 
-if isfield(options, 'prec')
-    prec = options.prec;
-else
-    prec = 0;
-end
 if isfield(options, 'nr')
     nr = options.nr;
 else
@@ -186,15 +181,14 @@ if sequential
         prob = macup(pname);
 
         for ir = minir : maxir
-            % The following line compares the solvers on `prob`; ir is needed for the random seed, and
-            % `prec` is the precision of the comparison (should be 0). The function will raise an error
-            % if the solvers behave differently.
+            % The following line compares the solvers on `prob`; ir is needed for the random seed.
+            % The function will raise an error if the solvers behave differently.
             system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
             if verbose
                 fprintf('     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
             end
 
-            compare(solvers, prob, ir, prec, single_test, options);
+            compare(solvers, prob, ir, single_test, options);
 
             system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
             if verbose
@@ -233,15 +227,14 @@ else
         prob = macup(pname);
 
         for ir = minir : maxir
-            % The following line compares the solvers on `prob`; ir is needed for the random seed, and
-            % `prec` is the precision of the comparison (should be 0). The function will raise an error
-            % if the solvers behave differently.
+            % The following line compares the solvers on `prob`; ir is needed for the random seed.
+            % The function will raise an error if the solvers behave differently.
             system(['touch ', fullfile(prob_start_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
             if verbose
                 fprintf('     \t%s Run No. %3d starts at %s\n', pname, ir, char(datetime()));
             end
 
-            compare(solvers, prob, ir, prec, single_test, options);
+            compare(solvers, prob, ir, single_test, options);
 
             system(['touch ', fullfile(prob_end_runs_dir, [pname, '.', num2str(ir, '%02d')])]);
             if verbose
@@ -276,7 +269,7 @@ return
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function equiv = compare(solvers, prob, ir, prec, single_test, options)
+function equiv = compare(solvers, prob, ir, single_test, options)
 pname = prob.name;
 objective = prob.objective;
 nonlcon = prob.nonlcon;
@@ -578,15 +571,23 @@ if ~isempty(exception)
         equiv = true;
         return
     else
-        fprintf('\n\n>>> !%s encounters an error during test %d of %s with the following options! <<<\n\n', regexprep(solvers{1}, '_norma', ''), ir, pname);
+        fprintf('\n\n>>> !%s encounters an error during test %d of %s with the following data! <<<\n\n', regexprep(solvers{1}, '_norma', ''), ir, pname);
         format long;
+        prob1
+        prob1.x0
+        prob1.lb
+        prob1.ub
+        prob1.Aineq
+        prob1.bineq
+        prob1.Aeq
+        prob1.beq
         test_options
         rethrow(exception)
     end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END: Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-equiv = iseq(x1(:), fx1, exitflag1, output1, x2(:), fx2, exitflag2, output2, prec);
+equiv = iseq(x1(:), fx1, exitflag1, output1, x2(:), fx2, exitflag2, output2);
 
 if ~equiv
     format long;
@@ -614,7 +615,15 @@ if ~equiv
         chist2 = output2.chist(end-nhist+1:end);
         chist1 == chist2
     end
-    fprintf('\nThe solvers produce different results on %s at the %dth run with the following options.\n\n', pname, ir);
+    fprintf('\nThe solvers produce different results on %s at the %dth run with the following data.\n\n', pname, ir);
+    prob1
+    prob1.x0
+    prob1.lb
+    prob1.ub
+    prob1.Aineq
+    prob1.bineq
+    prob1.Aeq
+    prob1.beq
     test_options
     if single_test && options.sequential
         cd(options.olddir);
@@ -627,12 +636,35 @@ return
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function eq = iseq(x, f, exitflag, output, xx, ff, ee, oo, prec)
+function eq = iseq(x, f, exitflag, output, xx, ff, ee, oo)
 eq = true;
 
-if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'fhist'; 'xhist'; 'chist'; 'nlcihist'; 'nlcehist'])) ...
-        || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'fhist'; 'xhist'; 'chist'; 'nlcihist', 'nlcehist']))
-    eq = false;
+%if ~isempty(setdiff(fieldnames(output), [fieldnames(oo); 'fhist'; 'xhist'; 'chist'; 'nlcihist'; 'nlcehist'])) ...
+%        || ~isempty(setdiff(fieldnames(oo), [fieldnames(output); 'fhist'; 'xhist'; 'chist'; 'nlcihist', 'nlcehist']))
+%    eq = false;
+%end
+
+eq = eq && isempty(setxor(fieldnames(output), fieldnames(oo)));
+
+if ~isfield(output, 'xhist')
+    output.xhist = zeros(length(x), 0);
+end
+if ~isfield(oo, 'xhist')
+    oo.xhist = zeros(length(x), 0);
+end
+
+if ~isfield(output, 'fhist')
+    output.fhist = zeros(1, 0);
+end
+if ~isfield(oo, 'fhist')
+    oo.fhist = zeros(1, 0);
+end
+
+if ~isfield(output, 'chist')
+    output.chist = zeros(1, 0);
+end
+if ~isfield(oo, 'chist')
+    oo.chist = zeros(1, 0);
 end
 
 if ~isfield(output,'constrviolation')
@@ -642,48 +674,27 @@ if ~isfield(oo,'constrviolation')
     oo.constrviolation = 0;
 end
 
-if ~isfield(output, 'chist')
-    output.chist = zeros(output.funcCount, 1);
+if ~isfield(output, 'nlcihist')
+    output.nlcihist = zeros(length(x), 0);
 end
-if ~isfield(oo, 'chist')
-    oo.chist = zeros(oo.funcCount, 1);
-end
-
-if (norm(xx-x)/(1+norm(x)) > prec || abs(ff-f)/(1+abs(f)) > prec ...
-        || abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation)) > prec)
-    eq = false;
+if ~isfield(oo, 'nlcihist')
+    oo.nlcihist = zeros(length(x), 0);
 end
 
-if isfield(output, 'fhist')
-    output.fhist = output.fhist(:);
-else
-    output.fhist = [];
+if ~isfield(output, 'nlcehist')
+    output.nlcehist = zeros(length(x), 0);
 end
-if isfield(oo, 'fhist')
-    oo.fhist = oo.fhist(:);
-else
-    oo.fhist = [];
-end
-nhist = min(length(output.fhist), length(oo.fhist));
-output.fhist = output.fhist(end - nhist + 1: end);
-oo.fhist = oo.fhist(end - nhist + 1: end);
-
-minfhist = min(length(output.fhist), length(oo.fhist));
-if norm(output.fhist(end-minfhist+1:end) - oo.fhist(end-minfhist+1:end))/(1+norm(output.fhist(end-minfhist+1:end))) > prec
-    eq = false;
+if ~isfield(oo, 'nlcehist')
+    oo.nlcehist = zeros(length(x), 0);
 end
 
-minchist = min(length(output.chist), length(oo.chist));
-if norm(output.chist(end-minchist+1:end) - oo.chist(end-minchist+1:end))/(1+norm(output.chist(end-minchist+1:end))) > prec
-    eq = false;
-end
-
-if (prec == 0 && (exitflag ~= ee|| oo.funcCount ~= output.funcCount))
-    eq = false;
-end
-
-%diff = max([abs(ff-f)/(1+abs(f)), norm(xx-x)/(1+norm(x)), ...
-%    abs(oo.constrviolation-output.constrviolation)/(1+abs(output.constrviolation))]);
+eq = (eq && exitflag == ee && output.funcCount == oo.funcCount);
+eq = (eq && all(xx == x) && ff == f && (oo.constrviolation == output.constrviolation || (isnan(oo.constrviolation) && isnan(output.constrviolation))));
+eq = (eq && size(output.xhist, 2) == size(oo.xhist, 2) && all(output.xhist == oo.xhist, 'all'));
+eq = (eq && size(output.fhist, 2) == size(oo.fhist, 2) && all(output.fhist == oo.fhist | (isnan(output.fhist) & isnan(oo.fhist))));
+eq = (eq && size(output.chist, 2) == size(oo.chist, 2) && all(output.chist == oo.chist | (isnan(output.chist) & isnan(oo.chist))));
+eq = (eq && size(output.nlcehist, 2) == size(oo.nlcehist, 2) && all(output.nlcehist == oo.nlcehist, 'all'));
+eq = (eq && size(output.nlcihist, 2) == size(oo.nlcihist, 2) && all(output.nlcihist == oo.nlcihist, 'all'));
 
 return
 

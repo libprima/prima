@@ -59,10 +59,10 @@ real(RP), intent(inout), optional :: confilt(:, :)  ! (M, MAXFILT)
 ! Local variables
 character(len=*), parameter :: srname = 'SAVEFILT'
 integer(IK) :: index_to_keep(size(ffilt))
+integer(IK) :: kworst
 integer(IK) :: m
 integer(IK) :: maxfilt
 integer(IK) :: n
-integer(IK) :: kworst
 logical :: keep(nfilt)
 real(RP) :: cfilt_shifted(size(ffilt))
 real(RP) :: cref

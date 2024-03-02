@@ -1535,9 +1535,9 @@ end
 % Validate options.maxhist
 validated = false;
 if isfield(options, 'maxhist')
-    if ~isintegerscalar(options.maxhist) || options.maxhist < 0
+    if ~isintegerscalar(options.maxhist) || options.maxhist <= 0
         wid = sprintf('%s:InvalidMaxhist', invoker);
-        wmsg = sprintf('%s: invalid maxhist; it should be a nonnegative integer; it is set to maxfun.', invoker);
+        wmsg = sprintf('%s: invalid maxhist; it should be a positive integer; it is set to maxfun.', invoker);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
@@ -1587,7 +1587,7 @@ options.output_nlchist = logical(options.output_nlchist);
 % Validate options.maxfilt
 validated = false;
 if isfield(options, 'maxfilt')
-    if ~isintegerscalar(options.maxfilt) || options.maxfilt < 1
+    if ~isintegerscalar(options.maxfilt) || options.maxfilt <= 0
         wid = sprintf('%s:InvalidMaxfilt', invoker);
         wmsg = sprintf('%s: invalid maxfilt; it should be a positive integer; it is set to %d.', invoker, maxfilt);
         warning(wid, '%s', wmsg);
