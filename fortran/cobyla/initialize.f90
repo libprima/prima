@@ -8,7 +8,7 @@ module initialize_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, January 24, 2024 PM03:53:21
+! Last Modified: Sunday, March 03, 2024 PM05:54:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -33,7 +33,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : eye, inv, isinv
+use, non_intrinsic :: linalg_mod, only : eye, inv, isinv, maximum
 use, non_intrinsic :: message_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 
@@ -155,7 +155,7 @@ do k = 1, n + 1_IK
         x(j) = x(j) + rhobeg
         call evaluate(calcfc, x, f, constr)
     end if
-    cstrv = maxval([ZERO, constr])
+    cstrv = maximum([ZERO, constr])
 
     ! Print a message about the function/constraint evaluation according to IPRINT.
     call fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x, cstrv, constr)
@@ -224,7 +224,7 @@ if (DEBUGGING) then
     call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
-    call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
+    call assert(all(sum(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(isinv(sim(:, 1:n), simi, itol) .or. any(.not. evaluated), 'SIMI = SIM(:, 1:N)^{-1}', srname)
@@ -296,7 +296,7 @@ if (DEBUGGING) then
         & 'SIZE(FVAL) == N+1 and FVAL does not contain NaN/+Inf', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
-    call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
+    call assert(all(sum(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
     call assert(size(evaluated) == n + 1, 'SIZE(EVALUATED) == N + 1', srname)
 end if
 

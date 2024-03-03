@@ -8,7 +8,7 @@ module trustregion_cobyla_mod
 !
 ! Started: June 2021
 !
-! Last Modified: Saturday, January 27, 2024 AM03:48:05
+! Last Modified: Sunday, March 03, 2024 PM05:58:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -163,7 +163,7 @@ subroutine trstlp_sub(iact, nact, stage, A, b, delta, d, vmultc, z)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, REALMAX, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, norm, linspace, trueloc
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, eye, isminor, lsqr, norm, linspace, trueloc, maximum
 use, non_intrinsic :: powalg_mod, only : qradd, qrexc
 implicit none
 
@@ -249,7 +249,7 @@ if (stage == 1) then
     ! 2. In MATLAB, linspace(1, mcon, mcon) can also be written as (1:mcon).
     nact = 0
     d = ZERO
-    cviol = maxval([-b, ZERO])
+    cviol = maximum([ZERO, -b])
     vmultc = cviol + b
     z = eye(n)
     if (mcon == 0 .or. cviol <= 0) then
@@ -278,7 +278,7 @@ else
 
     ! In Powell's code, stage 2 uses the ZDOTA and CVIOL calculated by stage 1. Here we re-calculate
     ! them so that they need not be passed from stage 1 to 2, and hence the coupling is reduced.
-    cviol = maxval([matprod(d, A(:, 1:m)) - b(1:m), ZERO])
+    cviol = maximum([ZERO, matprod(d, A(:, 1:m)) - b(1:m)])
 end if
 zdota(1:nact) = [(inprod(z(:, k), A(:, iact(k))), k=1, nact)]
 !!MATLAB: zdota(1:nact) = sum(z(:, 1:nact) .* A(:, iact(1:nact)), 1);  % Row vector
@@ -514,7 +514,7 @@ do iter = 1, maxiter
     dnew = d + step * sdirn
     if (stage == 1) then
         !cvold = cviol
-        cviol = maxval([matprod(dnew, A(:, iact(1:nact))) - b(iact(1:nact)), ZERO])
+        cviol = maximum([ZERO, matprod(dnew, A(:, iact(1:nact))) - b(iact(1:nact))])
         ! N.B.: CVIOL will be used when calculating VMULTD(NACT+1 : MCON).
     end if
 
@@ -559,7 +559,7 @@ do iter = 1, maxiter
         !cviol = (ONE - frac) * cvold + frac * cviol  ! Powell's version
         ! In theory, CVIOL = MAXVAL([MATPROD(D, A) - B, ZERO]), yet the CVIOL updated as above
         ! can be quite different from this value if A has huge entries (e.g., > 1E20).
-        cviol = maxval([matprod(d, A) - b, ZERO])
+        cviol = maximum([ZERO, matprod(d, A) - b])
     end if
 
     if (icon < 1 .or. icon > mcon) then

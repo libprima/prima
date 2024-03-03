@@ -8,7 +8,7 @@ module geometry_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, March 02, 2024 AM01:56:43
+! Last Modified: Sunday, March 03, 2024 PM06:01:50
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,7 +57,7 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
-    call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
+    call assert(all(sum(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
@@ -140,7 +140,7 @@ if (DEBUGGING) then
     call assert(delta >= rho .and. rho > 0, 'DELTA >= RHO > 0', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
-    call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
+    call assert(all(sum(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
@@ -303,7 +303,7 @@ if (DEBUGGING) then
     call assert(n >= 1, 'N >= 1', srname)
     call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim)), 'SIM is finite', srname)
-    call assert(all(maxval(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
+    call assert(all(sum(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
     call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
@@ -361,7 +361,7 @@ function geostep(jdrop, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamm
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, maximum
 
 implicit none
 
@@ -439,8 +439,8 @@ A(:, 1:m_lcon) = amat
 A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
 !!MATLAB: A(:, m_lcon+1:m) = simi'*(conmat(m_lcon+1:m, 1:n) - conmat(m_lcon+1:m, n+1))' % Implicit expansion for subtraction
 ! CVPD and CVND are the predicted constraint violation of D and -D by the linear models.
-cvpd = maxval([ZERO, conmat(:, n + 1) + matprod(d, A)])
-cvnd = maxval([ZERO, conmat(:, n + 1) - matprod(d, A)])
+cvpd = maximum([ZERO, conmat(:, n + 1) + matprod(d, A)])
+cvnd = maximum([ZERO, conmat(:, n + 1) - matprod(d, A)])
 ! Take -D if the linear models predict that its merit function value is lower.
 if (-inprod(d, g) + cpen * cvnd < inprod(d, g) + cpen * cvpd) then
     d = -d

@@ -12,7 +12,7 @@ module message_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, August 11, 2023 AM12:22:47
+! Last Modified: Sunday, March 03, 2024 PM05:34:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,6 +34,7 @@ use, non_intrinsic :: fprint_mod, only : fprint
 use, non_intrinsic :: infos_mod, only : FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, &
     & SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_X, NAN_INF_F, NAN_INF_MODEL, DAMAGING_ROUNDING, &
     & NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT, CALLBACK_TERMINATE
+use, non_intrinsic :: linalg_mod, only : maximum
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
@@ -95,7 +96,7 @@ end if
 if (present(cstrv)) then
     cstrv_loc = cstrv
 elseif (present(constr)) then
-    cstrv_loc = maxval([ZERO, -constr])  ! N.B.: We assume that the constraint is CONSTR >= 0.
+    cstrv_loc = maximum([ZERO, -constr])  ! N.B.: We assume that the constraint is CONSTR >= 0.
 else
     cstrv_loc = ZERO
 end if
@@ -178,6 +179,7 @@ subroutine rhomsg(solver, iprint, nf, delta, f, rho, x, cstrv, constr, cpen)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, STDOUT
 use, non_intrinsic :: fprint_mod, only : fprint
+use, non_intrinsic :: linalg_mod, only : maximum
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
@@ -231,7 +233,7 @@ end if
 if (present(cstrv)) then
     cstrv_loc = cstrv
 elseif (present(constr)) then
-    cstrv_loc = maxval([ZERO, -constr])  ! N.B.: We assume that the constraint is CONSTR >= 0.
+    cstrv_loc = maximum([ZERO, -constr])  ! N.B.: We assume that the constraint is CONSTR >= 0.
 else
     cstrv_loc = ZERO
 end if
@@ -343,6 +345,7 @@ subroutine fmsg(solver, state, iprint, nf, delta, f, x, cstrv, constr)
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, STDOUT
 use, non_intrinsic :: fprint_mod, only : fprint
+use, non_intrinsic :: linalg_mod, only : maximum
 use, non_intrinsic :: string_mod, only : strip, num2str
 implicit none
 
@@ -397,7 +400,7 @@ end if
 if (present(cstrv)) then
     cstrv_loc = cstrv
 elseif (present(constr)) then
-    cstrv_loc = maxval([ZERO, -constr])  ! N.B.: We assume that the constraint is CONSTR >= 0.
+    cstrv_loc = maximum([ZERO, -constr])  ! N.B.: We assume that the constraint is CONSTR >= 0.
 else
     cstrv_loc = ZERO
 end if

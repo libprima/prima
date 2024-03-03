@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, February 22, 2024 PM03:32:29
+! Last Modified: Sunday, March 03, 2024 PM05:54:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -269,7 +269,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate, moderatex, moderatec, moder
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: infos_mod, only : INVALID_INPUT
-use, non_intrinsic :: linalg_mod, only : trueloc, matprod
+use, non_intrinsic :: linalg_mod, only : trueloc, matprod, maximum
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: pintrf_mod, only : OBJCON, CALLBACK
 use, non_intrinsic :: selectx_mod, only : isbetter
@@ -509,7 +509,7 @@ else
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
-cstrv_loc = maxval([ZERO, constr_loc])
+cstrv_loc = maximum([ZERO, constr_loc])
 
 ! If RHOBEG is present, then RHOBEG_LOC is a copy of RHOBEG; otherwise, RHOBEG_LOC takes the default
 ! value for RHOBEG, taking the value of RHOEND into account. Note that RHOEND is considered only if

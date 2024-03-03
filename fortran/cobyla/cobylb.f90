@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, February 25, 2024 PM05:59:13
+! Last Modified: Sunday, March 03, 2024 PM06:02:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -47,7 +47,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING, CALLBACK_TERMINATE
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON, CALLBACK
 use, non_intrinsic :: ratio_mod, only : redrat
@@ -373,7 +373,7 @@ do tr = 1, maxtr
     ! 2. PREREF may be negative or 0, but it should be positive when PREREC = 0 and SHORTD is FALSE.
     ! 3. Due to 2, in theory, MAXIMUM([PREREC, PREREF]) > 0 if SHORTD is FALSE.
     preref = -inprod(d, g)  ! Can be negative.
-    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A), ZERO])
+    prerec = cval(n + 1) - maximum([ZERO, conmat(:, n + 1) + matprod(d, A)])
 
     ! Evaluate PREREM, which is the predicted reduction in the merit function.
     ! In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true numerically.
@@ -392,7 +392,7 @@ do tr = 1, maxtr
 
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc_internal, x, f, constr)
-        cstrv = maxval([ZERO, constr])
+        cstrv = maximum([ZERO, constr])
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
@@ -560,7 +560,7 @@ do tr = 1, maxtr
 
         ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
         call evaluate(calcfc_internal, x, f, constr)
-        cstrv = maxval([ZERO, constr])
+        cstrv = maximum([ZERO, constr])
         nf = nf + 1_IK
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
@@ -626,7 +626,7 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
     ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
     x = sim(:, n + 1) + d
     call evaluate(calcfc_internal, x, f, constr)
-    cstrv = maxval([ZERO, constr])
+    cstrv = maximum([ZERO, constr])
     nf = nf + 1_IK
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
@@ -712,7 +712,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, REALMAX, DEBUGG
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, isinv
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, isinv, maximum
 
 ! Solver-specific modules
 use, non_intrinsic :: trustregion_cobyla_mod, only : trstlp
@@ -773,7 +773,7 @@ if (DEBUGGING) then
         & 'SIZE(FVAL) == N+1 and FVAL does not contain NaN/+Inf', srname)
     call assert(size(sim_in, 1) == n .and. size(sim_in, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
     call assert(all(is_finite(sim_in)), 'SIM is finite', srname)
-    call assert(all(maxval(abs(sim_in(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
+    call assert(all(sum(abs(sim_in(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
     call assert(size(simi_in, 1) == n .and. size(simi_in, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi_in)), 'SIMI is finite', srname)
     call assert(isinv(sim_in(:, 1:n), simi_in, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
@@ -827,7 +827,7 @@ do iter = 1, n + 1_IK
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     preref = -inprod(d, g)  ! Can be negative.
-    prerec = cval(n + 1) - maxval([conmat(:, n + 1) + matprod(d, A), ZERO])
+    prerec = cval(n + 1) - maximum([ZERO, conmat(:, n + 1) + matprod(d, A)])
 
     if (.not. (prerec > 0 .and. preref < 0)) then  ! PREREC <= 0 or PREREF >= 0 or either is NaN.
         exit
