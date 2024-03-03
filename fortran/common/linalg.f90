@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, August 14, 2023 PM10:42:59
+! Last Modified: Monday, March 04, 2024 AM01:02:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1327,7 +1327,7 @@ function isorth(A, tol) result(is_orth)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether the matrix A has orthonormal columns up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING, REALMAX, ORTHTOL_DFT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
@@ -1340,6 +1340,7 @@ logical :: is_orth
 ! Local variables
 character(len=*), parameter :: srname = 'ISORTH'
 integer(IK) :: n
+real(RP) :: tol_loc
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1352,18 +1353,24 @@ end if
 ! Calculation starts !
 !====================!
 
+tol_loc = ORTHTOL_DFT
+if (present(tol)) then
+    tol_loc = tol
+end if
+
 n = int(size(A, 2), kind(n))
 
+! N.B. (20240304): In some cases, due to compiler bugs, we need to disable the test. We signify such
+! cases by setting ORTHTOL_DFT to REALMAX. For instance, NAG Fortran Compiler Release 7.1(Hanzomon)
+! Build 7143 is buggy concerning half-precision floating-point numbers. See the following:
+! https://fortran-lang.discourse.group/t/nagfor-7-1-supports-half-precision-floating-point-numbers-but-with-many-bugs
+is_orth = .true.
 if (n > size(A, 1)) then
     is_orth = .false.
-else if (is_nan(sum(abs(A)))) then
+elseif (is_nan(sum(abs(A)))) then
     is_orth = .false.
-else
-    if (present(tol)) then
-        is_orth = all(abs(matprod(transpose(A), A) - eye(n)) <= max(tol, tol * maxval(abs(A))))
-    else
-        is_orth = all(abs(matprod(transpose(A), A) - eye(n)) <= 0)
-    end if
+elseif (ORTHTOL_DFT < REALMAX) then
+    is_orth = all(abs(matprod(transpose(A), A) - eye(n)) <= max(tol_loc, tol_loc * maxval(abs(A))))
 end if
 
 !====================!
@@ -1844,7 +1851,7 @@ end if
 is_symmetric = .true.
 if (size(A, 1) /= size(A, 2)) then
     is_symmetric = .false.
-elseif (SYMTOL_DFT < 0.9_RP * REALMAX) then
+elseif (SYMTOL_DFT < REALMAX) then
     is_symmetric = (.not. any(abs(A - transpose(A)) > tol_loc * max(maxval(abs(A)), ONE))) .and. &
         & all(is_nan(A) .eqv. is_nan(transpose(A)))
 end if

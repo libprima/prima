@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, February 25, 2024 PM06:00:24
+! Last Modified: Monday, March 04, 2024 AM01:11:04
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -73,7 +73,7 @@ public :: IK, IK_DFT, INT16, INT32, INT64
 public :: RP, RP_DFT, DP, SP, QP
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: REALMIN, EPS, TINYCV, REALMAX, FUNCMAX, CONSTRMAX, BOUNDMAX
-public :: SYMTOL_DFT
+public :: SYMTOL_DFT, ORTHTOL_DFT
 public :: STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, CWEIGHT_DFT
 public :: ETA1_DFT, ETA2_DFT, GAMMA1_DFT, GAMMA2_DFT
@@ -178,6 +178,16 @@ real(RP), parameter :: SYMTOL_DFT = max(5.0E1 * EPS, 1.0E-10_RP)
 real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO
+#endif
+
+! ORTHTOL_DFT is the default tolerance for testing orthogonality of matrices.
+! In some cases, due to compiler bugs, we need to disable the test. We signify such cases by setting
+! ORTHTOL_DFT to REALMAX. For instance, NAG Fortran Compiler Release 7.1(Hanzomon) Build 7143 is
+! buggy concerning half-precision floating-point numbers.
+#if (defined __NAG_COMPILER_RELEASE && PRIMA_REAL_PRECISION <= 16) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
+real(RP), parameter :: ORTHTOL_DFT = REALMAX
+#else
+real(RP), parameter :: ORTHTOL_DFT = ZERO
 #endif
 
 ! Some default values
