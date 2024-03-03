@@ -64,7 +64,8 @@ gtest: FC := gfortran -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fal
 itest: FC := ifort -warn all -stand f$(FS) -diag-disable=10448  # 10448: suppress the warning about deprecation of ifort.
 
 # NAG nagfor
-ntest: FC := nagfor -C -f$(FSTD) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.
+#ntest: FC := nagfor -C -f$(FSTD) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.
+ntest: FC := nagfor -C -f$(FSTD) -fpp -nan -ieee=full  # `-nan -ieee=full` is to accommodate tests with REAL16.
 
 # NVIDIA nvfortran (aka, pgfortran)
 VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
