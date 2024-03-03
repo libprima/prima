@@ -61,7 +61,7 @@ program bobyqa_exmp
 use bobyqa_mod, only : bobyqa
 
 ! The following line specifies which module provides CALFUN and CALLBACK_FCN.
-use calfun_mod, only : RP, calfun, callback_fcn
+use calfun_mod, only : RP, IK, calfun, callback_fcn
 
 implicit none
 
@@ -85,7 +85,6 @@ call bobyqa(calfun, x, f, lb, ub)  ! This call will not print anything.
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call bobyqa(calfun, x, f, lb, ub, rhobeg=1.0D-1, iprint=1, nf=nf, info=info, callback_fcn=callback_fcn)
-
+call bobyqa(calfun, x, f, lb, ub, rhobeg=1.0_RP, iprint=1_IK, nf=nf, info=info, callback_fcn=callback_fcn)
 
 end program bobyqa_exmp

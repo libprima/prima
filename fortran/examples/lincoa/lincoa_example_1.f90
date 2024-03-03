@@ -60,7 +60,7 @@ program lincoa_exmp
 use lincoa_mod, only : lincoa
 
 ! The following line specifies which module provides CALFUN and CALLBACK_FCN.
-use calfun_mod, only : RP, calfun, callback_fcn
+use calfun_mod, only : RP, IK, calfun, callback_fcn
 
 implicit none
 
@@ -84,7 +84,6 @@ call lincoa(calfun, x, f, cstrv, Aineq, bineq)  ! This call will not print anyth
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call lincoa(calfun, x, f, cstrv, Aineq, bineq, rhobeg=1.0_RP, iprint=1, nf=nf, info=info, callback_fcn=callback_fcn)
-
+call lincoa(calfun, x, f, cstrv, Aineq, bineq, rhobeg=1.0_RP, iprint=1_IK, nf=nf, info=info, callback_fcn=callback_fcn)
 
 end program lincoa_exmp

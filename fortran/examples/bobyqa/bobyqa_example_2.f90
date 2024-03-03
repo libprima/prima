@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, January 10, 2024 AM12:21:59
+! Last Modified: Sunday, March 03, 2024 PM11:45:53
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -14,8 +14,9 @@ module calfun_mod
 
 implicit none
 private
-public :: RP, calfun
+public :: RP, IK, calfun
 integer, parameter :: RP = kind(0.0D0)
+integer, parameter :: IK = kind(0)
 
 contains
 
@@ -57,7 +58,7 @@ program bobyqa_exmp
 use bobyqa_mod, only : bobyqa
 
 ! The following line specifies which module provides CALFUN.
-use calfun_mod, only : RP, calfun
+use calfun_mod, only : RP, IK, calfun
 
 implicit none
 
@@ -82,7 +83,6 @@ call bobyqa(calfun, x, f, lb, ub)  ! This call will not print anything.
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call bobyqa(calfun, x, f, lb, ub, rhobeg=1.0D-1, iprint=1, nf=nf, info=info)
-
+call bobyqa(calfun, x, f, lb, ub, rhobeg=0.1_RP, iprint=1_IK, nf=nf, info=info)
 
 end program bobyqa_exmp

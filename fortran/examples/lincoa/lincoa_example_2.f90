@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, July 03, 2023 PM02:47:06
+! Last Modified: Sunday, March 03, 2024 PM11:48:23
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -14,8 +14,9 @@ module tetrahedron_mod
 
 implicit none
 private
-public :: RP, calfun, setup
+public :: RP, IK, calfun, setup
 integer, parameter :: RP = kind(0.0D0)
+integer, parameter :: IK = kind(0)
 
 contains
 
@@ -117,7 +118,7 @@ program lincoa_exmp
 use lincoa_mod, only : lincoa
 
 ! The following line specifies which module provides CALFUN.
-use tetrahedron_mod, only : RP, calfun, setup
+use tetrahedron_mod, only : RP, IK, calfun, setup
 
 implicit none
 
@@ -136,6 +137,6 @@ call lincoa(calfun, x, f, cstrv, Aineq, bineq)  ! This call will not print anyth
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call lincoa(calfun, x, f, cstrv, Aineq, bineq, rhobeg=1.0_RP, iprint=1, nf=nf, info=info)
+call lincoa(calfun, x, f, cstrv, Aineq, bineq, rhobeg=1.0_RP, iprint=1_IK, nf=nf, info=info)
 
 end program lincoa_exmp

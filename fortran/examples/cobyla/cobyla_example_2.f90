@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, September 27, 2023 PM03:12:49
+! Last Modified: Sunday, March 03, 2024 PM11:46:06
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -14,8 +14,9 @@ module calcfc_mod
 
 implicit none
 private
-public :: RP, calcfc_chebyquad, calcfc_hexagon
+public :: RP, IK, calcfc_chebyquad, calcfc_hexagon
 integer, parameter :: RP = kind(0.0D0)
+integer, parameter :: IK = kind(0)
 
 contains
 
@@ -88,7 +89,7 @@ program cobyla_exmp
 use cobyla_mod, only : cobyla
 
 ! The following line specifies which module provides CALCFC.
-use calcfc_mod, only : RP, calcfc_chebyquad, calcfc_hexagon
+use calcfc_mod, only : RP, IK, calcfc_chebyquad, calcfc_hexagon
 
 implicit none
 
@@ -109,7 +110,7 @@ call cobyla(calcfc_chebyquad, m, x_chebyquad, f, cstrv)  ! This call will not pr
 ! and IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x_chebyquad = [(real(i, RP) / real(n_chebyquad + 1, RP), i=1, n_chebyquad)] ! Starting point
-call cobyla(calcfc_chebyquad, m, x_chebyquad, f, cstrv, rhobeg=0.2_RP * x_chebyquad(1), iprint=1, nf=nf, info=info)
+call cobyla(calcfc_chebyquad, m, x_chebyquad, f, cstrv, rhobeg=0.2_RP * x_chebyquad(1), iprint=1_IK, nf=nf, info=info)
 
 ! The following lines illustrates how to call the solver to solve the Hexagon problem.
 x_hexagon = 2.0_RP  ! Starting point.
@@ -122,7 +123,7 @@ call cobyla(calcfc_hexagon, m, x_hexagon, f, cstrv)  ! This call will not print 
 ! the value of CONSTR(X_HEXAGON) when the solver returns.
 x_hexagon = 2.0_RP  ! Starting point.
 allocate (constr(m))
-call cobyla(calcfc_hexagon, m, x_hexagon, f, cstrv, nlconstr=constr, rhobeg=1.0_RP, iprint=1, nf=nf, info=info)
+call cobyla(calcfc_hexagon, m, x_hexagon, f, cstrv, nlconstr=constr, rhobeg=1.0_RP, iprint=1_IK, nf=nf, info=info)
 deallocate (constr) ! Deallocate the array CONSTR, which is allocated by the solver. Otherwise, memory leaks.
 
 end program cobyla_exmp

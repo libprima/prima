@@ -84,7 +84,6 @@ call cobyla(calcfc, 1_IK, x, f, cstrv)  ! This call will not print anything.
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call cobyla(calcfc, 1_IK, x, f, cstrv, rhobeg=1.0D-1, iprint=1, nf=nf, info=info, callback_fcn=callback_fcn)
-
+call cobyla(calcfc, 1_IK, x, f, cstrv, rhobeg=1.0_RP, iprint=1_IK, nf=nf, info=info, callback_fcn=callback_fcn)
 
 end program cobyla_exmp

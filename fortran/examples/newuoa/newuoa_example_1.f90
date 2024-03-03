@@ -61,7 +61,7 @@ program newuoa_exmp
 use newuoa_mod, only : newuoa
 
 ! The following line specifies which module provides CALFUN.
-use calfun_mod, only : RP, calfun, callback_fcn
+use calfun_mod, only : RP, IK, calfun, callback_fcn
 
 implicit none
 
@@ -80,7 +80,6 @@ call newuoa(calfun, x, f)  ! This call will not print anything.
 ! IPRINT, which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will
 ! take their default values coded in the solver.
 x = x0
-call newuoa(calfun, x, f, rhobeg=1.0D-1, iprint=1, nf=nf, info=info, callback_fcn=callback_fcn)
-
+call newuoa(calfun, x, f, rhobeg=1.0_RP, iprint=1_IK, nf=nf, info=info, callback_fcn=callback_fcn)
 
 end program newuoa_exmp

@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, May 30, 2023 PM06:33:27
+! Last Modified: Sunday, March 03, 2024 PM11:50:17
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -14,8 +14,9 @@ module calfun_mod
 
 implicit none
 private
-public :: RP, calfun
+public :: RP, IK, calfun
 integer, parameter :: RP = kind(0.0D0)
+integer, parameter :: IK = kind(0)
 
 contains
 
@@ -57,7 +58,7 @@ program uobyqa_exmp
 use uobyqa_mod, only : uobyqa
 
 ! The following line specifies which module provides CALFUN.
-use calfun_mod, only : RP, calfun
+use calfun_mod, only : RP, IK, calfun
 
 implicit none
 
@@ -73,6 +74,6 @@ call uobyqa(calfun, x, f)  ! This call will not print anything.
 ! which are optional. All the unspecified optional arguments (RHOEND, MAXFUN, etc.) will take their
 ! default values coded in the solver.
 x = [(real(i, RP) / real(n + 1, RP), i=1, n)]  ! Starting point
-call uobyqa(calfun, x, f, rhobeg=0.2_RP * x(1), iprint=1, nf=nf, info=info)
+call uobyqa(calfun, x, f, rhobeg=0.2_RP * x(1), iprint=1_IK, nf=nf, info=info)
 
 end program uobyqa_exmp
