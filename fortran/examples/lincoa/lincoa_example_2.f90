@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 03, 2024 PM11:48:23
+! Last Modified: Tuesday, March 05, 2024 AM09:42:08
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -17,6 +17,8 @@ private
 public :: RP, IK, calfun, setup
 integer, parameter :: RP = kind(0.0D0)
 integer, parameter :: IK = kind(0)
+! N.B.: We assume that PRIMA_REAL_PRECISION = 64 (double precision) and PRIMA_INTEGER_KIND = 0
+! (default kind). Revise RP and IK if this is not the case.
 
 contains
 

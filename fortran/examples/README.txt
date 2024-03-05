@@ -16,15 +16,15 @@ particular, PRIMA_REAL_PRECISION = 64 (double precision) and PRIMA_INTEGER_KIND 
 4. In the Makefiles, we impose Fortran 2018 standard in the compilation. It is our intention to be
 compliant with Fortran 2008 and above.
 
-5. As of June 2023, the examples run successfully with the following compilers.
-- AMD AOCC Flang 4.0.0
+5. As of March 2024, the examples run successfully with the following compilers on Ubuntu 22.04.
+- AMD AOCC Flang 4.1.0
 - Arm Fortran Compiler 22.1
-- Classic Flang 15.0.3
-- GNU gfortran 12.1.0
-- Intel ifort 2021.9.0
-- Intel ifx 2023.1.0
-- NAG Fortran Compiler Release 7.1
-- NVIDIA nvfortran 23.5
+- Classic Flang 17.0.2
+- GNU gfortran 13.1.0
+- Intel ifx 2024.0.2
+- Intel ifort 2021.11.1
+- NAG Fortran Compiler Release 7.1 (Hanzomon) Build 7143
+- NVIDIA nvfortran 24.1
 The following discontinued compilers are not supported: Absoft af95, g95, Oracle sunf95.
 
 Coded by Zaikun ZHANG (www.zhangzk.net).
