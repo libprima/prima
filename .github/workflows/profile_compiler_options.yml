@@ -123,6 +123,7 @@ jobs:
                 options.nr = 3;
                 prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'lincoa')
+                options.blacklist = {'HS105'};  % Classical LINCOA encounters a SEGFAULT when compiled with -O1.
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', '${{ matrix.competitor }}', options);
