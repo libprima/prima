@@ -63,7 +63,7 @@ int prima_init_options(prima_options_t *const options)
 
 
 // Function to check whether the problem matches the algorithm
-prima_rc_t prima_check_problem(const prima_problem_t problem, const int use_constr, const prima_algorithm_t algorithm)
+prima_rc_t prima_check_problem(const prima_problem_t problem, const int use_constr)
 {
     if (!problem.x0)
         return PRIMA_NULL_X0;
@@ -106,7 +106,7 @@ prima_rc_t prima_init_result(prima_result_t *const result, const prima_problem_t
             return PRIMA_MEMORY_ALLOCATION_FAILS;
         }
         for (int i = 0; i < problem.m_nlcon; i++)
-            result->nlconstr[i] = NAN;
+            result->nlconstr[i] = problem.nlconstr0 ? problem.nlconstr0[i] : NAN;
     }
 
     // nf: number of function evaluations
@@ -220,7 +220,7 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
 {
     int use_constr = (algorithm == PRIMA_COBYLA);
 
-    prima_rc_t info = prima_check_problem(problem, use_constr, algorithm);
+    prima_rc_t info = prima_check_problem(problem, use_constr);
 
     if (info == 0)
         info = prima_init_result(result, problem);

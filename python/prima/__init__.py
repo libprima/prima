@@ -124,10 +124,10 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=None, callb
     def constraint_function(x):
       values = np.array(nonlinear_constraint.fun(x), dtype=np.float64)
 
-      return np.concatenate((values - nonlinear_constraint.ub, [lbi - vi for lbi, vi in zip(nonlinear_constraint.lb, values) if lbi != -np.inf]))
+      return np.concatenate((values - nonlinear_constraint.ub, [lb_i - vi for lb_i, vi in zip(nonlinear_constraint.lb, values) if lb_i != -np.inf]))
     if options is None:
       options = {}
-    options['m_nlcon'] = len(nonlinear_constraint.lb) + len([lbi for lbi in nonlinear_constraint.lb if lbi != -np.inf])
+    options['m_nlcon'] = len(nonlinear_constraint.lb) + len([lb_i for lb_i in nonlinear_constraint.lb if lb_i != -np.inf])
     options['nlconstr0'] = constraint_function(x0)
     options['nlconstr0'] = np.array(options['nlconstr0'], dtype=np.float64)
     if 'f0' not in options: options['f0'] = fun(x0)

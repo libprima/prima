@@ -92,9 +92,10 @@ def separate_LC_into_eq_and_ineq(linear_constraint):
       else:
         A_ineq.append(linear_constraint.A[i])
         b_ineq.append(linear_constraint.ub[i])
-        # Flip the lb to to take format preferred by PRIMA
-        A_ineq.append( - linear_constraint.A[i])
-        b_ineq.append( - linear_constraint.lb[i])
+        # Flip the lb to to take format preferred by PRIMA, as long as it's not -inf
+        if linear_constraint.lb[i] != -np.inf:
+          A_ineq.append( - linear_constraint.A[i])
+          b_ineq.append( - linear_constraint.lb[i])
     # Convert to numpy arrays, or set to None if empty
     A_eq = np.array(A_eq, dtype=np.float64) if len(A_eq) > 0 else None
     b_eq = np.array(b_eq, dtype=np.float64) if len(b_eq) > 0 else None
