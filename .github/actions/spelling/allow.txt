@@ -2233,3 +2233,11 @@ autoselection
 auditwheel
 Cbuild
 Ceditable
+asarray
+jac
+lstsq
+nanmax
+nanmin
+prepdfo
+rcond
+SLSQP
