@@ -86,7 +86,7 @@ const char *prima_get_rc_string(const prima_rc_t rc);
  *         a NaN value can be passed to signal an evaluation error
  * data  : user data
  */
-typedef void (*prima_obj_t)(const double x[], double *f, const void *data);
+typedef void (*prima_obj_t)(const double x[], const double *f, const void *data);
 
 
 /*
@@ -99,7 +99,7 @@ typedef void (*prima_obj_t)(const double x[], double *f, const void *data);
  *          NaN values can be passed to signal evaluation errors
  * data  : user data
  */
-typedef void (*prima_objcon_t)(const double x[], double *f, double constr[], const void *data);
+typedef void (*prima_objcon_t)(const double x[], const double *f, double constr[], const void *data);
 
 
 /*
@@ -183,7 +183,7 @@ typedef struct {
 
 // Function to initialize the problem
 PRIMAC_API
-int prima_init_problem(prima_problem_t *problem, int n);
+int prima_init_problem(const prima_problem_t *problem, const int n);
 
 
 // Structure to hold the options
@@ -233,7 +233,7 @@ typedef struct {
 
 // Function to initialize the options
 PRIMAC_API
-int prima_init_options(prima_options_t *options);
+int prima_init_options(const prima_options_t *options);
 
 
 // Structure to hold the result
@@ -265,7 +265,7 @@ typedef struct {
 
 // Function to free the result
 PRIMAC_API
-int prima_free_result(prima_result_t *result);
+int prima_free_result(const prima_result_t *result);
 
 
 /*
@@ -277,7 +277,7 @@ int prima_free_result(prima_result_t *result);
  * return    : see prima_rc_t enum for return codes
  */
 PRIMAC_API
-int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, prima_result_t *result);
+int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, const prima_result_t *result);
 
 
 #ifdef __cplusplus
