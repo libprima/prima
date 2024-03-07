@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 22, 2024 PM03:28:51
+! Last Modified: Tuesday, March 05, 2024 PM10:49:12
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -777,7 +777,7 @@ end if
 if (DEBUGGING) then
     call assert(size(amat, 1) == size(x0) .and. size(amat, 2) == size(bvec), &
         & 'SIZE(AMAT) == [SIZE(X), SIZE(BVEC)]', srname)
-    call assert(all(matprod(x0, amat) - bvec <= max(1.0E-12_RP, 1.0E2 * EPS) * &
+    call assert(all(matprod(x0, amat) - bvec <= max(1.0E-12_RP, 1.0E2_RP * EPS) * &
         & (ONE + sum(abs(x0)) + sum(abs(bvec)))), 'The starting point is feasible', srname)
 end if
 end subroutine get_lincon

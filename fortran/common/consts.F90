@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, March 04, 2024 AM01:11:04
+! Last Modified: Friday, March 08, 2024 AM01:17:02
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -60,7 +60,13 @@ module consts_mod
 !--------------------------------------------------------------------------------------------------!
 
 ! Integer and real kinds. Unsupported kinds are negative.
-use, intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, REAL32, REAL64, REAL128
+use, intrinsic :: iso_fortran_env, only : INT16, INT32, INT64, SP => REAL32, DP => REAL64
+#if PRIMA_HP_AVAILABLE == 1
+use, intrinsic :: iso_fortran_env, only : HP => REAL16
+#endif
+#if PRIMA_QP_AVAILABLE == 1
+use, intrinsic :: iso_fortran_env, only : QP => REAL128
+#endif
 
 ! Standard IO units
 use, intrinsic :: iso_fortran_env, only : STDIN => INPUT_UNIT, STDOUT => OUTPUT_UNIT, STDERR => ERROR_UNIT
@@ -70,7 +76,13 @@ implicit none
 private
 public :: DEBUGGING
 public :: IK, IK_DFT, INT16, INT32, INT64
-public :: RP, RP_DFT, DP, SP, QP
+public :: RP, RP_DFT, DP, SP
+#if PRIMA_HP_AVAILABLE == 1
+public :: HP
+#endif
+#if PRIMA_QP_AVAILABLE == 1
+public :: QP
+#endif
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
 public :: REALMIN, EPS, TINYCV, REALMAX, FUNCMAX, CONSTRMAX, BOUNDMAX
 public :: SYMTOL_DFT, ORTHTOL_DFT
@@ -83,9 +95,6 @@ public :: MAXFUN_DIM_DFT, MAXHISTMEM, MIN_MAXFILT, MAXFILT_DFT, IPRINT_DFT
 logical, parameter :: DEBUGGING = (PRIMA_DEBUGGING == 1)  ! Whether we are in debugging mode
 integer, parameter :: IK_DFT = kind(0)  ! Default integer kind
 integer, parameter :: RP_DFT = kind(0.0)  ! Default real kind
-integer, parameter :: SP = REAL32  ! Kind for single precision
-integer, parameter :: DP = REAL64  ! Kind for double precision
-integer, parameter :: QP = REAL128  ! Kind for quadruple precision
 
 ! Define the integer kind to be used in the Fortran code.
 #if PRIMA_INTEGER_KIND  == 0
@@ -103,14 +112,16 @@ integer, parameter :: IK = IK_DFT
 ! Define the real kind to be used in the Fortran code.
 #if PRIMA_REAL_PRECISION == 0
 integer, parameter :: RP = RP_DFT
+#elif (PRIMA_REAL_PRECISION == 16 && PRIMA_HP_AVAILABLE == 1)
+integer, parameter :: RP = HP
 #elif PRIMA_REAL_PRECISION == 32
-integer, parameter :: RP = REAL32
+integer, parameter :: RP = SP
 #elif PRIMA_REAL_PRECISION == 64
-integer, parameter :: RP = REAL64
-#elif PRIMA_REAL_PRECISION == 128
-integer, parameter :: RP = REAL128
+integer, parameter :: RP = DP
+#elif (PRIMA_REAL_PRECISION == 128 && PRIMA_QP_AVAILABLE == 1)
+integer, parameter :: RP = QP
 #else
-integer, parameter :: RP = REAL64  ! Double precision
+integer, parameter :: RP = DP  ! Double precision
 #endif
 
 ! Define some frequently used numbers.
@@ -148,7 +159,9 @@ real(RP), parameter :: TINYCV = real(radix(ZERO), RP)**max(-200, MINE)  ! Normal
 ! FUNCMAX is used in the moderated extreme barrier. All function values are projected to the
 ! interval [-FUNCMAX, FUNCMAX] before passing to the solvers, and NaN is replaced with FUNCMAX.
 ! CONSTRMAX plays a similar role for constraints.
-real(RP), parameter :: FUNCMAX = real(radix(ZERO), RP)**min(100, MAXE / 2)  ! Normally, RADIX = 2.
+! TODO: Define FUNCMAX using RANGE instead of MAXE. Note that we need to update matlab/getmax.m accordingly.
+!!real(RP), parameter :: FUNCMAX = real(10.0_RP**max(4, min(30, range(ZERO) / 2)))
+real(RP), parameter :: FUNCMAX = real(radix(ZERO), RP)**max(13, min(100, MAXE / 2))  ! Normally, RADIX = 2.
 real(RP), parameter :: CONSTRMAX = FUNCMAX
 ! Any bound with an absolute value at least BOUNDMAX is considered as no bound.
 real(RP), parameter :: BOUNDMAX = QUART * REALMAX
@@ -171,36 +184,50 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 #if (defined __GFORTRAN__ || defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
 real(RP), parameter :: SYMTOL_DFT = REALMAX
 #elif (defined __FLANG && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
-real(RP), parameter :: SYMTOL_DFT = max(5.0E3 * EPS, 1.0E-10_RP)
+real(RP), parameter :: SYMTOL_DFT = max(5.0E3_RP * EPS, 10.0_RP**max(-10, -range(0.0_RP)))
 #elif (defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64)
-real(RP), parameter :: SYMTOL_DFT = max(5.0E1 * EPS, 1.0E-10_RP)
+real(RP), parameter :: SYMTOL_DFT = max(5.0E1_RP * EPS, 10.0_RP**max(-10, -range(0.0_RP)))
 #elif (defined __NAG_COMPILER_RELEASE && PRIMA_REAL_PRECISION > 64) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
-real(RP), parameter :: SYMTOL_DFT = max(1.0E1 * EPS, 1.0E-10_RP)
+real(RP), parameter :: SYMTOL_DFT = max(10.0_RP * EPS, 10.0_RP**max(-10, -range(0.0_RP)))
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO
 #endif
 
 ! ORTHTOL_DFT is the default tolerance for testing orthogonality of matrices.
 ! In some cases, due to compiler bugs, we need to disable the test. We signify such cases by setting
-! ORTHTOL_DFT to REALMAX. For instance, NAG Fortran Compiler Release 7.1(Hanzomon) Build 7143 is
-! buggy concerning half-precision floating-point numbers.
-#if (defined __NAG_COMPILER_RELEASE && PRIMA_REAL_PRECISION <= 16) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
+! ORTHTOL_DFT to REALMAX. For instance, NAG Fortran Compiler is buggy concerning half-precision
+! floating-point numbers before Release 7.2 Build 7201.
+#if (defined __NAG_COMPILER_RELEASE && __NAG_COMPILER_RELEASE <= 7200 && PRIMA_REAL_PRECISION <= 16) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
 real(RP), parameter :: ORTHTOL_DFT = REALMAX
 #else
 real(RP), parameter :: ORTHTOL_DFT = ZERO
 #endif
 
 ! Some default values
+! RHOBEG: initial value of the trust region radius. Should be about one tenth of the greatest
+! expected change to a variable.
 real(RP), parameter :: RHOBEG_DFT = ONE
-real(RP), parameter :: RHOEND_DFT = 1.0E-6_RP
+! RHOEND: final value of the trust region radius. Should indicate the accuracy required in the final
+! values of the variables.
+real(RP), parameter :: RHOEND_DFT = 10.0_RP**max(-6, -range(0.0_RP))  ! 1.0E-6
+! FTARGET: target value of the objective function. Solvers exit when finding a feasible point with
+! the objective function value no more than FTARGET.
 real(RP), parameter :: FTARGET_DFT = -REALMAX
+! CTOL: tolerance for constraint violation. A point with constraint violation <= CTOL is considered feasible.
 real(RP), parameter :: CTOL_DFT = sqrt(EPS)
-real(RP), parameter :: CWEIGHT_DFT = 1.0E8_RP
+! CWEIGHT: weight of constraint violation in the merit function used to select the output point.
+real(RP), parameter :: CWEIGHT_DFT = 10.0_RP**min(8, range(0.0_RP))  ! 1.0E8
+! ETA1: threshold of reduction ratio for shrinking the trust region radius.
 real(RP), parameter :: ETA1_DFT = TENTH
+! ETA2: threshold of reduction ratio for expanding the trust region radius.
 real(RP), parameter :: ETA2_DFT = 0.7_RP
+! GAMMA1: factor for shrinking the trust region radius.
 real(RP), parameter :: GAMMA1_DFT = HALF
+! GAMMA2: factor for expanding the trust region radius.
 real(RP), parameter :: GAMMA2_DFT = TWO
+! IPRINT: printing level. 0 means no printing.
 integer(IK), parameter :: IPRINT_DFT = 0
+! MAXFUN_DIM_DFT*N is the maximal number of function evaluations.
 integer(IK), parameter :: MAXFUN_DIM_DFT = 500
 
 ! Maximal amount of memory (Byte) allowed for XHIST, FHIST, CONHIST, CHIST, and the filters.

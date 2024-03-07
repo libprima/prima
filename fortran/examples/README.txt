@@ -17,11 +17,11 @@ particular, PRIMA_REAL_PRECISION = 64 (double precision) and PRIMA_INTEGER_KIND 
 compliant with Fortran 2008 and above.
 
 5. As of March 2024, the examples run successfully with the following compilers on Ubuntu 22.04.
-- AMD AOCC Flang 4.1.0
+- AMD AOCC Flang 4.2
 - Arm Fortran Compiler 23.10
-- Classic Flang 17.0.2
-- GNU gfortran 13.1.0
-- Intel ifx 2024.0.2
+- Classic Flang 17.0
+- GNU gfortran 13.1
+- Intel ifx 2024.0
 - Intel ifort 2021.11.1
 - NAG Fortran Compiler Release 7.1 (Hanzomon) Build 7143
 - NVIDIA nvfortran 24.1

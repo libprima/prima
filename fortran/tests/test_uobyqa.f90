@@ -38,7 +38,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, December 27, 2023 AM05:16:21
+! Last Modified: Thursday, March 07, 2024 PM02:41:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -163,7 +163,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         maxhist = maxfun
         ftarget = -REALMAX
         rhobeg = noisy(prob % Delta0)
-        rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 6.0_RP))
+        rhoend = max(1.0E-6_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 6.0_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
         x = noisy(prob % x0)
         orig_calfun => prob % calfun
@@ -206,7 +206,7 @@ else
                 end if
 
                 rhobeg = noisy(prob % Delta0)
-                rhoend = max(1.0E-6_RP, rhobeg * 1.0E1_RP**(6.0_RP * rand() - 5.0_RP))
+                rhoend = max(1.0E-6_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 5.0_RP))
                 if (rand() <= 0.2) then
                     rhoend = rhobeg
                 elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.

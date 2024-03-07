@@ -11,7 +11,7 @@ module trustregion_lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, November 03, 2023 PM02:59:49
+! Last Modified: Tuesday, March 05, 2024 PM10:41:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -140,7 +140,7 @@ if (DEBUGGING) then
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    orthtol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    orthtol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n, RP)))
     call assert(isorth(qfac, orthtol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)

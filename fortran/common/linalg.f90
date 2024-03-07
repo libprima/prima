@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, March 04, 2024 AM01:02:33
+! Last Modified: Thursday, March 07, 2024 PM01:40:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -652,8 +652,8 @@ if (n <= 0) then ! Of course, N < 0 should never happen.
     return
 end if
 
-! Zaikun 20220527: With the following code, the classic flang 15.0.3, Huawei Bisheng flang 1.3.3,
-! NVIDIA nvfortran 23.1, and AOCC 4.0.0 flang, and Arm Fortran Compiler version 22.1 raise a false
+! Zaikun 20220527: With the following code, the classic flang 17.0, Huawei Bisheng flang 1.3.3,
+! NVIDIA nvfortran 24.1, and AOCC 4.2 flang, and Arm Fortran Compiler version 23.1 raise a false
 ! positive error of out-bound subscripts when invoked with the -Mbounds flag.
 ! See https://github.com/flang-compiler/flang/issues/1238
 if (istril(A)) then
@@ -682,7 +682,7 @@ end if
 if (DEBUGGING) then
     call assert(size(x) == size(A, 2), 'SIZE(X) == SIZE(A, 2)', srname)
     if (is_finite(sum(abs(A)) + sum(abs(b)))) then
-        tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n + 1_IK, RP)))
+        tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n + 1_IK, RP)))
         call assert(norm(matprod(A, x) - b) <= tol * maxval([ONE, norm(b), norm(x)]), 'A*X == B', srname)
     end if
 end if
@@ -767,7 +767,7 @@ if (DEBUGGING) then
     call assert(size(B, 1) == n .and. size(B, 2) == n, 'SIZE(B) == [N, N]', srname)
     call assert(istril(B) .or. .not. istril(A), 'If A is lower triangular, then so is B', srname)
     call assert(istriu(B) .or. .not. istriu(A), 'If A is upper triangular, then so is B', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(n + 1_IK, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(10, range(0.0_RP)) * EPS * real(n + 1_IK, RP)))
     call assert(isinv(A, B, tol), 'B = A^{-1}', srname)
 end if
 end function inv
@@ -987,7 +987,7 @@ if (DEBUGGING) then
     if (present(Q)) then
         call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
             & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
-        tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(max(m, n) + 1_IK, RP)))
+        tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(6, range(0.0_RP)) * EPS * real(max(m, n) + 1_IK, RP)))
         call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     end if
     if (present(Rdiag)) then
@@ -1090,7 +1090,7 @@ if (DEBUGGING) then
     call assert(m >= n .and. n >= 0, 'M >= N >= 0', srname)
     call assert(size(b) == m, 'SIZE(B) == M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == n, 'SIZE(Q) == [M, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS * real(m + 1_IK, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(6, range(0.0_RP)) * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(size(R, 1) == n .and. size(R, 2) == n, 'SIZE(R) == [N, N]', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
@@ -1434,7 +1434,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     if (is_finite(norm(x)) .and. is_finite(norm(v))) then
-        tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
+        tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(6, range(0.0_RP)) * EPS))
         call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
         call assert(norm(x - y) <= (ONE + tol) * norm(x), 'NORM(X - Y) <= NORM(X)', srname)
         ! The following test may not be passed.
@@ -1501,7 +1501,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     if (is_finite(norm(x)) .and. is_finite(sum(V**2))) then
-        tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
+        tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(6, range(0.0_RP)) * EPS))
         call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
         call assert(norm(x - y) <= (ONE + tol) * norm(x), 'NORM(X - Y) <= NORM(X)', srname)
         ! The following test may not be passed.
@@ -1671,7 +1671,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(G)), 'G is finite', srname)
     call assert(abs(G(1, 1) - G(2, 2)) + abs(G(1, 2) + G(2, 1)) <= 0, &
         & 'G(1,1) == G(2,2), G(1,2) = -G(2,1)', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E6_RP * EPS))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(6, range(0.0_RP)) * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
     if (all(is_finite(x) .and. abs(x) < sqrt(REALMAX / 2.1_RP))) then
         r = norm(x)
@@ -1851,7 +1851,7 @@ end if
 is_symmetric = .true.
 if (size(A, 1) /= size(A, 2)) then
     is_symmetric = .false.
-elseif (SYMTOL_DFT < REALMAX) then
+elseif (SYMTOL_DFT < 0.9_RP * REALMAX) then
     is_symmetric = (.not. any(abs(A - transpose(A)) > tol_loc * max(maxval(abs(A)), ONE))) .and. &
         & all(is_nan(A) .eqv. is_nan(transpose(A)))
 end if
@@ -2756,7 +2756,7 @@ end if
 if (DEBUGGING) then
     call assert(size(H, 1) == n .and. size(H, 2) == n, 'SIZE(H) == [N, N]', srname)
     call assert(isbanded(H, 1_IK, n - 1_IK), 'H is a Hessenberg matrix', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 1.0E10_RP * EPS * real(n, RP)))
+    tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(10, range(0.0_RP)) * EPS * real(n, RP)))
     call assert(issymmetric(H, tol) .or. .not. issymmetric(A), 'H is symmetric if so is A', srname)
     if (present(Q)) then
         call assert(size(Q, 1) == n .and. size(Q, 2) == n, 'SIZE(Q) == [N, N]', srname)

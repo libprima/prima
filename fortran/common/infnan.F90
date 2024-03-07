@@ -63,7 +63,7 @@ module infnan_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Saturday, October 07, 2023 AM11:26:38
+! Last Modified: Tuesday, February 27, 2024 PM10:56:47
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: huge_mod, only : huge_value
@@ -72,16 +72,21 @@ implicit none
 private
 public :: is_finite, is_posinf, is_neginf, is_inf, is_nan
 
-#if PRIMA_QP_AVAILABLE == 1
-
-interface is_nan
-    module procedure is_nan_sp, is_nan_dp, is_nan_qp
-end interface is_nan
-
-#else
-
 interface is_nan
     module procedure is_nan_sp, is_nan_dp
+end interface is_nan
+
+
+#if PRIMA_HP_AVAILABLE == 1
+
+interface is_nan
+    module procedure is_nan_hp
+end interface is_nan
+#endif
+
+#if PRIMA_QP_AVAILABLE == 1
+interface is_nan
+    module procedure is_nan_qp
 end interface is_nan
 
 #endif
@@ -111,6 +116,22 @@ logical :: y
 y = ((.not. is_finite(x)) .and. (.not. is_inf(x)))
 y = ((.not. is_inf(x)) .and. (.not. (x <= huge_value(x) .and. x >= -huge_value(x)))) .or. y
 end function is_nan_dp
+
+
+#if PRIMA_HP_AVAILABLE == 1
+
+pure elemental function is_nan_hp(x) result(y)
+use, non_intrinsic :: consts_mod, only : HP
+implicit none
+real(HP), intent(in) :: x
+logical :: y
+!y = ((.not. (x <= huge_value(x) .and. x >= -huge_value(x)))) .and. (.not. abs(x) > huge_value(x))
+!y = (.not. is_finite(x) .and. .not. (abs(x) > huge_value(x))) .or. y
+y = ((.not. is_finite(x)) .and. (.not. is_inf(x)))
+y = ((.not. is_inf(x)) .and. (.not. (x <= huge_value(x) .and. x >= -huge_value(x)))) .or. y
+end function is_nan_hp
+
+#endif
 
 
 #if PRIMA_QP_AVAILABLE == 1

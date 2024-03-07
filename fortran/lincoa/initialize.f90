@@ -8,7 +8,7 @@ module initialize_lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, January 26, 2024 PM07:20:08
+! Last Modified: Friday, March 08, 2024 AM12:37:13
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -278,7 +278,7 @@ if (DEBUGGING) then
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
     ! LINCOA always starts with a feasible point.
     if (m > 0) then
-        call assert(all(matprod(xpt(:, 1), amat) - b <= max(1.0E-12_RP, 1.0E2 * EPS) * &
+        call assert(all(matprod(xpt(:, 1), amat) - b <= max(1.0E-12_RP, 1.0E2_RP * EPS) * &
             & (ONE + sum(abs(xpt(:, 1))) + sum(abs(b)))), 'The starting point is feasible', srname)
     end if
 end if

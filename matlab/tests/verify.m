@@ -62,7 +62,7 @@ try
     options.no_classical = true;
 
     % Be verbose if required or in CI.
-    options.verbose = ((isfield(options, 'verbose') && options.verbose) || (isenv('CI') && strcmpi(getenv('CI'), 'true')));
+    options.verbose = ((isfield(options, 'verbose') && options.verbose) || strcmpi(getenv('CI'), 'true'));
 
     % Determine the integer kind to use: 0, 16, 32, or 64, alternating every 4 weeks.
     if isfield(options, 'yw')

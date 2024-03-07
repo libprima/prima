@@ -12,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, February 14, 2024 PM01:47:26
+! Last Modified: Tuesday, March 05, 2024 PM10:40:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -140,7 +140,7 @@ if (DEBUGGING) then
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
@@ -443,7 +443,7 @@ if (DEBUGGING) then
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(.not. any(iact(1:nact) == l), 'L is not in IACT(1:NACT)', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
@@ -536,7 +536,7 @@ if (DEBUGGING) then
     call assert(icon >= 1 .and. icon <= nact, '1 <= ICON <= NACT', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)

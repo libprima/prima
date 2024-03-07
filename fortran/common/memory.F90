@@ -13,7 +13,7 @@ module memory_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, October 18, 2023 PM05:16:36
+! Last Modified: Wednesday, February 28, 2024 AM12:20:23
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -23,6 +23,9 @@ public :: safealloc
 
 interface cstyle_sizeof
     module procedure size_of_sp, size_of_dp
+#if PRIMA_HP_AVAILABLE == 1
+    module procedure size_of_hp
+#endif
 #if PRIMA_QP_AVAILABLE == 1
     module procedure size_of_qp
 #endif
@@ -34,6 +37,9 @@ interface safealloc
     module procedure alloc_rvector_sp, alloc_rmatrix_sp
     module procedure alloc_rvector_dp, alloc_rmatrix_dp
     module procedure alloc_character
+#if PRIMA_HP_AVAILABLE == 1
+    module procedure alloc_rvector_hp, alloc_rmatrix_hp
+#endif
 #if PRIMA_QP_AVAILABLE == 1
     module procedure alloc_rvector_qp, alloc_rmatrix_qp
 #endif
@@ -73,6 +79,25 @@ integer(IK) :: y
 
 y = int(storage_size(x) / 8, kind(y))
 end function size_of_dp
+
+
+#if PRIMA_HP_AVAILABLE == 1
+
+pure function size_of_hp(x) result(y)
+!--------------------------------------------------------------------------------------------------!
+! Return the storage size of X in Bytes, X being a REAL(HP) scalar.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : HP, IK
+implicit none
+! Inputs
+real(HP), intent(in) :: x
+! Outputs
+integer(IK) :: y
+
+y = int(storage_size(x) / 8, kind(y))
+end function size_of_hp
+
+#endif
 
 
 #if PRIMA_QP_AVAILABLE == 1
@@ -239,6 +264,82 @@ call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname
 call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == m, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == M', srname)
 call validate(lbound(x, 2) == 1 .and. ubound(x, 2) == n, 'LBOUND(X, 2) == 1, UBOUND(X, 2) == N', srname)
 end subroutine alloc_rmatrix_dp
+
+
+#if PRIMA_HP_AVAILABLE == 1
+
+subroutine alloc_rvector_hp(x, n)
+!--------------------------------------------------------------------------------------------------!
+! Allocate space for an allocatable REAL(HP) vector X, whose size is N after allocation.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : HP, IK
+use, non_intrinsic :: debug_mod, only : validate
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: n
+
+! Outputs
+real(HP), allocatable, intent(out) :: x(:)
+
+! Local variables
+integer :: alloc_status
+character(len=*), parameter :: srname = 'ALLOC_RVECTOR_HP'
+
+! Preconditions (checked even not debugging)
+call validate(n >= 0, 'N >= 0', srname)
+
+! According to the Fortran 2003 standard, when a procedure is invoked, any allocated ALLOCATABLE
+! object that is an actual argument associated with an INTENT(OUT) ALLOCATABLE dummy argument is
+! deallocated. So the following line is unnecessary since F2003 as X is INTENT(OUT):
+! !if (allocated(x)) deallocate (x)
+! Allocate memory for X. Initialize X to a compiler-independent strange value.
+allocate (x(1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = -huge(x)  ! Costly if X is of a large size.
+
+! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(size(x) == n, 'SIZE(X) == N', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == n, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == N', srname)
+end subroutine alloc_rvector_hp
+
+
+subroutine alloc_rmatrix_hp(x, m, n)
+!--------------------------------------------------------------------------------------------------!
+! Allocate space for an allocatable REAL(HP) matrix X, whose size is (M, N) after allocation.
+!--------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : HP, IK
+use, non_intrinsic :: debug_mod, only : validate
+implicit none
+
+! Inputs
+integer(IK), intent(in) :: m, n
+
+! Outputs
+real(HP), allocatable, intent(out) :: x(:, :)
+
+! Local variables
+integer :: alloc_status
+character(len=*), parameter :: srname = 'ALLOC_RMATRIX_HP'
+
+! Preconditions (checked even not debugging)
+call validate(m >= 0 .and. n >= 0, 'M >= 0, N >= 0', srname)
+
+! !if (allocated(x)) deallocate (x)  ! Unnecessary in F03 since X is INTENT(OUT)
+! Allocate memory for X. Initialize X to a compiler-independent strange value.
+allocate (x(1:m, 1:n), stat=alloc_status)  ! Absoft does not support the SOURCE keyword as of 2022.
+x = -huge(x)  ! Costly if X is of a large size.
+
+! Postconditions (checked even not debugging)
+call validate(alloc_status == 0, 'Memory allocation succeeds (ALLOC_STATUS == 0)', srname)
+call validate(allocated(x), 'X is allocated', srname)
+call validate(size(x, 1) == m .and. size(x, 2) == n, 'SIZE(X) == [M, N]', srname)
+call validate(lbound(x, 1) == 1 .and. ubound(x, 1) == m, 'LBOUND(X, 1) == 1, UBOUND(X, 1) == M', srname)
+call validate(lbound(x, 2) == 1 .and. ubound(x, 2) == n, 'LBOUND(X, 2) == 1, UBOUND(X, 2) == N', srname)
+end subroutine alloc_rmatrix_hp
+
+#endif
 
 
 #if PRIMA_QP_AVAILABLE == 1

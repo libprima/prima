@@ -9,33 +9,13 @@ module inf_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Friday, October 06, 2023 PM07:30:36
+! Last Modified: Tuesday, February 27, 2024 PM10:57:47
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: huge_mod, only : huge_value
 implicit none
 private
 public :: is_finite, is_posinf, is_neginf, is_inf
-
-#if PRIMA_QP_AVAILABLE == 1
-
-interface is_finite
-    module procedure is_finite_sp, is_finite_dp, is_finite_qp
-end interface is_finite
-
-interface is_posinf
-    module procedure is_posinf_sp, is_posinf_dp, is_posinf_qp
-end interface is_posinf
-
-interface is_neginf
-    module procedure is_neginf_sp, is_neginf_dp, is_neginf_qp
-end interface is_neginf
-
-interface is_inf
-    module procedure is_inf_sp, is_inf_dp, is_inf_qp
-end interface is_inf
-
-#else
 
 interface is_finite
     module procedure is_finite_sp, is_finite_dp
@@ -51,6 +31,46 @@ end interface is_neginf
 
 interface is_inf
     module procedure is_inf_sp, is_inf_dp
+end interface is_inf
+
+
+#if PRIMA_HP_AVAILABLE == 1
+
+interface is_finite
+    module procedure is_finite_hp
+end interface is_finite
+
+interface is_posinf
+    module procedure is_posinf_hp
+end interface is_posinf
+
+interface is_neginf
+    module procedure is_neginf_hp
+end interface is_neginf
+
+interface is_inf
+    module procedure is_inf_hp
+end interface is_inf
+
+#endif
+
+
+#if PRIMA_QP_AVAILABLE == 1
+
+interface is_finite
+    module procedure is_finite_qp
+end interface is_finite
+
+interface is_posinf
+    module procedure is_posinf_qp
+end interface is_posinf
+
+interface is_neginf
+    module procedure is_neginf_qp
+end interface is_neginf
+
+interface is_inf
+    module procedure is_inf_qp
 end interface is_inf
 
 #endif
@@ -122,6 +142,43 @@ real(DP), intent(in) :: x
 logical :: y
 y = (abs(x) > huge_value(x))
 end function is_inf_dp
+
+
+#if PRIMA_HP_AVAILABLE == 1
+
+pure elemental function is_finite_hp(x) result(y)
+use, non_intrinsic :: consts_mod, only : HP
+implicit none
+real(HP), intent(in) :: x
+logical :: y
+y = (x <= huge_value(x) .and. x >= -huge_value(x))
+end function is_finite_hp
+
+pure elemental function is_posinf_hp(x) result(y)
+use, non_intrinsic :: consts_mod, only : HP
+implicit none
+real(HP), intent(in) :: x
+logical :: y
+y = (abs(x) > huge_value(x)) .and. (x > 0)
+end function is_posinf_hp
+
+pure elemental function is_neginf_hp(x) result(y)
+use, non_intrinsic :: consts_mod, only : HP
+implicit none
+real(HP), intent(in) :: x
+logical :: y
+y = (abs(x) > huge_value(x)) .and. (x < 0)
+end function is_neginf_hp
+
+pure elemental function is_inf_hp(x) result(y)
+use, non_intrinsic :: consts_mod, only : HP
+implicit none
+real(HP), intent(in) :: x
+logical :: y
+y = (abs(x) > huge_value(x))
+end function is_inf_hp
+
+#endif
 
 
 #if PRIMA_QP_AVAILABLE == 1

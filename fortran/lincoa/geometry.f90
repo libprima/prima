@@ -8,7 +8,7 @@ module geometry_lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, October 03, 2023 AM10:45:07
+! Last Modified: Tuesday, March 05, 2024 PM10:43:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -327,7 +327,7 @@ if (DEBUGGING) then
     call assert(size(bmat, 1) == n .and. size(bmat, 2) == npt + n, 'SIZE(BMAT) == [N, NPT+N]', srname)
     call assert(delbar > 0, 'DELBAR> 0', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E8_RP * EPS * real(n, RP)))
+    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
     call assert(size(rescon) == m, 'SIZE(RESCON) == M', srname)

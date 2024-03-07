@@ -8,23 +8,31 @@ module huge_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Friday, October 06, 2023 PM07:30:09
+! Last Modified: Tuesday, February 27, 2024 PM11:02:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
 public :: huge_value
 
+interface huge_value
+    module procedure huge_value_sp, huge_value_dp
+end interface huge_value
+
+
+#if PRIMA_HP_AVAILABLE == 1
+
+interface huge_value
+    module procedure huge_value_hp
+end interface huge_value
+
+#endif
+
+
 #if PRIMA_QP_AVAILABLE == 1
 
 interface huge_value
-    module procedure huge_value_sp, huge_value_dp, huge_value_qp
-end interface huge_value
-
-#else
-
-interface huge_value
-    module procedure huge_value_sp, huge_value_dp
+    module procedure huge_value_qp
 end interface huge_value
 
 #endif
@@ -48,6 +56,16 @@ real(DP), intent(in) :: x
 real(DP) :: y
 y = huge(x)
 end function huge_value_dp
+
+#if PRIMA_HP_AVAILABLE == 1
+pure elemental function huge_value_hp(x) result(y)
+use, non_intrinsic :: consts_mod, only : HP
+implicit none
+real(HP), intent(in) :: x
+real(HP) :: y
+y = huge(x)
+end function huge_value_hp
+#endif
 
 #if PRIMA_QP_AVAILABLE == 1
 pure elemental function huge_value_qp(x) result(y)

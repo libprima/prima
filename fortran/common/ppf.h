@@ -11,8 +11,8 @@
  * PRIMA_FORTRAN_STANDARD   which Fortran standard to follow: 2008, 2018, 2023
  * PRIMA_RELEASED           released or not: 1, 0
  * PRIMA_DEBUGGING          debug or not: 0, 1
- * PRIMA_INTEGER_KIND       the integer kind to be used: 0, 32, 64, 16
- * PRIMA_REAL_PRECISION     the real precision to be used: 64, 32, 128, 0
+ * PRIMA_INTEGER_KIND       the integer kind to be used: 0, 16, 32, 64
+ * PRIMA_REAL_PRECISION     the real precision to be used: 64, 16, 32, 128, 0
  * PRIMA_QP_AVAILABLE       quad precision available or not: 0, 1
  * PRIMA_MAX_HIST_MEM_MB    maximal MB memory for computation history: 300
  * PRIMA_AGGRESSIVE_OPTIONS compile the code with aggressive options: 0, 1
@@ -99,24 +99,43 @@
 
 /******************************************************************************/
 /* Which real kind to use?
- * 0 = default REAL (SINGLE PRECISION), 32 = REAL*4, 64 = REAL*8, 128 = REAL*16.
+ * 0 = default REAL (SINGLE PRECISION), 16 = REAL*2, 32 = REAL*4, 64 = REAL*8,
+ * 128 = REAL*16.
  * Make sure that your compiler supports the selected kind.  Note the following:
  * 1. The default REAL (i.e., 0) is the single-precision REAL.
  * 2. Fortran standards guarantee that 0, 32, and 64 are supported, but not 128.
- * 3. If you set PRIMA_REAL_PRECISION to 128, then set PRIMA_QP_AVAILABLE to 1.*/
+ * 3. If you set PRIMA_REAL_PRECISION to 16, then set PRIMA_HP_AVAILABLE to 1.
+ * 4. If you set PRIMA_REAL_PRECISION to 128, then set PRIMA_QP_AVAILABLE to 1.*/
 #if !defined PRIMA_REAL_PRECISION
 #define PRIMA_REAL_PRECISION 64
 #endif
 
+/* Is half precision available on this platform (compiler, hardware ...)? */
+/* Set PRIMA_HP_AVAILABLE to 1 and PRIMA_REAL_PRECISION to 16 if REAL*2 is
+ * available and you REALLY intend to use it. DO NOT DO IT IF NOT SURE. */
+#if !defined PRIMA_HP_AVAILABLE
+#if (defined __NAG_COMPILER_RELEASE && __NAG_COMPILER_RELEASE > 7200)
+#define PRIMA_HP_AVAILABLE 1
+#else
+#define PRIMA_HP_AVAILABLE 0
+#endif
+#endif
+
+/* Revise PRIMA_REAL_PRECISION according to PRIMA_HP_AVAILABLE . */
+#if PRIMA_HP_AVAILABLE != 1 && PRIMA_REAL_PRECISION < 32
+#undef PRIMA_REAL_PRECISION
+#define PRIMA_REAL_PRECISION 32
+#endif
+
 /* Is quad precision available on this platform (compiler, hardware ...)? */
 /* Note:
- * 1. Not all platforms support REAL128. For example, pgfortran 19 does not.
- * 2. It is not guaranteed that REAL128 has a wider range than REAL64. For
- *    example, REAL128 of nagfor 7.0 has a range of 291, while REAL64
+ * 1. Not all platforms support REAL*16. For example, pgfortran 19 does not.
+ * 2. It is not guaranteed that REAL*16 has a wider range than REAL*8. For
+ *    example, REAL*16 of nagfor 7.0 has a range of 291, while REAL*8
  *    has a range of 307.
- * 3. It is rarely a good idea to use REAL128 as the working precision,
+ * 3. It is rarely a good idea to use REAL*16 as the working precision,
  *    which is probably inefficient and unnecessary.
- * 4. Set PRIMA_QP_AVAILABLE to 1 and PRIMA_REAL_PRECISION to 128 if REAL128
+ * 4. Set PRIMA_QP_AVAILABLE to 1 and PRIMA_REAL_PRECISION to 128 if REAL*16
  *    is available and you REALLY intend to use it. DO NOT DO IT IF NOT SURE. */
 #if !defined PRIMA_QP_AVAILABLE
 #define PRIMA_QP_AVAILABLE 0
@@ -135,7 +154,7 @@
  * The maximal supported value is 2000, as 2000 M = 2*10^9 = maximum of INT32.
  * N.B.: A big value (even < 2000) may lead to SEGFAULTs due to large arrays. */
 #if !defined PRIMA_MAX_HIST_MEM_MB
-#define PRIMA_MAX_HIST_MEM_MB 300  /* 1MB > 10^5*REAL64. 100 can be too small.*/
+#define PRIMA_MAX_HIST_MEM_MB 300  /* 1MB > 10^5*DOUBLE. 100 can be too small.*/
 #endif
 /******************************************************************************/
 
