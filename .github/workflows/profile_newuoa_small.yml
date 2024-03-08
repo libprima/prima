@@ -77,7 +77,7 @@ jobs:
 
       - name: Set up MATLAB
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' }}
-        uses: matlab-actions/setup-matlab@v2.0.0
+        uses: matlab-actions/setup-matlab@v2.1.0
         with:
           release: ${{ matrix.matlab }}
           cache: true
