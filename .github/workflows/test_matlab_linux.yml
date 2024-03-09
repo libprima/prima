@@ -2,7 +2,7 @@ name: Test MATLAB, Linux
 
 on:
   # Trigger the workflow on push or pull request
-  push:
+  #PUSH:
   workflow_dispatch:
     inputs:
       git-ref:
