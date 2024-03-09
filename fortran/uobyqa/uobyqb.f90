@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 25, 2024 PM05:58:13
+! Last Modified: Saturday, March 09, 2024 PM03:34:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -353,7 +353,7 @@ do tr = 1, maxtr
     ! checking whether the interpolation error bound in (28) is (sufficiently) small. If the bound
     ! is small, then set ACCURATE_MOD to TRUE. Otherwise, it identifies a "bad" interpolation point
     ! that makes a significant contribution to the bound, with a preference to the interpolation
-    ! points that are a far away from the current trust-region center. Such a point will be replaced
+    ! points that are far away from the current trust-region center. Such a point will be replaced
     ! with a new point obtained by the geometry step. If all the interpolation points are close
     ! enough to the trust-region center, then they are all considered to be good.
     ! 3. Our implementation defines ACCURATE_MOD by a method from NEWUOA and BOBYQA, which is also
