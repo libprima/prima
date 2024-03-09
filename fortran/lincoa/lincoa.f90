@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 09, 2024 PM01:31:39
+! Last Modified: Saturday, March 09, 2024 PM01:43:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -761,7 +761,7 @@ bvec(mxl + mxu + 1:m) = bvec(mxl + mxu + 1:m) / Anorm
 deallocate (ixl, ixu, ieq, iineq, Anorm)
 
 ! Print a warning if the starting point is sufficiently infeasible and the constraints are modified.
-smallx = TEN**max(-6, MAXPOW10) * rhoend
+smallx = TEN**max(-6, -MAXPOW10) * rhoend
 constr_modified = (any(x0 + smallx < xl) .or. any(x0 - smallx > xu) .or. &
     & any(abs(Aeqx0 - beq) > smallx * Aeq_norm) .or. any(Aineqx0 - bineq > smallx * Aineq_norm))
 if (constr_modified) then
