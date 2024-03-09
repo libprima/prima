@@ -1,4 +1,4 @@
-from prima import minimize, NonlinearConstraint as NLC, PRIMAMessage
+from prima import minimize, LinearConstraint as LC, NonlinearConstraint as NLC, PRIMAMessage
 from objective import fun
 import numpy as np
 import pytest
@@ -73,8 +73,7 @@ def test_iprint(capfd):
     res = minimize(fun, x0, options=options)
     assert fun.result_point_and_value_are_optimal(res)
     outerr = capfd.readouterr()
-    assert outerr.out == '''No bounds or constraints detected, applying NEWUOA
-
+    assert outerr.out == '''
 Return from NEWUOA because the trust region radius reaches its lower bound.
 Number of function values = 23   Least value of F =  0.000000000000000E+000
 The corresponding X is:  5.000000000000000E+000   4.000000000000000E+000
@@ -122,3 +121,31 @@ def test_rhoend():
     # With a smaller rhoend we have a larger tolerance for the final
     # trust region radius, and so we should converge more quickly
     assert res_with_rhoend.nfev < res_without_rhoend.nfev
+
+
+@pytest.mark.parametrize("method", ["NEWUOA", "BOBYQA", "LINCOA", "COBYLA"])
+def test_quiet(capfd, method):
+    nlc = NLC(lambda x: np.array([x[0]**2, x[1]**2]), lb=[25]*2, ub=[100]*2)
+    lc = LC(np.array([[1, 1],[1, -1]]), lb=[0, 0], ub=[8, 2])
+    bounds = ([0, 3], [0, 3])
+    x0 = [0.0] * 2
+    options = {'quiet': False}
+    if method == "NEWUOA":
+        res = minimize(fun, x0, options=options)
+    elif method == "BOBYQA":
+        res = minimize(fun, x0, bounds=bounds, options=options)
+    elif method == "LINCOA":
+        res = minimize(fun, x0, constraints=lc, options=options)
+    elif method == "COBYLA":
+        res = minimize(fun, x0, constraints=nlc, options=options)
+    outerr = capfd.readouterr()
+    if method == "NEWUOA":
+        assert outerr.out == "No bounds or constraints detected, applying NEWUOA\n"
+    elif method == "BOBYQA":
+        assert outerr.out == "Bounds without linear or nonlinear constraints detected, applying BOBYQA\n"
+    elif method == "LINCOA":
+        assert outerr.out == "Linear constraints detected without nonlinear constraints, applying LINCOA\n"
+    elif method == "COBYLA":
+        assert outerr.out == "Nonlinear constraints detected, applying COBYLA\n"
+    assert outerr.err == ''
+    

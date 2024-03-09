@@ -60,6 +60,10 @@ def process_nl_constraints(x0, nlcs, options):
                 constraints.append(constraints_i)
         return np.array(constraints)
     
+    # TODO: Incorporate the handling of lb/ub into the nlc_fun
+    # And then return the constraint function. Options dict will contain
+    # m_nlcon and f0/nlconstr0
+    
     return NonlinearConstraint(nlc_fun, lb=lb, ub=ub)
 
     

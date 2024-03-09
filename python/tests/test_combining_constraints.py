@@ -3,7 +3,7 @@ import numpy as np
 from objective import fun
 
 
-def test_providing_linear_and_nonlinear_constraints(capfd):
+def test_providing_linear_and_nonlinear_constraints():
     nlc = prima_NLC(lambda x: x[0]**2, lb=[25], ub=[100])
     lc = prima_LC(np.array([1,1]), lb=10, ub=15)
     x0 = [0, 0]
@@ -11,12 +11,10 @@ def test_providing_linear_and_nonlinear_constraints(capfd):
     assert np.isclose(res.x[0], 5.5, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[1], 4.5, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.fun, 0.5, atol=1e-6, rtol=1e-6)
-    outerr = capfd.readouterr()
-    assert outerr.out == "Nonlinear constraints detected, applying COBYLA\n"
-    assert outerr.err == ''
+    assert res.method == "cobyla"
 
 
-def test_providing_bounds_and_linear_constraints(capfd):
+def test_providing_bounds_and_linear_constraints():
     lc = prima_LC(np.array([1,1]), lb=10, ub=15)
     bounds = prima_Bounds(1, 1)
     x0 = [0, 0]
@@ -24,12 +22,10 @@ def test_providing_bounds_and_linear_constraints(capfd):
     assert np.isclose(res.x[0], 1, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[1], 9, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.fun, 41, atol=1e-6, rtol=1e-6)
-    outerr = capfd.readouterr()
-    assert outerr.out == "Linear constraints detected without nonlinear constraints, applying LINCOA\n"
-    assert outerr.err == ''
+    assert res.method == "lincoa"
 
 
-def test_providing_bounds_and_nonlinear_constraints(capfd):
+def test_providing_bounds_and_nonlinear_constraints():
     nlc = prima_NLC(lambda x: x[0]**2, lb=[25], ub=[100])
     bounds = prima_Bounds([None, 1], [None, 1])
     x0 = [0, 0]
@@ -37,14 +33,12 @@ def test_providing_bounds_and_nonlinear_constraints(capfd):
     assert np.isclose(res.x[0], 5, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[1], 1, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.fun, 9, atol=1e-6, rtol=1e-6)
-    outerr = capfd.readouterr()
-    assert outerr.out == "Nonlinear constraints detected, applying COBYLA\n"
-    assert outerr.err == ''
+    assert res.method == "cobyla"
 
 
 # This test is re-used for the compatibility tests, hence the extra arguments and their
 # default values
-def test_providing_bounds_and_linear_and_nonlinear_constraints(capfd, minimize=prima_minimize, NLC=prima_NLC, LC=prima_LC, Bounds=prima_Bounds, package='prima'):
+def test_providing_bounds_and_linear_and_nonlinear_constraints(minimize=prima_minimize, NLC=prima_NLC, LC=prima_LC, Bounds=prima_Bounds, package='prima'):
     # This test needs a 3 variable objective function so that we can check that the
     # bounds and constraints are all active
     def newfun(x):
@@ -79,7 +73,5 @@ def test_providing_bounds_and_linear_and_nonlinear_constraints(capfd, minimize=p
     assert np.isclose(res.x[1], 1, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[2], 3.5, atol=1e-3, rtol=1e-3)
     assert np.isclose(res.fun, 9.5, atol=1e-3, rtol=1e-3)
-    if package == 'prima':
-        outerr = capfd.readouterr()
-        assert outerr.out == "Nonlinear constraints detected, applying COBYLA\n"
-        assert outerr.err == ''
+    if package == 'prima' or package == 'pdfo':
+        assert res.method == "cobyla"

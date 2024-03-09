@@ -30,7 +30,7 @@ class SelfCleaningPyObject {
 
 struct PRIMAResult {
     // Construct PRIMAResult from prima_result_t
-    PRIMAResult(const prima_result_t& result, const int num_vars, const int num_constraints)  :
+    PRIMAResult(const prima_result_t& result, const int num_vars, const int num_constraints, const std::string method)  :
     x(num_vars, result.x),
     success(prima_is_success(result)),
     status(result.status),
@@ -38,7 +38,8 @@ struct PRIMAResult {
     fun(result.f),
     nfev(result.nf),
     maxcv(result.cstrv),
-    nlconstr(num_constraints, result.nlconstr) {}
+    nlconstr(num_constraints, result.nlconstr),
+    method(method) {}
 
     std::string repr() const {
       std::string repr = "PRIMAResult(";
@@ -51,6 +52,7 @@ struct PRIMAResult {
         "nfev=" + std::to_string(nfev) + ", " +
         "maxcv=" + std::to_string(maxcv) + ", " +
         "nlconstr=" + std::string(pybind11::repr(nlconstr)) + 
+        "method=" + "\'" + method + "\'" + ")";
         ")";
       return repr;
     }
@@ -63,6 +65,7 @@ struct PRIMAResult {
     int nfev;                                                     // number of objective function calls
     double maxcv;                                                 // constraint violation (cobyla & lincoa)
     pybind11::array_t<double, pybind11::array::c_style> nlconstr; // non-linear constraint values, of size m_nlcon (cobyla only)
+    std::string method;                                           // optimization method
 };
 
 
@@ -94,6 +97,7 @@ PYBIND11_MODULE(_prima, m) {
       .def_readwrite("nfev", &PRIMAResult::nfev)
       .def_readwrite("maxcv", &PRIMAResult::maxcv)
       .def_readwrite("nlconstr", &PRIMAResult::nlconstr)
+      .def_readwrite("method", &PRIMAResult::method)
       .def("__repr__", &PRIMAResult::repr);
 
     py::enum_<prima_message_t>(m, "PRIMAMessage")
@@ -325,7 +329,7 @@ PYBIND11_MODULE(_prima, m) {
       // Initialize the result, call the function, convert the return type, and return it.
       prima_result_t result;
       const prima_rc_t rc = prima_minimize(algorithm, &problem, &options, &result);
-      PRIMAResult result_copy(result, py_x0.size(), problem.m_nlcon);
+      PRIMAResult result_copy(result, py_x0.size(), problem.m_nlcon, method.cast<std::string>());
       prima_free_result(&result);
       return result_copy;
     }, "fun"_a, "x0"_a, "args"_a=py::tuple(), "method"_a=py::none(),
