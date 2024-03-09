@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, August 07, 2023 AM03:53:29
+! Last Modified: Saturday, March 09, 2024 PM01:41:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,7 +104,7 @@ if (DEBUGGING) then
     call assert(size(pq) == npt, 'SIZE(PQ) = NPT', srname)
     call assert(size(hq, 1) == n .and. issymmetric(hq), 'HQ is an NxN symmetric matrix', srname)
     ! The following test cannot be passed.
-    !htol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E10_RP * EPS)) ! Tolerance for error in H
+    !htol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, TEN**min(10, MAXPOW10) * EPS)) ! Tolerance for error in H
     !call assert(errh(idz_loc, bmat, zmat, xpt) <= htol, 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 

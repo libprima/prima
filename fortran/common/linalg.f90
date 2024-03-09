@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 09, 2024 PM12:32:30
+! Last Modified: Saturday, March 09, 2024 PM01:32:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2797,7 +2797,7 @@ function eigmin_sym_trid(td, tn, tol) result(eig_min)
 ! !crvmin = eigs(tridh, 1, 'smallestreal');
 ! !% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -2837,7 +2837,7 @@ end if
 !====================!
 
 maxiter = 100
-tol_loc = 1.0E-6_RP
+tol_loc = TEN**max(-6, -MAXPOW10)
 if (present(tol)) then
     tol_loc = tol
 end if

@@ -59,7 +59,7 @@ end subroutine construct_ptinsq
 
 
 subroutine calfun_ptinsq(x, f)
-use, non_intrinsic :: consts_mod, only : IK, RP
+use, non_intrinsic :: consts_mod, only : IK, RP, TEN, MAXPOW10
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -84,7 +84,7 @@ f = 0.0_RP
 do i = 4, n, 2_IK
     do j = 2, i - 2_IK, 2_IK
         temp = (x(i - 1) - x(j - 1))**2 + (x(i) - x(j))**2
-        temp = max(temp, 1.0E-6_RP)
+        temp = max(temp, TEN**max(-6, -MAXPOW10))
         f = f + 1.0_RP / sqrt(temp)
     end do
 end do
