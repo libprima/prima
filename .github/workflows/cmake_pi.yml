@@ -1,7 +1,7 @@
 name: CMake build on Raspberry Pi
 
 on:
-  #PUSH:
+  push:
   schedule:
     - cron: '0 16 * * 6'  # 16h Saturday
   workflow_dispatch:
