@@ -138,7 +138,11 @@
  * 4. Set PRIMA_QP_AVAILABLE to 1 and PRIMA_REAL_PRECISION to 128 if REAL*16
  *    is available and you REALLY intend to use it. DO NOT DO IT IF NOT SURE. */
 #if !defined PRIMA_QP_AVAILABLE
+#if defined __GFORTRAN__ || defined __INTEL_COMPILER || defined __NAG_COMPILER_RELEASE
+#define PRIMA_QP_AVAILABLE 1
+#else
 #define PRIMA_QP_AVAILABLE 0
+#endif
 #endif
 
 /* Revise PRIMA_REAL_PRECISION according to PRIMA_QP_AVAILABLE . */

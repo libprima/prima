@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 09, 2024 PM12:33:25
+! Last Modified: Sunday, March 10, 2024 AM12:32:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1105,7 +1105,7 @@ subroutine updateh(knew, kref, d, xpt, idz, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TEN, MAXPOW10, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
@@ -1150,7 +1150,6 @@ real(RP) :: tempb
 real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(bmat, 2))
-real(RP) :: ztest
 
 ! Debugging variables
 !real(RP) :: beta_test
@@ -1263,7 +1262,6 @@ call symmetrize(bmat(:, npt + 1:npt + n))
 ! 2. If 2 <= IDZ <= NPT - N -1, then JL = IDZ, and ZMAT(KNEW, 1) is L2-norm of ZMAT(KNEW, 1 : IDZ-1),
 ! while ZMAT(KNEW, JL) is L2 norm of ZMAT(KNEW, IDZ : NPT-N-1).
 ! See (4.15)--(4.17) of the NEWUOA paper and the elaboration around them.
-ztest = TEN**max(-20, -MAXPOW10) * maxval(abs(zmat))  ! Taken from BOBYQA. It is implicitly zero in NEWUOA/LINCOA.
 jl = 1  ! In the loop below, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT-N-1, then JL = IDZ.
 do j = 2, npt - n - 1_IK
     if (j == idz) then
@@ -1272,8 +1270,8 @@ do j = 2, npt - n - 1_IK
     end if
 
     ! Powell's condition in NEWUOA/LINCOA for the IF ... THEN below: IF (ZMAT(KNEW, J) /= 0) THEN
-    ! A possible alternative: IF (ABS(ZMAT(KNEW, J)) > 1.0E-20_RP * ABS(ZMAT(KNEW, JL))) THEN
-    if (abs(zmat(knew, j)) > ztest) then
+    ! A possible alternative: IF (ABS(ZMAT(KNEW, J)) > 1.0E-20 * ABS(ZMAT(KNEW, JL))) THEN
+    if (abs(zmat(knew, j)) > 1.0E-20 * maxval(abs(zmat))) then
         ! Multiply a Givens rotation to ZMAT from the right so that ZMAT(KNEW, [JL,J]) becomes [*,0].
         grot = planerot(zmat(knew, [jl, j]))  !!MATLAB: grot = planerot(zmat(knew, [jl, j])')
         zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), transpose(grot))

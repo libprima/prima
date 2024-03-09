@@ -160,8 +160,8 @@ CHCKTST := $(TOOLS_DIR)/checktest
 # Define the tests.
 ######################################################################################
 # Decide whether to test QP, i.e., REAL128.
-# Flang and nvfortran do not support REAL128;
-# AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
+# Flang 17.0 and nvfortran 24.1 do not support REAL128;
+# AOCC Flang 4.2 complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 TESTS_QP = atest gtest ntest itest stest 9test xtest
 TESTS_NO_QP = dtest ftest rtest vtest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
