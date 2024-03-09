@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Commit submodules
+ROOTDIR=$(git rev-parse --show-toplevel)
+for SUBMODULE in $(git submodule status | awk '{print $2}'); do
+    echo "Committing $SUBMODULE"
+    cd "$SUBMODULE" || (printf "Error: submodule %s not found\n" "$SUBMODULE" && exit 1)
+    git add -A
+    git commit -m "Update $SUBMODULE"
+done
+cd "$ROOTDIR" || exit 2
+
+exit 0
