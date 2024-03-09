@@ -2164,3 +2164,4 @@ TRIGON
 setxor
 HP
 MAXPOW
+minfloat
