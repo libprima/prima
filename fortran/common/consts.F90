@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, March 08, 2024 AM01:17:02
+! Last Modified: Saturday, March 09, 2024 AM11:35:28
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -151,17 +151,15 @@ real(RP), parameter :: REALMIN = tiny(ZERO)
 ! R: double.xmax
 real(RP), parameter :: REALMAX = huge(ZERO)
 
-integer, parameter :: MINE = minexponent(ZERO)
-integer, parameter :: MAXE = maxexponent(ZERO)
+integer, parameter :: MAXPOW10 = range(ZERO)
+integer, parameter :: HALF_MAXPOW10 = floor(real(MAXPOW10) / 2.0)
 
 ! TINYCV is used in LINCOA. Powell set TINYCV = 1.0D-60. What about setting TINYCV = REALMIN?
-real(RP), parameter :: TINYCV = real(radix(ZERO), RP)**max(-200, MINE)  ! Normally, RADIX = 2.
+real(RP), parameter :: TINYCV = TEN**max(-60, -MAXPOW10)
 ! FUNCMAX is used in the moderated extreme barrier. All function values are projected to the
 ! interval [-FUNCMAX, FUNCMAX] before passing to the solvers, and NaN is replaced with FUNCMAX.
 ! CONSTRMAX plays a similar role for constraints.
-! TODO: Define FUNCMAX using RANGE instead of MAXE. Note that we need to update matlab/getmax.m accordingly.
-!!real(RP), parameter :: FUNCMAX = real(10.0_RP**max(4, min(30, range(ZERO) / 2)))
-real(RP), parameter :: FUNCMAX = real(radix(ZERO), RP)**max(13, min(100, MAXE / 2))  ! Normally, RADIX = 2.
+real(RP), parameter :: FUNCMAX = TEN**max(4, min(30, HALF_MAXPOW10))
 real(RP), parameter :: CONSTRMAX = FUNCMAX
 ! Any bound with an absolute value at least BOUNDMAX is considered as no bound.
 real(RP), parameter :: BOUNDMAX = QUART * REALMAX
@@ -184,11 +182,11 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 #if (defined __GFORTRAN__ || defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
 real(RP), parameter :: SYMTOL_DFT = REALMAX
 #elif (defined __FLANG && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
-real(RP), parameter :: SYMTOL_DFT = max(5.0E3_RP * EPS, 10.0_RP**max(-10, -range(0.0_RP)))
+real(RP), parameter :: SYMTOL_DFT = max(5.0E3_RP * EPS, TEN**max(-10, -MAXPOW10))
 #elif (defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64)
-real(RP), parameter :: SYMTOL_DFT = max(5.0E1_RP * EPS, 10.0_RP**max(-10, -range(0.0_RP)))
+real(RP), parameter :: SYMTOL_DFT = max(5.0E1_RP * EPS, TEN**max(-10, -MAXPOW10))
 #elif (defined __NAG_COMPILER_RELEASE && PRIMA_REAL_PRECISION > 64) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
-real(RP), parameter :: SYMTOL_DFT = max(10.0_RP * EPS, 10.0_RP**max(-10, -range(0.0_RP)))
+real(RP), parameter :: SYMTOL_DFT = max(TEN * EPS, TEN**max(-10, -MAXPOW10))
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO
 #endif
@@ -209,14 +207,14 @@ real(RP), parameter :: ORTHTOL_DFT = ZERO
 real(RP), parameter :: RHOBEG_DFT = ONE
 ! RHOEND: final value of the trust region radius. Should indicate the accuracy required in the final
 ! values of the variables.
-real(RP), parameter :: RHOEND_DFT = 10.0_RP**max(-6, -range(0.0_RP))  ! 1.0E-6
+real(RP), parameter :: RHOEND_DFT = TEN**max(-6, -MAXPOW10)  ! 1.0E-6
 ! FTARGET: target value of the objective function. Solvers exit when finding a feasible point with
 ! the objective function value no more than FTARGET.
 real(RP), parameter :: FTARGET_DFT = -REALMAX
 ! CTOL: tolerance for constraint violation. A point with constraint violation <= CTOL is considered feasible.
 real(RP), parameter :: CTOL_DFT = sqrt(EPS)
 ! CWEIGHT: weight of constraint violation in the merit function used to select the output point.
-real(RP), parameter :: CWEIGHT_DFT = 10.0_RP**min(8, range(0.0_RP))  ! 1.0E8
+real(RP), parameter :: CWEIGHT_DFT = TEN**min(8, MAXPOW10)  ! 1.0E8
 ! ETA1: threshold of reduction ratio for shrinking the trust region radius.
 real(RP), parameter :: ETA1_DFT = TENTH
 ! ETA2: threshold of reduction ratio for expanding the trust region radius.

@@ -22,19 +22,19 @@ if nargin < 2
     precision = 'double';
 end
 
-% The following values are intended to be the returns of the Fortran intrinsics RADIX, HUGE, and
-% MAXEXPONENT corresponding to the given precision. They are the largest finite value, base of the
-% model that represents the floating point numbers, and maximal exponent of the model.
-% As of 20230207, the following values are consistent with gfortran, ifort, ifx, nagfor, nvfortran,
-% Classic flang, AOCC flang, sunf95, and g95.
-radix = 2;
+% maxfloat, minfloat, and maxpow10 are intended to the return of the Fortran intrinsics HUGE, TINY,
+% and RANGE corresponding to the given precision. They are the largest finite value, the smallest
+% positive normalized value, and the decimal exponent range of the floating point numbers, respectively.
 if strcmpi(precision, 'single')
-    maxfloat = realmax('single') ;
-    maxexponent = 128;
+    maxfloat = realmax('single');
+    minfloat = realmin('single');
 else  % Even if precision = 'quadruple'
-    maxfloat = realmax('double') ;
-    maxexponent = 1024;
+    maxfloat = realmax('double');
+    minfloat = realmin('double');
 end
+% According to Sec. 16.9.170 of Fortran 2023 Interpretation Document J3/24-007, the Fortran intrinsic
+% RANGE returns the following value.
+maxpow10 = fix(min(log10(maxfloat), -log10(minfloat)));
 
 % The following values are intended to be consistent with BOUNDMAX, FUNCMAX, and CONSTRMAX defined
 % in the Fortran code.
@@ -44,7 +44,7 @@ case {'real'}
 case {'bound'}
     maxnum = 0.25 * maxfloat;
 case {'fun', 'func', 'function', 'con', 'constr', 'constraint'}
-    maxnum = radix^min(100, maxexponent / 2);
+    maxnum = 10^min(30, floor(maxpow10 / 2));
 otherwise
     % Private/unexpected error
     error(sprintf('%s:InvalidInput', funname), '%s: UNEXPECTED ERROR: invalid data_type received.', funname);
