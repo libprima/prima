@@ -8,7 +8,7 @@ module initialize_lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 08, 2024 AM12:37:13
+! Last Modified: Saturday, March 09, 2024 PM12:34:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,7 +41,7 @@ subroutine initxf(calfun, iprint, maxfun, Aeq, Aineq, amat, beq, bineq, ctol, ft
 
 ! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, REALMAX, BOUNDMAX, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, EPS, TEN, MAXPOW10, REALMAX, BOUNDMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
@@ -278,7 +278,7 @@ if (DEBUGGING) then
     call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
     ! LINCOA always starts with a feasible point.
     if (m > 0) then
-        call assert(all(matprod(xpt(:, 1), amat) - b <= max(1.0E-12_RP, 1.0E2_RP * EPS) * &
+        call assert(all(matprod(xpt(:, 1), amat) - b <= max(TEN**max(-12, -MAXPOW10), 1.0E2_RP * EPS) * &
             & (ONE + sum(abs(xpt(:, 1))) + sum(abs(b)))), 'The starting point is feasible', srname)
     end if
 end if

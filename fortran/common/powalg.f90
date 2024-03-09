@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 09, 2024 PM12:04:24
+! Last Modified: Saturday, March 09, 2024 PM12:33:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1105,7 +1105,7 @@ subroutine updateh(knew, kref, d, xpt, idz, bmat, zmat, info)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, DAMAGING_ROUNDING
@@ -1263,7 +1263,7 @@ call symmetrize(bmat(:, npt + 1:npt + n))
 ! 2. If 2 <= IDZ <= NPT - N -1, then JL = IDZ, and ZMAT(KNEW, 1) is L2-norm of ZMAT(KNEW, 1 : IDZ-1),
 ! while ZMAT(KNEW, JL) is L2 norm of ZMAT(KNEW, IDZ : NPT-N-1).
 ! See (4.15)--(4.17) of the NEWUOA paper and the elaboration around them.
-ztest = 1.0E-20_RP * maxval(abs(zmat))  ! Taken from BOBYQA. It is implicitly zero in NEWUOA/LINCOA.
+ztest = TEN**max(-20, -MAXPOW10) * maxval(abs(zmat))  ! Taken from BOBYQA. It is implicitly zero in NEWUOA/LINCOA.
 jl = 1  ! In the loop below, if 2 <= J < IDZ, then JL = 1; if IDZ < J <= NPT-N-1, then JL = IDZ.
 do j = 2, npt - n - 1_IK
     if (j == idz) then

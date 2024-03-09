@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 09, 2024 PM12:00:20
+! Last Modified: Saturday, March 09, 2024 PM12:32:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -829,7 +829,7 @@ subroutine qr(A, Q, R, P)
 ! A = Q*R (if no pivoting) or A(:, P) = Q*R (if pivoting), where the columns of Q are orthonormal,
 ! and R is upper triangular.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -919,7 +919,7 @@ end if
 
 ! Postconditions
 if (DEBUGGING) then
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 1.0E4_RP * EPS * real(max(m, n) + 1_IK, RP)))
+    tol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, TEN**min(4, MAXPOW10) * EPS * real(max(m, n) + 1_IK, RP)))
     call assert(isorth(Q_loc, tol), 'The columns of Q are orthonormal', srname)
     call assert(istril(T, tol), 'R is upper triangular', srname)
     if (pivot) then

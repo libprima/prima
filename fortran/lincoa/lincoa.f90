@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 05, 2024 PM10:49:12
+! Last Modified: Saturday, March 09, 2024 PM12:35:54
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -647,7 +647,7 @@ subroutine get_lincon(Aeq, Aineq, beq, bineq, rhoend, xl, xu, x0, amat, bvec)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, BOUNDMAX, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, TEN, MAXPOW10, BOUNDMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, warning
 use, non_intrinsic :: linalg_mod, only : matprod, eye, trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
@@ -777,7 +777,7 @@ end if
 if (DEBUGGING) then
     call assert(size(amat, 1) == size(x0) .and. size(amat, 2) == size(bvec), &
         & 'SIZE(AMAT) == [SIZE(X), SIZE(BVEC)]', srname)
-    call assert(all(matprod(x0, amat) - bvec <= max(1.0E-12_RP, 1.0E2_RP * EPS) * &
+    call assert(all(matprod(x0, amat) - bvec <= max(TEN**max(-12, -MAXPOW10), 1.0E2_RP * EPS) * &
         & (ONE + sum(abs(x0)) + sum(abs(bvec)))), 'The starting point is feasible', srname)
 end if
 end subroutine get_lincon
