@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, February 25, 2024 PM05:58:39
+! Last Modified: Saturday, March 09, 2024 PM09:23:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -277,7 +277,7 @@ do tr = 1, maxtr
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xpt, gopt, pq, hq)
-    trfail = (.not. qred > 1.0E-5 * rho**2)  ! QRED is tiny/negative, or NaN.
+    trfail = (.not. qred > 1.0E-6 * rho**2)  ! QRED is tiny/negative, or NaN.
 
     if (shortd .or. trfail) then
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.

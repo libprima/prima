@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 09, 2024 PM03:34:46
+! Last Modified: Saturday, March 09, 2024 PM07:02:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -258,7 +258,7 @@ do tr = 1, maxtr
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(pq, d, xpt(:, kopt))  ! QRED = Q(XOPT) - Q(XOPT + D)
-    trfail = (.not. qred > EPS * rho**2)  ! QRED is tiny/negative or NaN.
+    trfail = (.not. qred > 1.0E-6 * rho**2)  ! QRED is tiny/negative or NaN.
 
     if (shortd .or. trfail) then
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
