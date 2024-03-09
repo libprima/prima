@@ -5,9 +5,9 @@ from packaging import version
 from test_combining_constraints import test_providing_bounds_and_linear_and_nonlinear_constraints
 
 
-def test_prima(capfd):
+def test_prima():
     from prima import minimize, NonlinearConstraint as NLC, LinearConstraint as LC, Bounds
-    test_providing_bounds_and_linear_and_nonlinear_constraints(capfd, minimize, NLC, LC, Bounds)
+    test_providing_bounds_and_linear_and_nonlinear_constraints(minimize, NLC, LC, Bounds)
 
 
 # Despite the fact that we are using the pdfo function, we still get this warning because the pdfo
@@ -23,4 +23,4 @@ def test_pdfo():
 
     from pdfo import pdfo
     from scipy.optimize import NonlinearConstraint as NLC, LinearConstraint as LC, Bounds
-    test_providing_bounds_and_linear_and_nonlinear_constraints(None, pdfo, NLC, LC, Bounds, package='pdfo')
+    test_providing_bounds_and_linear_and_nonlinear_constraints(pdfo, NLC, LC, Bounds, package='pdfo')

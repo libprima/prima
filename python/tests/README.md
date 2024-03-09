@@ -44,6 +44,7 @@ order to run that test by itself.
   - [x] npt - test_options.py::test_npt
   - [x] rhobeg - test_options.py::test_rhobeg
   - [x] rhoend - test_options.py::test_rhoend
+  - [x] quiet - test_options.py::test_quiet
 - [x] an objective function without args can be used successfully - test_options.py::test_normal_function
 - [x] an objective function with args can be used successfully - test_options.py::test_function_with_regular_args
 - [x] an objective function with *args can be used successfully - test_options.py::test_function_with_star_args
