@@ -2163,3 +2163,4 @@ OET
 TRIGON
 setxor
 HP
+MAXPOW

@@ -12,7 +12,7 @@ module getact_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 05, 2024 PM10:40:51
+! Last Modified: Saturday, March 09, 2024 PM12:12:21
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,7 +77,7 @@ subroutine getact(amat, delta, g, iact, nact, qfac, resact, resnew, rfac, psd)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, EPS, REALMAX, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, TEN, MAXPOW10, EPS, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, eye, istriu, isorth, norm, lsqr, solve, trueloc
@@ -140,7 +140,7 @@ if (DEBUGGING) then
     call assert(size(resact) == m, 'SIZE(RESACT) == M', srname)
     call assert(size(resnew) == m, 'SIZE(RESNEW) == M', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n, RP)))
+    tol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, TEN**min(8, MAXPOW10) * EPS * real(n, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
@@ -404,7 +404,7 @@ subroutine addact(l, c, iact, nact, qfac, resact, resnew, rfac, vlam)
 ! gradient of the new active constraint.
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : istriu, isorth
 use, non_intrinsic :: powalg_mod, only : qradd
@@ -443,7 +443,7 @@ if (DEBUGGING) then
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(.not. any(iact(1:nact) == l), 'L is not in IACT(1:NACT)', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n, RP)))
+    tol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, TEN**min(8, MAXPOW10) * EPS * real(n, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
@@ -497,7 +497,7 @@ subroutine delact(icon, iact, nact, qfac, resact, resnew, rfac, vlam)
 ! QFAC, etc accordingly, and reduces NACT to NACT-1.
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, IK, EPS, TINYCV, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, TEN, MAXPOW10, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : isorth, istriu
 use, non_intrinsic :: powalg_mod, only : qrexc
@@ -536,7 +536,7 @@ if (DEBUGGING) then
     call assert(icon >= 1 .and. icon <= nact, '1 <= ICON <= NACT', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n, RP)))
+    tol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, TEN**min(8, MAXPOW10) * EPS * real(n, RP)))
     call assert(isorth(qfac, tol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)

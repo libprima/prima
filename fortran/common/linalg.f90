@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, March 07, 2024 PM01:40:52
+! Last Modified: Saturday, March 09, 2024 PM12:00:20
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -616,7 +616,7 @@ function solve(A, b) result(x)
 ! and invertible, and B is a vector of length SIZE(A, 1). The implementation is NAIVE.
 ! TODO: Better to implement it into several subfunctions: triu, tril, and general square.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none
@@ -682,7 +682,7 @@ end if
 if (DEBUGGING) then
     call assert(size(x) == size(A, 2), 'SIZE(X) == SIZE(A, 2)', srname)
     if (is_finite(sum(abs(A)) + sum(abs(b)))) then
-        tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n + 1_IK, RP)))
+        tol = max(TEN**max(-8, -MAXPOW10), min(1.0E-1_RP, TEN**min(8, MAXPOW10) * EPS * real(n + 1_IK, RP)))
         call assert(norm(matprod(A, x) - b) <= tol * maxval([ONE, norm(b), norm(x)]), 'A*X == B', srname)
     end if
 end if
@@ -698,7 +698,7 @@ function inv(A) result(B)
 ! implement it into several subfunctions: triu with M >= N, tril with M <= N; general with M >= N,
 ! general with M <= N, etc.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TEN, MAXPOW10, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -767,7 +767,7 @@ if (DEBUGGING) then
     call assert(size(B, 1) == n .and. size(B, 2) == n, 'SIZE(B) == [N, N]', srname)
     call assert(istril(B) .or. .not. istril(A), 'If A is lower triangular, then so is B', srname)
     call assert(istriu(B) .or. .not. istriu(A), 'If A is upper triangular, then so is B', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(10, range(0.0_RP)) * EPS * real(n + 1_IK, RP)))
+    tol = max(TEN**max(-8, -MAXPOW10), min(1.0E-1_RP, TEN**min(10, MAXPOW10) * EPS * real(n + 1_IK, RP)))
     call assert(isinv(A, B, tol), 'B = A^{-1}', srname)
 end if
 end function inv
@@ -950,7 +950,7 @@ function lsqr_Rdiag(A, b, Q, Rdiag) result(x)
 ! 3. A HAS FULL COLUMN RANK;
 ! 4. It seems that b (CGRAD and DNEW) is in the column space of A (not sure yet).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -987,7 +987,7 @@ if (DEBUGGING) then
     if (present(Q)) then
         call assert(size(Q, 1) == m .and. (size(Q, 2) == m .or. size(Q, 2) == min(m, n)), &
             & 'SIZE(Q) == [M, N] .or. SIZE(Q) == [M, MIN(M, N)]', srname)
-        tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(6, range(0.0_RP)) * EPS * real(max(m, n) + 1_IK, RP)))
+        tol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, TEN**min(6, MAXPOW10) * EPS * real(max(m, n) + 1_IK, RP)))
         call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     end if
     if (present(Rdiag)) then
@@ -1063,7 +1063,7 @@ function lsqr_Rfull(b, Q, R) result(x)
 ! 1. The economy-size QR factorization is supplied externally (Q is called QFAC and R is called RFAC);
 ! 2. R is non-singular.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -1090,7 +1090,7 @@ if (DEBUGGING) then
     call assert(m >= n .and. n >= 0, 'M >= N >= 0', srname)
     call assert(size(b) == m, 'SIZE(B) == M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == n, 'SIZE(Q) == [M, N]', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(6, range(0.0_RP)) * EPS * real(m + 1_IK, RP)))
+    tol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, TEN**min(6, MAXPOW10) * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(size(R, 1) == n .and. size(R, 2) == n, 'SIZE(R) == [N, N]', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
@@ -1383,7 +1383,7 @@ function project1(x, v) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function returns the projection of X to SPAN(V).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_inf, is_finite, is_nan
 implicit none
@@ -1434,7 +1434,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     if (is_finite(norm(x)) .and. is_finite(norm(v))) then
-        tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(6, range(0.0_RP)) * EPS))
+        tol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, TEN**min(6, MAXPOW10) * EPS))
         call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
         call assert(norm(x - y) <= (ONE + tol) * norm(x), 'NORM(X - Y) <= NORM(X)', srname)
         ! The following test may not be passed.
@@ -1449,7 +1449,7 @@ function project2(x, V) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function returns the projection of X to RANGE(V).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_inf, is_finite, is_nan
 implicit none
@@ -1501,7 +1501,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     if (is_finite(norm(x)) .and. is_finite(sum(V**2))) then
-        tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(6, range(0.0_RP)) * EPS))
+        tol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, TEN**min(6, MAXPOW10) * EPS))
         call assert(norm(y) <= (ONE + tol) * norm(x), 'NORM(Y) <= NORM(X)', srname)
         call assert(norm(x - y) <= (ONE + tol) * norm(x), 'NORM(X - Y) <= NORM(X)', srname)
         ! The following test may not be passed.
@@ -1580,7 +1580,7 @@ function planerot(x) result(G)
 ! 2. Difference from MATLAB: if X contains NaN or consists of only Inf, MATLAB returns a NaN matrix,
 ! but we return an identity matrix or a matrix of +/-SQRT(2). We intend to keep G always orthogonal.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, REALMIN, EPS, REALMAX, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, REALMIN, EPS, REALMAX, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_inf
 implicit none
@@ -1671,7 +1671,7 @@ if (DEBUGGING) then
     call assert(all(is_finite(G)), 'G is finite', srname)
     call assert(abs(G(1, 1) - G(2, 2)) + abs(G(1, 2) + G(2, 1)) <= 0, &
         & 'G(1,1) == G(2,2), G(1,2) = -G(2,1)', srname)
-    tol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(6, range(0.0_RP)) * EPS))
+    tol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, 10.0_RP**min(6, MAXPOW10) * EPS))
     call assert(isorth(G, tol), 'G is orthonormal', srname)
     if (all(is_finite(x) .and. abs(x) < sqrt(REALMAX / 2.1_RP))) then
         r = norm(x)
@@ -2648,7 +2648,7 @@ subroutine hessenberg_full(A, H, Q)
 ! This subroutine finds a Hessenberg matrix H (all entries below the subdiagonal are 0) such that
 ! H = Q^T*A*Q, where Q is a orthogonal matrix that may also be returned. A will stay unchanged.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TWO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TWO, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
@@ -2756,7 +2756,7 @@ end if
 if (DEBUGGING) then
     call assert(size(H, 1) == n .and. size(H, 2) == n, 'SIZE(H) == [N, N]', srname)
     call assert(isbanded(H, 1_IK, n - 1_IK), 'H is a Hessenberg matrix', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(10, range(0.0_RP)) * EPS * real(n, RP)))
+    tol = max(TEN**max(-8, -MAXPOW10), min(1.0E-1_RP, TEN**min(10, MAXPOW10) * EPS * real(n, RP)))
     call assert(issymmetric(H, tol) .or. .not. issymmetric(A), 'H is symmetric if so is A', srname)
     if (present(Q)) then
         call assert(size(Q, 1) == n .and. size(Q, 2) == n, 'SIZE(Q) == [N, N]', srname)

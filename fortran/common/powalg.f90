@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, March 06, 2024 PM09:39:28
+! Last Modified: Saturday, March 09, 2024 PM12:04:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -84,7 +84,7 @@ subroutine qradd_Rdiag(c, Q, Rdiag, n)  ! Used in COBYLA
 ! and R(:, N) (N takes the updated value).
 !--------------------------------------------------------------------------------------------------!
 
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, planerot, hypotenuse, isorth, isminor, trueloc
@@ -121,7 +121,7 @@ if (DEBUGGING) then
     call assert(size(c) == m, 'SIZE(C) == M', srname)
     call assert(size(Rdiag) >= min(m, n + 1_IK) .and. size(Rdiag) <= m, 'MIN(M, N+1) <= SIZE(Rdiag) <= M', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) == [M, M]', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(12, range(0.0_RP)) * EPS * real(m + 1_IK, RP)))
+    tol = max(TEN**max(-8, -MAXPOW10), min(1.0E-1_RP, TEN**min(12, MAXPOW10) * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
     Qsave = Q(:, 1:n)  ! For debugging only
     Rdsave = Rdiag(1:n)  ! For debugging only
@@ -202,7 +202,7 @@ subroutine qradd_Rfull(c, Q, R, n)  ! Used in LINCOA
 ! 1. At entry, Q is a MxM orthonormal matrix, and R is a MxL upper triangular matrix with N < L <= M.
 ! 2. The subroutine changes only Q(:, N+1:M) and R(:, N+1) with N taking the original value.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, isorth, istriu, diag
 implicit none
@@ -237,7 +237,7 @@ if (DEBUGGING) then
     call assert(size(Q, 1) == m .and. size(Q, 2) == m, 'SIZE(Q) = [M, M]', srname)
     call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
     call assert(size(R, 2) >= n + 1 .and. size(R, 2) <= m, 'N+1 <= SIZE(R, 2) <= M', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(m + 1_IK, RP)))
+    tol = max(TEN**max(-8, -MAXPOW10), min(1.0E-1_RP, TEN**min(8, MAXPOW10) * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
     call assert(all(diag(R(:, 1:n)) > 0), 'DIAG(R(:, 1:N)) > 0', srname)
@@ -302,7 +302,7 @@ subroutine qrexc_Rdiag(A, Q, Rdiag, i)  ! Used in COBYLA
 ! 1. With L = SIZE(Q, 2) = SIZE(R, 1), we have M >= L >= N. Most often, L = M or N.
 ! 2. The subroutine changes only Q(:, I:N) and RDIAG(I:N).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, planerot, isorth, istriu, diag
 implicit none
@@ -340,7 +340,7 @@ if (DEBUGGING) then
     call assert(size(Rdiag) == n, 'SIZE(Rdiag) == N', srname)
     call assert(size(Q, 1) == m .and. size(Q, 2) >= n .and. size(Q, 2) <= m, &
         & 'SIZE(Q, 1) == M, N <= SIZE(Q, 2) <= M', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(m + 1_IK, RP)))
+    tol = max(TEN**max(-8, -MAXPOW10), min(1.0E-1_RP, TEN**min(8, MAXPOW10) * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthonormal', srname)  ! Costly!
     Qsave = Q  ! For debugging only.
     Rdsave = Rdiag(1:i) ! For debugging only.
@@ -422,7 +422,7 @@ subroutine qrexc_Rfull(Q, R, i)  ! Used in LINCOA
 ! 1. With L = SIZE(Q, 2) = SIZE(R, 1), we have M >= L >= N. Most often, L = M or N.
 ! 2. The subroutine changes only Q(:, I:N) and R(:, I:N).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: linalg_mod, only : matprod, planerot, isorth, istriu, hypotenuse, diag
 implicit none
@@ -459,7 +459,7 @@ if (DEBUGGING) then
     call assert(size(Q, 2) == size(R, 1), 'SIZE(Q, 2) == SIZE(R, 1)', srname)
     call assert(size(Q, 2) >= n .and. size(Q, 2) <= m, 'N <= SIZE(Q, 2) <= M', srname)
     call assert(size(R, 1) >= n .and. size(R, 1) <= m, 'N <= SIZE(R, 1) <= M', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(m + 1_IK, RP)))
+    tol = max(TEN**max(-8, -MAXPOW10), min(1.0E-1_RP, TEN**min(8, MAXPOW10) * EPS * real(m + 1_IK, RP)))
     call assert(isorth(Q, tol), 'The columns of Q are orthogonal', srname)
     call assert(istriu(R), 'R is upper triangular', srname)
     call assert(all(diag(R(:, 1:n)) > 0), 'DIAG(R(:, 1:N)) > 0', srname)
@@ -1505,7 +1505,7 @@ function calvlag_lfqint(kref, bmat, d, xpt, zmat, idz) result(vlag)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, EPS, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, EPS, TEN, MAXPOW10, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_finite
 use, non_intrinsic :: linalg_mod, only : matprod, issymmetric
@@ -1581,7 +1581,7 @@ vlag(kref) = vlag(kref) + ONE
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
-    tol = max(1.0E-8_RP, min(1.0E-1_RP, 10.0_RP**min(12, range(0.0_RP)) * EPS * real(npt + n, RP)))
+    tol = max(TEN**max(-8, -MAXPOW10), min(1.0E-1_RP, TEN**min(12, MAXPOW10) * EPS * real(npt + n, RP)))
     call wassert(abs(sum(vlag(1:npt)) - ONE) / real(npt, RP) <= tol .or. RP == kind(0.0), &
         & 'SUM(VLAG(1:NPT)) == 1', srname)
 end if

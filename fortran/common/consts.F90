@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 09, 2024 AM11:35:28
+! Last Modified: Saturday, March 09, 2024 AM11:47:13
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -84,7 +84,7 @@ public :: HP
 public :: QP
 #endif
 public :: ZERO, ONE, TWO, HALF, QUART, TEN, TENTH, PI
-public :: REALMIN, EPS, TINYCV, REALMAX, FUNCMAX, CONSTRMAX, BOUNDMAX
+public :: REALMIN, EPS, MAXPOW10, TINYCV, REALMAX, FUNCMAX, CONSTRMAX, BOUNDMAX
 public :: SYMTOL_DFT, ORTHTOL_DFT
 public :: STDIN, STDOUT, STDERR
 public :: RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, CTOL_DFT, CWEIGHT_DFT

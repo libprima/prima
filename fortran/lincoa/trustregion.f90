@@ -11,7 +11,7 @@ module trustregion_lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 05, 2024 PM10:41:57
+! Last Modified: Saturday, March 09, 2024 PM12:09:39
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ subroutine trstep(amat, delta, gopt_in, hq_in, pq_in, rescon, tol, xpt, iact, na
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TWO, HALF, EPS, REALMIN, TINYCV, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, TWO, HALF, TEN, MAXPOW10, EPS, REALMIN, TINYCV, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, solve, isorth, istriu, &
@@ -140,7 +140,7 @@ if (DEBUGGING) then
     call assert(size(iact) == m, 'SIZE(IACT) == M', srname)
     call assert(all(iact(1:nact) >= 1 .and. iact(1:nact) <= m), '1 <= IACT <= M', srname)
     call assert(size(qfac, 1) == n .and. size(qfac, 2) == n, 'SIZE(QFAC) == [N, N]', srname)
-    orthtol = max(1.0E-10_RP, min(1.0E-1_RP, 10.0_RP**min(8, range(0.0_RP)) * EPS * real(n, RP)))
+    orthtol = max(TEN**max(-10, -MAXPOW10), min(1.0E-1_RP, TEN**min(8, MAXPOW10) * EPS * real(n, RP)))
     call assert(isorth(qfac, orthtol), 'QFAC is orthogonal', srname)
     call assert(size(rfac, 1) == n .and. size(rfac, 2) == n, 'SIZE(RFAC) == [N, N]', srname)
     call assert(istriu(rfac), 'RFAC is upper triangular', srname)
