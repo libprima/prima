@@ -9,7 +9,7 @@ solvers = lower(solvers);
 precision = 'double';
 rhobeg = 1;
 rhoend = 1e-6;
-npt = @(n) 2*n+1
+npt = @(n) 2*n+1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MAXN is the maximal possible dimension of problems in our test.

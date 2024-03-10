@@ -112,7 +112,7 @@ jobs:
             options = struct();
             options.nr = 4;  % 4 random runs for each problem
 
-            options.npt = @(n) ${{ matrix.npt }}
+            options.npt = @(n) ${{ matrix.npt }};
 
             if  strcmp('${{ matrix.solver }}', 'lincoa')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
