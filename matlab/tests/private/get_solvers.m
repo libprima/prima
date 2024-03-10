@@ -4,7 +4,7 @@ function spaths = get_solvers(solvers, test_dir, options)
 % Possible members of `solvers`:
 % SOLVER, a member of {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'}.
 % SOLVER_norma, the version SOLVER in the ".development/norma" directory.
-% SOLVER_classical|_single|_quadruple, the classical/single-precision/quadruple-precision version of SOLVER.
+% SOLVER_classical|_default|_single|_quadruple, the classical/default/single-precision/quadruple-precision version of SOLVER.
 % SOLVER_archiva, the version of SOLVER in the "norma" directory under `dev_arch`, which is equivalent
 % to the latest archiva version of SOLVER.
 
@@ -83,8 +83,8 @@ for is = 1 : length(solvers)
 end
 
 % SOLVER_classical is obtained by preparing SOLVER. Thus we remove solvers ending with '_classical'.
-% The same for _single and _quadruple.
-[solvers, ind] = unique(regexprep(solvers, '(_classical|_single|_quadruple)', ''));
+% The same for _default, _single, and _quadruple.
+[solvers, ind] = unique(regexprep(solvers, '(_classical|_default|_single|_quadruple)', ''));
 mexopts = mexopts(ind);
 
 % Compile the solvers.
@@ -107,7 +107,7 @@ try
             % The archiva solver name is SOLVER_norma. See the comments on archiva_dir in
             % prepare_test_dir.m for details.
             solver = regexprep(solver, '_archiva', '_norma');
-        else  % SOLVER or SOLVER_classical|_single|_quadruple
+        else  % SOLVER or SOLVER_classical|_default|_single|_quadruple
             solver_dir = fullfile(test_dir, root_dir_name);
         end
 

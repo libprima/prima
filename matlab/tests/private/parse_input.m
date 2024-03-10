@@ -15,6 +15,8 @@ function [solver, options] = parse_input(argin)
 % - `competitor` (optional) can be any of {'classical', 'archiva', 'norma', 'single', 'quadruple'},
 %   indicating the name of a competitor solver to test (only for profiling)
 %   - 'classical' means to test the classical solvers
+%   - 'default' means to test the solvers with the default settings for npt, gamma1/2, eta1/2,
+%     scaling, honour_x0
 %   - 'archiva' means to compare with the "archiva" version of the solver, located under the
 %     .development/archiva/dev_arch/ directory
 %   - 'norma' means to compare with the "norma" version of the solver, located under the
@@ -59,7 +61,7 @@ sequential_flags = {'sequential', 'seq'};
 reverse_flags = {'reverse', 'rev'};
 reload_flags = {'reload', 'load'};
 problem_types = {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'};
-competitors = {'classical', 'archiva', 'norma', 'single', 'quadruple'};
+competitors = {'classical', 'default', 'archiva', 'norma', 'single', 'quadruple'};
 
 % Default values.
 solver = '';

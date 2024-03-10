@@ -16,9 +16,11 @@ function output = profile(varargin)
 % - `reverse_flag` (optional) is either 'reverse' or 'rev', which means to test the solvers in the reverse order
 % - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
 %   indicating the problem type to test
-% - `competitor` (optional) can be any of {'classical', 'archiva', 'norma', 'single', 'quadruple'},
-%   indicating the name of a competitor solver to test (only for profiling)
+% - `competitor` (optional) can be any of {'classical', 'default', 'archiva', 'norma', 'single', 'quadruple'},
+%   indicating the name of a competitor solver to test
 %   - 'classical' means to test the classical solvers
+%   - 'default' means to test the solvers with the default settings for npt, gamma1/2, eta1/2,
+%      scaling, honour_x0
 %   - 'archiva' means to compare with the "archiva" version of the solver, located under the
 %     .development/archiva/dev_arch/ directory
 %   - 'norma' means to compare with the "norma" version of the solver, located under the

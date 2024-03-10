@@ -174,7 +174,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Plot performance profiles, int16 and int64](https://github.com/primalib/prima/actions/workflows/profile_integer_kind.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_integer_kind.yml)
     - [![Plot performance profiles, infnan](https://github.com/primalib/prima/actions/workflows/profile_infnan.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_infnan.yml)
     - [![Plot performance profiles, various compiler options](https://github.com/primalib/prima/actions/workflows/profile_compiler_options.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_compiler_options.yml)
-    - [![Plot performance profiles, various npt](https://github.com/primalib/prima/actions/workflows/profile_npt/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_npt.yml)
+    - [![Plot performance profiles, various npt](https://github.com/primalib/prima/actions/workflows/profile_npt.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_npt.yml)
 
 - [Tests](https://github.com/opt4ai/prima/actions) at [opt4ai/prima](https://github.com/opt4ai/prima)
 

@@ -18,6 +18,7 @@ for isol = 1 : length(solvers)
     solver = solvers{isol};
     % `regexprep` removes '_classical' in case 'solver' ends with it.
     solver = regexprep(solver, '_classical$', '');
+    solver = regexprep(solver, '_default$', '');
     solver = regexprep(solver, '_single$', '');
     solver = regexprep(solver, '_quadruple$', '');
     solver = regexprep(solver, '_archiva$', '_norma');

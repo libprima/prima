@@ -12,7 +12,7 @@ fprintf('\nPreparing the testing directory for test ''%s'' ...\n', test_name);
 fprintf('\nThe solver: %s\n', solver);
 
 % competitor: the competitor solver to be tested against. It can be 'norma', 'archiva', 'classical',
-% 'single', or 'quadruple'.
+% 'default', 'single', or 'quadruple'.
 competitor = '';
 if isfield(test_options, 'competitor')
     competitor = test_options.competitor;
