@@ -36,7 +36,7 @@ jobs:
     steps:
 
       - name: Get npt string
-        run:  echo "NPT=$(echo ${{ matrix.npt }} | sed 's|*||g' | sed 's|[[:space:]]||g')" >> $GITHUB_ENV
+        run:  echo "NPT=$(echo '${{ matrix.npt }}' | sed 's|*||g' | sed 's|[[:space:]]||g')" >> $GITHUB_ENV
 
       - name: Get the solver name
         run:  echo "SOLNAME=$(echo ${{ matrix.solver }} | cut -c1-6)" >> $GITHUB_ENV
@@ -161,7 +161,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ env.NPT }} 
+          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ env.NPT }}
           path: |
             /tmp/${{ env.SOLNAME }}_profile_prima/*summary*.pdf
             /tmp/${{ env.SOLNAME }}_profile_prima/*.txt
