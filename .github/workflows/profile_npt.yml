@@ -158,7 +158,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.npt }}
+          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-$(echo ${{ matrix.npt }} | sed 's|*||g' | sed 's|[[:space:]]||g')
           path: |
             /tmp/${{ env.SOLNAME }}_profile_prima/*summary*.pdf
             /tmp/${{ env.SOLNAME }}_profile_prima/*.txt
