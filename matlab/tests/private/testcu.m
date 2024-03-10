@@ -9,6 +9,7 @@ solvers = lower(solvers);
 precision = 'double';
 rhobeg = 1;
 rhoend = 1e-6;
+npt = @(n) 2*n+1
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % MAXN is the maximal possible dimension of problems in our test.
@@ -92,7 +93,7 @@ disp(['prob_end_time_dir = ', prob_end_time_dir]);
 disp(['prob_end_runs_dir = ', prob_end_runs_dir]);
 
 % Set options
-options = setopt(options, precision, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
+options = setopt(options, precision, rhobeg, rhoend, npt, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
     eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
     sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict, verbose);
 
@@ -528,7 +529,7 @@ return
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function options = setopt(options, precision, rhobeg, rhoend, maxfun_dim, maxfun, maxit, ftarget, perm, ...
+function options = setopt(options, precision, rhobeg, rhoend, npt, maxfun_dim, maxfun, maxit, ftarget, perm, ...
         randomizex0, eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
         sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict, verbose) % Set options
 
@@ -541,6 +542,9 @@ if (~isfield(options, 'rhoend'))
 end
 if (~isfield(options, 'rhobeg'))
     options.rhobeg = rhobeg;
+end
+if (~isfield(options, 'npt'))
+    options.npt = npt;
 end
 if (~isfield(options, 'maxit'))
     options.maxit = maxit;
@@ -737,6 +741,7 @@ solv_options = struct();
 solv_options.precision = options.precision;
 solv_options.rhobeg = options.rhobeg;
 solv_options.rhoend = options.rhoend;
+solv_options.npt = min(max(n+2, fix(options.npt(n))), (n+1)*(n+2)/2);
 solv_options.maxfun = min(options.maxfun_dim*n, options.maxfun);  % may differ from options.maxfun
 solv_options.ftarget = options.ftarget;
 solv_options.output_xhist = options.output_xhist;
