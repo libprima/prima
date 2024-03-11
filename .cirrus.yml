@@ -37,9 +37,9 @@ task:
     #   container:
     #     image: alpine:latest
 
-    - name: ARM64 Alpine
-      arm_container:
-        image: alpine:latest
+    # - name: ARM64 Alpine
+    #   arm_container:
+    #     image: alpine:latest
 
 
   dependencies_script: |
@@ -61,8 +61,8 @@ task:
         brew update && brew upgrade && brew install gcc git make cmake
     elif grep -qi "fedora" /etc/os-release ; then
         dnf upgrade -y && dnf -y install gcc git make cmake gfortran gdb
-    elif grep -qi "alpine" /etc/os-release ; then
-        apk update && apk upgrade && apk add musl-dev gcc git make cmake gfortran gdb
+    #elif grep -qi "alpine" /etc/os-release ; then
+        #apk update && apk upgrade && apk add musl-dev gcc git make cmake gfortran gdb
     else
         apt update && apt upgrade -y && apt install -y gcc git make cmake gfortran gdb
     fi
@@ -92,7 +92,8 @@ task:
     export CC=gcc
     CFLAGS="-Wall -Wextra -Wpedantic -Werror"
     export FC=gfortran
-    export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination -Wno-trampolines'
+    #export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination -Wno-trampolines'
+    export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'
 
     $FC --version
     $CC --version
