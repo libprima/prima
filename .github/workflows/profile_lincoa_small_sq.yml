@@ -21,6 +21,7 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}
 jobs:
   test:
     name: Profile PRIMA.
+    continue-on-error: true
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

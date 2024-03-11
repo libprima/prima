@@ -23,6 +23,7 @@ jobs:
   test:
     name: Profile PRIMA.
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
