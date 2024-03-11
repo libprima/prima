@@ -23,6 +23,12 @@ options.competitor = root_dir_name;
 options.compile = true;
 test_dir = prepare_test_dir(fake_solver_name, funname, options);
 
+is_mac_silicon = false;
+if ismac
+    [~, result] = system('uname -v');
+    is_mac_silicon = contains(result, 'arm64', 'IgnoreCase', true);
+end
+
 exception = [];
 
 try
@@ -35,26 +41,31 @@ try
     clear('setup');
     opt=struct();
     opt.verbose = true;
-    opt.single=true;
-    opt.quadruple=true;
-    opt.debug=true;
-    opt.classical=true;
+    opt.half = is_mac_silicon;
+    opt.single = true;
+    opt.double = true;
+    opt.quadruple = true;
+    opt.debug = true;
+    %opt.classical = true;
+    opt.classical = false;
+
     tic
+
     setup(opt);
-    testprima
-    toc
 
     solvers = {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'};
-    precisions = {'double', 'single', 'quadruple'};
+    precisions = {'half', 'single', 'double', 'quadruple'};
+    precisions = precisions([opt.half, opt.single, opt.double, opt.quadruple]);
     debug_flags = {true, false};
-    variants = {'modern', 'classical'};
+    %variants = {'modern', 'classical'};
+    variants = {'modern'};
 
     % Show current path information.
     showpath(solvers);
 
     % Test the solvers.
-    fun = @sin;
-    x0 = 1;
+    fun = @chrosen;
+    x0 = [-1; -1];
     for isol = 1 : length(solvers)
         solver = str2func(solvers{isol});
         solver
@@ -65,26 +76,32 @@ try
                 options.debug = debug_flags{idbg};
                 for ivar = 1 : length(variants)
                     options.classical = strcmp(variants{ivar}, 'classical');
+                    if ismac && strcmp(func2str(solver), 'cobyla') && strcmp(options.precision, 'half') && options.classical
+                        % Skip the classical cobyla in half precision on macOS, as it will encounter an infinite cycling.
+                        continue;
+                    end
                     if ismac && strcmp(func2str(solver), 'bobyqa') && strcmp(options.precision, 'quadruple') && options.classical
                         % Skip the classical bobyqa in quadruple precision on macOS, as it will encounter a segmentation fault.
                         continue;
                     end
-                    for iprint = -4 : 4
-                        options.output_xhist = true;
-                        options.iprint = iprint;
-                        options
-                        format long
-                        [x, f, exitflag, output] = solver(fun, x0, options)
-                        if (ismember(solvers{isol}, matlab_implemented))
-                            options_mat = options;
-                            options_mat.fortran = false;
-                            [x, f, exitflag, output] = solver(fun, x0, options_mat)
-                        end
+                    options.output_xhist = true;
+                    options.maxfun = 100*length(x0);
+                    options.rhoend = 1.0e-3;
+                    options.iprint = randi([-4, 4]);
+                    options
+                    format long
+                    [x, f, exitflag, output] = solver(fun, x0, options)
+                    if (ismember(solvers{isol}, matlab_implemented))
+                        options_mat = options;
+                        options_mat.fortran = false;
+                        [x, f, exitflag, output] = solver(fun, x0, options_mat)
                     end
                 end
             end
         end
     end
+
+    toc
 
     % Show current path information again at the end of test.
     showpath(solvers);

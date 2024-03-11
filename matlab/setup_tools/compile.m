@@ -241,17 +241,29 @@ function prepare_header(header_file, precision, debug_flag)
 %PREPARE_HEADER prepares `header_file` for the compilation according to `precision` and `debug_flag`.
 
 switch precision
+case {'h', 'half'}
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 32', '#define PRIMA_REAL_PRECISION 16');
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 64', '#define PRIMA_REAL_PRECISION 16');
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 128', '#define PRIMA_REAL_PRECISION 16');
+    rep_str(header_file, '#define PRIMA_HP_AVAILABLE 0', '#define PRIMA_HP_AVAILABLE 1');
+    rep_str(header_file, '#define PRIMA_QP_AVAILABLE 1', '#define PRIMA_QP_AVAILABLE 0');
 case {'s', 'single'}
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 16', '#define PRIMA_REAL_PRECISION 32');
     rep_str(header_file, '#define PRIMA_REAL_PRECISION 64', '#define PRIMA_REAL_PRECISION 32');
     rep_str(header_file, '#define PRIMA_REAL_PRECISION 128', '#define PRIMA_REAL_PRECISION 32');
+    rep_str(header_file, '#define PRIMA_HP_AVAILABLE 1', '#define PRIMA_HP_AVAILABLE 0');
     rep_str(header_file, '#define PRIMA_QP_AVAILABLE 1', '#define PRIMA_QP_AVAILABLE 0');
 case {'q', 'quadruple'}
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 16', '#define PRIMA_REAL_PRECISION 128');
     rep_str(header_file, '#define PRIMA_REAL_PRECISION 32', '#define PRIMA_REAL_PRECISION 128');
     rep_str(header_file, '#define PRIMA_REAL_PRECISION 64', '#define PRIMA_REAL_PRECISION 128');
+    rep_str(header_file, '#define PRIMA_HP_AVAILABLE 1', '#define PRIMA_HP_AVAILABLE 0');
     rep_str(header_file, '#define PRIMA_QP_AVAILABLE 0', '#define PRIMA_QP_AVAILABLE 1');
 otherwise
+    rep_str(header_file, '#define PRIMA_REAL_PRECISION 16', '#define PRIMA_REAL_PRECISION 64');
     rep_str(header_file, '#define PRIMA_REAL_PRECISION 32', '#define PRIMA_REAL_PRECISION 64');
     rep_str(header_file, '#define PRIMA_REAL_PRECISION 128', '#define PRIMA_REAL_PRECISION 64');
+    rep_str(header_file, '#define PRIMA_HP_AVAILABLE 1', '#define PRIMA_HP_AVAILABLE 0');
     rep_str(header_file, '#define PRIMA_QP_AVAILABLE 1', '#define PRIMA_QP_AVAILABLE 0');
 end
 

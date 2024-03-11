@@ -18,6 +18,7 @@ function setup(varargin)
 %   setup(solver_name, options)  % Compile a solver with `options`
 %
 %   Possible options for compilation:
+%   - half: whether to compile the half precision of the Fortran solvers (default: false)
 %   - single: whether to compile the single precision of the Fortran solvers (default: true)
 %   - quadruple: whether to compile the quadruple precision of the Fortran solvers (default: false)
 %   - classical: whether to compile the classical variant of the Fortran solvers (default: true)
@@ -123,7 +124,7 @@ end
 if strcmp(action, 'path')
     add_save_path(interfaces, package_name);
     % Create `all_precisions.m` and `all_variants.m` under `tools` according to the content of
-    % `mexdir`. They reflect the precisions ('double', 'single', 'quadruple') and variants
+    % `mexdir`. They reflect the precisions ('half', 'single', 'double', 'quadruple') and variants
     % ('modern', 'classical') of the solvers available under `mexdir`.
     create_all_precisions(mexdir);
     create_all_variants(mexdir);
@@ -145,7 +146,7 @@ clean_generated_files(fortd_interform, gateways_interform, tools, mexdir);
 
 
 % Create `all_precisions.m` and `all_variants.m` under `tools` according to `options`.
-% They reflect the precisions ('double', 'single', 'quadruple') and variants ('modern','classical')
+% They reflect the precisions ('half', 'single', 'double', 'quadruple') and variants ('modern','classical')
 % of the solvers available after the compilation.
 create_all_precisions(options);
 create_all_variants(options);

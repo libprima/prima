@@ -117,8 +117,8 @@ probinfo = struct();
 probinfo.raw_data = struct('objective', fun, 'x0', x0, 'Aineq', Aineq, 'bineq', bineq, ...
     'Aeq', Aeq, 'beq', beq, 'lb', lb, 'ub', ub, 'nonlcon', nonlcon, 'options', options);
 
-% Decide the precision ('single', 'double', or 'quadruple') of the real calculation within the
-% Fortran solvers. This is needed ONLY by `boundmax`, `funcmax`, and `constrmax` defined below by
+% Decide the precision ('half', 'single', 'double', or 'quadruple') of the real calculation within
+% the Fortran solvers. This is needed ONLY by `boundmax`, `funcmax`, and `constrmax` defined below by
 % calling `getmax`. These three numbers will be used in `pre_x0`, `pre_fun`, and `pre_nonlcon`
 % respectively in the sequel. Note the following.
 % 1. `precision` takes effect only if Fortran solvers are called (i.e., when options.fortran = true).

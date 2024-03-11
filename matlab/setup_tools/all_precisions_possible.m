@@ -3,7 +3,7 @@ function [precision_list, default_precision] = all_precisions_possible()
 % the Fortran solvers in this package; `default_precision`, if requested, is the name of the default
 % precision.
 
-precision_list = {'double', 'single', 'quadruple'};
+precision_list = {'half', 'single', 'double', 'quadruple'};
 
 default_precision = 'double';
 

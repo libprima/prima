@@ -1,7 +1,7 @@
 function create_all_precisions(options_or_directory)
 %CREATE_ALL_PRECISIONS creates `all_precisions.m` under the directory containing this script
 % according to `options_or_directory`. `all_precisions.m` should return a cell array containing
-% the names of all the precisions ('double', 'single', 'quadruple') available for the Fortran
+% the names of all the precisions ('half', 'single', 'double', 'quadruple') available for the Fortran
 % solvers in this package. It is created in the following way.
 %
 % 0. We assume that 'double' is always available.
@@ -14,8 +14,9 @@ function create_all_precisions(options_or_directory)
 % 2. If `options_or_directory` is a structure (or empty), then it will be interpreted as compilation
 % options. The return of `all_precisions.m` will reflect the precisions available after the compilation.
 
-% Default values for the availability of 'single' and 'quadruple'. They are used only if
+% Default values for the availability of 'half', 'single' and 'quadruple'. They are used only if
 % `options_or_directory` is a structure (i.e., it is indeed the compilation options).
+half_precision = false;
 single_precision = true;
 quadruple_precision = false;
 
@@ -45,12 +46,16 @@ try  % We use `try ... catch ...` in order to restore `allprec_file` in case of 
     elseif ischarstr(options_or_directory)
 
         directory = options_or_directory;
+        half_precision = isavailable(directory, 'half');
         single_precision = isavailable(directory, 'single');
         quadruple_precision = isavailable(directory, 'quadruple');
 
     elseif isa(options_or_directory, 'struct')
 
         options = options_or_directory;
+        if isfield(options, 'half') && islogicalscalar(options.half)
+            half_precision = options.half;
+        end
         if isfield(options, 'single') && islogicalscalar(options.single)
             single_precision = options.single;
         end
@@ -64,6 +69,9 @@ try  % We use `try ... catch ...` in order to restore `allprec_file` in case of 
 
     % Decide the precision list string.
     precision_list_string = '''double''';
+    if half_precision
+        precision_list_string = [precision_list_string, ', ''half'''];
+    end
     if single_precision
         precision_list_string = [precision_list_string, ', ''single'''];
     end
