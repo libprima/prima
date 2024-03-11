@@ -2167,3 +2167,8 @@ MAXPOW
 minfloat
 maxpow
 QCNEW
+apk
+cirruslabs
+dnf
+freebsd
+sonoma
