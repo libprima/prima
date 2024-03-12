@@ -14,7 +14,7 @@ on:
         description: Git Ref (Optional)
         required: false
       precision:
-        description: Test Precision
+        description: Test Precision (Optional)
         required: false
 
 # Show the git ref in the workflow name if it is invoked manually.

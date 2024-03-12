@@ -58,8 +58,8 @@ try
     showpath(solvers);
 
     % Test the solvers.
-    fun = @chrosen;
-    x0 = [-1; -1];
+    fun = @sin;
+    x0 = -1;
     for isol = 1 : length(solvers)
         solver = str2func(solvers{isol});
         solver
