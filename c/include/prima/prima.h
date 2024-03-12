@@ -86,7 +86,7 @@ const char *prima_get_rc_string(const prima_rc_t rc);
  *         a NaN value can be passed to signal an evaluation error
  * data  : user data
  */
-typedef void (*prima_obj_t)(const double x[], double *f, const void *data);
+typedef void (*prima_obj_t)(const double x[], double *const f, const void *data);
 
 
 /*
@@ -99,7 +99,7 @@ typedef void (*prima_obj_t)(const double x[], double *f, const void *data);
  *          NaN values can be passed to signal evaluation errors
  * data  : user data
  */
-typedef void (*prima_objcon_t)(const double x[], double *f, double constr[], const void *data);
+typedef void (*prima_objcon_t)(const double x[], double *const f, double constr[], const void *data);
 
 
 /*
@@ -114,8 +114,8 @@ typedef void (*prima_objcon_t)(const double x[], double *f, double constr[], con
  * nlconstr : nonlinear constraint values of the current best point (COBYLA only)
  * terminate : a boolean to ask for termination
  */
-typedef void (*prima_callback_t)(const int n, const double x[], const double f, int nf, int tr,
-            const double cstrv, int m_nlcon, const double nlconstr[], bool *terminate);
+typedef void (*prima_callback_t)(const int n, const double x[], const double f, const int nf, const int tr,
+                                 const double cstrv, const int m_nlcon, const double nlconstr[], bool *const terminate);
 
 
 // Structure to hold the problem
@@ -183,7 +183,7 @@ typedef struct {
 
 // Function to initialize the problem
 PRIMAC_API
-int prima_init_problem(prima_problem_t *problem, int n);
+int prima_init_problem(prima_problem_t *const problem, const int n);
 
 
 // Structure to hold the options
@@ -233,7 +233,7 @@ typedef struct {
 
 // Function to initialize the options
 PRIMAC_API
-int prima_init_options(prima_options_t *options);
+int prima_init_options(prima_options_t *const options);
 
 
 // Structure to hold the result
@@ -265,7 +265,7 @@ typedef struct {
 
 // Function to free the result
 PRIMAC_API
-int prima_free_result(prima_result_t *result);
+int prima_free_result(prima_result_t *const result);
 
 
 /*
@@ -277,7 +277,7 @@ int prima_free_result(prima_result_t *result);
  * return    : see prima_rc_t enum for return codes
  */
 PRIMAC_API
-int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, prima_result_t *result);
+int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, prima_result_t *const result);
 
 
 #ifdef __cplusplus
