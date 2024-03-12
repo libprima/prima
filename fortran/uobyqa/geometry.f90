@@ -8,7 +8,7 @@ module geometry_uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, October 13, 2023 PM02:22:55
+! Last Modified: Tuesday, March 12, 2024 PM09:57:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -279,7 +279,8 @@ if (gg > 0 .and. is_finite(gg)) then
     end if
 else ! GG is 0 or NaN due to rounding errors. Set DCAUCHY to a displacement from XOPT to XPT(:, KNEW).
     dcauchy = xpt(:, knew) - xopt
-    dcauchy = min(HALF, delbar / norm(dcauchy)) * dcauchy
+    scaling = delbar / norm(dcauchy)
+    dcauchy = max(0.6_RP * scaling, min(HALF, scaling)) * dcauchy  ! 0.6: ensure |D| > DELBAR/2
     if (inprod(g, dcauchy) * inprod(dcauchy, matprod(h, dcauchy)) < 0) then
         dcauchy = -dcauchy
     end if

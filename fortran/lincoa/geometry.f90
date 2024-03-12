@@ -8,7 +8,7 @@ module geometry_lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 12, 2024 PM07:21:11
+! Last Modified: Tuesday, March 12, 2024 PM09:57:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -449,7 +449,7 @@ end if
 if (sum(abs(s)) <= 0 .or. .not. is_finite(sum(abs(s)))) then
     s = xpt(:, knew) - xopt
     scaling = delbar / norm(s)
-    s = max(0.6_RP * scaling, min(HALF, scaling)) * s
+    s = max(0.6_RP * scaling, min(HALF, scaling)) * s  ! 0.6: ensure |D| > DELBAR/2
     cstrv = maximum([ZERO, matprod(s, amat(:, trueloc(rstat >= 0))) - rescon(trueloc(rstat >= 0))])
     feasible = (cstrv <= 0)
 end if

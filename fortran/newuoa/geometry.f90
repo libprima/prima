@@ -8,7 +8,7 @@ module geometry_newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, October 03, 2023 AM10:45:41
+! Last Modified: Tuesday, March 12, 2024 PM09:57:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -204,6 +204,7 @@ real(RP) :: dden(size(xpt, 1))
 real(RP) :: denom
 real(RP) :: denrat
 real(RP) :: pqlag(size(xpt, 2))
+real(RP) :: scaling
 real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 
 ! Sizes
@@ -260,6 +261,14 @@ if (denrat <= 0.8_RP) then
     if (abs(alpha * beta + vlag(knew)**2) >= abs(denom) .or. is_nan(denom)) then
         d = dden
     end if
+end if
+
+! In case D is zero or contains Inf/NaN, replace it with a displacement from XPT(:, KNEW) to
+! XOPT. Powell's code does not have this.
+if (sum(abs(d)) <= 0 .or. .not. is_finite(sum(abs(d)))) then
+    d = xpt(:, knew) - xpt(:, kopt)
+    scaling = delbar / norm(d)
+    d = max(0.6_RP * scaling, min(HALF, scaling)) * d  ! 0.6: ensure |D| > DELBAR/2
 end if
 
 !====================!
