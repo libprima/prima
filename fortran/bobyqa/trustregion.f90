@@ -8,7 +8,7 @@ module trustregion_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 12, 2024 PM02:14:38
+! Last Modified: Tuesday, March 12, 2024 PM07:53:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -98,6 +98,7 @@ real(RP) :: cth
 real(RP) :: delsq
 real(RP) :: dhd
 real(RP) :: dhs
+real(RP) :: dold(size(d))
 real(RP) :: dredg
 real(RP) :: dredsq
 real(RP) :: ds
@@ -223,7 +224,6 @@ do iter = 1, maxiter
     resid = delsq - sum(d(trueloc(xbdi == 0))**2)
     if (resid <= 0) then
         twod_search = .true.
-        write (*, *) 225
         exit
     end if
 
@@ -242,7 +242,6 @@ do iter = 1, maxiter
     ds = inprod(d(trueloc(xbdi == 0)), s(trueloc(xbdi == 0)))
 
     if (.not. (stepsq > EPS * delsq .and. gredsq * delsq > (tol * qred)**2 .and. .not. is_nan(ds))) then
-        write (*, *) 244
         exit
     end if
 
@@ -267,7 +266,6 @@ do iter = 1, maxiter
     ! BSTEP < 0 should not happen. BSTEP can be 0 or NaN when, e.g., DS or STEPSQ becomes Inf.
     ! Powell's code does not handle this.
     if (bstep <= 0 .or. .not. is_finite(bstep)) then
-        write (*, *) 268
         exit
     end if
 
@@ -351,7 +349,15 @@ do iter = 1, maxiter
         ggsav = gredsq
         gnew = gnew + stplen * hs
         gredsq = sum(gnew(trueloc(xbdi == 0))**2)
+        dold = d
         d = d + stplen * s
+
+        ! Exit in case of Inf/NaN in D.
+        if (.not. is_finite(sum(abs(d)))) then
+            d = dold
+            exit
+        end if
+
         sdec = max(stplen * (ggsav - HALF * stplen * shs), ZERO)
         qred = qred + sdec
     end if
@@ -363,7 +369,6 @@ do iter = 1, maxiter
         xbdi(iact) = nint(sign(ONE, s(iact)), kind(xbdi))  !!MATLAB: xbdi(iact) = sign(s(iact))
         ! Exit when NACT = N (NACT > N is impossible). We must update XBDI before exiting!
         if (nact >= n) then
-            write (*, *) 363
             exit  ! This leads to a difference. Why?
         end if
         delsq = delsq - d(iact)**2
@@ -371,7 +376,6 @@ do iter = 1, maxiter
             twod_search = .true.
             ! Why set TWOD_SEARCH to TRUE? Because DELSQ <= 0 just means that D reaches the trust
             ! region boundary.
-            write (*, *) 370
             exit
         end if
         beta = ZERO
@@ -381,13 +385,11 @@ do iter = 1, maxiter
         ! Either apply another conjugate gradient iteration or exit.
         ! N.B. ITERCG > N - NACT is impossible.
         if (itercg >= n - nact .or. sdec <= tol * qred .or. is_nan(sdec) .or. is_nan(qred)) then
-            write (*, *) 379
             exit
         end if
         beta = gredsq / ggsav  ! Has GGSAV got the correct value yet?
     else
         twod_search = .true.
-        write (*, *) 384, 'd = ', d
         exit
     end if
 end do
@@ -428,7 +430,6 @@ do iter = 1, maxiter
     xbdi(trueloc(xbdi == 0 .and. (xnew <= sl))) = -1
     nact = int(count(xbdi /= 0), kind(nact))
     if (nact >= n - 1) then
-        write (*, *) 424
         exit
     end if
 
@@ -447,7 +448,6 @@ do iter = 1, maxiter
     ! orthogonal to the reduced D.
     temp = gredsq * dredsq - dredg * dredg
     if (.not. temp > tol**2 * max(gredsq * dredsq, qred**2)) then  ! TEMP is tiny or NaN occurs
-        write (*, *) 441
         exit
     end if
     temp = sqrt(temp)
@@ -504,7 +504,6 @@ do iter = 1, maxiter
         !!MATLAB: [hangt_bd, iact] = min(tanbd);
     end if
     if (hangt_bd <= 0) then
-        write (*, *) 498
         exit
     end if
 
@@ -518,7 +517,6 @@ do iter = 1, maxiter
     ! with HANGT being the TANGENT of HALF the angle of the alternative iteration.
     args = [shs, dhd, dhs, dredg, sredg]
     if (any(is_nan(args))) then
-        write (*, *) 511
         exit
     end if
     ! Define the grid size of the search for HANGT. Powell defined the size to be 4 if hangt_bd is
@@ -530,42 +528,38 @@ do iter = 1, maxiter
     hangt = interval_max(interval_fun_trsbox, ZERO, hangt_bd, args, grid_size)
     sdec = interval_fun_trsbox(hangt, args)
     if (.not. sdec > 0) then
-        write (*, *) 522
         exit
     end if
 
     ! Update GNEW, D and HDRED. If the angle of the alternative iteration is restricted by a bound
-    ! on a free variable, that variable is fixed at the bound.
-    cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
-    sth = (hangt + hangt) / (ONE + hangt * hangt)
-    write (*, *) 'hangt, sth = ', hangt, sth, (hangt + hangt) / (ONE + hangt * hangt)
-    if (hangt <= huge(0.0_RP) .and. sth > huge(0.0_RP)) then
-        write (*, *) '***** hangt = ', hangt, ', BUT sth = (hangt + hangt) / (ONE + hangt * hangt) = ', sth
-        error stop 1
-    end if
+    ! on a free variable, that variable is fixed at the bound. The MIN below is a precaution against
+    ! rounding errors.
+    cth = min((ONE - hangt**2) / (ONE + hangt**2), ONE - hangt**2)
+    sth = min((hangt + hangt) / (ONE + hangt**2), hangt + hangt)
     gnew = gnew + (cth - ONE) * hdred + sth * hs
+    dold = d
     d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
-    write (*, *) 'cs = ', cth, sth, hangt
-    write (*, *) 's = ', s
-    write (*, *) 'd = ', d
+
+    ! Exit in case of Inf/NaN in D.
+    if (.not. is_finite(sum(abs(d)))) then
+        d = dold
+        exit
+    end if
+
     hdred = cth * hdred + sth * hs
     qred = qred + sdec
     if (iact >= 1 .and. iact <= n .and. hangt >= hangt_bd) then  ! D(IACT) reaches lower/upper bound.
         xbdi(iact) = nint(sign(ONE, xopt(iact) + d(iact) - HALF * (sl(iact) + su(iact))), kind(xbdi))
         !!MATLAB: xbdi(iact) = sign(xopt(iact)+d(iact) - 0.5*(sl+su));
     elseif (.not. sdec > tol * qred) then  ! SDEC is small or NaN occurs
-        write (*, *) 537, 'd = ', d
         exit
     end if
 end do
 
 ! Set D, giving careful attention to the bounds.
-write (*, *) 542, 'd=', d
 xnew = max(sl, min(su, xopt + d))
-write (*, *) 544, 'xnew = ', xnew, 'sl=', sl, 'su=', su
 xnew(trueloc(xbdi == -1)) = sl(trueloc(xbdi == -1))
 xnew(trueloc(xbdi == 1)) = su(trueloc(xbdi == 1))
-write (*, *) 547, 'xnew = ', xnew, 'xopt =', xopt
 d = xnew - xopt
 
 ! Set CRVMIN to ZERO if it has never been set or becomes NaN due to ill conditioning.
@@ -586,7 +580,6 @@ end if
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
     ! Due to rounding, it may happen that ||D|| > DELTA, but ||D|| > 2*DELTA is highly improbable.
-    write (*, *) delta, norm(d), d
     call assert(norm(d) <= TWO * delta, '||D|| <= 2*DELTA', srname)
     call assert(crvmin >= 0, 'CRVMIN >= 0', srname)
     ! D is supposed to satisfy the bound constraints SL <= XOPT + D <= SU.

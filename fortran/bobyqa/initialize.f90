@@ -8,7 +8,7 @@ module initialize_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, February 24, 2024 PM10:36:37
+! Last Modified: Tuesday, March 12, 2024 PM07:54:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -545,8 +545,8 @@ if (DEBUGGING) then
     call assert(issymmetric(bmat(:, npt + 1:npt + n)), 'BMAT(:, NPT+1:NPT+N) is symmetric', srname)
     call assert(size(zmat, 1) == npt .and. size(zmat, 2) == npt - n - 1, &
         & 'SIZE(ZMAT) == [NPT, NPT - N - 1]', srname)
-    call assert(errh(1_IK, bmat, zmat, xpt) <= max(1.0E-3_RP, 1.0E2_RP * real(npt, RP) * EPS), &
-        & '[IDZ, BMA, ZMAT] represents H = W^{-1}', srname)
+    call assert(RP /= kind(0.0D0) .or. errh(1_IK, bmat, zmat, xpt) <= max(1.0E-3_RP, 1.0E2_RP * real(npt, RP) * EPS), &
+        & '[BMA, ZMAT] represents H = W^{-1}', srname)
 end if
 
 end subroutine inith
