@@ -62,7 +62,7 @@ int prima_init_options(prima_options_t *const options)
 
 
 // Function to check whether the problem matches the algorithm
-int prima_check_problem(prima_problem_t problem, prima_options_t options, const int use_constr, const prima_algorithm_t algorithm)
+int prima_check_problem(prima_problem_t problem, const int use_constr, const prima_algorithm_t algorithm)
 {
     if (algorithm != PRIMA_COBYLA && (problem.calcfc || problem.nlconstr0 || problem.m_nlcon > 0))
         return PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS;
@@ -235,7 +235,7 @@ int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t problem, p
 {
     int use_constr = (algorithm == PRIMA_COBYLA);
 
-    int info = prima_check_problem(problem, options, use_constr, algorithm);
+    int info = prima_check_problem(problem, use_constr, algorithm);
 
     if (info == 0)
         info = prima_init_result(result, problem);
