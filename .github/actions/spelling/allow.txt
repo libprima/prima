@@ -2173,3 +2173,5 @@ dnf
 freebsd
 sonoma
 randi
+libasan
+libubsan
