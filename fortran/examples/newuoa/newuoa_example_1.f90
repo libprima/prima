@@ -8,11 +8,12 @@
 !------------------------- THE MODULE THAT IMPLEMENTS CALFUN, CALLBACK_FCN ------------------------!
 module calfun_mod
 
+use consts_mod, only : RP, IK
 implicit none
 private
 public :: IK, RP, calfun, callback_fcn
-integer, parameter :: RP = kind(0.0D0)
-integer, parameter :: IK = kind(0)
+!integer, parameter :: RP = kind(0.0D0)
+!integer, parameter :: IK = kind(0)
 ! N.B.: We assume that PRIMA_REAL_PRECISION = 64 (double precision) and PRIMA_INTEGER_KIND = 0
 ! (default kind). Revise RP and IK if this is not the case.
 

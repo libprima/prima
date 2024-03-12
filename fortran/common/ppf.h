@@ -81,7 +81,7 @@
 /* Are we debugging?
  * PRIMA_RELEASED == 1 and PRIMA_DEBUGGING == 1 do not conflict. User may debug.*/
 #if !defined PRIMA_DEBUGGING
-#define PRIMA_DEBUGGING 0
+#define PRIMA_DEBUGGING 1
 #endif
 /******************************************************************************/
 
@@ -107,7 +107,7 @@
  * 3. If you set PRIMA_REAL_PRECISION to 16, then set PRIMA_HP_AVAILABLE to 1.
  * 4. If you set PRIMA_REAL_PRECISION to 128, then set PRIMA_QP_AVAILABLE to 1.*/
 #if !defined PRIMA_REAL_PRECISION
-#define PRIMA_REAL_PRECISION 64
+#define PRIMA_REAL_PRECISION 16
 #endif
 
 /* Is half precision available on this platform (compiler, hardware ...)? */
