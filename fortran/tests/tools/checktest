@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # N.B.: Execute checktest by  "bash ./checktest" instead of just "./checktest", because
 # "./checktest" may not be executable on all operating systems.

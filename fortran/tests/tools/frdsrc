@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This script pre-processes the Fortran source code for Classic Flang 17.0, Huawei Bisheng flang
 # 2.1.0, Arm Fortran Compiler 23.1, and AOCC 4.2 flang, which raise a false positive error about
 # out-bound subscripts when invoked with the -Mbounds flag.

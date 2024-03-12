@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This script pre-processes the Fortran source code for g95
 # It does not support REAL32, REAL64, REAL128 in ISO_FORTRAN_ENV.
 

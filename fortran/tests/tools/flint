@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This script checks the Fortran code of the solver corresponding to this directory.
 # Usage: flint [--compiler_name [--all]] or flint --clean
 

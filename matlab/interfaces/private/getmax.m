@@ -28,7 +28,7 @@ end
 switch lower(precision)
 case 'half'  % IEEE 754 half precision (float16); followed by nagfor 7.1+ when providing REAL16.
     maxfloat = 2^16 - 2^5;  %65504;
-    minfloat = 2^(-14);  %6.1035e-05;
+    minfloat = 2^(-14);  %6.103515e-05;
 case 'single'
     maxfloat = realmax('single');
     minfloat = realmin('single');

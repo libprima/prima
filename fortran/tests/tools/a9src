@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This script pre-processes the Fortran source code for g95 and Absoft af95.
 # 1. They do not recognize the `back` keyword in `min/maxloc`, which is available since F2008.
 # 2. They do not support allocatable characters (variable length strings), which is F2003.

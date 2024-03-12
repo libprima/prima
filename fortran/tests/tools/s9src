@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This script pre-processes the Fortran source code for sunf95 and g95. They do not allow passing
 # internal procedures as actual arguments, but the MEX gateways need to do so for CALFUN and CALCFC.
 

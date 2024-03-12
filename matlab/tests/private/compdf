@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Usage: compdf [LIST OF INPUT FILES].
 # The purpose is to combine the input files into a pdf file.
 # The output will be written to output-\`date +%s\`.pdf."

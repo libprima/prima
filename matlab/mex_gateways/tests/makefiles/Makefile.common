@@ -28,7 +28,7 @@
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
 
-SHELL = /bin/bash
+SHELL = /usr/bin/env bash
 
 # The MathWorks header file for Fortran MEX. To respect the copyright, we do not include it in this
 # package but use the file on this machine if available.

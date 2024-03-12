@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This script pre-processes the Fortran source code for sunf95.
 # 1. It does not recognize overloaded intrinsic functions (particularly, their returning type/kind)
 # correctly, e.g., INT in LINALG_MOD.

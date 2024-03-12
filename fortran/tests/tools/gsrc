@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This script pre-processes the Fortran source code for gfortran when it is invoked with -Ofast.
 
 DIR="$(realpath "$1")"

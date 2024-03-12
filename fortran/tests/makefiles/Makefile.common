@@ -33,7 +33,7 @@
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
 
-SHELL = /bin/bash
+SHELL = /usr/bin/env bash
 
 ####################################################################################################
 # Variables
