@@ -7,7 +7,7 @@
 
 
 // Objective function
-static void fun(const double x[], const double *f, const void *data)
+static void fun(const double x[], double *const f, const void *data)
 {
     const double x1 = x[0];
     const double x2 = x[1];
@@ -17,7 +17,7 @@ static void fun(const double x[], const double *f, const void *data)
 
 
 // Callback function
-static void callback(const int n, const double x[], const double f, const int nf, const int tr, const double cstrv, const int m_nlcon, const double nlconstr[], const bool *terminate)
+static void callback(const int n, const double x[], const double f, const int nf, const int tr, const double cstrv, const int m_nlcon, const double nlconstr[], bool *const terminate)
 {
     (void)n;
     (void)cstrv;
