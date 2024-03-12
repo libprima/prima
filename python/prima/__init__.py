@@ -40,8 +40,8 @@ def get_constraint_type(constraint):
 
 
 def process_constraints(constraints, x0, options):
-    # First throw it back if it's None
-    if constraints is None:
+    # First throw it back if it's an empty tuple
+    if not constraints:
         return None, None
     # Next figure out if it's a list of constraints or a single constraint
     # If it's a single constraint, make it a list, and then the remaining logic
@@ -87,7 +87,7 @@ def process_constraints(constraints, x0, options):
     return linear_constraint, nonlinear_constraint
 
 
-def minimize(fun, x0, args=(), method=None, bounds=None, constraints=None, callback=None, options=None):
+def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callback=None, options=None):
 
     temp_options = {}
     linear_constraint, nonlinear_constraint = process_constraints(constraints, x0, temp_options)
