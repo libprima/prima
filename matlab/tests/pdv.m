@@ -23,12 +23,6 @@ options.competitor = root_dir_name;
 options.compile = true;
 test_dir = prepare_test_dir(fake_solver_name, funname, options);
 
-is_mac_silicon = false;
-if ismac
-    [~, result] = system('uname -v');
-    is_mac_silicon = contains(result, 'arm64', 'IgnoreCase', true);
-end
-
 exception = [];
 
 try
@@ -41,7 +35,7 @@ try
     clear('setup');
     opt=struct();
     opt.verbose = true;
-    opt.half = is_mac_silicon;
+    opt.half = ismac_silicon();
     opt.single = true;
     opt.double = true;
     opt.quadruple = true;

@@ -16,9 +16,12 @@ on:
       random-seed:
         description: Random Seed (Optional)
         required: false
+      precision:
+        description: Test Precision (Optional)
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}', inputs.git-ref, inputs.random-seed) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}, precision {2}', inputs.git-ref, inputs.random-seed, inputs.precision) || '' }}
 
 jobs:
   test:
@@ -162,15 +165,11 @@ jobs:
                 options.seed = str2num('${{ inputs.random-seed }}');
             end
             options.tough = strcmp('${{ matrix.test }}', 'tough');
-            daynum = day(datetime('now', 'TimeZone', 'Asia/Shanghai'));
-            if mod(daynum, 3) == 0
-                options.precision = 'single';
-            elseif mod(daynum, 3) == 1
-                options.precision = 'double';
+            if ~isempty('${{ inputs.precision }}')
+                options.precision = '${{ inputs.precision }}';
             else
-                options.precision = 'quadruple';
+                options.precision = 'date';
             end
-            options
             stress('${{ matrix.solver }}', options);
 
 

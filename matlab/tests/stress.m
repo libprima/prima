@@ -39,10 +39,32 @@ rng(random_seed);
 tough_test = isfield(options, 'tough') && options.tough;
 
 % Which precision to test
+precision = 'double';
 if isfield(options, 'precision') && ischarstr(options.precision)
     precision = options.precision;
-else
-    precision = 'double';
+end
+if strcmpi(precision, 'date')  % Use the date to determine the precision
+    daynum = day(datetime('now', 'TimeZone', 'Asia/Shanghai'));
+    if ismac_silicon
+        if mod(daynum, 4) == 0
+            options.precision = 'half';
+        elseif mod(daynum, 4) == 1
+            options.precision = 'single';
+        elseif mod(daynum, 4) == 2
+            options.precision = 'double';
+        else
+            options.precision = 'quadruple';
+        end
+    end
+    else
+        if mod(daynum, 3) == 0
+            options.precision = 'single';
+        elseif mod(daynum, 3) == 1
+            options.precision = 'double';
+        else
+            options.precision = 'quadruple';
+        end
+    end
 end
 
 % Set up the solver

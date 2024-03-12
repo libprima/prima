@@ -9,6 +9,17 @@ on:
     - cron: '0 16 3-31/3 * *'
   # Trigger the workflow manually
   workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
+      precision:
+        description: Test Precision
+        required: false
+
+# Show the git ref in the workflow name if it is invoked manually.
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}, precision {1}', inputs.git-ref, inputs.precision) || '' }}
+
 
 jobs:
   test:
@@ -19,6 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
+        test: [normal, tough]
 
     steps:
       - name: Clone Repository (Latest)
@@ -38,7 +50,12 @@ jobs:
           submodules: recursive
 
       - name: Conduct the test  # We do not use matlab-actions/run-command, which is not supported on macOS ARM64 as of 20240119
-        run: /Applications/MATLAB_R2023b.app/bin/matlab -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); stress('${{ matrix.solver }}'); copy_crash_dump_files(root_dir);"
+        run: |
+            if ~isempty('${{ inputs.precision }}')
+                /Applications/MATLAB_R2023b.app/bin/matlab -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); options.tough = strcmp('${{ matrix.test }}', 'tough'); options.precision = '${{ inputs.precision }}'; stress('${{ matrix.solver }}', options); copy_crash_dump_files(root_dir);"
+            else
+                /Applications/MATLAB_R2023b.app/bin/matlab -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); options.tough = strcmp('${{ matrix.test }}', 'tough'); options.precision = 'date'; stress('${{ matrix.solver }}', options); copy_crash_dump_files(root_dir);"
+            end
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.3.1
