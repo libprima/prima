@@ -88,7 +88,7 @@ task:
     done
 
 
-  cmake_test_script:
+  cmake_test_script: |
     ROOT_DIR=$(git rev-parse --show-toplevel)
     cd $ROOT_DIR
 
@@ -108,7 +108,7 @@ task:
     ctest --output-on-failure -V -E stress
 
 
-  fortran_test_script:
+  fortran_test_script: |
     ROOT_DIR=$(git rev-parse --show-toplevel)
     cd $ROOT_DIR/fortran/tests
 
