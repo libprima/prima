@@ -114,8 +114,8 @@ typedef void (*prima_objcon_t)(const double x[], const double *f, double constr[
  * nlconstr : nonlinear constraint values of the current best point (COBYLA only)
  * terminate : a boolean to ask for termination
  */
-typedef void (*prima_callback_t)(const int n, const double x[], const double f, int nf, int tr,
-            const double cstrv, int m_nlcon, const double nlconstr[], bool *terminate);
+typedef void (*prima_callback_t)(const int n, const double x[], const double f, const int nf, const int tr,
+              const double cstrv, const int m_nlcon, const double nlconstr[], const bool *terminate);
 
 
 // Structure to hold the problem
@@ -183,7 +183,7 @@ typedef struct {
 
 // Function to initialize the problem
 PRIMAC_API
-int prima_init_problem(const prima_problem_t *problem, const int n);
+int prima_init_problem(prima_problem_t *problem, const int n);
 
 
 // Structure to hold the options
@@ -233,7 +233,7 @@ typedef struct {
 
 // Function to initialize the options
 PRIMAC_API
-int prima_init_options(const prima_options_t *options);
+int prima_init_options(prima_options_t *options);
 
 
 // Structure to hold the result
@@ -265,7 +265,7 @@ typedef struct {
 
 // Function to free the result
 PRIMAC_API
-int prima_free_result(const prima_result_t *result);
+int prima_free_result(prima_result_t *result);
 
 
 /*
@@ -277,7 +277,7 @@ int prima_free_result(const prima_result_t *result);
  * return    : see prima_rc_t enum for return codes
  */
 PRIMAC_API
-int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, const prima_result_t *result);
+int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, prima_result_t *result);
 
 
 #ifdef __cplusplus
