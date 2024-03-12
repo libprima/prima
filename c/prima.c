@@ -234,7 +234,7 @@ int uobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], doub
              int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *const info);
 
 int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
-             double  *const cstrv, const int m_ineq, const double Aineq[], const double bineq[],
+             double *const cstrv, const int m_ineq, const double Aineq[], const double bineq[],
              const int m_eq, const double Aeq[], const double beq[], const double xl[], const double xu[],
              int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
 
