@@ -8,7 +8,7 @@ module geometry_lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 09, 2024 PM12:07:43
+! Last Modified: Tuesday, March 12, 2024 PM07:21:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -444,9 +444,9 @@ if (nact > 0 .and. gnorm > EPS .and. is_finite(gnorm)) then
     end if
 end if
 
-! In case S contains NaN, replace it with a displacement from XPT(:, KNEW) to XOPT. Powell's code
-! does not have this.
-if (is_nan(sum(abs(s)))) then
+! In case S is zero or contains Inf/NaN, replace it with a displacement from XPT(:, KNEW) to
+! XOPT. Powell's code does not have this.
+if (sum(abs(s)) <= 0 .or. .not. is_finite(sum(abs(s)))) then
     s = xpt(:, knew) - xopt
     scaling = delbar / norm(s)
     s = max(0.6_RP * scaling, min(HALF, scaling)) * s

@@ -8,7 +8,7 @@ module trustregion_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, February 04, 2024 AM09:44:57
+! Last Modified: Tuesday, March 12, 2024 PM07:53:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -98,6 +98,7 @@ real(RP) :: cth
 real(RP) :: delsq
 real(RP) :: dhd
 real(RP) :: dhs
+real(RP) :: dold(size(d))
 real(RP) :: dredg
 real(RP) :: dredsq
 real(RP) :: ds
@@ -348,7 +349,15 @@ do iter = 1, maxiter
         ggsav = gredsq
         gnew = gnew + stplen * hs
         gredsq = sum(gnew(trueloc(xbdi == 0))**2)
+        dold = d
         d = d + stplen * s
+
+        ! Exit in case of Inf/NaN in D.
+        if (.not. is_finite(sum(abs(d)))) then
+            d = dold
+            exit
+        end if
+
         sdec = max(stplen * (ggsav - HALF * stplen * shs), ZERO)
         qred = qred + sdec
     end if
@@ -523,11 +532,20 @@ do iter = 1, maxiter
     end if
 
     ! Update GNEW, D and HDRED. If the angle of the alternative iteration is restricted by a bound
-    ! on a free variable, that variable is fixed at the bound.
-    cth = (ONE - hangt * hangt) / (ONE + hangt * hangt)
-    sth = (hangt + hangt) / (ONE + hangt * hangt)
+    ! on a free variable, that variable is fixed at the bound. The MIN below is a precaution against
+    ! rounding errors.
+    cth = min((ONE - hangt**2) / (ONE + hangt**2), ONE - hangt**2)
+    sth = min((hangt + hangt) / (ONE + hangt**2), hangt + hangt)
     gnew = gnew + (cth - ONE) * hdred + sth * hs
+    dold = d
     d(trueloc(xbdi == 0)) = cth * d(trueloc(xbdi == 0)) + sth * s(trueloc(xbdi == 0))
+
+    ! Exit in case of Inf/NaN in D.
+    if (.not. is_finite(sum(abs(d)))) then
+        d = dold
+        exit
+    end if
+
     hdred = cth * hdred + sth * hs
     qred = qred + sdec
     if (iact >= 1 .and. iact <= n .and. hangt >= hangt_bd) then  ! D(IACT) reaches lower/upper bound.
