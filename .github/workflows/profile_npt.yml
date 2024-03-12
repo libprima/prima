@@ -115,10 +115,19 @@ jobs:
             options.npt = @(n) ${{ matrix.npt }};
 
             if  strcmp('${{ matrix.solver }}', 'lincoa')
+                if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)'})
+                    options.blacklist = {'AGG', 'SSEBLIN', 'ANTWERP', 'AVION2', 'DALLASS', 'HIMMELBI', 'SPANHYD', 'ARGLALE', 'GMNCASE3', 'GMNCASE2', 'LEVYMONT'};
+                end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
+                if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)'})
+                    options.blacklist = {'HOLMES', 'CHEBYQAD'};
+                end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', '${{ matrix.competitor }}', options);
             else
+                if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)'})
+                    options.blacklist = {'ARGLINB', 'ARGLINC', 'ERRINROS', 'BA-L1LS', 'BA-L1SPLS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN16LS', 'CHNROSNB', 'SPIN2LS'};
+                end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
             end
 

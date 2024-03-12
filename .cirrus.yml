@@ -60,7 +60,7 @@ task:
     elif [ "$(uname)" == "Darwin" ] ; then
         brew update && brew upgrade && brew install gcc git make cmake
     elif grep -qi "fedora" /etc/os-release ; then
-        dnf upgrade -y && dnf -y install gcc git make cmake gfortran gdb
+        dnf upgrade -y && dnf install -y gcc git make cmake gfortran gdb libasan libubsan
     #elif grep -qi "alpine" /etc/os-release ; then
         #apk update && apk upgrade && apk add musl-dev gcc git make cmake gfortran gdb
     else
@@ -126,7 +126,7 @@ task:
         SOLVER=cobyla
     fi
 
-    make clean && make gtest_i2.$SOLVER
+    $MK clean && $MK gtest_i2.$SOLVER
 
 
   on_failure:

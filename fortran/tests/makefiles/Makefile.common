@@ -454,7 +454,7 @@ GFORT := $(GFORT) $(GFSTD) -fall-intrinsics -frecursive \
 	$(FSAN) \
 	-fPIC -fimplicit-none -fbacktrace -fcheck=all \
 	-ftrapv
-	#-finit-real=nan -finit-integer=-9999999 \  # This will hide some warnings on uninitialized variables.
+	#-finit-real=nan -finit-integer=-9999999  # This will hide some warnings on uninitialized variables.
 	#-Wrealloc-lhs -Wrealloc-lhs-all
 
 gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
@@ -886,7 +886,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "common/preproc.f90:[0-9]*:.*unit_memo.*may be used uninitialized" \
 	| grep -v "Compiling file\|Module subprogram name" \
 	| grep -v "An allocatable array function '.*' is an extended feature" \
-	| grep -v "An allocatable dummy array\ '.*' is an extended feature" \
+	| grep -v "An allocatable dummy array '.*' is an extended feature" \
 	| grep -v "WARNING --  When --chk x is specified, it must be used to compile all source files of a program" \
 	| grep -v "0 Errors, 0 Warnings" \
 	| grep -v "Encountered 0 errors, 0 warnings, [0-9]* information.* in file" \
