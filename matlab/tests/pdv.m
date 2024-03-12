@@ -1,5 +1,23 @@
-function pdv()
+function pdv(options)
 % PDV tests the Fortran solvers for all Precision, Debugging flags, and Variants.
+
+if nargin < 1
+    options = struct();
+end
+
+% Set the random seed. We ALTER THE SEED WEEKLY to test the solvers as much as possible.
+if isfield(options, 'yw')
+    yw = options.yw;
+elseif isfield(options, 'seed')
+    yw = options.seed;
+else
+    yw = year_week('Asia/Shanghai');
+end
+fprintf('\nYW = %d\n', yw);
+% Define the random seed by yw
+random_seed = yw;
+orig_rng_state = rng();  % Save the current random number generator settings
+rng(random_seed);
 
 oldpath = path();  % Record the current path.
 restoredefaultpath;  % Restore the "right out of the box" path of MATLAB
@@ -19,9 +37,9 @@ root_dir = fileparts(fileparts(mfilepath));
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 fake_solver_name = root_dir_name;
-options.competitor = root_dir_name;
-options.compile = true;
-test_dir = prepare_test_dir(fake_solver_name, funname, options);
+opt.competitor = root_dir_name;
+opt.compile = true;
+test_dir = prepare_test_dir(fake_solver_name, funname, opt);
 
 exception = [];
 
@@ -58,37 +76,38 @@ try
     showpath(solvers);
 
     % Test the solvers.
-    fun = @sin;
-    x0 = -1;
+    %fun = @sin; x0 = -1;
+    fun = @chrosen; x0 = [-1, -1];
+    x0 = x0 + 0.1*randn(size(x0));
     for isol = 1 : length(solvers)
         solver = str2func(solvers{isol});
         solver
-        options = struct();
+        opt = struct();
         for iprc = 1 : length(precisions)
-            options.precision = precisions{iprc};
+            opt.precision = precisions{iprc};
             for idbg = 1 : length(debug_flags)
-                options.debug = debug_flags{idbg};
+                opt.debug = debug_flags{idbg};
                 for ivar = 1 : length(variants)
-                    options.classical = strcmp(variants{ivar}, 'classical');
-                    if ismac && strcmp(func2str(solver), 'cobyla') && strcmp(options.precision, 'half') && options.classical
+                    opt.classical = strcmp(variants{ivar}, 'classical');
+                    if ismac && strcmp(func2str(solver), 'cobyla') && strcmp(opt.precision, 'half') && opt.classical
                         % Skip the classical cobyla in half precision on macOS, as it will encounter an infinite cycling.
                         continue;
                     end
-                    if ismac && strcmp(func2str(solver), 'bobyqa') && strcmp(options.precision, 'quadruple') && options.classical
+                    if ismac && strcmp(func2str(solver), 'bobyqa') && strcmp(opt.precision, 'quadruple') && opt.classical
                         % Skip the classical bobyqa in quadruple precision on macOS, as it will encounter a segmentation fault.
                         continue;
                     end
-                    options.output_xhist = true;
-                    options.maxfun = 100*length(x0);
-                    options.rhoend = 1.0e-3;
-                    options.iprint = randi([-4, 4]);
-                    options
+                    opt.output_xhist = true;
+                    opt.maxfun = 200*length(x0);
+                    opt.rhoend = 1.0e-4;
+                    opt.iprint = randi([-4, 4]);
                     format long
-                    [x, f, exitflag, output] = solver(fun, x0, options)
+                    opt
+                    [x, f, exitflag, output] = solver(fun, x0, opt)
                     if (ismember(solvers{isol}, matlab_implemented))
-                        options_mat = options;
-                        options_mat.fortran = false;
-                        [x, f, exitflag, output] = solver(fun, x0, options_mat)
+                        opt_mat = opt;
+                        opt_mat.fortran = false;
+                        [x, f, exitflag, output] = solver(fun, x0, opt_mat)
                     end
                 end
             end
@@ -106,6 +125,8 @@ catch exception
 
 end
 
+% Restore the random number generator state
+rng(orig_rng_state);
 setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
 fprintf('\nCurrently in %s\n\n', pwd());

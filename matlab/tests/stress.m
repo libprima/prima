@@ -45,7 +45,7 @@ if isfield(options, 'precision') && ischarstr(options.precision)
 end
 if strcmpi(precision, 'date')  % Use the date to determine the precision
     daynum = day(datetime('now', 'TimeZone', 'Asia/Shanghai'));
-    if ismac_silicon
+    if ismac_silicon()
         if mod(daynum, 4) == 0
             options.precision = 'half';
         elseif mod(daynum, 4) == 1
@@ -55,7 +55,6 @@ if strcmpi(precision, 'date')  % Use the date to determine the precision
         else
             options.precision = 'quadruple';
         end
-    end
     else
         if mod(daynum, 3) == 0
             options.precision = 'single';
@@ -74,6 +73,7 @@ if ~isfield(options, 'compile') || options.compile
     compile_options = struct();
     compile_options.verbose = false;
     compile_options.debug = (rand() < 0.5);
+    compile_options.half = strcmpi(precision, 'half');
     compile_options.single = strcmpi(precision, 'single');
     compile_options.quadruple = strcmpi(precision, 'quadruple');
     compile_options.classical = false;
