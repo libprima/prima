@@ -87,6 +87,9 @@ task:
         export EXAMPLE_NUM=2 && $MK gtest
     done
 
+
+  cmake_test_script:
+    ROOT_DIR=$(git rev-parse --show-toplevel)
     cd $ROOT_DIR
 
     export CC=gcc
@@ -103,6 +106,27 @@ task:
     cmake --build . --target install
     cmake --build . --target tests
     ctest --output-on-failure -V -E stress
+
+
+  fortran_test_script:
+    ROOT_DIR=$(git rev-parse --show-toplevel)
+    cd $ROOT_DIR/fortran/tests
+
+    # Decide the solver to test by date
+    SOLVER_NUM=$(($(date +%-d) % 4))
+    if [ $SOLVER_NUM==0 ] ; then
+        SOLVER=uobyqa
+    elif [ $SOLVER_NUM==1 ] ; then
+        SOLVER=newuoa
+    elif [ $SOLVER_NUM==2 ] ; then
+        SOLVER=bobyqa
+    elif [ $SOLVER_NUM==3 ] ; then
+        SOLVER=lincoa
+    else
+        SOLVER=cobyla
+    fi
+
+    make clean && make gtest_i2.$SOLVER
 
 
   on_failure:
