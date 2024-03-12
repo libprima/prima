@@ -277,7 +277,7 @@ int prima_free_result(prima_result_t *const result);
  * return    : see prima_rc_t enum for return codes
  */
 PRIMAC_API
-int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, prima_result_t *const result);
+int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t problem, prima_options_t options, prima_result_t *const result);
 
 
 #ifdef __cplusplus
