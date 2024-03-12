@@ -51,7 +51,7 @@ struct PRIMAResult {
         "fun=" + std::to_string(fun) + ", " +
         "nfev=" + std::to_string(nfev) + ", " +
         "maxcv=" + std::to_string(maxcv) + ", " +
-        "nlconstr=" + std::string(pybind11::repr(nlconstr)) + 
+        "nlconstr=" + std::string(pybind11::repr(nlconstr)) + ", " +
         "method=" + "\'" + method + "\'" + ")";
         ")";
       return repr;
