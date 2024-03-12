@@ -62,28 +62,22 @@ int prima_init_options(prima_options_t *const options)
 
 
 // Function to check whether the problem matches the algorithm
-int prima_check_problem(prima_problem_t *const problem, prima_options_t *const options, const int use_constr, const prima_algorithm_t algorithm)
+int prima_check_problem(const prima_problem_t problem, const int use_constr, const prima_algorithm_t algorithm)
 {
-    if (!problem)
-        return PRIMA_NULL_PROBLEM;
-
-    if (algorithm != PRIMA_COBYLA && (problem->calcfc || problem->nlconstr0 || problem->m_nlcon > 0))
+    if (algorithm != PRIMA_COBYLA && (problem.calcfc || problem.nlconstr0 || problem.m_nlcon > 0))
         return PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS;
 
     if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA) &&
-        (problem->m_ineq > 0 || problem->m_eq > 0 || problem->Aineq || problem->bineq || problem->Aeq || problem->beq))
+        (problem.m_ineq > 0 || problem.m_eq > 0 || problem.Aineq || problem.bineq || problem.Aeq || problem.beq))
         return PRIMA_PROBLEM_SOLVER_MISMATCH_LINEAR_CONSTRAINTS;
 
-    if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA && algorithm != PRIMA_BOBYQA) && (problem->xl || problem->xu))
+    if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA && algorithm != PRIMA_BOBYQA) && (problem.xl || problem.xu))
         return PRIMA_PROBLEM_SOLVER_MISMATCH_BOUNDS;
 
-    if (!options)
-        return PRIMA_NULL_OPTIONS;
-
-    if (!problem->x0)
+    if (!problem.x0)
         return PRIMA_NULL_X0;
 
-    if ((use_constr && !problem->calcfc) || (!use_constr && !problem->calfun))
+    if ((use_constr && !problem.calcfc) || (!use_constr && !problem.calfun))
         return PRIMA_NULL_FUNCTION;
 
     return 0;
@@ -91,22 +85,19 @@ int prima_check_problem(prima_problem_t *const problem, prima_options_t *const o
 
 
 // Function to initialize the result
-int prima_init_result(prima_result_t *const result, prima_problem_t *const problem)
+int prima_init_result(prima_result_t *const result, const prima_problem_t problem)
 {
     if (!result)
         return PRIMA_NULL_RESULT;
 
     memset(result, 0, sizeof(prima_result_t));
 
-    if (!problem)
-        return PRIMA_NULL_PROBLEM;
-
     // x: returned point
-    result->x = (double*)malloc(problem->n * sizeof(double));
+    result->x = (double*)malloc(problem.n * sizeof(double));
     if (!result->x)
         return PRIMA_MEMORY_ALLOCATION_FAILS;
-    for (int i = 0; i < problem->n; i++)
-        result->x[i] = problem->x0[i];
+    for (int i = 0; i < problem.n; i++)
+        result->x[i] = problem.x0[i];
 
     // f: objective function value at the returned point
     result->f = NAN;
@@ -115,15 +106,15 @@ int prima_init_result(prima_result_t *const result, prima_problem_t *const probl
     result->cstrv = NAN;
 
     // nlconstr: nonlinear constraint values at the returned point, of size m_nlcon (COBYLA only)
-    if (problem->m_nlcon <= 0)
+    if (problem.m_nlcon <= 0)
         result->nlconstr = NULL;
     else {
-        result->nlconstr = (double*)malloc(problem->m_nlcon * sizeof(double));
+        result->nlconstr = (double*)malloc(problem.m_nlcon * sizeof(double));
         if (!result->nlconstr) {
             free(result->x);
             return PRIMA_MEMORY_ALLOCATION_FAILS;
         }
-        for (int i = 0; i < problem->m_nlcon; i++)
+        for (int i = 0; i < problem.m_nlcon; i++)
             result->nlconstr[i] = NAN;
     }
 
@@ -240,11 +231,11 @@ int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], doub
 
 
 // The function that does the minimization using a PRIMA solver
-int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, prima_options_t *options, prima_result_t *const result)
+int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result)
 {
     int use_constr = (algorithm == PRIMA_COBYLA);
 
-    int info = prima_check_problem(problem, options, use_constr, algorithm);
+    int info = prima_check_problem(problem, use_constr, algorithm);
 
     if (info == 0)
         info = prima_init_result(result, problem);
@@ -252,29 +243,29 @@ int prima_minimize(const prima_algorithm_t algorithm, prima_problem_t *problem, 
     if (info == 0) {
         switch (algorithm) {
             case PRIMA_BOBYQA:
-                bobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, options->callback, &info);
+                bobyqa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), problem.xl, problem.xu, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, options.callback, &info);
                 result->cstrv = 0.0;
                 break;
 
             case PRIMA_COBYLA:
-                cobyla_c(problem->m_nlcon, problem->calcfc, options->data, problem->n, result->x, &(result->f), &(result->cstrv), result->nlconstr,
-                            problem->m_ineq, problem->Aineq, problem->bineq, problem->m_eq, problem->Aeq, problem->beq,
-                            problem->xl, problem->xu, problem->f0, problem->nlconstr0, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, options->callback, &info);
+                cobyla_c(problem.m_nlcon, problem.calcfc, options.data, problem.n, result->x, &(result->f), &(result->cstrv), result->nlconstr,
+                            problem.m_ineq, problem.Aineq, problem.bineq, problem.m_eq, problem.Aeq, problem.beq,
+                            problem.xl, problem.xu, problem.f0, problem.nlconstr0, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.iprint, options.callback, &info);
                 break;
 
             case PRIMA_LINCOA:
-                lincoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->cstrv),
-                            problem->m_ineq, problem->Aineq, problem->bineq, problem->m_eq, problem->Aeq, problem->beq,
-                            problem->xl, problem->xu, &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, options->callback, &info);
+                lincoa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), &(result->cstrv),
+                            problem.m_ineq, problem.Aineq, problem.bineq, problem.m_eq, problem.Aeq, problem.beq,
+                            problem.xl, problem.xu, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, options.callback, &info);
                 break;
 
             case PRIMA_NEWUOA:
-                newuoa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->npt, options->iprint, options->callback, &info);
+                newuoa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, options.callback, &info);
                 result->cstrv = 0.0;
                 break;
 
             case PRIMA_UOBYQA:
-                uobyqa_c(problem->calfun, options->data, problem->n, result->x, &(result->f), &(result->nf), options->rhobeg, options->rhoend, options->ftarget, options->maxfun, options->iprint, options->callback, &info);
+                uobyqa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.iprint, options.callback, &info);
                 result->cstrv = 0.0;
                 break;
 

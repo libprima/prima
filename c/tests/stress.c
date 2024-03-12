@@ -25,7 +25,7 @@ static double random_gen(double a, double b)
 }
 
 // Objective function for unconstrained, bound constrained, and linearly-constrained problems
-static void fun(const double x[], double *f, const void *data)
+static void fun(const double x[], double *const f, const void *data)
 {
   // Objective: Rosenbrock function
   *f = 0.0;
@@ -42,7 +42,7 @@ static void fun(const double x[], double *f, const void *data)
 }
 
 // Objective & constraint function for nonlinearly-constrained problems
-static void fun_con(const double x[], double *f, double constr[], const void *data)
+static void fun_con(const double x[], double *const f, double constr[], const void *data)
 {
   // Objective: Rosenbrock function
   *f = 0.0;
@@ -168,7 +168,7 @@ int main(int argc, char * argv[])
 
   // Call the solver
   prima_result_t result;
-  rc = prima_minimize(algorithm, &problem, &options, &result);
+  rc = prima_minimize(algorithm, problem, options, &result);
 
   // Print the result
   printf("f* = %g, cstrv = %g, nlconstr = {%g}, rc = %d, msg = '%s', evals = %d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);

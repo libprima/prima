@@ -16,7 +16,7 @@ static int int_data = 0xff;
 void * data_ref = &int_data;
 
 // Objective function for unconstrained, bound constrained, and linearly-constrained problems
-static void fun(const double x[], double *f, const void *data)
+static void fun(const double x[], double *const f, const void *data)
 {
   const double x1 = x[0];
   const double x2 = x[1];
@@ -38,7 +38,7 @@ static void fun(const double x[], double *f, const void *data)
 }
 
 // Objective & constraint function for nonlinearly-constrained problems
-static void fun_con(const double x[], double *f, double constr[], const void *data)
+static void fun_con(const double x[], double *const f, double constr[], const void *data)
 {
   const double x1 = x[0];
   const double x2 = x[1];
@@ -144,7 +144,7 @@ int main(int argc, char * argv[])
 
   // Call the solver
   prima_result_t result;
-  int rc = prima_minimize(algorithm, &problem, &options, &result);
+  int rc = prima_minimize(algorithm, problem, options, &result);
 
   // Print the result
   printf("f* = %g, cstrv = %g, nlconstr = {%g}, rc = %d, msg = '%s', evals = %d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);

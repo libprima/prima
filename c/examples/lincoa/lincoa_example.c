@@ -58,7 +58,7 @@ int main(int argc, char * argv[])
 
     // Call the solver
     prima_result_t result;
-    const int rc = prima_minimize(PRIMA_LINCOA, &problem, &options, &result);
+    const int rc = prima_minimize(PRIMA_LINCOA, problem, options, &result);
 
     // Print the result
     printf("x* = {%g, %g}, f* = %g, cstrv = %g, rc = %d, msg = '%s', evals = %d\n", result.x[0], result.x[1], result.f, result.cstrv, rc, result.message, result.nf);

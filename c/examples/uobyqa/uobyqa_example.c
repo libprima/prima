@@ -52,7 +52,7 @@ int main(int argc, char * argv[])
 
     // Run the solver
     prima_result_t result;
-    const int rc = prima_minimize(PRIMA_UOBYQA, &problem, &options, &result);
+    const int rc = prima_minimize(PRIMA_UOBYQA, problem, options, &result);
 
     // Print the result
     printf("x* = {%g, %g}, rc = %d, msg = '%s', evals = %d\n", result.x[0], result.x[1], rc, result.message, result.nf);
