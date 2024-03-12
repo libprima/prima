@@ -5,19 +5,18 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 12, 2024 PM01:07:11
+! Last Modified: Tuesday, March 12, 2024 PM09:24:14
 !--------------------------------------------------------------------------------------------------!
 
 
 !-------------------------------- THE MODULE THAT IMPLEMENTS CALFUN -------------------------------!
 module calfun_mod
 
-use consts_mod, only : RP, IK
 implicit none
 private
 public :: RP, IK, calfun
-!integer, parameter :: RP = kind(0.0D0)
-!integer, parameter :: IK = kind(0)
+integer, parameter :: RP = kind(0.0D0)
+integer, parameter :: IK = kind(0)
 ! N.B.: We assume that PRIMA_REAL_PRECISION = 64 (double precision) and PRIMA_INTEGER_KIND = 0
 ! (default kind). Revise RP and IK if this is not the case.
 
