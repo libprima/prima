@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 10, 2024 AM12:32:09
+! Last Modified: Tuesday, March 12, 2024 PM12:59:25
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1271,7 +1271,7 @@ do j = 2, npt - n - 1_IK
 
     ! Powell's condition in NEWUOA/LINCOA for the IF ... THEN below: IF (ZMAT(KNEW, J) /= 0) THEN
     ! A possible alternative: IF (ABS(ZMAT(KNEW, J)) > 1.0E-20 * ABS(ZMAT(KNEW, JL))) THEN
-    if (abs(zmat(knew, j)) > 1.0E-20 * maxval(abs(zmat))) then
+    if (abs(zmat(knew, j)) > 1.0E-20 * maxval(abs(zmat))) then  ! Threshold comes from Powell's BOBYQA
         ! Multiply a Givens rotation to ZMAT from the right so that ZMAT(KNEW, [JL,J]) becomes [*,0].
         grot = planerot(zmat(knew, [jl, j]))  !!MATLAB: grot = planerot(zmat(knew, [jl, j])')
         zmat(:, [jl, j]) = matprod(zmat(:, [jl, j]), transpose(grot))

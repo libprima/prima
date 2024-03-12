@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Monday, February 26, 2024 PM11:23:34
+! Last Modified: Tuesday, March 12, 2024 PM12:57:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -669,7 +669,6 @@ real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(vlag_in))
 real(RP) :: zknew1
-real(RP) :: ztest
 
 ! Sizes.
 n = int(size(bmat, 1), kind(n))
@@ -731,10 +730,9 @@ end if
 vlag(knew) = vlag(knew) - ONE
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT. After this, ZMAT(KNEW, :) contains
-! only one nonzero at ZMAT(KNEW, 1). Entries of ZMAT are treated as 0 if the moduli are at most ZTEST.
-ztest = 1.0E-20_RP * maxval(abs(zmat))  ! This threshold is by Powell
+! only one nonzero at ZMAT(KNEW, 1). Entries of ZMAT are treated as 0 if the moduli are quite small.
 do j = 2, npt - n - 1_IK
-    if (abs(zmat(knew, j)) > ztest) then
+    if (abs(zmat(knew, j)) > 1.0E-20 * maxval(abs(zmat))) then  ! This threshold is by Powell
         grot = planerot(zmat(knew, [1_IK, j]))
         zmat(:, [1_IK, j]) = matprod(zmat(:, [1_IK, j]), transpose(grot))
     end if

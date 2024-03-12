@@ -8,7 +8,7 @@ module update_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, January 23, 2024 PM07:56:39
+! Last Modified: Tuesday, March 12, 2024 PM12:56:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -69,7 +69,6 @@ real(RP) :: tau
 real(RP) :: v1(size(bmat, 1))
 real(RP) :: v2(size(bmat, 1))
 real(RP) :: vlag(size(bmat, 2))
-real(RP) :: ztest
 
 ! Sizes.
 n = int(size(xpt, 1), kind(n))
@@ -151,10 +150,9 @@ bmat = bmat + outprod(v1, vlag) + outprod(v2, hcol) !call r2update(bmat, ONE, v1
 call symmetrize(bmat(:, npt + 1:npt + n))
 
 ! Apply Givens rotations to put zeros in the KNEW-th row of ZMAT. After this, ZMAT(KNEW, :) contains
-! only one nonzero at ZMAT(KNEW, 1). Entries of ZMAT are treated as 0 if the moduli are at most ZTEST.
-ztest = 1.0E-20_RP * maxval(abs(zmat))  ! This threshold is by Powell
+! only one nonzero at ZMAT(KNEW, 1). Entries of ZMAT are treated as 0 if the moduli are quite small.
 do j = 2, npt - n - 1_IK
-    if (abs(zmat(knew, j)) > ztest) then
+    if (abs(zmat(knew, j)) > 1.0E-20 * maxval(abs(zmat))) then  ! This threshold is by Powell
         grot = planerot(zmat(knew, [1_IK, j]))
         zmat(:, [1_IK, j]) = matprod(zmat(:, [1_IK, j]), transpose(grot))
     end if

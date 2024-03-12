@@ -5,7 +5,7 @@
 !
 ! Started: July 2020
 !
-! Last Modified: Monday, March 11, 2024 PM07:05:33
+! Last Modified: Tuesday, March 12, 2024 PM01:27:13
 !--------------------------------------------------------------------------------------------------!
 
 
@@ -43,7 +43,7 @@ f = 0.0_RP
 do i = 4, n, 2
     do j = 2, i - 2, 2
         temp = (x(i - 1) - x(j - 1))**2 + (x(i) - x(j))**2
-        temp = max(temp, 1.0D-6)
+        temp = max(temp, 1.0E-4_RP)
         f = f + 1.0_RP / sqrt(temp)
     end do
 end do

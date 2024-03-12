@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 09, 2024 AM11:47:13
+! Last Modified: Tuesday, March 12, 2024 PM12:53:21
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -185,7 +185,7 @@ real(RP), parameter :: SYMTOL_DFT = REALMAX
 real(RP), parameter :: SYMTOL_DFT = max(5.0E3_RP * EPS, TEN**max(-10, -MAXPOW10))
 #elif (defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64)
 real(RP), parameter :: SYMTOL_DFT = max(5.0E1_RP * EPS, TEN**max(-10, -MAXPOW10))
-#elif (defined __NAG_COMPILER_RELEASE && PRIMA_REAL_PRECISION > 64) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
+#elif (defined __NAG_COMPILER_BUILD && PRIMA_REAL_PRECISION > 64) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
 real(RP), parameter :: SYMTOL_DFT = max(TEN * EPS, TEN**max(-10, -MAXPOW10))
 #else
 real(RP), parameter :: SYMTOL_DFT = ZERO
@@ -195,7 +195,7 @@ real(RP), parameter :: SYMTOL_DFT = ZERO
 ! In some cases, due to compiler bugs, we need to disable the test. We signify such cases by setting
 ! ORTHTOL_DFT to REALMAX. For instance, NAG Fortran Compiler is buggy concerning half-precision
 ! floating-point numbers before Release 7.2 Build 7201.
-#if (defined __NAG_COMPILER_RELEASE && __NAG_COMPILER_RELEASE <= 7200 && PRIMA_REAL_PRECISION <= 16) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
+#if (defined __NAG_COMPILER_BUILD && __NAG_COMPILER_BUILD <= 7200 && PRIMA_REAL_PRECISION <= 16) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
 real(RP), parameter :: ORTHTOL_DFT = REALMAX
 #else
 real(RP), parameter :: ORTHTOL_DFT = ZERO

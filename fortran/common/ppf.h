@@ -81,7 +81,7 @@
 /* Are we debugging?
  * PRIMA_RELEASED == 1 and PRIMA_DEBUGGING == 1 do not conflict. User may debug.*/
 #if !defined PRIMA_DEBUGGING
-#define PRIMA_DEBUGGING 0
+#define PRIMA_DEBUGGING 1
 #endif
 /******************************************************************************/
 
@@ -107,14 +107,14 @@
  * 3. If you set PRIMA_REAL_PRECISION to 16, then set PRIMA_HP_AVAILABLE to 1.
  * 4. If you set PRIMA_REAL_PRECISION to 128, then set PRIMA_QP_AVAILABLE to 1.*/
 #if !defined PRIMA_REAL_PRECISION
-#define PRIMA_REAL_PRECISION 64
+#define PRIMA_REAL_PRECISION 16
 #endif
 
 /* Is half precision available on this platform (compiler, hardware ...)? */
 /* Set PRIMA_HP_AVAILABLE to 1 and PRIMA_REAL_PRECISION to 16 if REAL*2 is
  * available and you REALLY intend to use it. DO NOT DO IT IF NOT SURE. */
 #if !defined PRIMA_HP_AVAILABLE
-#if (defined __NAG_COMPILER_RELEASE && __NAG_COMPILER_RELEASE > 7200)
+#if (defined __NAG_COMPILER_BUILD && __NAG_COMPILER_BUILD > 7200)
 #define PRIMA_HP_AVAILABLE 1
 #else
 #define PRIMA_HP_AVAILABLE 0
@@ -138,7 +138,7 @@
  * 4. Set PRIMA_QP_AVAILABLE to 1 and PRIMA_REAL_PRECISION to 128 if REAL*16
  *    is available and you REALLY intend to use it. DO NOT DO IT IF NOT SURE. */
 #if !defined PRIMA_QP_AVAILABLE
-#if defined __GFORTRAN__ || defined __INTEL_COMPILER || defined __NAG_COMPILER_RELEASE
+#if defined __GFORTRAN__ || defined __INTEL_COMPILER || defined __NAG_COMPILER_BUILD
 #define PRIMA_QP_AVAILABLE 1
 #else
 #define PRIMA_QP_AVAILABLE 0
