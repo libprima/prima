@@ -204,8 +204,7 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
           cmake --build . --target install
           cmake --build . --target tests
-          # cobyla test does not pass on AOCC: https://github.com/libprima/prima/issues/41
-          ctest --output-on-failure -V -E "stress|cobyla"
+          ctest --output-on-failure -V -E "stress"
         shell: bash
         env:
           FC: ${{ matrix.toolchain.compiler }}
