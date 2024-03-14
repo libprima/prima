@@ -1,14 +1,12 @@
 import numpy as np
 from ._linear_constraints import LinearConstraint
+from scipy.optimize import OptimizeResult
 
 # All the accepted scalar types; np.generic correspond to all NumPy types.
 scalar_types = (int, float, np.generic)
 eps = np.finfo(np.float64).eps
-solver_list = ['uobyqa', 'newuoa', 'bobyqa', 'lincoa', 'cobyla']
-invoker_list = solver_list[:]
-# invoker_list.append('pdfo')
 
-def _project(x0, lb, ub, constraints, options=None):
+def _project(x0, lb, ub, constraints):
     """Projection of the initial guess onto the feasible set.
 
     Parameters
@@ -27,11 +25,10 @@ def _project(x0, lb, ub, constraints, options=None):
             nonlinear: dict
                 The nonlinear constraints of the problem. When ``_project`` is called, the nonlinear constraints are
                 None.
-    options: dict, optional
 
     Returns
     -------
-    result: x0
+    result: OptimizeResult
         The result of the projection.
 
     Authors
@@ -43,13 +40,7 @@ def _project(x0, lb, ub, constraints, options=None):
 
     Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
     """
-    # possible solvers
-    # fun_name = stack()[0][3]  # name of the current function
-    # local_invoker_list = ['prepdfo']
-    # if len(stack()) < 3 or stack()[1][3].lower() not in local_invoker_list:
-    #     raise SystemError('`{}` should only be called by {}'.format(fun_name, ', '.join(invoker_list)))
-    # invoker = stack()[1][3].lower()
-    invoker = ''
+    invoker = 'prima'
 
     # Validate x0.
     if isinstance(x0, scalar_types):
@@ -100,17 +91,13 @@ def _project(x0, lb, ub, constraints, options=None):
         # the nonlinear constraints will not be taken into account in this function and are, therefore, not validated
         raise ValueError('{}: UNEXPECTED ERROR: The constraints are ill-defined.'.format(invoker))
 
-    # Validate options
-    if options is not None and not isinstance(options, dict):
-        raise ValueError('{}: UNEXPECTED ERROR: The options should be a dictionary.'.format(invoker))
-
     max_con = 1e20  # Decide whether an inequality constraint can be ignored
 
     # Project onto the feasible set.
     if constraints['linear'] is None:
         # Direct projection onto the bound constraints
         x_proj = np.nanmin((np.nanmax((x0_c, lb_c), axis=0), ub_c), axis=0)
-        return x_proj
+        return OptimizeResult(x=x_proj)
     elif all(np.less_equal(np.abs(constraints['linear'].ub - constraints['linear'].lb), eps)) and \
             np.max(lb_c) <= -max_con and np.min(ub_c) >= max_con:
         # The linear constraints are all equality constraints. The projection can therefore be done by solving the
@@ -123,12 +110,10 @@ def _project(x0, lb, ub, constraints, options=None):
         # than max_con, they will be reduced to this bound.
         x_proj = np.nanmin((np.nanmax((x0_c + xi, lb_c), axis=0), ub_c), axis=0)
 
-        return x_proj
+        return OptimizeResult(x=x_proj)
 
     if constraints['linear'] is not None:
         try:
-            # TODO: Ideally we'd like to not depend on scipy in the prima package, so in the future we might want to bring in
-            # SLSQP ourselves
             # Project the initial guess onto the linear constraints via SciPy.
             from scipy.optimize import minimize
             from scipy.optimize import Bounds as ScipyBounds
@@ -167,17 +152,16 @@ def _project(x0, lb, ub, constraints, options=None):
             # Perform the actual projection.
             ax_ineq = np.dot(pc_args_ineq['A'], x0_c)
             ax_eq = np.dot(pc_args_eq['A'], x0_c)
-            if np.all(pc_args_ineq['lb'] <= ax_ineq) and np.all(ax_ineq <= pc_args_ineq['ub']) and \
-                    np.all(ax_eq == pc_args_eq['lb']) and \
-                    np.all(lb_c <= x0_c) and np.all(x0_c <= ub_c):
-                # Do not perform any projection if the initial guess is feasible.
-                return x0_c
-            else:
-                res = minimize(lambda x: np.dot(x - x0_c, x - x0_c) / 2, x0_c, jac=lambda x: (x - x0_c),
+            if np.greater(ax_ineq, pc_args_ineq['ub']).any() or np.greater(pc_args_ineq['lb'], ax_ineq).any() or \
+                    np.not_equal(ax_eq, pc_args_eq['lb']).any() or \
+                    np.greater(x0_c, ub_c).any() or np.greater(lb_c, x0_c).any():
+                return minimize(lambda x: np.dot(x - x0_c, x - x0_c) / 2, x0_c, jac=lambda x: (x - x0_c),
                                 bounds=ScipyBounds(lb_c, ub_c), constraints=project_constraints)
-                return res.x
+            else:
+                # Do not perform any projection if the initial guess is feasible.
+                return OptimizeResult(x=x0_c)
 
         except ImportError:
-            return x0_c
+            return OptimizeResult(x=x0_c)
 
-    return x0_c
+    return OptimizeResult(x=x0_c)
