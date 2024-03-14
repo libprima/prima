@@ -1,40 +1,34 @@
 from ._prima import minimize as _minimize, __version__, PRIMAMessage
-from ._nonlinear_constraints import NonlinearConstraint, process_nl_constraints
+# Bounds may appear unused in this file but we need to import it to make it available to the user
+from scipy.optimize import NonlinearConstraint, LinearConstraint, Bounds
+from ._nonlinear_constraints import process_nl_constraints
 from ._linear_constraints import (
-    LinearConstraint,
     process_single_linear_constraint,
     process_multiple_linear_constraints,
     separate_LC_into_eq_and_ineq,
 )
-from ._bounds import process_bounds, Bounds
+from ._bounds import process_bounds
 from enum import Enum
 import numpy as np
 from ._common import _project
 
 
 class ConstraintType(Enum):
-    LINEAR_NATIVE = 5
-    NONLINEAR_NATIVE = 10
-    LINEAR_NONNATIVE = 15
-    NONLINEAR_NONNATIVE = 20
-    LINEAR_DICT = 25
-    NONLINEAR_DICT = 30
+    LINEAR_OBJECT = 5
+    NONLINEAR_OBJECT = 10
+    LINEAR_DICT = 15
+    NONLINEAR_DICT = 20
 
 
 def get_constraint_type(constraint):
-    # Make sure the test for native is first, since the hasattr tests will also pass for native constraints
-    if isinstance(constraint, LinearConstraint):
-        return ConstraintType.LINEAR_NATIVE
-    elif isinstance(constraint, NonlinearConstraint):
-        return ConstraintType.NONLINEAR_NATIVE
-    elif isinstance(constraint, dict) and ("A" in constraint) and ("lb" in constraint) and ("ub" in constraint):
+    if isinstance(constraint, dict) and ("A" in constraint) and ("lb" in constraint) and ("ub" in constraint):
         return ConstraintType.LINEAR_DICT
     elif isinstance(constraint, dict) and ("fun" in constraint) and ("lb" in constraint) and ("ub" in constraint):
         return ConstraintType.NONLINEAR_DICT
     elif hasattr(constraint, "A") and hasattr(constraint, "lb") and hasattr(constraint, "ub"):
-        return ConstraintType.LINEAR_NONNATIVE
+        return ConstraintType.LINEAR_OBJECT
     elif hasattr(constraint, "fun") and hasattr(constraint, "lb") and hasattr(constraint, "ub"):
-        return ConstraintType.NONLINEAR_NONNATIVE
+        return ConstraintType.NONLINEAR_OBJECT
     else:
         raise ValueError("Constraint type not recognized")
 
@@ -54,15 +48,9 @@ def process_constraints(constraints, x0, options):
     nonlinear_constraints = []
     for constraint in constraints:
         constraint_type = get_constraint_type(constraint)
-        if constraint_type in (
-            ConstraintType.LINEAR_NATIVE,
-            ConstraintType.LINEAR_NONNATIVE,
-        ):
+        if constraint_type is ConstraintType.LINEAR_OBJECT:
             linear_constraints.append(constraint)
-        elif constraint_type in (
-            ConstraintType.NONLINEAR_NATIVE,
-            ConstraintType.NONLINEAR_NONNATIVE,
-        ):
+        elif constraint_type is ConstraintType.NONLINEAR_OBJECT:
             nonlinear_constraints.append(constraint)
         elif constraint_type == ConstraintType.LINEAR_DICT:
             linear_constraints.append(LinearConstraint(constraint["A"], constraint["lb"], constraint["ub"]))
@@ -128,15 +116,15 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
 
     lb, ub = process_bounds(bounds, lenx0)
 
+    # Project x0 onto the feasible set
+    if nonlinear_constraint is None:
+        result = _project(x0, lb, ub, {"linear": linear_constraint, "nonlinear": None})
+        x0 = result.x
+    
     if linear_constraint is not None:
-        # this function doesn't take nonlinear constraints into account at this time
-        x0 = _project(x0, lb, ub, {"linear": linear_constraint, "nonlinear": None})
         A_eq, b_eq, A_ineq, b_ineq = separate_LC_into_eq_and_ineq(linear_constraint)
     else:
-        A_eq = None
-        b_eq = None
-        A_ineq = None
-        b_ineq = None
+        A_eq, b_eq, A_ineq, b_ineq = None, None, None, None
 
     if nonlinear_constraint is not None:
         # PRIMA prefers -inf < f(x) <= 0, so we need to modify the nonlinear constraint accordingly

@@ -1,13 +1,5 @@
 import numpy as np
-
-from warnings import warn  # TODO: Need to determine the text of the warning and actually warn about it
-
-
-class NonlinearConstraint(object):
-    def __init__(self, fun, lb=-np.inf, ub=0):
-        self.fun = fun
-        self.lb = lb
-        self.ub = ub
+from scipy.optimize import NonlinearConstraint
 
 
 def process_nl_constraints(x0, nlcs, options):
