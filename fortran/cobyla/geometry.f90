@@ -8,7 +8,7 @@ module geometry_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, March 14, 2024 AM09:35:46
+! Last Modified: Thursday, March 14, 2024 PM02:41:58
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -329,9 +329,9 @@ end if
 
 ! Zaikun 20240314: We use the scaled versions of VETA and VSIG, which works better if DELTA is small
 ! and SIMI contains large values. This prevents an infinite loop that occurred when RP is REAL16
-! (half precision). In that case, VSIG was evaluated to be zero due to rounding, although all enrties of
-! VSIG_SCALED ere close to 0.5, and the geometry-improving step turns out to be exactly the same as
-! SIM(:, JDORP), which led to a dead loop.
+! (half precision). In that case, VSIG was evaluated to be zero due to rounding, although all entries
+! of VSIG_SCALED ere close to 0.5, and the geometry-improving step turns out to be exactly the same
+! as SIM(:, JDORP), which led to a dead loop.
 veta_scaled = sqrt(sum((sim(:, 1:n) / delta)**2, dim=1))
 vsig_scaled = ONE / sqrt(sum((simi * delta)**2, dim=2))
 
@@ -371,7 +371,7 @@ function geostep(jdrop, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamm
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, DEBUGGING
+use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
 use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, maximum
