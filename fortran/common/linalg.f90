@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 09, 2024 PM01:32:37
+! Last Modified: Thursday, March 14, 2024 AM11:11:29
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1867,8 +1867,8 @@ function p_norm(x, p) result(y)
 ! This function calculates the P-norm of a vector X.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, ZERO, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf
+use, non_intrinsic :: debug_mod, only : assert, validate
+use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 implicit none
 
 ! Inputs
@@ -1879,12 +1879,11 @@ real(RP) :: y
 ! Local variables
 character(len=*), parameter :: srname = 'P_NORM'
 real(RP) :: p_loc
+real(RP) :: scaling
 
 ! Preconditions
-if (DEBUGGING) then
-    if (present(p)) then
-        call assert(p >= 0, 'P >= 0', srname)
-    end if
+if (present(p)) then
+    call validate(p >= 0, 'P >= 0', srname)
 end if
 
 !====================!
@@ -1897,6 +1896,10 @@ else
     p_loc = TWO
 end if
 
+! If SIZE(X) = 0, then MAXVAL(ABS(X)) = -HUGE(X); since we handle such a case individually,
+! it is OK to write MAXVAL(ABS(X)) below, but we append 0 for robustness.
+scaling = maxval([abs(x), ZERO])
+
 if (size(x) == 0) then
     y = ZERO
 elseif (p_loc <= 0) then
@@ -1904,27 +1907,35 @@ elseif (p_loc <= 0) then
 elseif (.not. all(is_finite(x))) then
     ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
     y = sum(abs(x))
-elseif (.not. any(abs(x) > 0)) then
-    ! The following is incorrect without checking the last case, as X may be all NaN.
+elseif (scaling <= 0) then
     y = ZERO
 else
     if (is_posinf(p_loc)) then
-        ! If SIZE(X) = 0, then MAXVAL(ABS(X)) = -HUGE(X); since we have handled such a case in the
-        ! above, it is OK to write Y = MAXVAL(ABS(X)) below, but we append 0 for robustness.
-        y = maxval([abs(x), ZERO])
+        y = scaling
     elseif (.not. present(p) .or. abs(p_loc - TWO) <= 0) then
         ! N.B.: We may use the intrinsic NORM2. Here, we use the following naive implementation to
-        ! get full control on the computation in a way similar to MATPROD and INPROD. A disadvantage
-        ! is the possibility of over/underflow.
+        ! get full control on the computation in a way similar to MATPROD and INPROD.
         y = sqrt(sum(x**2))
+        ! The following code handles over/underflow naively.
+        if ((is_posinf(y) .and. is_finite(scaling)) .or. (y <= 0 .and. scaling > 0)) then
+            y = scaling * sqrt(sum((x / scaling)**2))
+        end if
     else
         y = sum(abs(x)**p_loc)**(ONE / p_loc)
+        if ((is_posinf(y) .and. is_finite(scaling)) .or. (y <= 0 .and. scaling > 0)) then
+            y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
+        end if
     end if
 end if
 
 !====================!
 !  Calculation ends  !
 !====================!
+
+if (DEBUGGING) then
+    call assert(y >= 0 .or. is_nan(sum(abs(x))), 'Y >= 0 unless X contains NaN', srname)
+    call assert(y > 0 .or. is_nan(sum(abs(x))) .or. all(abs(x) <= 0), 'Y > 0 unless X contains NaN or is zero', srname)
+end if
 
 end function p_norm
 

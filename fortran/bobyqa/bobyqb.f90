@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 09, 2024 PM09:03:28
+! Last Modified: Thursday, March 14, 2024 PM02:01:09
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -82,7 +82,7 @@ use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, CALLBACK_TERMINATE
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, DAMAGING_ROUNDING, CALLBACK_TERMINATE
 use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
@@ -149,6 +149,7 @@ logical :: bad_trstep
 logical :: close_itpset
 logical :: improve_geo
 logical :: reduce_rho
+logical :: rescued
 logical :: shortd
 logical :: small_trrad
 logical :: terminate
@@ -260,6 +261,7 @@ call initq(ij, fval, xpt, gopt, hq, pq)
 rho = rhobeg
 delta = rho
 ebound = ZERO
+rescued = .false.
 shortd = .false.
 trfail = .false.
 ratio = -ONE
@@ -330,6 +332,7 @@ do tr = 1, maxtr
         x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! X = XBASE + XOPT + D without rounding.
         call evaluate(calfun, x, f)
         nf = nf + 1_IK
+        rescued = .false.  ! Set RESCUED to FALSE after evaluating F at a new point.
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, 'Trust region', iprint, nf, delta, f, x)
@@ -365,7 +368,7 @@ do tr = 1, maxtr
 
         ! Call RESCUE if rounding errors have damaged the denominator corresponding to D.
         ! RESCUE is invoked sometimes though not often after a trust-region step, and it does
-        ! improve the performance, especially when pursing high-precision solutions..
+        ! improve the performance, especially when pursing high-precision solutions.
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         if (ximproved .and. .not. (is_finite(sum(abs(vlag))) .and. any(den > maxval(vlag(1:npt)**2)))) then
@@ -375,12 +378,17 @@ do tr = 1, maxtr
             ! !if (ximproved .and. .not. any(den > HALF * maxval(vlag(1:npt)**2))) then
             ! !if (.not. any(den > HALF * maxval(vlag(1:npt)**2))) then  ! Powell's code.
             ! !if (.not. any(den > maxval(vlag(1:npt)**2))) then
+            if (rescued) then
+                info = DAMAGING_ROUNDING  ! The last RESCUE did not improve the situation.
+                exit
+            end if
             call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
                 exit
             end if
+            rescued = .true.
             dnorm_rec = REALMAX
             moderr_rec = REALMAX
 
@@ -435,6 +443,8 @@ do tr = 1, maxtr
     ! !close_itpset = all(distsq <= 4.0_RP * delta**2)  ! Powell's NEWUOA code.
     ! !close_itpset = all(distsq <= max(delta**2, 4.0_RP * rho**2))  ! Powell's LINCOA code.
     ! ADEQUATE_GEO: Is the geometry of the interpolation set "adequate"?
+    ! N.B. (Zaikun 20240314): Even if RESCUE has just been called (RESCUED = TRUE), the geometry may
+    ! still be inadequate/improvable if XPT contains points far away from XOPT.
     adequate_geo = (shortd .and. accurate_mod) .or. close_itpset
     ! SMALL_TRRAD: Is the trust-region radius small? This indicator seems not impactive in practice.
     small_trrad = (max(delta, dnorm) <= rho)  ! Powell's code. See also (6.7) of the BOBYQA paper.
@@ -508,13 +518,17 @@ do tr = 1, maxtr
         vlag = calvlag(kopt, bmat, d, xpt, zmat)
         den = calden(kopt, bmat, d, xpt, zmat)
         if (.not. (is_finite(sum(abs(vlag))) .and. den(knew_geo) > HALF * vlag(knew_geo)**2)) then
+            if (rescued) then
+                info = DAMAGING_ROUNDING  ! The last RESCUE did not improve the situation.
+                exit
+            end if
             call rescue(calfun, solver, iprint, maxfun, delta, ftarget, xl, xu, kopt, nf, fhist, &
                 & fval, gopt, hq, pq, sl, su, xbase, xhist, xpt, bmat, zmat, subinfo)
             if (subinfo /= INFO_DFT) then
                 info = subinfo
                 exit
             end if
-
+            rescued = .true.
             dnorm_rec = REALMAX
             moderr_rec = REALMAX
         else
@@ -522,6 +536,7 @@ do tr = 1, maxtr
             x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! X = XBASE + XOPT + D without rounding.
             call evaluate(calfun, x, f)
             nf = nf + 1_IK
+            rescued = .false.  ! Set RESCUED to FALSE after evaluating F at a new point.
 
             ! Print a message about the function evaluation according to IPRINT.
             call fmsg(solver, 'Geometry', iprint, nf, delbar, f, x)

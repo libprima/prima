@@ -8,7 +8,7 @@ module geometry_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, March 03, 2024 PM06:01:50
+! Last Modified: Thursday, March 14, 2024 AM09:35:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,8 +45,8 @@ logical :: adequate_geo
 ! Local variables
 character(len=*), parameter :: srname = 'ASSESS_GEO'
 integer(IK) :: n
-real(RP) :: veta(size(sim, 1))
-real(RP) :: vsig(size(sim, 1))
+real(RP) :: veta_scaled(size(sim, 1))
+real(RP) :: vsig_scaled(size(sim, 1))
 real(RP), parameter :: itol = TENTH
 
 ! Sizes
@@ -78,9 +78,14 @@ end if
 ! "best" point, [e_1, ..., e_n] is an orthogonal matrix, and L is a constant in the order of DELTA.
 ! This simplex is optimal in the sense that the interpolation system has the minimal condition
 ! number, i.e., one. For this simplex, the distance from V_{N+1} to its opposite face is L/SQRT{N}.
-vsig = ONE / sqrt(sum(simi**2, dim=2))
-veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
-adequate_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
+!!vsig = ONE / sqrt(sum(simi**2, dim=2))
+!!veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
+!!adequate_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
+
+! Zaikun 20240314: We use the scaled versions of VETA and VSIG, as is explained in SETDROP_GEO.
+vsig_scaled = ONE / sqrt(sum((simi * delta)**2, dim=2))
+veta_scaled = sqrt(sum((sim(:, 1:n) / delta)**2, dim=1))
+adequate_geo = all(vsig_scaled >= factor_alpha) .and. all(veta_scaled <= factor_beta)
 
 !====================!
 !  Calculation ends  !
@@ -291,8 +296,8 @@ integer(IK) :: jdrop
 ! Local variables
 character(len=*), parameter :: srname = 'SETDROP_GEO'
 integer(IK) :: n
-real(RP) :: veta(size(sim, 1))
-real(RP) :: vsig(size(sim, 1))
+real(RP) :: veta_scaled(size(sim, 1))
+real(RP) :: vsig_scaled(size(sim, 1))
 real(RP), parameter :: itol = TENTH
 
 ! Sizes
@@ -319,20 +324,28 @@ end if
 
 ! Calculate the values of sigma and eta.
 ! VSIG(J) (J=1, .., N) is the Euclidean distance from vertex J to the opposite face of the simplex.
-vsig = ONE / sqrt(sum(simi**2, dim=2))
-veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
+!!veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
+!!vsig = ONE / sqrt(sum(simi**2, dim=2))
+
+! Zaikun 20240314: We use the scaled versions of VETA and VSIG, which works better if DELTA is small
+! and SIMI contains large values. This prevents an infinite loop that occurred when RP is REAL16
+! (half precision). In that case, VSIG was evaluated to be zero due to rounding, although all enrties of
+! VSIG_SCALED ere close to 0.5, and the geometry-improving step turns out to be exactly the same as
+! SIM(:, JDORP), which led to a dead loop.
+veta_scaled = sqrt(sum((sim(:, 1:n) / delta)**2, dim=1))
+vsig_scaled = ONE / sqrt(sum((simi * delta)**2, dim=2))
 
 ! Decide which vertex to drop from the simplex. It will be replaced with a new point to improve the
 ! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
-if (any(veta > factor_beta * delta)) then
-    jdrop = int(maxloc(veta, mask=(.not. is_nan(veta)), dim=1), kind(jdrop))
-    !!MATLAB: [~, jdrop] = max(veta, [], 'omitnan');
-elseif (any(vsig < factor_alpha * delta)) then
-    jdrop = int(minloc(vsig, mask=(.not. is_nan(vsig)), dim=1), kind(jdrop))
-    !!MATLAB: [~, jdrop] = min(vsig, [], 'omitnan');
+if (any(veta_scaled > factor_beta)) then
+    jdrop = int(maxloc(veta_scaled, mask=(.not. is_nan(veta_scaled)), dim=1), kind(jdrop))
+    !!MATLAB: [~, jdrop] = max(veta_scaled, [], 'omitnan');
+elseif (any(vsig_scaled < factor_alpha)) then
+    jdrop = int(minloc(vsig_scaled, mask=(.not. is_nan(vsig_scaled)), dim=1), kind(jdrop))
+    !!MATLAB: [~, jdrop] = min(vsig_scaled, [], 'omitnan');
 else
-    ! We arrive here if VSIG and VETA are all NaN, which can happen due to NaN in SIM and SIMI,
-    ! which should not happen unless there is a bug.
+    ! We arrive here if VSIG_SCALED and VETA_SCALED are all NaN, which can happen due to NaN in SIM
+    ! and SIMI, which should not happen unless there is a bug.
     jdrop = 0
 end if
 
@@ -389,7 +402,6 @@ real(RP) :: A(size(simi, 1), size(conmat, 1))
 real(RP) :: cvnd
 real(RP) :: cvpd
 real(RP) :: g(size(simi, 1))
-real(RP) :: vsigj
 
 ! Sizes
 m_lcon = int(size(bvec), kind(m_lcon))
@@ -419,14 +431,12 @@ end if
 !====================!
 
 ! SIMI(JDROP, :) is a vector perpendicular to the face of the simplex to the opposite of vertex
-! JDROP. Thus VSIGJ * SIMI(JDROP, :) is the unit vector in this direction.
-vsigj = ONE / sqrt(sum(simi(jdrop, :)**2))
-
-! Set D to the vector in the above-mentioned direction and with length FACTOR_GAMMA * DELTA. Since
+! JDROP. Set D to the vector in this direction and with length FACTOR_GAMMA * DELTA. Since
 ! FACTOR_ALPHA < FACTOR_GAMMA < FACTOR_BETA, D improves the geometry of the simplex as per (14) of
 ! the COBYLA paper. This also explains why this subroutine does not replace DELTA with
 ! DELBAR = MAX(MIN(TENTH * SQRT(MAXVAL(DISTSQ)), HALF * DELTA), RHO) as in NEWUOA.
-d = (vsigj * simi(jdrop, :)) * delta * factor_gamma
+d = simi(jdrop, :)
+d = factor_gamma * delta * (d / norm(d))
 
 ! The code below chooses the direction of D according to an approximation of the merit function.
 ! See (17) of the COBYLA paper and  line 225 of Powell's cobylb.f.

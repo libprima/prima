@@ -32,6 +32,10 @@ jobs:
         npt: [n+2, n+6, 2*n, 2*n+2, 3*n, 4*n, n*sqrt(n), 0.25*n*n, 0.5*(n+1)*(n+2)]
         solver: [newuoa, bobyqa, lincoa]
         competitor: [classical, default]
+        exclude:
+          - dim: large
+            npt: n*sqrt(n)
+            solver: bobyqa
 
     steps:
 

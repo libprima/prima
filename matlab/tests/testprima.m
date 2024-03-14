@@ -194,6 +194,7 @@ cellfun(@(solver) warning('on', [solver, ':ReviseX0']), all_solvers);
 
 return
 
+
 function f = chrosen(x)
 %CHROSEN calculates the function value of the Chained Rosenbrock function.
 %   See

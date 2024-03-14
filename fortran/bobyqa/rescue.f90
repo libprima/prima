@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 12, 2024 PM07:55:52
+! Last Modified: Thursday, March 14, 2024 PM01:18:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -177,6 +177,7 @@ real(RP) :: vlag(size(xpt, 1) + size(xpt, 2))
 real(RP) :: vquad
 real(RP) :: wmv(size(xpt, 1) + size(xpt, 2))
 real(RP) :: x(size(xpt, 1))
+real(RP) :: xnew(size(xpt, 1))
 real(RP) :: xopt(size(xpt, 1))
 real(RP) :: xp
 real(RP) :: xq
@@ -475,19 +476,33 @@ if (nprov > 0) then
         ! and IQ entries.
         xp = ZERO
         xq = ZERO
-        xpt(:, kpt) = ZERO
+        xnew = ZERO
         if (ip > 0 .and. iq > 0) then
             xp = ptsaux(1, ip)
-            xpt(ip, kpt) = xp
+            xnew(ip) = xp
             xq = ptsaux(1, iq)
-            xpt(iq, kpt) = xq
+            xnew(iq) = xq
         elseif (ip > 0) then  ! IP > 0, IQ == 0
             xp = ptsaux(1, ip)
-            xpt(ip, kpt) = xp
+            xnew(ip) = xp
         elseif (iq > 0) then  ! IP == 0, IQ > 0
             xq = ptsaux(2, iq)
-            xpt(iq, kpt) = xq
+            xnew(iq) = xq
         end if
+
+        ! Zaikun 20240314: Skip the new point if it is too close to XPT(:, KPT), the point to replace.
+        ! Indeed, it may even happen that XNEW == XPT(:, KPT), which did occur when RP = REAL16 (half
+        ! precision) and led to an infinite cycling, because RESCUE did not make any change to XPT,
+        ! and later the algorithm decided to call RESCUE again with the same data. This was fixed by
+        ! the skipping, and by terminating the algorithm if RESCUE is requested for two times
+        ! without any new function evaluations in between, which was the behavior of Powell's code.
+        ! Skipping an XNEW that is close but not identical to XPT(:, KPT) will cause discrepancy
+        ! between [BMAT, ZMAT] and XPT, since the former has been updated, but it is not severe as
+        ! the difference between XNEW and XPT(:, KPT) is tiny.
+        if (sum(abs(xnew - xpt(:, kpt))) <= 1.0E-2 * delta .or. .not. is_finite(sum(abs(xnew)))) then
+            cycle
+        end if
+        xpt(:, kpt) = xnew
 
         ! Calculate F at the new interpolation point, and set MODERR to the factor that is going to
         ! multiply the KPT-th Lagrange function when the model is updated to provide interpolation
