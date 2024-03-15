@@ -4,7 +4,7 @@ function spaths = get_solvers(solvers, test_dir, options)
 % Possible members of `solvers`:
 % SOLVER, a member of {'cobyla', 'uobyqa', 'newuoa', 'bobyqa', 'lincoa'}.
 % SOLVER_norma, the version SOLVER in the ".development/norma" directory.
-% SOLVER_classical|_default|_single|_quadruple, the classical/default/single-precision/quadruple-precision version of SOLVER.
+% SOLVER_classical|_default|_half|_single|_quadruple, the classical/default/single-precision/quadruple-precision version of SOLVER.
 % SOLVER_archiva, the version of SOLVER in the "norma" directory under `dev_arch`, which is equivalent
 % to the latest archiva version of SOLVER.
 
@@ -62,6 +62,11 @@ for is = 1 : length(solvers)
         mexopts{is}.classical = (isverify && ~(isfield(options, 'no_classical') && options.no_classical)) ...
             || endsWith(solvers{is}, '_classical') || ismember([solvers{is}, '_classical'], solvers);
 
+        % Do we compile the half-precision version?
+        % Yes if we are in verification or if the solver name ends with '_half' or
+        % SOLVER_half is requested or options.precision='half'.
+        mexopts{is}.half = (isverify || endsWith(solvers{is}, '_half') || ismember([solvers{is}, '_half'], solvers)) || ...
+            (isfield(options, 'precision') && (isa(options.precision, 'char') ||  isa(options.precision, 'string')) && strcmpi(options.precision, 'half'));
 
         % Do we compile the single-precision version?
         % Yes if we are in verification or if the solver name ends with '_single' or
@@ -83,8 +88,8 @@ for is = 1 : length(solvers)
 end
 
 % SOLVER_classical is obtained by preparing SOLVER. Thus we remove solvers ending with '_classical'.
-% The same for _default, _single, and _quadruple.
-[solvers, ind] = unique(regexprep(solvers, '(_classical|_default|_single|_quadruple)', ''));
+% The same for _default, _half, _single, and _quadruple.
+[solvers, ind] = unique(regexprep(solvers, '(_classical|_default|_half|_single|_quadruple)', ''));
 mexopts = mexopts(ind);
 
 % Compile the solvers.
@@ -107,7 +112,7 @@ try
             % The archiva solver name is SOLVER_norma. See the comments on archiva_dir in
             % prepare_test_dir.m for details.
             solver = regexprep(solver, '_archiva', '_norma');
-        else  % SOLVER or SOLVER_classical|_default|_single|_quadruple
+        else  % SOLVER or SOLVER_classical|_default|_half|_single|_quadruple
             solver_dir = fullfile(test_dir, root_dir_name);
         end
 

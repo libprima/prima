@@ -10,6 +10,7 @@ for isol = 1 : length(solvers)
 end
 
 solvers = regexprep(solvers, '_default', '');
+solvers = regexprep(solvers, '_half', '');
 solvers = regexprep(solvers, '_single', '');
 solvers = regexprep(solvers, '_quadruple', '');
 solvers = regexprep(solvers, '_archiva', '_norma');

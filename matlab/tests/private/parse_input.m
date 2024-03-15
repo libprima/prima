@@ -12,7 +12,7 @@ function [solver, options] = parse_input(argin)
 % - `reverse_flag` (optional) is either 'reverse' or 'rev', which means to test the solvers in the reverse order
 % - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
 %   indicating the problem type to test
-% - `competitor` (optional) can be any of {'classical', 'archiva', 'norma', 'single', 'quadruple'},
+% - `competitor` (optional) can be any of {'classical', 'archiva', 'norma', 'ultima', 'half', single', 'quadruple'},
 %   indicating the name of a competitor solver to test (only for profiling)
 %   - 'classical' means to test the classical solvers
 %   - 'default' means to test the solvers with the default settings for npt, gamma1/2, eta1/2,
@@ -21,10 +21,13 @@ function [solver, options] = parse_input(argin)
 %     .development/archiva/dev_arch/ directory
 %   - 'norma' means to compare with the "norma" version of the solver, located under the
 %      .development/norma/ directory
+%   - 'ultima' means to compare with the "ultima" (latest) version of the solver pushed to GitHub
+%   - 'half' means to compare with the half precision version of the solver, namely the solver
+%     invoked with precision = 'half'
 %   - 'single' means to compare with the single precision version of the solver, namely the solver
-%     invoked with the 'single' flag set to true
+%     invoked with precision = 'single'
 %   - 'quadruple' means to compare with the quadruple precision version of the solver, namely the solver
-%     invoked with the 'quadruple' flag set to true
+%     invoked with precision = 'quadruple'
 % - `options` (optional) is a structure containing options to pass to `isequiv`, `perfdata`, etc.
 %
 % If the testing function is `verify`, then the following signatures are also supported:
@@ -61,7 +64,7 @@ sequential_flags = {'sequential', 'seq'};
 reverse_flags = {'reverse', 'rev'};
 reload_flags = {'reload', 'load'};
 problem_types = {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'};
-competitors = {'classical', 'default', 'archiva', 'norma', 'single', 'quadruple'};
+competitors = {'classical', 'default', 'archiva', 'norma', 'ultima', 'half', 'single', 'quadruple'};
 
 % Default values.
 solver = '';

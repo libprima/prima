@@ -72,9 +72,11 @@ for is = 1:ns
     solvers{is} = regexprep(solvers{is}, '_4test', '');
     solvers{is} = regexprep(solvers{is}, '_classical$', ' (classical)');
     solvers{is} = regexprep(solvers{is}, '_default$', ' (default)');
+    solvers{is} = regexprep(solvers{is}, '_half$', ' (half)');
     solvers{is} = regexprep(solvers{is}, '_single$', ' (single)');
     solvers{is} = regexprep(solvers{is}, '_quadruple$', ' (quadruple)');
     solvers{is} = regexprep(solvers{is}, '_archiva$', ' (archiva)');
+    solvers{is} = regexprep(solvers{is}, '_ultima$', ' (ultima)');
     solvers{is} = regexprep(solvers{is}, '_norma$', ' (norma)');
     %solvers{is} = regexprep(solvers{is}, 'newuoa', 'NEWUOA');
 end

@@ -443,15 +443,19 @@ if ischarstr(solver) && ~strcmp(solver, 'fmincon') && ~strcmpi(solver, 'fminunc'
         prob.options = rmfield(prob.options, intersect(fieldnames(prob.options), ...
             {'npt', 'eta1', 'eta2', 'gamma1', 'gamma2', 'scale', 'honour_x0'}));
     end
+    if endsWith(solver, '_half')
+        prob.options.precision = 'half';
+    end
     if endsWith(solver, '_single')
         prob.options.precision = 'single';
     end
     if endsWith(solver, '_quadruple')
         prob.options.precision = 'quadruple';
     end
-    % `regexprep` removes '_classical' in case 'solver' ends with it. Similar for '_default', '_single', '_quadruple'.
+    % `regexprep` removes '_classical' in case 'solver' ends with it. Similar for '_default', '_half', '_single', '_quadruple'.
     solver = regexprep(solver, '_classical$', '');
     solver = regexprep(solver, '_default$', '');
+    solver = regexprep(solver, '_half$', '');
     solver = regexprep(solver, '_single$', '');
     solver = regexprep(solver, '_quadruple$', '');
     solver = regexprep(solver, '_archiva$', '_norma');

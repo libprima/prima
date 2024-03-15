@@ -16,19 +16,18 @@ function output = profile(varargin)
 % - `reverse_flag` (optional) is either 'reverse' or 'rev', which means to test the solvers in the reverse order
 % - `problem_type` can be any of {'u', 'b', 'l', 'n', 'ub', 'ubl', 'ubln', 'bl', 'bln', 'ln'},
 %   indicating the problem type to test
-% - `competitor` (optional) can be any of {'classical', 'default', 'archiva', 'norma', 'single', 'quadruple'},
+% - `competitor` (optional) can be any of {'classical', 'default', 'archiva', 'norma', 'ultima', 'half', 'single', 'quadruple'},
 %   indicating the name of a competitor solver to test
 %   - 'classical' means to test the classical solvers
 %   - 'default' means to test the solvers with the default settings for npt, gamma1/2, eta1/2,
 %      scaling, honour_x0
 %   - 'archiva' means to compare with the "archiva" version of the solver, located under the
 %     .development/archiva/dev_arch/ directory
-%   - 'norma' means to compare with the "norma" version of the solver, located under the
-%     .development/norma/ directory
-%   - 'single' means to compare with the single precision version of the solver, namely the solver
-%     invoked with the 'single' flag set to true
+%   - 'ultima' means to compare with the "ultima" (latest) version of the solver pushed to GitHub
+%   - 'half' means to compare with the half precision version of the solver, namely the solver
+%     invoked with precision = 'single'
 %   - 'quadruple' means to compare with the quadruple precision version of the solver, namely the solver
-%     invoked with the 'quadruple' flag set to true
+%     invoked with precision = 'quadruple'
 %
 % Coded by Zaikun ZHANG (www.zhangzk.net).
 %
