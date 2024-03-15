@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 15, 2024 PM03:44:40
+! Last Modified: Friday, March 15, 2024 PM09:14:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -315,6 +315,24 @@ if (subinfo /= INFO_DFT) then
     call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
     ! Arrange CHIST, FHIST, and XHIST so that they are in the chronological order.
     call rangehist(nf, xhist, fhist, chist)
+    ! Postconditions
+    if (DEBUGGING) then
+        call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+        call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+        call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+        call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+        call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+        ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+        call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+        call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+            & 'FHIST does not contain NaN/+Inf', srname)
+        call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
+        call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) &
+            & .or. is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain negative values or NaN/+Inf', srname)
+        nhist = minval([nf, maxfhist, maxchist])
+        call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv, ctol)),&
+            & 'No point in the history is better than X', srname)
+    end if
     return
 end if
 

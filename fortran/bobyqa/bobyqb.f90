@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 15, 2024 PM03:09:17
+! Last Modified: Friday, March 15, 2024 PM09:14:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -250,6 +250,23 @@ if (subinfo /= INFO_DFT) then
     call rangehist(nf, xhist, fhist)
     ! Print a return message according to IPRINT.
     call retmsg(solver, info, iprint, nf, f, x)
+    ! Postconditions
+    if (DEBUGGING) then
+        call assert(nf <= maxfun, 'NF <= MAXFUN', srname)
+        call assert(size(x) == n .and. .not. any(is_nan(x)), 'SIZE(X) == N, X does not contain NaN', srname)
+        call assert(all(x >= xl) .and. all(x <= xu), 'XL <= X <= XU', srname)
+        call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
+        call assert(size(xhist, 1) == n .and. size(xhist, 2) == maxxhist, 'SIZE(XHIST) == [N, MAXXHIST]', srname)
+        call assert(.not. any(is_nan(xhist(:, 1:min(nf, maxxhist)))), 'XHIST does not contain NaN', srname)
+        ! The last calculated X can be Inf (finite + finite can be Inf numerically).
+        do k = 1, min(nf, maxxhist)
+            call assert(all(xhist(:, k) >= xl) .and. all(xhist(:, k) <= xu), 'XL <= XHIST <= XU', srname)
+        end do
+        call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
+        call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
+            & 'FHIST does not contain NaN/+Inf', srname)
+        call assert(.not. any(fhist(1:min(nf, maxfhist)) < f), 'F is the smallest in FHIST', srname)
+    end if
     return
 end if
 
