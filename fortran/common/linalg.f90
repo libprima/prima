@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, March 14, 2024 AM11:11:29
+! Last Modified: Saturday, March 16, 2024 AM04:06:59
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1396,7 +1396,6 @@ real(RP) :: y(size(x))
 ! Local variables
 character(len=*), parameter :: srname = 'PROJECT1'
 real(RP) :: u(size(v))
-real(RP) :: scaling
 real(RP) :: tol
 
 ! Preconditions
@@ -1417,14 +1416,10 @@ elseif (any(is_inf(v))) then
     u(trueloc(is_inf(v))) = sign(ONE, v(trueloc(is_inf(v))))
     !!MATLAB: u = 0; u(isinf(v)) = sign(v(isinf(v)))
     u = u / norm(u)
-    !y = inprod(x, u) * u
-    scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
-    y = scaling * inprod(x / scaling, u) * u
+    y = inprod(x, u) * u
 else
     u = v / norm(v)
-    !y = inprod(x, u) * u
-    scaling = maxval(abs(x)) ! The scaling seems to reduce the rounding error.
-    y = scaling * inprod(x / scaling, u) * u
+    y = inprod(x, u) * u
 end if
 
 !====================!
