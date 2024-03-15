@@ -8,7 +8,7 @@ module trustregion_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 12, 2024 PM07:53:36
+! Last Modified: Friday, March 15, 2024 PM09:34:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
