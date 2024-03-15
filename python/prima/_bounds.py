@@ -1,17 +1,5 @@
 import numpy as np
-
-class Bounds:
-    def __init__(self, lb=-np.inf, ub=np.inf, **kwargs):
-        if 'keep_feasible' in kwargs:
-            raise ValueError("PRIMA does not support keep_feasible at this time")
-        self.lb = np.atleast_1d(lb)
-        self.ub = np.atleast_1d(ub)
-        try:
-            res = np.broadcast_arrays(self.lb, self.ub)
-            self.lb, self.ub = res
-        except ValueError:
-            raise ValueError("`lb` and `ub` must be broadcastable.")
-
+from scipy.optimize import Bounds
 
 def process_bounds(bounds, lenx0):
     '''
@@ -20,7 +8,6 @@ def process_bounds(bounds, lenx0):
     fewer entries than the length of x0, the remaining entries will generated as -/+ infinity.
     Some examples of valid lists of tuple, assuming len(x0) == 3:
     [(0, 1), (2, 3), (4, 5)] -> returns [0, 2, 4], [1, 3, 5]
-    [(0, 1), (2, 3), None]   -> returns [0, 2, -inf], [1, 3, inf]
     [(0, 1), (None, 3)]      -> returns [0, -inf, -inf], [1, 3, inf]
     [(0, 1), (-np.inf, 3)]   -> returns [0, -inf, -inf], [1, 3, inf]
     '''
@@ -30,10 +17,9 @@ def process_bounds(bounds, lenx0):
         ub = np.array([np.inf]*lenx0, dtype=np.float64)
         return lb, ub
     
-    # This will handle an object of type scipy.optimize.Bounds or similar
-    if hasattr(bounds, 'lb') and hasattr(bounds, 'ub'):
-        lb = np.nan_to_num(np.array(bounds.lb, dtype=np.float64), nan=-np.inf, posinf=np.inf, neginf=-np.inf)
-        ub = np.nan_to_num(np.array(bounds.ub, dtype=np.float64), nan=np.inf, posinf=np.inf, neginf=-np.inf)
+    if isinstance(bounds, Bounds):
+        lb = np.array(bounds.lb, dtype=np.float64)
+        ub = np.array(bounds.ub, dtype=np.float64)
         lb = np.concatenate((lb, -np.inf*np.ones(lenx0 - len(lb))))
         ub = np.concatenate((ub, np.inf*np.ones(lenx0 - len(ub))))
         return lb, ub
