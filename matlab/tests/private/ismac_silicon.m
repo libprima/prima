@@ -1,5 +1,5 @@
 function isms = ismac_silicon()
-% ISMAC_SILICON checks if the current machine is an Apple Silicon Mac.
+% ISMAC_SILICON checks whether the current machine is an Apple Silicon Mac.
 isms = false;
 if ismac
     [~, result] = system('uname -v');

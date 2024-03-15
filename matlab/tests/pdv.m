@@ -53,7 +53,7 @@ try
     clear('setup');
     opt=struct();
     opt.verbose = true;
-    opt.half = ismac_silicon();
+    opt.half = half_precision_available();
     opt.single = true;
     opt.double = true;
     opt.quadruple = true;

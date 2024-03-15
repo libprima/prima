@@ -67,6 +67,7 @@ for is = 1 : length(solvers)
         % SOLVER_half is requested or options.precision='half'.
         mexopts{is}.half = (isverify || endsWith(solvers{is}, '_half') || ismember([solvers{is}, '_half'], solvers)) || ...
             (isfield(options, 'precision') && (isa(options.precision, 'char') ||  isa(options.precision, 'string')) && strcmpi(options.precision, 'half'));
+        mexopts{is}.half = mexopts{is}.half && half_precision_available();
 
         % Do we compile the single-precision version?
         % Yes if we are in verification or if the solver name ends with '_single' or

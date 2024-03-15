@@ -459,6 +459,7 @@ if ischarstr(solver) && ~strcmp(solver, 'fmincon') && ~strcmpi(solver, 'fminunc'
     solver = regexprep(solver, '_single$', '');
     solver = regexprep(solver, '_quadruple$', '');
     solver = regexprep(solver, '_archiva$', '_norma');
+    solver = regexprep(solver, '_ultima$', '_norma');
     solver = str2func(solver);
 end
 

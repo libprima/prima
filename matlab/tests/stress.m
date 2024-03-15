@@ -45,7 +45,7 @@ if isfield(options, 'precision') && ischarstr(options.precision)
 end
 if strcmpi(precision, 'date')  % Use the date to determine the precision
     daynum = day(datetime('now', 'TimeZone', 'Asia/Shanghai'));
-    if ismac_silicon()
+    if half_precision_available()
         if mod(daynum, 4) == 0
             options.precision = 'half';
         elseif mod(daynum, 4) == 1

@@ -25,6 +25,8 @@ function output = profile(varargin)
 %     .development/archiva/dev_arch/ directory
 %   - 'ultima' means to compare with the "ultima" (latest) version of the solver pushed to GitHub
 %   - 'half' means to compare with the half precision version of the solver, namely the solver
+%     invoked with precision = 'half'
+%   - 'single' means to compare with the single precision version of the solver, namely the solver
 %     invoked with precision = 'single'
 %   - 'quadruple' means to compare with the quadruple precision version of the solver, namely the solver
 %     invoked with precision = 'quadruple'
