@@ -124,7 +124,10 @@ PYBIND11_MODULE(_prima, m) {
                       const py::object& b_ineq,
                       const py::object& constraint_function,
                       const py::object& python_callback_function,
-                      const py::object& options_dict)
+                      const py::object& options_dict,
+                      const py::object& nlconstr0,
+                      const py::object& m_nlcon,
+                      const py::object& f0)
     {
       // Reference for how to go from a python function to a C style function pointer: https://stackoverflow.com/questions/74480093
       // Basically, we need to create a function with a C signature that calls the python function, and
@@ -155,7 +158,7 @@ PYBIND11_MODULE(_prima, m) {
       prima_init_problem(&problem, py_x0.size());
       problem.x0 = py_x0.mutable_data();
 
-      // Process options. We do this first in order to see if the user provided the number of nonlinear constraints.
+      // Process options.
       prima_options_t options;
       prima_init_options(&options);
       if (options_dict.is_none() == false) {
@@ -166,26 +169,24 @@ PYBIND11_MODULE(_prima, m) {
         if(options_dict.contains("npt"))       { options.npt       = options_dict["npt"].cast<int>(); }
         if(options_dict.contains("rhobeg"))    { options.rhobeg    = options_dict["rhobeg"].cast<double>(); }
         if(options_dict.contains("rhoend"))    { options.rhoend    = options_dict["rhoend"].cast<double>(); }
-        // These go into problem, not options. The options dictionary is the only way to pass it in.
-        if(options_dict.contains("m_nlcon"))   { problem.m_nlcon   = options_dict["m_nlcon"].cast<int>(); }
-        if(options_dict.contains("f0"))        { problem.f0        = options_dict["f0"].cast<double>(); }
-        if(options_dict.contains("nlconstr0")) {
-          auto nlconstr0_buffer_info = options_dict["nlconstr0"].cast<py::buffer>().request();
-          if (nlconstr0_buffer_info.format != "d")
-          {
-            throw std::invalid_argument("nlconstr0 must be a double array");
-          }
-          problem.nlconstr0 = (double*) nlconstr0_buffer_info.ptr;
-        }
       }
       options.data = (void*)&args;
 
       prima_algorithm_t algorithm = pystr_method_to_algorithm(method);
 
       if ( algorithm == PRIMA_COBYLA ) {
-        if (python_constraint_function_holder.is_none()) {
-          throw std::invalid_argument("constraint_function must be provided if nonlinear constraints are provided");
+        if (python_constraint_function_holder.is_none() ||  nlconstr0.is_none() || m_nlcon.is_none() || f0.is_none()) {
+          throw std::invalid_argument("constraint_function, nlconstr0, m_nlcon, and f0 must be provided if nonlinear constraints are provided");
         }
+
+        auto nlconstr0_buffer_info = nlconstr0.cast<py::buffer>().request();
+        if (nlconstr0_buffer_info.format != "d")
+        {
+          throw std::invalid_argument("nlconstr0 must be a double array");
+        }
+        problem.nlconstr0 = (double*) nlconstr0_buffer_info.ptr;
+        problem.m_nlcon   = m_nlcon.cast<int>();
+        problem.f0   = f0.cast<double>();
 
         problem.calcfc = [](const double x[], double *f, double constr[], const void *data) {
           // In order for xlist to not copy the data from x, we need to provide a dummy base object
@@ -336,6 +337,7 @@ PYBIND11_MODULE(_prima, m) {
            "lb"_a=py::none(), "ub"_a=py::none(), "A_eq"_a=py::none(), "b_eq"_a=py::none(),
            "A_ineq"_a=py::none(), "b_ineq"_a=py::none(),
            "constraint_function"_a=py::none(),
-           "callback"_a=nullptr, "options"_a=py::none()
+           "callback"_a=nullptr, "options"_a=py::none(), "nlconstr0"_a=py::none(),
+            "m_nlcon"_a=py::none(), "f0"_a=py::none()
   );
 }
