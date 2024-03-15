@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 09, 2024 PM09:22:48
+! Last Modified: Friday, March 15, 2024 PM03:44:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -77,8 +77,8 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, REALMAX
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, CALLBACK_TERMINATE
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
+use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, CALLBACK_TERMINATE, NAN_INF_MODEL
 use, non_intrinsic :: linalg_mod, only : matprod, maximum, eye, trueloc, linspace, norm, trueloc
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: message_mod, only : fmsg, rhomsg, retmsg
@@ -230,6 +230,7 @@ if (DEBUGGING) then
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
+    call assert(all(is_finite(x)), 'X is finite', srname)
     call assert(size(xl) == n .and. size(xu) == n, 'SIZE(XL) == N == SIZE(XU)', srname)
     call assert(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
         & 'MIN(MIN_MAXFILT, MAXFUN) <= MAXFILT <= MAXFUN', srname)
@@ -286,6 +287,20 @@ do k = 1, npt
     end if
 end do
 
+! Initialize [BMAT, ZMAT, IDZ], representing the inverse of the KKT matrix of the interpolation system.
+call inith(ij, xpt, idz, bmat, zmat)
+
+! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
+! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+hq = ZERO
+pq = omega_mul(idz, zmat, fval)
+gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xpt(:, kopt), xpt, pq)
+pqalt = pq
+galt = gopt
+if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+    subinfo = NAN_INF_MODEL
+end if
+
 ! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
@@ -302,17 +317,6 @@ if (subinfo /= INFO_DFT) then
     call rangehist(nf, xhist, fhist, chist)
     return
 end if
-
-! Initialize [BMAT, ZMAT, IDZ], representing the inverse of the KKT matrix of the interpolation system.
-call inith(ij, xpt, idz, bmat, zmat)
-
-! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
-! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
-hq = ZERO
-pq = omega_mul(idz, zmat, fval)
-gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xpt(:, kopt), xpt, pq)
-pqalt = pq
-galt = gopt
 
 ! Initialize RESCON.
 rescon = max(b - matprod(xpt(:, kopt), amat), ZERO)
@@ -478,6 +482,10 @@ do tr = 1, maxtr
             ! the current model with the alternative model if the recent few (three) alternative
             ! models are more accurate in predicting the function value of XOPT + D.
             call tryqalt(idz, bmat, fval - fval(kopt), xpt(:, kopt), xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
+            if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+                info = NAN_INF_MODEL
+                exit
+            end if
 
             ! Update RESCON if XOPT is changed.
             ! Zaikun 20221115: Shouldn't we do it after DELTA is updated?
@@ -619,6 +627,10 @@ do tr = 1, maxtr
         ! more accurate in predicting the function value of XOPT + D.
         ! N.B.: Powell's code does this only if XOPT + D is feasible.
         call tryqalt(idz, bmat, fval - fval(kopt), xpt(:, kopt), xpt, zmat, qalt_better, gopt, pq, hq, galt, pqalt)
+        if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+            info = NAN_INF_MODEL
+            exit
+        end if
 
         ! Update RESCON. Zaikun 20221115: Currently, UPDATERES does not update RESCON if XIMPROVED
         ! is FALSE. Shouldn't we do it whenever DELTA is updated? Have we MISUNDERSTOOD RESCON?
@@ -665,7 +677,7 @@ do tr = 1, maxtr
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
-if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
+if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm >= TENTH * rhoend .and. nf < maxfun) then
     x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK

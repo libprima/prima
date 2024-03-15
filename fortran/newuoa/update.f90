@@ -8,7 +8,7 @@ module update_newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, October 29, 2023 PM03:02:35
+! Last Modified: Friday, March 15, 2024 PM03:38:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, March 13, 2024 PM11:56:56
+! Last Modified: Friday, March 15, 2024 PM03:42:46
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -45,7 +45,7 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, TENTH, 
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING, CALLBACK_TERMINATE
 use, non_intrinsic :: linalg_mod, only : inprod, matprod, norm, maximum
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
@@ -180,10 +180,11 @@ maxhist = int(max(maxxhist, maxfhist, maxconhist, maxchist), kind(maxhist))
 ! Preconditions
 if (DEBUGGING) then
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
-    call assert(m >= 0, 'M >= 0', srname)
+    call assert(m >= m_lcon .and. m_lcon >= 0, 'M >= M_LCON >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(maxfun >= n + 2, 'MAXFUN >= N + 2', srname)
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
+    call assert(all(is_finite(x)), 'X is finite', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     call assert(ctol >= 0, 'CTOL >= 0', srname)
@@ -621,7 +622,7 @@ do tr = 1, maxtr
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the last trust-region step if it has not been tried yet.
-if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
+if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm >= TENTH * rhoend .and. nf < maxfun) then
     ! Zaikun 20230615: UPDATEXFC or UPDATEPOLE is not called since the last trust-region step. Hence
     ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
     x = sim(:, n + 1) + d

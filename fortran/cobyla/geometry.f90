@@ -8,7 +8,7 @@ module geometry_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, March 14, 2024 PM02:41:58
+! Last Modified: Thursday, March 14, 2024 PM07:23:41
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -410,7 +410,7 @@ n = int(size(simi, 1), kind(n))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(m >= 0, 'M >= 0', srname)
+    call assert(m >= m_lcon .and. m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(delta > 0, 'DELTA > 0', srname)
     call assert(cpen > 0, 'CPEN > 0', srname)

@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 09, 2024 PM09:23:29
+! Last Modified: Friday, March 15, 2024 PM03:38:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -56,8 +56,8 @@ use, non_intrinsic :: consts_mod, only : RP, IK, ONE, HALF, TENTH, REALMAX, DEBU
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, CALLBACK_TERMINATE
+use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
+use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, CALLBACK_TERMINATE, NAN_INF_MODEL
 use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
@@ -162,6 +162,7 @@ if (DEBUGGING) then
     call assert(n >= 1 .and. npt >= n + 2, 'N >= 1, NPT >= N + 2', srname)
     call assert(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', srname)
     call assert(rhobeg >= rhoend .and. rhoend > 0, 'RHOBEG >= RHOEND > 0', srname)
+    call assert(all(is_finite(x)), 'X is finite', srname)
     call assert(eta1 >= 0 .and. eta1 <= eta2 .and. eta2 < 1, '0 <= ETA1 <= ETA2 < 1', srname)
     call assert(gamma1 > 0 .and. gamma1 < 1 .and. gamma2 > 1, '0 < GAMMA1 < 1 < GAMMA2', srname)
     call assert(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', srname)
@@ -190,6 +191,16 @@ end if
 x = xbase + xpt(:, kopt)
 f = fval(kopt)
 
+! Initialize [BMAT, ZMAT, IDZ], representing the inverse of the KKT matrix of the interpolation system.
+call inith(ij, xpt, idz, bmat, zmat)
+
+! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
+! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+call initq(ij, fval, xpt, gopt, hq, pq)
+if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+    subinfo = NAN_INF_MODEL
+end if
+
 ! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
@@ -212,16 +223,6 @@ if (subinfo /= INFO_DFT) then
     end if
     return
 end if
-
-! Initialize [BMAT, ZMAT, IDZ], representing the inverse of the KKT matrix of the interpolation system.
-call inith(ij, xpt, idz, bmat, zmat)
-
-! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
-! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
-call initq(ij, fval, xpt, gopt, hq, pq)
-
-! After initializing GOPT, HQ, PQ, BMAT, ZMAT, one can also choose to return if these arrays contain
-! NaN. We do not do it here. The code will continue to run and possibly recovers by geometry steps.
 
 ! Set some more initial values.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
@@ -364,6 +365,10 @@ do tr = 1, maxtr
             ! has been revised after the last function evaluation.
             ! 5. Powell's code tries Q_alt only when DELTA == RHO.
             call tryqalt(idz, bmat, fval - fval(kopt), ratio, xpt(:, kopt), xpt, zmat, itest, gopt, hq, pq)
+            if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+                info = NAN_INF_MODEL
+                exit
+            end if
         end if
     end if  ! End of IF (SHORTD .OR. TRFAIL). The normal trust-region calculation ends.
 
@@ -565,6 +570,10 @@ do tr = 1, maxtr
         call updateh(knew_geo, kopt, d, xpt, idz, bmat, zmat)
         call updatexf(knew_geo, ximproved, f, xosav + d, kopt, fval, xpt)
         call updateq(idz, knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+        if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+            info = NAN_INF_MODEL
+            exit
+        end if
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
     ! The calculations with the current RHO are complete. Enhance the resolution of the algorithm
@@ -604,7 +613,7 @@ do tr = 1, maxtr
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
-if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
+if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm >= TENTH * rhoend .and. nf < maxfun) then
     x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK

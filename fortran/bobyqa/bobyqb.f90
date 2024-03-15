@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 14, 2024 PM02:01:09
+! Last Modified: Friday, March 15, 2024 PM03:09:17
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -82,7 +82,8 @@ use, non_intrinsic :: debug_mod, only : assert!, wassert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
-use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, DAMAGING_ROUNDING, CALLBACK_TERMINATE
+use, non_intrinsic :: infos_mod, only : INFO_DFT, SMALL_TR_RADIUS, MAXTR_REACHED, DAMAGING_ROUNDING,&
+    & NAN_INF_MODEL, CALLBACK_TERMINATE
 use, non_intrinsic :: linalg_mod, only : norm
 use, non_intrinsic :: message_mod, only : retmsg, rhomsg, fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ, CALLBACK
@@ -232,6 +233,16 @@ end if
 x = xinbd(xbase, xpt(:, kopt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
 f = fval(kopt)
 
+! Initialize [BMAT, ZMAT], representing the inverse of the KKT matrix of the interpolation system.
+call inith(ij, xpt, bmat, zmat)
+
+! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
+! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+call initq(ij, fval, xpt, gopt, hq, pq)
+if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+    subinfo = NAN_INF_MODEL
+end if
+
 ! Check whether to return due to abnormal cases that may occur during the initialization.
 if (subinfo /= INFO_DFT) then
     info = subinfo
@@ -241,16 +252,6 @@ if (subinfo /= INFO_DFT) then
     call retmsg(solver, info, iprint, nf, f, x)
     return
 end if
-
-! Initialize [BMAT, ZMAT], representing the inverse of the KKT matrix of the interpolation system.
-call inith(ij, xpt, bmat, zmat)
-
-! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
-! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
-call initq(ij, fval, xpt, gopt, hq, pq)
-
-! After initializing GOPT, HQ, PQ, BMAT, ZMAT, one can also choose to return if these arrays contain
-! NaN. We do not do it here. The code will continue to run and possibly recovers by geometry steps.
 
 ! Set some more initial values.
 ! We must initialize RATIO. Otherwise, when SHORTD = TRUE, compilers may raise a run-time error that
@@ -417,6 +418,10 @@ do tr = 1, maxtr
             ! Try whether to replace the new quadratic model with the alternative model, namely the
             ! least Frobenius norm interpolant.
             call tryqalt(bmat, fval - fval(kopt), ratio, sl, su, xpt(:, kopt), xpt, zmat, itest, gopt, hq, pq)
+            if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+                info = NAN_INF_MODEL
+                exit
+            end if
         end if
     end if  ! End of IF (SHORTD .OR. TRFAIL). The normal trust-region calculation ends.
 
@@ -571,6 +576,10 @@ do tr = 1, maxtr
             call updateh(knew_geo, kopt, d, xpt, bmat, zmat)
             call updatexf(knew_geo, ximproved, f, max(sl, min(su, xosav + d)), kopt, fval, xpt)
             call updateq(knew_geo, ximproved, bmat, d, moderr, xdrop, xosav, xpt, zmat, gopt, hq, pq)
+            if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+                info = NAN_INF_MODEL
+                exit
+            end if
         end if
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
 
@@ -616,7 +625,7 @@ do tr = 1, maxtr
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
-if (info == SMALL_TR_RADIUS .and. shortd .and. nf < maxfun) then
+if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm >= TENTH * rhoend .and. nf < maxfun) then
     x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
