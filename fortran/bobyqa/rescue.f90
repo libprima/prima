@@ -629,7 +629,7 @@ if (DEBUGGING) then
     do j = 1, npt
         hcol(1:npt) = matprod(zmat, zmat(j, :))
         hcol(npt + 1:npt + n) = bmat(:, j)
-        call assert(RP /= kind(0.0D0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
+        call assert(precision(0.0_RP) < precision(0.0D0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
 end if
 
@@ -702,12 +702,12 @@ if (DEBUGGING) then
     do j = 1, npt
         hcol(1:npt) = matprod(zmat, zmat(j, :))
         hcol(npt + 1:npt + n) = bmat(:, j)
-        call assert(RP /= kind(0.0D0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
+        call assert(precision(0.0_RP) < precision(0.0D0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
 
     ! The following is too expensive to check.
     !tol = 1.0E-2_RP
-    !call wassert(errh(bmat, zmat, xpt) <= tol .or. RP /= kind(0.0D0), &
+    !call wassert(errh(bmat, zmat, xpt) <= tol .or. precision(0.0_RP) < precision(0.0D0), &
     !    & 'H = W^{-1} in (2.7) of the BOBYQA paper', srname)
 end if
 
@@ -785,14 +785,14 @@ if (DEBUGGING) then
     do j = 1, npt
         hcol(1:npt) = matprod(zmat, zmat(j, :))
         hcol(npt + 1:npt + n) = bmat(:, j)
-        call assert(RP /= kind(0.0D0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
+        call assert(precision(0.0_RP) < precision(0.0D0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
 
     ! The following is too expensive to check.
     ! !if (n * npt <= 50) then
     ! !    xpt_test = xpt
     ! !    xpt_test(:, knew) = xpt(:, kopt) + d
-    ! !    call assert(errh(bmat, zmat, xpt_test) <= tol .or. RP /= kind(0.0D0), &
+    ! !    call assert(errh(bmat, zmat, xpt_test) <= tol .or. precision(0.0_RP) < precision(0.0D0), &
     ! !        & 'H = W^{-1} in (2.7) of the BOBYQA paper', srname)
     ! !end if
 end if

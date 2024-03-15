@@ -1176,7 +1176,7 @@ if (DEBUGGING) then
     do j = 1, npt
         hcol(1:npt) = omega_col(idz, zmat, j)
         hcol(npt + 1:npt + n) = bmat(:, j)
-        call assert(RP /= kind(0.0D0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
+        call assert(precision(0.0_RP) < precision(0.0D0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
 
     call assert(all(is_finite(xpt)), 'XPT is finite', srname)
@@ -1190,15 +1190,15 @@ if (DEBUGGING) then
     !    call safealloc(vlag_test, npt + n)
     !    vlag_test = calvlag(knew, bmat, d + (xpt(:, kref) - xpt(:, knew)), xpt, zmat, idz)
     !    call wassert(all(abs(vlag_test - calvlag(kref, bmat, d, xpt, zmat, idz)) <= &
-    !        & tol * maxval([ONE, abs(vlag_test)])) .or. RP /= kind(0.0D0), 'VLAG_TEST == VLAG', srname)
+    !        & tol * maxval([ONE, abs(vlag_test)])) .or. precision(0.0_RP) < precision(0.0D0), 'VLAG_TEST == VLAG', srname)
     !    deallocate (vlag_test)
     !    beta_test = calbeta(knew, bmat, d + (xpt(:, kref) - xpt(:, knew)), xpt, zmat, idz)
     !    call wassert(abs(beta_test - calbeta(kref, bmat, d, xpt, zmat, idz)) <= &
-    !        & tol * max(ONE, abs(beta_test)) .or. RP /= kind(0.0D0), 'BETA_TEST == BETA', srname)
+    !        & tol * max(ONE, abs(beta_test)) .or. precision(0.0_RP) < precision(0.0D0), 'BETA_TEST == BETA', srname)
     !end if
 
     ! The following is too expensive to check.
-    !call wassert(errh(idz, bmat, zmat, xpt) <= tol .or. RP /= kind(0.0D0), &
+    !call wassert(errh(idz, bmat, zmat, xpt) <= tol .or. precision(0.0_RP) < precision(0.0D0), &
     !    & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
 end if
 
@@ -1420,14 +1420,14 @@ if (DEBUGGING) then
     do j = 1, npt
         hcol(1:npt) = omega_col(idz, zmat, j)
         hcol(npt + 1:npt + n) = bmat(:, j)
-        call assert(RP /= kind(0.0D0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
+        call assert(precision(0.0_RP) < precision(0.0D0) .or. sum(abs(hcol)) > 0, 'Column '//num2str(j)//' of H is nonzero', srname)
     end do
 
     ! The following is too expensive to check.
     !call safealloc(xpt_test, n, npt)
     !xpt_test = xpt
     !xpt_test(:, knew) = xpt(:, kref) + d
-    !call wassert(errh(idz, bmat, zmat, xpt_test) <= tol .or. RP /= kind(0.0D0), &
+    !call wassert(errh(idz, bmat, zmat, xpt_test) <= tol .or. precision(0.0_RP) < precision(0.0D0), &
     !    & 'H = W^{-1} in (3.12) of the NEWUOA paper', srname)
     !deallocate (xpt_test)
 end if
@@ -1582,7 +1582,7 @@ vlag(kref) = vlag(kref) + ONE
 if (DEBUGGING) then
     call assert(size(vlag) == npt + n, 'SIZE(VLAG) == NPT + N', srname)
     tol = max(TEN**max(-8, -MAXPOW10), min(1.0E-1_RP, TEN**min(12, MAXPOW10) * EPS * real(npt + n, RP)))
-    call wassert(abs(sum(vlag(1:npt)) - ONE) / real(npt, RP) <= tol .or. RP /= kind(0.0D0), &
+    call wassert(abs(sum(vlag(1:npt)) - ONE) / real(npt, RP) <= tol .or. precision(0.0_RP) < precision(0.0D0), &
         & 'SUM(VLAG(1:NPT)) == 1', srname)
 end if
 
