@@ -8,9 +8,12 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "prima"
-dependencies = ["numpy"]
+dependencies = ["numpy", "scipy >= 1.9.0"]
 dynamic = ["version"]
-requires-python = ">= 3.7"  # Driving factor is availavility of scikit-build-core
+# The driving factor for our Python version is that we need a version of SciPy that
+# includes https://github.com/scipy/scipy/pull/15394. This was merged in SciPy 1.9.0,
+# and Python 3.7 only support up to SciPy 1.7.3 whereas 3.8 supports 1.10.1.
+requires-python = ">= 3.8"
 
 [tool.scikit-build]
 cmake.args = ["-G Ninja", "-DBUILD_SHARED_LIBS=OFF", "-DPRIMA_ENABLE_PYTHON=ON"]
