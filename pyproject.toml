@@ -48,4 +48,7 @@ skip = [
   "pp*",
   # Disable musllinux for the moment. It successfully built but there was an error when testing
   "*musllinux*",
+  # SciPy does not provide binaries for 32-bit Python on Linux starting from 3.10.
+  # As such we can compile but we cannot test, so we skip those.
+  "cp31*-manylinux_i686",
 ]

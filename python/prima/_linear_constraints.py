@@ -53,14 +53,14 @@ def separate_LC_into_eq_and_ineq(linear_constraint):
     # ensures lb <= ub.
     epsilon = np.finfo(np.float64).eps
 
-    eq_indices = linear_constraint.ub <= linear_constraint.lb + 2*epsilon
+    eq_indices = (linear_constraint.ub <= (linear_constraint.lb + 2*epsilon))
     A_eq = linear_constraint.A[eq_indices]
     b_eq = (linear_constraint.lb[eq_indices] + linear_constraint.ub[eq_indices])/2.0
 
-    ineq_ub_indices = linear_constraint.ub < np.inf
+    ineq_ub_indices = (linear_constraint.ub < np.inf)
     A_ineq_ub = linear_constraint.A[~eq_indices & ineq_ub_indices]
     b_ineq_ub = linear_constraint.ub[~eq_indices & ineq_ub_indices]
-    ineq_lb_indices = linear_constraint.lb > -np.inf
+    ineq_lb_indices = (linear_constraint.lb > -np.inf)
     A_ineq_lb = -linear_constraint.A[~eq_indices & ineq_lb_indices]
     b_ineq_lb = -linear_constraint.lb[~eq_indices & ineq_lb_indices]
     A_ineq = np.concatenate((A_ineq_ub, A_ineq_lb))
