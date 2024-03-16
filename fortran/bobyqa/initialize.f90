@@ -8,7 +8,7 @@ module initialize_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 16, 2024 AM03:37:10
+! Last Modified: Saturday, March 16, 2024 PM04:49:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -167,7 +167,9 @@ evaluated = .false.
 
 ! Initialize XHIST, FHIST, and FVAL. Otherwise, compilers may complain that they are not
 ! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
-! Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+! N.B.: 1. Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+! 2. Do not initialize the models if the current initialization aborts due to abnormality. Otherwise,
+! errors or exceptions may occur, as FVAL and XPT etc are uninitialized.
 xhist = -REALMAX
 fhist = REALMAX
 fval = REALMAX

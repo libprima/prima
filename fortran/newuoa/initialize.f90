@@ -8,7 +8,7 @@ module initialize_newuoa_mod
 !
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Monday, August 07, 2023 AM03:55:41
+! Last Modified: Saturday, March 16, 2024 PM02:13:43
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,7 +133,9 @@ evaluated = .false.
 
 ! Initialize XHIST, FHIST, and FVAL. Otherwise, compilers may complain that they are not
 ! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
-! Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+! N.B.: 1. Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+! 2. Do not initialize the models if the current initialization aborts due to abnormality. Otherwise, 
+! errors or exceptions may occur, as FVAL and XPT etc are uninitialized.
 xhist = -REALMAX
 fhist = REALMAX
 fval = REALMAX

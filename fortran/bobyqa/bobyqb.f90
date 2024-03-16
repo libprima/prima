@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 15, 2024 PM09:14:40
+! Last Modified: Saturday, March 16, 2024 PM04:44:48
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -233,14 +233,18 @@ end if
 x = xinbd(xbase, xpt(:, kopt), xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT.
 f = fval(kopt)
 
-! Initialize [BMAT, ZMAT], representing the inverse of the KKT matrix of the interpolation system.
-call inith(ij, xpt, bmat, zmat)
+! Finish the initialization if INITXF completed normally and CALLBACK did not request termination;
+! otherwise, do not proceed, as XPT etc may be uninitialized, leading to errors or exceptions.
+if (subinfo == INFO_DFT) then
+    ! Initialize [BMAT, ZMAT], representing inverse of KKT matrix of the interpolation system.
+    call inith(ij, xpt, bmat, zmat)
 
-! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
-! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
-call initq(ij, fval, xpt, gopt, hq, pq)
-if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
-    subinfo = NAN_INF_MODEL
+    ! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
+    ! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+    call initq(ij, fval, xpt, gopt, hq, pq)
+    if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+        subinfo = NAN_INF_MODEL
+    end if
 end if
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.

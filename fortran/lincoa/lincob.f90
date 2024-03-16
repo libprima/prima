@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 15, 2024 PM09:14:49
+! Last Modified: Saturday, March 16, 2024 PM04:59:49
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -287,18 +287,22 @@ do k = 1, npt
     end if
 end do
 
-! Initialize [BMAT, ZMAT, IDZ], representing the inverse of the KKT matrix of the interpolation system.
-call inith(ij, xpt, idz, bmat, zmat)
+! Finish the initialization if INITXF completed normally and CALLBACK did not request termination;
+! otherwise, do not proceed, as XPT etc may be uninitialized, leading to errors or exceptions.
+if (subinfo == INFO_DFT) then
+    ! Initialize [BMAT, ZMAT, IDZ], representing inverse of KKT matrix of the interpolation system.
+    call inith(ij, xpt, idz, bmat, zmat)
 
-! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
-! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
-hq = ZERO
-pq = omega_mul(idz, zmat, fval)
-gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xpt(:, kopt), xpt, pq)
-pqalt = pq
-galt = gopt
-if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
-    subinfo = NAN_INF_MODEL
+    ! Initialize the quadratic represented by [GOPT, HQ, PQ], so that its gradient at XBASE+XOPT is
+    ! GOPT; its Hessian is HQ + sum_{K=1}^NPT PQ(K)*XPT(:, K)*XPT(:, K)'.
+    hq = ZERO
+    pq = omega_mul(idz, zmat, fval)
+    gopt = matprod(bmat(:, 1:npt), fval) + hess_mul(xpt(:, kopt), xpt, pq)
+    pqalt = pq
+    galt = gopt
+    if (.not. (all(is_finite(gopt)) .and. all(is_finite(hq)) .and. all(is_finite(pq)))) then
+        subinfo = NAN_INF_MODEL
+    end if
 end if
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.
@@ -685,6 +689,7 @@ do tr = 1, maxtr
 
     ! Report the current best value, and check if user asks for early termination.
     if (present(callback_fcn)) then
+        ! FIXME: CVAL(KOP) is WRONG! CVAL is not updated.
         call callback_fcn(xbase + xpt(:, kopt), fval(kopt), nf, tr, cval(kopt), terminate=terminate)
         if (terminate) then
             info = CALLBACK_TERMINATE

@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 15, 2024 PM09:15:04
+! Last Modified: Saturday, March 16, 2024 PM04:45:33
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -168,7 +168,6 @@ end if
 ! Initialize XBASE, XPT, FVAL, and KOPT, together with the history and NF.
 call initxf(calfun, iprint, maxfun, ftarget, rhobeg, x, kopt, nf, fhist, fval, xbase, xhist, xpt, subinfo)
 
-
 ! Report the current best value, and check if user asks for early termination.
 terminate = .false.
 if (present(callback_fcn)) then
@@ -182,17 +181,22 @@ end if
 x = xbase + xpt(:, kopt)
 f = fval(kopt)
 
-! Initialize the Lagrange polynomials represented by PL. Allocate memory for it first. In general,
-! to make the implementation simple and straightforward, we use automatic arrays rather than
-! allocable ones whenever possible. However, PL is an exception, as its size is O(N^4). If SAFEALLOC
-! fails, an informative error will be raised, which is preferred to a silent or ambiguous failure.
-call safealloc(pl, npt - 1_IK, npt)
-call initl(xpt, pl)
+! Finish the initialization if INITXF completed normally and CALLBACK did not request termination;
+! otherwise, do not proceed, as XPT etc may be uninitialized, leading to errors or exceptions.
+if (subinfo == INFO_DFT) then
+    ! Initialize the Lagrange polynomials represented by PL. Allocate memory for it first. In
+    ! general, to make the implementation simple and straightforward, we use automatic arrays rather
+    ! than allocable ones whenever possible. However, PL is an exception, as its size is O(N^4). If
+    ! SAFEALLOC fails, an informative error will be raised, which is preferred to a silent or
+    ! ambiguous failure.
+    call safealloc(pl, npt - 1_IK, npt)
+    call initl(xpt, pl)
 
-! Initialize the quadratic model represented by PQ.
-call initq(fval, xpt, pq)
-if (.not. (all(is_finite(pq)))) then
-    subinfo = NAN_INF_MODEL
+    ! Initialize the quadratic model represented by PQ.
+    call initq(fval, xpt, pq)
+    if (.not. (all(is_finite(pq)))) then
+        subinfo = NAN_INF_MODEL
+    end if
 end if
 
 ! Check whether to return due to abnormal cases that may occur during the initialization.

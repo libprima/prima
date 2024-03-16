@@ -8,7 +8,7 @@ module initialize_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, March 03, 2024 PM05:54:59
+! Last Modified: Saturday, March 16, 2024 PM04:48:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -134,14 +134,17 @@ evaluated = .false.
 
 ! Initialize XHIST, FHIST, CHIST, CONHIST, FVAL, CVAL, and CONMAT. Otherwise, compilers may complain
 !that they are not (completely) initialized if the initialization aborts due to abnormality (see
-!CHECKEXIT). Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+!CHECKEXIT).
+! N.B.: 1. Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+! 2. Do not initialize the models if the current initialization aborts due to abnormality. Otherwise,
+! errors or exceptions may occur, as FVAL and XPT etc are uninitialized.
 xhist = -REALMAX
 fhist = REALMAX
 chist = REALMAX
-conhist = -REALMAX
+conhist = REALMAX
 fval = REALMAX
 cval = REALMAX
-conmat = -REALMAX
+conmat = REALMAX
 
 do k = 1, n + 1_IK
     x = sim(:, n + 1)

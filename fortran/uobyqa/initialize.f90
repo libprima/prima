@@ -8,7 +8,7 @@ module initialize_uobyqa_mod
 !
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Monday, October 02, 2023 PM02:11:04
+! Last Modified: Saturday, March 16, 2024 PM04:50:24
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -117,7 +117,9 @@ evaluated = .false.
 
 ! Initialize XHIST, FHIST, and FVAL. Otherwise, compilers may complain that they are not
 ! (completely) initialized if the initialization aborts due to abnormality (see CHECKEXIT).
-! Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+! N.B.: 1. Initializing them to NaN would be more reasonable (NaN is not available in Fortran).
+! 2. Do not initialize the models if the current initialization aborts due to abnormality. Otherwise,
+! errors or exceptions may occur, as FVAL and XPT etc are uninitialized.
 xhist = -REALMAX
 fhist = REALMAX
 fval = REALMAX
@@ -143,7 +145,7 @@ do k = 1, 2_IK * n + 1_IK
     ! evaluate F at XBASE + 2*XPT(:, K) or XBASE - XPT(:, K) IMMEDIATELY after XBASE + XPT(:, K).
     ! This increases the probability of finding a smaller function value earlier in the sampling
     ! process for the first model. This process itself can be regarded as a simple direct search. It
-    ! is important for the performance of the algorithm during the early stage, even before the
+    ! is IMPORTANT for the performance of the algorithm during the early stage, even before the
     ! first model is built.
     if (modulo(k, 2_IK) == 0) then
         if (fval(k) < fval(1)) then
