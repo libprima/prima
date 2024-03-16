@@ -204,7 +204,10 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
           cmake --build . --target install
           cmake --build . --target tests
-          ctest --output-on-failure -V -E "stress"
+
+          # As of 20240316, CMake test fails on cobyla with the Classic flang, AOCC flang, and
+          # nvfortran. See https://github.com/libprima/prima/issues/165
+          ctest --output-on-failure -V -E "stress|cobyla"
         shell: bash
         env:
           FC: ${{ matrix.toolchain.compiler }}
