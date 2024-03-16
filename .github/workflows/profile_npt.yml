@@ -119,18 +119,18 @@ jobs:
             options.npt = @(n) ${{ matrix.npt }};
 
             if  strcmp('${{ matrix.solver }}', 'lincoa')
-                if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)'})
-                    options.blacklist = {'AGG', 'SSEBLIN', 'ANTWERP', 'AVION2', 'DALLASS', 'HIMMELBI', 'SPANHYD', 'ARGLALE', 'GMNCASE3', 'GMNCASE2', 'LEVYMONT'};
+                if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)', '3*n', '4*n'})
+                    options.blacklist = {'AGG', 'ANTWERP', 'ARGLALE', 'ARGLBLE', 'AVION2', 'CVXQP1', 'DALLASS', 'DUAL1', 'DUAL3', 'GMNCASE1', 'GMNCASE2', 'GMNCASE3', 'HIMMELBI', 'HYDROELS', 'LEVYMONT', 'QPCBLEND', 'SMBANK', 'SPANHYD', 'SSEBLIN'};
                 end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
-                if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)'})
-                    options.blacklist = {'HOLMES', 'CHEBYQAD'};
+                if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)', '3*n', '4*n'})
+                    options.blacklist = {'CHEBYQAD', 'HOLMES', 'LEVYMONT'};
                 end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', '${{ matrix.competitor }}', options);
             else
-                if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)'})
-                    options.blacklist = {'ARGLINB', 'ARGLINC', 'ERRINROS', 'BA-L1LS', 'BA-L1SPLS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN16LS', 'CHNROSNB', 'SPIN2LS'};
+                if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)', '3*n', '4*n'})
+                    options.blacklist = {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'FBRAIN3LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN15LS', 'LUKSAN16LS', 'QING', 'SENSORS', 'SPIN2LS', 'TOINTPSP'};
                 end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
             end

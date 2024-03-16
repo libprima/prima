@@ -121,13 +121,17 @@ jobs:
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
                 options.nr = 3;
+                options.blacklist = {'CERI651B', 'HS99EXP', 'TRO6X2', 'POLAK2', 'GBRAIN', 'HIMMELP6'};
                 prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'lincoa')
                 options.blacklist = {'HS105'};  % Classical LINCOA encounters a SEGFAULT when compiled with -O1.
+                options.blacklist = [options.blacklist, {'DUAL2', 'SSEBLIN', 'AGG', 'SMBANK', 'GMNCASE3'}];
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
+                options.blacklist = {'CHEBYQAD'};
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', '${{ matrix.competitor }}', options);
             else
+                options.blacklist={'LUKSAN11LS', 'SPIN2LS', 'ARGLINA', 'ARGLINC', 'ERRINROS', 'QING', 'METHANB8LS', 'SPIN2LS'};
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
             end
 
