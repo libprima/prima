@@ -60,9 +60,9 @@ def process_constraints(constraints):
             raise ValueError("Constraint type not recognized")
 
     if len(nonlinear_constraints) > 0:
-        nonlinearconstraint_function = process_nl_constraints(nonlinear_constraints)
+        nonlinear_constraint_function = process_nl_constraints(nonlinear_constraints)
     else:
-        nonlinearconstraint_function = None
+        nonlinear_constraint_function = None
 
     # Determine if we have multiple linear constraints, just 1, or none, and process accordingly
     if len(linear_constraints) > 1:
@@ -72,17 +72,17 @@ def process_constraints(constraints):
     else:
         linear_constraint = None
 
-    return linear_constraint, nonlinearconstraint_function
+    return linear_constraint, nonlinear_constraint_function
 
 
 def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callback=None, options=None):
 
-    linear_constraint, nonlinearconstraint_function = process_constraints(constraints)
+    linear_constraint, nonlinear_constraint_function = process_constraints(constraints)
         
     quiet = options.get("quiet", True) if options is not None else True
 
     if method is None:
-        if nonlinearconstraint_function is not None:
+        if nonlinear_constraint_function is not None:
             if not quiet: print("Nonlinear constraints detected, applying COBYLA")
             method = "cobyla"
         elif linear_constraint is not None:
@@ -97,7 +97,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     else:
         # Raise some errors if methods were called with inappropriate options
         method = method.lower()
-        if method != "cobyla" and nonlinearconstraint_function is not None:
+        if method != "cobyla" and nonlinear_constraint_function is not None:
             raise ValueError("Nonlinear constraints were provided for an algorithm that cannot handle them")
         if method not in ("cobyla", "lincoa") and linear_constraint is not None:
             raise ValueError("Linear constraints were provided for an algorithm that cannot handle them")
@@ -112,7 +112,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     lb, ub = process_bounds(bounds, lenx0)
 
     # Project x0 onto the feasible set
-    if nonlinearconstraint_function is None:
+    if nonlinear_constraint_function is None:
         result = _project(x0, lb, ub, {"linear": linear_constraint, "nonlinear": None})
         x0 = result.x
     
@@ -121,8 +121,8 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     else:
         A_eq, b_eq, A_ineq, b_ineq = None, None, None, None
         
-    if nonlinearconstraint_function is not None:
-        nlconstr0 = nonlinearconstraint_function(x0)
+    if nonlinear_constraint_function is not None:
+        nlconstr0 = nonlinear_constraint_function(x0)
         m_nlcon = len(nlconstr0) if hasattr(nlconstr0, "__len__") else 1
         f0 = fun(x0)
     else:
@@ -141,7 +141,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         b_eq,
         A_ineq,
         b_ineq,
-        nonlinearconstraint_function,
+        nonlinear_constraint_function,
         callback,
         options,
         nlconstr0,

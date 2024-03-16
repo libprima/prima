@@ -2240,8 +2240,6 @@ nanmax
 nanmin
 prepdfo
 rcond
-SLSQP
 subcases
-nonlinearconstraint
 newconstraint
 inear

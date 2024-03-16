@@ -122,7 +122,7 @@ PYBIND11_MODULE(_prima, m) {
                       const py::object& b_eq,
                       const py::object& A_ineq,
                       const py::object& b_ineq,
-                      const py::object& constraint_function,
+                      const py::object& nonlinear_constraint_function,
                       const py::object& python_callback_function,
                       const py::object& options_dict,
                       const py::object& nlconstr0,
@@ -140,9 +140,9 @@ PYBIND11_MODULE(_prima, m) {
       static py::object python_callback_function_holder;
       python_callback_function_holder = std::move(python_callback_function);
       auto cleaner_2 = SelfCleaningPyObject(python_callback_function_holder);
-      static py::object python_constraint_function_holder;
-      python_constraint_function_holder = std::move(constraint_function);
-      auto cleaner_3 = SelfCleaningPyObject(python_constraint_function_holder);
+      static py::object python_nonlinear_constraint_function_holder;
+      python_nonlinear_constraint_function_holder = std::move(nonlinear_constraint_function);
+      auto cleaner_3 = SelfCleaningPyObject(python_nonlinear_constraint_function_holder);
       // Storing the shape lets us handle both scalar inputs for x0 as well as 1D arrays
       static py::array::ShapeContainer x0_shape;  // no cleaner required for this one since it's just a wrapped std::vector
       if (py_x0.ndim() == 0) {
@@ -175,8 +175,8 @@ PYBIND11_MODULE(_prima, m) {
       prima_algorithm_t algorithm = pystr_method_to_algorithm(method);
 
       if ( algorithm == PRIMA_COBYLA ) {
-        if (python_constraint_function_holder.is_none() ||  nlconstr0.is_none() || m_nlcon.is_none() || f0.is_none()) {
-          throw std::invalid_argument("constraint_function, nlconstr0, m_nlcon, and f0 must be provided if nonlinear constraints are provided");
+        if (python_nonlinear_constraint_function_holder.is_none() ||  nlconstr0.is_none() || m_nlcon.is_none() || f0.is_none()) {
+          throw std::invalid_argument("nonlinear_constraint_function, nlconstr0, m_nlcon, and f0 must be provided if nonlinear constraints are provided");
         }
 
         auto nlconstr0_buffer_info = nlconstr0.cast<py::buffer>().request();
@@ -199,10 +199,10 @@ PYBIND11_MODULE(_prima, m) {
           py::object constraints;
           if (args.size() > 0) {
             result = python_objective_function_holder(xlist, args).cast<double>();
-            constraints = python_constraint_function_holder(xlist, args);
+            constraints = python_nonlinear_constraint_function_holder(xlist, args);
           } else {
             result = python_objective_function_holder(xlist).cast<double>();
-            constraints = python_constraint_function_holder(xlist);
+            constraints = python_nonlinear_constraint_function_holder(xlist);
           }
 
           *f = result;
@@ -219,7 +219,7 @@ PYBIND11_MODULE(_prima, m) {
               py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
               if (constr_list_buffer_info.format != "d")
               {
-                throw std::invalid_argument("constraint_function must return a double array");
+                throw std::invalid_argument("nonlinear_constraint_function must return a double array");
               }
 
 
@@ -230,7 +230,7 @@ PYBIND11_MODULE(_prima, m) {
             }
             catch(const std::exception& e)
             {
-              throw(std::invalid_argument("constraint_function must return a double or a double array"));
+              throw(std::invalid_argument("nonlinear_constraint_function must return a double or a double array"));
             }
             
           }
@@ -336,7 +336,7 @@ PYBIND11_MODULE(_prima, m) {
     }, "fun"_a, "x0"_a, "args"_a=py::tuple(), "method"_a=py::none(),
            "lb"_a=py::none(), "ub"_a=py::none(), "A_eq"_a=py::none(), "b_eq"_a=py::none(),
            "A_ineq"_a=py::none(), "b_ineq"_a=py::none(),
-           "constraint_function"_a=py::none(),
+           "nonlinear_constraint_function"_a=py::none(),
            "callback"_a=nullptr, "options"_a=py::none(), "nlconstr0"_a=py::none(),
             "m_nlcon"_a=py::none(), "f0"_a=py::none()
   );
