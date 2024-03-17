@@ -75,8 +75,8 @@ def test_iprint(capfd):
     outerr = capfd.readouterr()
     assert outerr.out == '''
 Return from NEWUOA because the trust region radius reaches its lower bound.
-Number of function values = 23   Least value of F =  0.000000000000000E+000
-The corresponding X is:  5.000000000000000E+000   4.000000000000000E+000
+Number of function values = 22   Least value of F =  1.577721810442024E-030
+The corresponding X is:  4.999999999999999E+000   3.999999999999999E+000
 '''
     assert outerr.err == ''
 

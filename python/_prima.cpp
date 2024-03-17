@@ -329,7 +329,7 @@ PYBIND11_MODULE(_prima, m) {
 
       // Initialize the result, call the function, convert the return type, and return it.
       prima_result_t result;
-      const prima_rc_t rc = prima_minimize(algorithm, &problem, &options, &result);
+      const prima_rc_t rc = prima_minimize(algorithm, problem, options, &result);
       PRIMAResult result_copy(result, py_x0.size(), problem.m_nlcon, method.cast<std::string>());
       prima_free_result(&result);
       return result_copy;
