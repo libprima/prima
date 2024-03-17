@@ -73,10 +73,14 @@ def test_iprint(capfd):
     res = minimize(fun, x0, options=options)
     assert fun.result_point_and_value_are_optimal(res)
     outerr = capfd.readouterr()
-    assert outerr.out == '''
+    # In order to account for some machines (i.e. 32bit machines we test on) providing
+    # slightly different values, we use this formatting function to get the numbers in
+    # the right format, whatever they may be.
+    fmt = lambda x: np.format_float_scientific(x, precision=15, exp_digits=3).upper()
+    assert outerr.out == f'''
 Return from NEWUOA because the trust region radius reaches its lower bound.
-Number of function values = 22   Least value of F =  1.577721810442024E-030
-The corresponding X is:  4.999999999999999E+000   3.999999999999999E+000
+Number of function values = {res.nfev}   Least value of F =  {fmt(res.fun)}
+The corresponding X is:  {fmt(res.x[0])}   {fmt(res.x[1])}
 '''
     assert outerr.err == ''
 

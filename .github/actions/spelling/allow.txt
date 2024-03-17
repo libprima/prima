@@ -2243,3 +2243,8 @@ rcond
 subcases
 newconstraint
 inear
+PYCUTEST
+pycutest
+excludelist
+slsqp
+optiprofiler
