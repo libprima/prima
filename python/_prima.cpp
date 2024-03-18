@@ -76,7 +76,7 @@ prima_algorithm_t pystr_method_to_algorithm(const pybind11::str& method_) {
   else if (method == "lincoa") { return PRIMA_LINCOA; }
   else if (method == "newuoa") { return PRIMA_NEWUOA; }
   else if (method == "uobyqa") { return PRIMA_UOBYQA; }
-  else { throw std::invalid_argument("method must be one of BOBYQA, COBYLA, LINCOA, NEWUOA, or UOBYQA"); }
+  else { throw std::invalid_argument("Expected method to be one of BOBYQA, COBYLA, LINCOA, NEWUOA, or UOBYQA"); }
 }
 
 PYBIND11_MODULE(_prima, m) {
@@ -209,33 +209,21 @@ PYBIND11_MODULE(_prima, m) {
 
           try
           {
-            double constraint = constraints.cast<double>();
-            *constr = constraint;
+            py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
+            if (constr_list_buffer_info.format != "d")
+            {
+              throw std::invalid_argument("nonlinear_constraint_function must return a double array");
+            }
+
+            // We need to copy. We cannot set the pointer since we are not passed a pointer-to-pointer
+            for (int i = 0; i < constr_list_buffer_info.size; i++) {
+              constr[i] = ((double*)constr_list_buffer_info.ptr)[i];
+            }
           }
           catch(const std::exception& e)
           {
-            try
-            {
-              py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
-              if (constr_list_buffer_info.format != "d")
-              {
-                throw std::invalid_argument("nonlinear_constraint_function must return a double array");
-              }
-
-
-              // We need to copy. We cannot set the pointer since we are not passed a pointer-to-pointer
-              for (int i = 0; i < constr_list_buffer_info.size; i++) {
-                constr[i] = ((double*)constr_list_buffer_info.ptr)[i];
-              }
-            }
-            catch(const std::exception& e)
-            {
-              throw(std::invalid_argument("nonlinear_constraint_function must return a double or a double array"));
-            }
-            
+            throw(std::invalid_argument("nonlinear_constraint_function must return a double or a double array"));
           }
-          
-          
         };
 
       } else {

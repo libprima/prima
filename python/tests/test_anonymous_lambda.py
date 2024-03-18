@@ -21,6 +21,6 @@ def test_anonymous_lambda_unclean_exit():
     of the anonymous lambdas.
     '''
     myNLC = NLC(lambda x: x[0]**2 - 9, [-np.inf], [0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e_info:
         minimize(lambda x: (x[0] - 5)**2 + (x[1] - 4)**2, [0.0] * 2, method='GARBAGE', constraints=myNLC, callback=lambda x, *args: print(x))
-    
+    assert e_info.match("Method must be one of NEWUOA, UOBYQA, BOBYQA, COBYLA, or LINCOA, not 'garbage'")

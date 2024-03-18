@@ -25,7 +25,7 @@ order to run that test by itself.
 - [x] providing bounds and linear and nonlinear constraints together calls COBYLA and the constraints/bounds are successfully applied - test_combining_constraints.py::test_providing_bounds_and_linear_and_nonlinear_constraints
 
 
-## Requirements for data types
+## Requirements for scalar/list/array
 - [x] providing a nonlinear constraint function returning a numpy array works without warnings or errors - test_data_types.py::test_constraint_function_returns_numpy_array
 - [x] providing a nonlinear constraint function returning a Python list works without warnings or errors - test_data_types.py::test_constraint_function_returns_list
 - [x] providing a nonlinear constraint function returning a scalar works without warnings or errors - test_data_types.py::test_constraint_function_returns_scalar
@@ -33,6 +33,10 @@ order to run that test by itself.
 - [x] providing x0 as Python list works without warnings or errors - test_data_types.py::test_x0_as_array
 - [x] providing x0 as scalar works without warnings or errors - test_data_types.py::test_x0_as_scalar
 - [x] providing A as either a scalar, list, or numpy array, providing lb as either a scalar, list, or numpy array, and providing ub as either a scalar, list or numpy array works without warning or errors in all combinations - test_data_types.py::test_linear_constraint_data_types
+- [x] providing a nonlinear constraint with scalar lower bound and scalar upper bound works without warnings or errors - test_data_types.py::test_nonlinear_constraint_lb_scalar_ub_scalar
+- [x] providing a nonlinear constraint with scalar lower bound and list/array upper bound works without warnings or errors - test_data_types.py::test_nonlinear_constraint_lb_scalar_ub_not_scalar
+- [x] providing a nonlinear constraint with list/array lower bound and scalar upper bound works without warnings or errors - test_data_types.py::test_nonlinear_constraint_lb_not_scalar_ub_scalar
+- [x] providing a nonlinear constraint with list/array lower bound and list/array upper bound works without warnings or errors - test_data_types.py::test_nonlinear_constraint_lb_not_scalar_ub_not_scalar
 
 
 ## Requirements for various options
@@ -59,9 +63,26 @@ order to run that test by itself.
 
 ## Requirements for processing of lists of constraints
 - [x] providing a list of nonlinear constraint functions without providing either the total dimension or the dimension of each function successfully determines the total number of constraints - test_process_nonlinear_constraints.py::test_multiple_nl_constraints_various_data_types
-- [x] providing a list of linear constraints leads to them being successfully combined and applied - test_process_linear_constraints.py::test_multiple_linear_constraints
+- [x] providing a list of linear constraints leads to them being successfully combined - test_process_linear_constraints.py::test_multiple_linear_constraints_implementation
+- [x] providing a list of linear constraints leads to them being successfully combined and applied - test_process_linear_constraints.py::test_multiple_linear_constraints_high_level
 - [x] providing linear constraints that contain both equality and inequality constraints leads to a correct separation into A_eq/b_eq and A_ineq/b_ineq - test_process_linear_constraints.py::test_separate_LC_into_eq_and_ineq
 
+
+## Requirements for constraint types
+- [x] PRIMA's LinearConstraint is the same as SciPy's scipy.optimize.LinearConstraint - test_constraint_types.py::test_prima_lc_is_scipy_lc
+- [x] providing a linear constraint as a type scipy.optimize.LinearConstraint works without warnings or errors - test_constraint_types.py::test_linear_constraint_object
+- [x] providing a linear constraint as a dictionary with keys 'A', 'lb', and 'ub' works without warnings or errors - test_constraint_types.py::test_linear_constraint_dict
+- [x] PRIMA's NonlinearConstraint is the same as SciPy's scipy.optimize.NonlinearConstraint - test_constraint_types.py::test_prima_lc_is_scipy_lc
+- [x] providing a nonlinear constraint as a type scipy.optimize.NonlinearConstraint works without warnings or errors - test_constraint_types.py::test_nonlinear_constraint_object
+- [x] providing a nonlinear constraint as a dictionary with keys 'fun', 'lb', and 'ub' works without warnings or errors - test_constraint_types.py::test_nonlinear_constraint_dict
+- [x] providing an unsupported constraint type raises an exception - test_constraint_types.py::test_unsupported_type_raises_exception
+
+
+## Requirements for warnings related to method selection
+- [x] providng a method that is not one of the 5 provided raises an exception - test_method_selection_warnings_and_exceptions.py::test_method_not_recognized
+- [x] providing nonlinear constraints to a method that cannot handle them raises an exception - test_method_selection_warnings_and_exceptions.py::test_providing_nonlinear_constraints_to_non_cobyla_method
+- [x] providing linear constraints to a method that cannot handle them raises an exception - test_method_selection_warnings_and_exceptions.py::test_providing_linear_constraints_to_non_cobyla_non_lincoa_method
+- [x] providing bounds to a method that cannot handle them raises an exception - test_method_selection_warnings_and_exceptions.py::test_providing_bounds_to_non_cobyla_non_lincoa_non_bobyqa_method
 
 ## Requirements for regression tests
 These tests are for behavior observed during testing that we want to make sure remains fixed.
