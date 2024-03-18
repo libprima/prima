@@ -79,7 +79,7 @@ order to run that test by itself.
 
 
 ## Requirements for warnings related to method selection
-- [x] providng a method that is not one of the 5 provided raises an exception - test_method_selection_warnings_and_exceptions.py::test_method_not_recognized
+- [x] providing a method that is not one of the 5 provided raises an exception - test_method_selection_warnings_and_exceptions.py::test_method_not_recognized
 - [x] providing nonlinear constraints to a method that cannot handle them raises an exception - test_method_selection_warnings_and_exceptions.py::test_providing_nonlinear_constraints_to_non_cobyla_method
 - [x] providing linear constraints to a method that cannot handle them raises an exception - test_method_selection_warnings_and_exceptions.py::test_providing_linear_constraints_to_non_cobyla_non_lincoa_method
 - [x] providing bounds to a method that cannot handle them raises an exception - test_method_selection_warnings_and_exceptions.py::test_providing_bounds_to_non_cobyla_non_lincoa_non_bobyqa_method
