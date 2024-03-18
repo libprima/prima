@@ -3,8 +3,7 @@ from ._prima import minimize as _minimize, __version__, PRIMAMessage
 from scipy.optimize import NonlinearConstraint, LinearConstraint, Bounds
 from ._nonlinear_constraints import process_nl_constraints
 from ._linear_constraints import (
-    process_single_linear_constraint,
-    process_multiple_linear_constraints,
+    combine_multiple_linear_constraints,
     separate_LC_into_eq_and_ineq,
 )
 from ._bounds import process_bounds
@@ -66,9 +65,9 @@ def process_constraints(constraints):
 
     # Determine if we have multiple linear constraints, just 1, or none, and process accordingly
     if len(linear_constraints) > 1:
-        linear_constraint = process_multiple_linear_constraints(linear_constraints)
+        linear_constraint = combine_multiple_linear_constraints(linear_constraints)
     elif len(linear_constraints) == 1:
-        linear_constraint = process_single_linear_constraint(linear_constraints[0])
+        linear_constraint = linear_constraints[0]
     else:
         linear_constraint = None
 
