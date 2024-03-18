@@ -128,13 +128,6 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         A_eq, b_eq, A_ineq, b_ineq = separate_LC_into_eq_and_ineq(linear_constraint)
     else:
         A_eq, b_eq, A_ineq, b_ineq = None, None, None, None
-        
-    if nonlinear_constraint_function is not None:
-        m_nlcon = len(nlconstr0)
-        f0 = fun(x0)
-    else:
-        m_nlcon = 0
-        f0 = None
 
     return _minimize(
         fun,
@@ -150,7 +143,5 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         nonlinear_constraint_function,
         callback,
         options,
-        nlconstr0,
-        m_nlcon,
-        f0,
+        nlconstr0
     )
