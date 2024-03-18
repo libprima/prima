@@ -3,6 +3,7 @@ from objective import fun
 import numpy as np
 import pytest
 
+
 def test_x0_as_list():
     x0 = [0.0] * 2
     res = minimize(fun, x0)
