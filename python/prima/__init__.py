@@ -108,8 +108,10 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
 
     try:
         lenx0 = len(x0)
+        x0_is_scalar = False
     except TypeError:
         lenx0 = 1
+        x0_is_scalar = True
 
     lb, ub = process_bounds(bounds, lenx0)
 
@@ -117,6 +119,10 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     if nonlinear_constraint_function is None:
         result = _project(x0, lb, ub, {"linear": linear_constraint, "nonlinear": None})
         x0 = result.x
+        # _project will upgrade x0 to a 1D array if it was a scalar, but the objective function
+        # might expect a scalar, so we downgrade it back to a scalar if that's what it was originally
+        if x0_is_scalar:
+            x0 = x0[0]
     
     if linear_constraint is not None:
         A_eq, b_eq, A_ineq, b_ineq = separate_LC_into_eq_and_ineq(linear_constraint)
