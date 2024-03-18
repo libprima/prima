@@ -3,7 +3,7 @@ from scipy.optimize import Bounds
 
 def process_bounds(bounds, lenx0):
     '''
-    bounds can either be an object with the properties lb and ub, or a list of tuples
+    `bounds` can either be an object with the properties lb and ub, or a list of tuples
     indicating a lower bound and an upper bound for each variable. If the list contains
     fewer entries than the length of x0, the remaining entries will generated as -/+ infinity.
     Some examples of valid lists of tuple, assuming len(x0) == 3:
