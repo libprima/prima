@@ -97,6 +97,8 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     else:
         # Raise some errors if methods were called with inappropriate options
         method = method.lower()
+        if method not in ('newuoa', 'uobyqa', 'bobyqa', 'cobyla', 'lincoa'):
+            raise ValueError(f"Method must be one of NEWUOA, UOBYQA, BOBYQA, COBYLA, or LINCOA, not '{method}'")
         if method != "cobyla" and nonlinear_constraint_function is not None:
             raise ValueError("Nonlinear constraints were provided for an algorithm that cannot handle them")
         if method not in ("cobyla", "lincoa") and linear_constraint is not None:

@@ -1,14 +1,25 @@
 import numpy as np
-from prima import LinearConstraint, process_multiple_linear_constraints, separate_LC_into_eq_and_ineq
+from prima import LinearConstraint, process_multiple_linear_constraints, separate_LC_into_eq_and_ineq, minimize
+from objective import fun
 
 
-def test_multiple_linear_constraints():
+def test_multiple_linear_constraints_implementation():
     constraints = [LinearConstraint(A=np.array([[1, 2], [3, 4]]), lb=[5, 6], ub=[7, 8]),
                    LinearConstraint(A=np.array([[9, 10], [11, 12]]), lb=[13, 14], ub=[15, 16])]
     processed_constraint = process_multiple_linear_constraints(constraints)
     assert (processed_constraint.A == np.array([[1, 2], [3, 4], [9, 10], [11, 12]])).all()
     assert all(processed_constraint.lb == [5, 6, 13, 14])
     assert all(processed_constraint.ub == [7, 8, 15, 16])
+    
+
+def test_multiple_linear_constraints_high_level():
+    constraints = [LinearConstraint(A=np.array([1, 0]), lb=5, ub=7),
+                     LinearConstraint(A=np.array([0, 1]), lb=6, ub=8)]
+    x0 = [0.0, 0.0]
+    res = minimize(fun, x0, constraints=constraints)
+    assert np.isclose(res.x[0], 5.0, rtol=1e-6)
+    assert np.isclose(res.x[1], 6.0, rtol=1e-6)
+    assert np.isclose(res.fun, 4.0, rtol=1e-6)
 
 
 def test_separate_LC_into_eq_and_ineq():

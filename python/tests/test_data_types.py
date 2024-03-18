@@ -56,3 +56,39 @@ def test_linear_constraint_data_types(A, lb, ub):
     x0 = 0
     res = minimize(scalar_fun, x0, method='LINCOA', constraints=myLC)
     assert np.isclose(res.x, 4, rtol=1e-2)
+
+
+def test_nonlinear_constraint_lb_scalar_ub_scalar():
+    nlc = NLC(lambda x: [x[0]**2, x[1]**2], lb=25, ub=100)
+    x0 = [0, 0]
+    res = minimize(fun, x0, constraints=nlc)
+    assert np.isclose(res.x[0], 5, atol=1e-6, rtol=1e-6)
+    assert np.isclose(res.x[1], 5, atol=1e-6, rtol=1e-6)
+    assert np.isclose(res.fun, 1, atol=1e-6, rtol=1e-6)
+
+
+def test_nonlinear_constraint_lb_scalar_ub_not_scalar():
+    nlc = NLC(lambda x: [x[0]**2, x[1]**2], lb=9, ub=[9, 16])
+    x0 = [0, 0]
+    res = minimize(fun, x0, constraints=nlc)
+    assert np.isclose(res.x[0], 3, atol=1e-6, rtol=1e-6)
+    assert np.isclose(res.x[1], 4, atol=1e-6, rtol=1e-6)
+    assert np.isclose(res.fun, 4, atol=1e-6, rtol=1e-6)
+
+
+def test_nonlinear_constraint_lb_not_scalar_ub_scalar():
+    nlc = NLC(lambda x: [x[0]**2, x[1]**2], lb=[25, 36], ub=100)
+    x0 = [0, 0]
+    res = minimize(fun, x0, constraints=nlc)
+    assert np.isclose(res.x[0], 5, atol=1e-6, rtol=1e-6)
+    assert np.isclose(res.x[1], 6, atol=1e-6, rtol=1e-6)
+    assert np.isclose(res.fun, 4, atol=1e-6, rtol=1e-6)
+    
+
+def test_nonlinear_constraint_lb_not_scalar_ub_not_scalar():
+    nlc = NLC(lambda x: [x[0]**2, x[1]**2], lb=[4, 4], ub=[4, 9])
+    x0 = [0, 0]
+    res = minimize(fun, x0, constraints=nlc)
+    assert np.isclose(res.x[0], 2, atol=1e-6, rtol=1e-6)
+    assert np.isclose(res.x[1], 3, atol=1e-6, rtol=1e-6)
+    assert np.isclose(res.fun, 10, atol=1e-6, rtol=1e-6)

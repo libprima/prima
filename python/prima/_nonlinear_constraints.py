@@ -67,7 +67,7 @@ def process_single_nl_constraint(nlc):
                 raise ValueError("A NonlinearConstraint was provided without specifying lower or upper bounds")
             align_constraint_values = lambda values: values - nlc.ub
         else:
-            align_constraint_values = lambda values: np.concatenate(([ub_ii - vi for ub_ii, vi in zip(nlc.ub, values) if ub_ii < np.inf],
+            align_constraint_values = lambda values: np.concatenate(([vi - ub_ii for ub_ii, vi in zip(nlc.ub, values) if ub_ii < np.inf],
                                         nlc.lb - values))
     elif not lb_is_scalar and ub_is_scalar:
         if nlc.ub == np.inf:
