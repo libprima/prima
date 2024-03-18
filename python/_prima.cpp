@@ -161,7 +161,7 @@ PYBIND11_MODULE(_prima, m) {
       // Process options.
       prima_options_t options;
       prima_init_options(&options);
-      if (options_dict.is_none() == false) {
+      if ( ! options_dict.is_none()) {
         if(options_dict.contains("ftarget"))   { options.ftarget   = options_dict["ftarget"].cast<double>(); }
         if(options_dict.contains("iprint"))    { options.iprint    = options_dict["iprint"].cast<int>(); }
         if(options_dict.contains("maxfev"))    { options.maxfun    = options_dict["maxfev"].cast<int>(); }
@@ -246,7 +246,7 @@ PYBIND11_MODULE(_prima, m) {
       }
 
       prima_callback_t cpp_callback_function_wrapper = nullptr;
-      if (python_callback_function_holder.is_none() == false) {
+      if ( ! python_callback_function_holder.is_none()) {
         cpp_callback_function_wrapper = [](const int n, const double x[], const double f, int nf, int tr,
                                 const double cstrv, int m_nlcon, const double nlconstr[], bool *terminate) {
           // In order for xlist to not copy the data from x, we need to provide a dummy base object
@@ -264,7 +264,7 @@ PYBIND11_MODULE(_prima, m) {
       //=====================
       //    Handle Bounds
       //=====================
-      if (lb.is_none() == false && ub.is_none() == false) {
+      if (( ! lb.is_none())  && ( ! ub.is_none())) {
         // Use the buffer protocol to avoid copying
         py::buffer_info lb_buffer_info  = lb.cast<py::buffer>().request();
         if (lb_buffer_info.format != "d")
@@ -283,7 +283,7 @@ PYBIND11_MODULE(_prima, m) {
       //==============================
       //  Handle Linear Constraints
       //==============================
-      if(A_eq.is_none() == false) {
+      if( ! A_eq.is_none()) {
         py::buffer_info A_eq_buffer_info  = A_eq.cast<py::buffer>().request();
         if (A_eq_buffer_info.format != "d")
         {
@@ -298,7 +298,7 @@ PYBIND11_MODULE(_prima, m) {
         }
         problem.beq = (double*) b_eq_buffer_info.ptr;
       }
-      if(A_ineq.is_none() == false) {
+      if( ! A_ineq.is_none()) {
         py::buffer_info A_ineq_buffer_info  = A_ineq.cast<py::buffer>().request();
         if (A_ineq_buffer_info.format != "d")
         {

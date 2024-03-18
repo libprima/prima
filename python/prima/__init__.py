@@ -133,7 +133,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         m_nlcon = len(nlconstr0)
         f0 = fun(x0)
     else:
-        m_nlcon = None
+        m_nlcon = 0
         f0 = None
 
     return _minimize(
