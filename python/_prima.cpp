@@ -125,9 +125,7 @@ PYBIND11_MODULE(_prima, m) {
                       const py::object& nonlinear_constraint_function,
                       const py::object& python_callback_function,
                       const py::object& options_dict,
-                      const py::object& nlconstr0,
-                      const py::object& m_nlcon,
-                      const py::object& f0)
+                      const py::object& nlconstr0)
     {
       // Reference for how to go from a python function to a C style function pointer: https://stackoverflow.com/questions/74480093
       // Basically, we need to create a function with a C signature that calls the python function, and
@@ -175,8 +173,8 @@ PYBIND11_MODULE(_prima, m) {
       prima_algorithm_t algorithm = pystr_method_to_algorithm(method);
 
       if ( algorithm == PRIMA_COBYLA ) {
-        if (python_nonlinear_constraint_function_holder.is_none() ||  nlconstr0.is_none() || m_nlcon.is_none() || f0.is_none()) {
-          throw std::invalid_argument("nonlinear_constraint_function, nlconstr0, m_nlcon, and f0 must be provided if nonlinear constraints are provided");
+        if (python_nonlinear_constraint_function_holder.is_none() ||  nlconstr0.is_none()) {
+          throw std::invalid_argument("nonlinear_constraint_function and nlconstr0 must both be provided if nonlinear constraints are provided");
         }
 
         auto nlconstr0_buffer_info = nlconstr0.cast<py::buffer>().request();
@@ -185,8 +183,12 @@ PYBIND11_MODULE(_prima, m) {
           throw std::invalid_argument("nlconstr0 must be a double array");
         }
         problem.nlconstr0 = (double*) nlconstr0_buffer_info.ptr;
-        problem.m_nlcon   = m_nlcon.cast<int>();
-        problem.f0   = f0.cast<double>();
+        problem.m_nlcon   = nlconstr0_buffer_info.size;
+        if (args.size() > 0) {
+          problem.f0 = python_objective_function_holder(py_x0, args).cast<double>();
+        } else {
+          problem.f0 = python_objective_function_holder(py_x0).cast<double>();
+        }
 
         problem.calcfc = [](const double x[], double *f, double constr[], const void *data) {
           // In order for xlist to not copy the data from x, we need to provide a dummy base object
@@ -325,7 +327,6 @@ PYBIND11_MODULE(_prima, m) {
            "lb"_a=py::none(), "ub"_a=py::none(), "A_eq"_a=py::none(), "b_eq"_a=py::none(),
            "A_ineq"_a=py::none(), "b_ineq"_a=py::none(),
            "nonlinear_constraint_function"_a=py::none(),
-           "callback"_a=nullptr, "options"_a=py::none(), "nlconstr0"_a=py::none(),
-            "m_nlcon"_a=py::none(), "f0"_a=py::none()
+           "callback"_a=nullptr, "options"_a=py::none(), "nlconstr0"_a=py::none()
   );
 }
