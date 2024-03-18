@@ -1,12 +1,12 @@
 import numpy as np
-from prima import LinearConstraint, process_multiple_linear_constraints, separate_LC_into_eq_and_ineq, minimize
+from prima import LinearConstraint, combine_multiple_linear_constraints, separate_LC_into_eq_and_ineq, minimize
 from objective import fun
 
 
 def test_multiple_linear_constraints_implementation():
     constraints = [LinearConstraint(A=np.array([[1, 2], [3, 4]]), lb=[5, 6], ub=[7, 8]),
                    LinearConstraint(A=np.array([[9, 10], [11, 12]]), lb=[13, 14], ub=[15, 16])]
-    processed_constraint = process_multiple_linear_constraints(constraints)
+    processed_constraint = combine_multiple_linear_constraints(constraints)
     assert (processed_constraint.A == np.array([[1, 2], [3, 4], [9, 10], [11, 12]])).all()
     assert all(processed_constraint.lb == [5, 6, 13, 14])
     assert all(processed_constraint.ub == [7, 8, 15, 16])
