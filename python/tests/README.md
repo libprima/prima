@@ -61,8 +61,18 @@ order to run that test by itself.
 - [x] compatible with PDFO API - test_compatibility_pdfo.py::test_pdfo
 
 
-## Requirements for processing of lists of constraints
-- [x] providing a list of nonlinear constraint functions without providing either the total dimension or the dimension of each function successfully determines the total number of constraints - test_process_nonlinear_constraints.py::test_multiple_nl_constraints_various_data_types
+## Requirements for processing nonlinear constraints
+- [x] providing a list of nonlinear constraints with either scalar or vector for lb/ub correctly constructs the constraint function - test_process_nonlinear_constraints.py::test_multiple_nl_constraints_various_data_types
+- [x] providing a single nonlinear constraints with either scalar or vector for lb/ub correctly constructs the constraint function - test_process_nonlinear_constraints.py::test_single_nl_constraint
+- [x] providing a nonlinear constraint with upper and/or lower bounds as vectors of different length than the length of the output of the constraint function raises an exception - test_process_nonlinear_constraints.py::test_length_nlc_fun_not_equal_to_length_lb_ub
+- [x] providing a nonlinear constraint with upper and lower bound as vectors of where upper bounds has correct length and lower bounds does not as compared to the length of the output of the constraint function raises an exception - test_process_nonlinear_constraints.py::test_length_nlc_fun_ne_to_length_ub
+- [x] providing a nonlinear constraint with scalar lb at -inf and scalar ub at inf raises an exception - test_process_nonlinear_constraints.py::test_lb_neg_inf_ub_inf_raises
+- [x] providing a nonlinear constraint with scalar lb at -inf and vector ub containing at least 1 inf raises an exception - test_process_nonlinear_constraints.py::test_lb_neg_inf_ub_vector_w_inf_raises
+- [x] providing a nonlinear constraint with vector lb containing at least 1 -inf and scalar ub at inf raises an exception - test_process_nonlinear_constraints.py::test_lb_vector_with_neg_inf_ub_inf_raises
+- [x] providing a nonlinear constraint with vector lb and vector ub containing -inf and +inf at the same index raises an exception - test_process_nonlinear_constraints.py::test_lb_vector_with_neg_inf_ub_vector_w_inf_at_same_index_raises
+
+
+## Requirements for processing linear constraints
 - [x] providing a list of linear constraints leads to them being successfully combined - test_process_linear_constraints.py::test_multiple_linear_constraints_implementation
 - [x] providing a list of linear constraints leads to them being successfully combined and applied - test_process_linear_constraints.py::test_multiple_linear_constraints_high_level
 - [x] providing linear constraints that contain both equality and inequality constraints leads to a correct separation into A_eq/b_eq and A_ineq/b_ineq - test_process_linear_constraints.py::test_separate_LC_into_eq_and_ineq
@@ -78,7 +88,7 @@ order to run that test by itself.
 - [x] providing an unsupported constraint type raises an exception - test_constraint_types.py::test_unsupported_type_raises_exception
 
 
-## Requirements for warnings related to method selection
+## Requirements for warnings and exceptions related to method selection
 - [x] providing a method that is not one of the 5 provided raises an exception - test_method_selection_warnings_and_exceptions.py::test_method_not_recognized
 - [x] providing nonlinear constraints to a method that cannot handle them raises an exception - test_method_selection_warnings_and_exceptions.py::test_providing_nonlinear_constraints_to_non_cobyla_method
 - [x] providing linear constraints to a method that cannot handle them raises an exception - test_method_selection_warnings_and_exceptions.py::test_providing_linear_constraints_to_non_cobyla_non_lincoa_method

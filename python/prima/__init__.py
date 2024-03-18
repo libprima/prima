@@ -32,10 +32,10 @@ def get_constraint_type(constraint):
         raise ValueError("Constraint type not recognized")
 
 
-def process_constraints(constraints):
+def process_constraints(constraints, x0):
     # First throw it back if it's an empty tuple
     if not constraints:
-        return None, None
+        return None, None, None
     # Next figure out if it's a list of constraints or a single constraint
     # If it's a single constraint, make it a list, and then the remaining logic
     # doesn't have to change
@@ -59,9 +59,10 @@ def process_constraints(constraints):
             raise ValueError("Constraint type not recognized")
 
     if len(nonlinear_constraints) > 0:
-        nonlinear_constraint_function = process_nl_constraints(nonlinear_constraints)
+        nonlinear_constraint_function, nlconstr0 = process_nl_constraints(nonlinear_constraints, x0)
     else:
         nonlinear_constraint_function = None
+        nlconstr0 = None
 
     # Determine if we have multiple linear constraints, just 1, or none, and process accordingly
     if len(linear_constraints) > 1:
@@ -71,12 +72,12 @@ def process_constraints(constraints):
     else:
         linear_constraint = None
 
-    return linear_constraint, nonlinear_constraint_function
+    return linear_constraint, nonlinear_constraint_function, nlconstr0
 
 
 def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callback=None, options=None):
 
-    linear_constraint, nonlinear_constraint_function = process_constraints(constraints)
+    linear_constraint, nonlinear_constraint_function, nlconstr0 = process_constraints(constraints, x0)
         
     quiet = options.get("quiet", True) if options is not None else True
 
@@ -129,11 +130,9 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         A_eq, b_eq, A_ineq, b_ineq = None, None, None, None
         
     if nonlinear_constraint_function is not None:
-        nlconstr0 = nonlinear_constraint_function(x0)
-        m_nlcon = len(nlconstr0) if hasattr(nlconstr0, "__len__") else 1
+        m_nlcon = len(nlconstr0)
         f0 = fun(x0)
     else:
-        nlconstr0 = None
         m_nlcon = None
         f0 = None
 

@@ -2237,3 +2237,4 @@ pycutest
 excludelist
 slsqp
 optiprofiler
+manylinux
