@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, March 16, 2024 PM04:46:12
+! Last Modified: Tuesday, March 19, 2024 PM06:46:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -98,6 +98,7 @@ real(RP), intent(out) :: xhist(:, :)    ! XHIST(N, MAXXHIST)
 ! Local variables
 character(len=*), parameter :: solver = 'COBYLA'
 character(len=*), parameter :: srname = 'COBYLB'
+integer(IK) :: j
 integer(IK) :: jdrop_geo
 integer(IK) :: jdrop_tr
 integer(IK) :: kopt
@@ -132,6 +133,7 @@ real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in
 real(RP) :: cval(size(x) + 1)
 real(RP) :: d(size(x))
 real(RP) :: delta
+real(RP) :: distsq(size(x) + 1)
 real(RP) :: dnorm
 real(RP) :: ffilt(size(cfilt))
 real(RP) :: fval(size(x) + 1)
@@ -358,13 +360,15 @@ do tr = 1, maxtr
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
     d = trstlp(A, -conmat(:, n + 1), delta, g)
     dnorm = min(delta, norm(d))
+    x = sim(:, n + 1) + d
 
     ! Is the trust-region trial step short? Note that we compare DNORM with RHO, not DELTA.
     ! Powell's code essentially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
     ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
     ! Note that LINCOA has a slightly more sophisticated way of defining SHORTD, taking into account
     ! whether D causes a change to the active set. Should we try the same here?
-    shortd = (dnorm < TENTH * rho)
+    !shortd = (dnorm <= TENTH * rho)
+    shortd = (norm(x - sim(:, n + 1)) <= TENTH * rho) ! `<=` is better than `<` in case of underflow
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
@@ -389,19 +393,30 @@ do tr = 1, maxtr
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
-        x = sim(:, n + 1) + d
-
-        ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc_internal, x, f, constr)
-        cstrv = maximum([ZERO, constr])
-        nf = nf + 1_IK
+        ! If X is close to one of the points in the interpolation set, then we do not evaluate the
+        ! objective and constraints at X, assuming them to have the values at the closest point.
+        ! N.B.: If this happens, do NOT include X into the filter, as F and CONSTR are inaccurate.
+        distsq(n + 1) = sum((x - sim(:, n + 1))**2)
+        distsq(1:n) = [(sum((x - (sim(:, n + 1) + sim(:, j)))**2), j=1, n)]  ! Implied do-loop
+        !!MATLAB: distsq(1:n) = sum((x - (sim(:,1:n) + sim(:, n+1)))**2, 1)  % Implicit expansion
+        if (any(distsq <= (1.0E-4 * rhoend)**2)) then
+            j = int(minloc(distsq, mask=(.not. is_nan(distsq)), dim=1), kind(j))
+            f = fval(j)
+            constr = conmat(:, j)
+            cstrv = cval(j)
+        else
+            ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
+            call evaluate(calcfc_internal, x, f, constr)
+            cstrv = maximum([ZERO, constr])
+            nf = nf + 1_IK
+            ! Save X, F, CONSTR, CSTRV into the history.
+            call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
+            ! Save X, F, CONSTR, CSTRV into the filter.
+            call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
+        end if
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
         call fmsg(solver, 'Trust region', iprint, nf, delta, f, x, cstrv, constr)
-        ! Save X, F, CONSTR, CSTRV into the history.
-        call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
-        ! Save X, F, CONSTR, CSTRV into the filter.
-        call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
 
         ! Evaluate ACTREM, which is the actual reduction in the merit function.
         actrem = (fval(n + 1) + cpen * cval(n + 1)) - (f + cpen * cstrv)
@@ -559,18 +574,34 @@ do tr = 1, maxtr
         d = geostep(jdrop_geo, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamma, simi)
         x = sim(:, n + 1) + d
 
-        ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-        call evaluate(calcfc_internal, x, f, constr)
-        cstrv = maximum([ZERO, constr])
-        nf = nf + 1_IK
+        ! If X is close to one of the points in the interpolation set, then we do not evaluate the
+        ! objective and constraints at X, assuming them to have the values at the closest point.
+        ! N.B.:
+        ! 1. If this happens, do NOT include X into the filter, as F and CONSTR are inaccurate.
+        ! 2. In precise arithmetic, X - SIM(:, N+1) = D has a length of FACTOR_ALPHA * DELTA > 0.
+        ! Due to rounding, however, X may be quite close to SIM(:, N+1). In experiments with single
+        ! precision on 20240317, X = SIM(:, N+1) did happen.
+        distsq(n + 1) = sum((x - sim(:, n + 1))**2)
+        distsq(1:n) = [(sum((x - (sim(:, n + 1) + sim(:, j)))**2), j=1, n)]  ! Implied do-loop
+        !!MATLAB: distsq(1:n) = sum((x - (sim(:,1:n) + sim(:, n+1)))**2, 1)  % Implicit expansion
+        if (any(distsq <= (1.0E-4_RP * rhoend)**2)) then
+            j = int(minloc(distsq, mask=(.not. is_nan(distsq)), dim=1), kind(j))
+            f = fval(j)
+            constr = conmat(:, j)
+            cstrv = cval(j)
+        else
+            ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
+            call evaluate(calcfc_internal, x, f, constr)
+            cstrv = maximum([ZERO, constr])
+            nf = nf + 1_IK
+            ! Save X, F, CONSTR, CSTRV into the history.
+            call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
+            ! Save X, F, CONSTR, CSTRV into the filter.
+            call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
+        end if
 
         ! Print a message about the function/constraint evaluation according to IPRINT.
         call fmsg(solver, 'Geometry', iprint, nf, delta, f, x, cstrv, constr)
-        ! Save X, F, CONSTR, CSTRV into the history.
-        call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
-        ! Save X, F, CONSTR, CSTRV into the filter.
-        call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
-
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced with D.
         call updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi, subinfo)
         ! Check whether to exit due to damaging rounding in UPDATEXFC.
@@ -622,21 +653,18 @@ do tr = 1, maxtr
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the last trust-region step if it has not been tried yet.
-if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm >= 1.0E-3 * rhoend .and. nf < maxfun) then
-    ! Zaikun 20230615: UPDATEXFC or UPDATEPOLE is not called since the last trust-region step. Hence
-    ! SIM(:, N + 1) remains unchanged. Otherwise, SIM(:, N + 1) + D would not make sense.
-    x = sim(:, n + 1) + d
+! Ensure that X has not been updated after SHORTD == TRUE occurred, or the code below is incorrect.
+if (info == SMALL_TR_RADIUS .and. shortd .and. norm(x - sim(:, n + 1)) > 1.0E-3_RP * rhoend .and. nf < maxfun) then
     call evaluate(calcfc_internal, x, f, constr)
     cstrv = maximum([ZERO, constr])
     nf = nf + 1_IK
-    ! Print a message about the function evaluation according to IPRINT.
-    ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
-    ! Print a message about the function/constraint evaluation according to IPRINT.
-    call fmsg(solver, 'Trust region', iprint, nf, rho, f, x, cstrv, constr)
     ! Save X, F, CONSTR, CSTRV into the history.
     call savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
     ! Save X, F, CONSTR, CSTRV into the filter.
     call savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
+    ! Print a message about the function/constraint evaluation according to IPRINT.
+    ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
+    call fmsg(solver, 'Trust region', iprint, nf, rho, f, x, cstrv, constr)
 end if
 
 ! Return the best calculated values of the variables.

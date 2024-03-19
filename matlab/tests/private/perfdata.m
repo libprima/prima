@@ -18,6 +18,8 @@ outdir = fullfile(data_dir, strcat(stamp, '.', feature_and_time));
 if ~exist(outdir, 'dir')
     mkdir(outdir);
 end
+options.outdir = outdir;
+disp(['outdir = ', outdir]);
 
 % Check whether to reload data or calculate everything from scratch.
 matfile = fullfile(data_dir, strcat(stamp, '.perfdata.', test_feature, '.mat'));
@@ -54,17 +56,12 @@ else
     save(matfile, 'frec', 'fmin', 'pdim', 'plist', '-v7.3');
 end
 
-% Record the tested problems in `problems.txt`.
-fprob = fullfile(outdir, strcat(stamp, '.', feature_and_time, '.', 'problems.txt'));
+% Record the tested problems in a text file.
+fprob = fullfile(outdir, strcat(stamp, '.', feature_and_time, '.', 'tested_problems.txt'));
 fid = fopen(fprob, 'w');
-if fid >= 3
-    for ip = 1 : length(plist)
-        fprintf(fid, "%s\n", plist{ip});
-    end
-    fclose(fid);
-else
-    error('\nFail to open file %s.\n', fprob);
-end
+assert(fid >= 3); % 0, 1, 2 are reserved for stdin, stdout, stderr.
+fprintf(fid, '%s\n', plist{:});
+fclose(fid);
 
 % Plot the profiles.
 ns = length(solvers);

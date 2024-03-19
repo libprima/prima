@@ -126,6 +126,13 @@ else
 end
 assert(~isempty(plist));
 
+% Record the problems to test in problems.txt.
+fprob = fullfile(options.outdir, strcat(stamp, '.', 'problems_to_test.txt'));
+fid = fopen(fprob, 'w');
+assert(fid >= 3); % 0, 1, 2 are reserved for stdin, stdout, stderr.
+fprintf(fid, '%s\n', plist{:});
+fclose(fid);
+
 np = length(plist);
 ns = length(solvers);
 nr = options.nr;

@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, January 05, 2024 PM04:22:11
+! Last Modified: Tuesday, March 19, 2024 PM06:52:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -76,8 +76,8 @@ end if
 maxhist_in = maxhist
 
 ! Revise MAXHIST according to MAXHISTMEM, i.e., the maximal memory allowed for the history.
-! N.B.: The `UNIT_MEMO = INT(*)` below converts integers to the default integer kind, which is the 
-! kind of UNIT_MEMO. Fortran compilers may complain without the conversion. It is not needed in 
+! N.B.: The `UNIT_MEMO = INT(*)` below converts integers to the default integer kind, which is the
+! kind of UNIT_MEMO. Fortran compilers may complain without the conversion. It is not needed in
 ! Python/MATLAB/Julia/R. Meanwhile, INT(OUTPUT_*HIST) converts booleans to integers.
 unit_memo = int(int(output_xhist) * n + int(output_fhist))
 if (present(output_chist) .and. present(chist)) then
@@ -140,8 +140,9 @@ subroutine savehist(nf, x, xhist, f, fhist, cstrv, chist, constr, conhist)
 ! This subroutine saves X, F, CSTRV, and CONSTR into XHIST, FHIST, CHIST, and CONHIST respectively.
 !--------------------------------------------------------------------------------------------------!
 use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, wassert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
+use, non_intrinsic :: string_mod, only : num2str
 implicit none
 
 ! Inputs
@@ -158,11 +159,14 @@ real(RP), intent(inout), optional :: chist(:)
 real(RP), intent(inout), optional :: conhist(:, :)
 
 ! Local variables
+integer(IK) :: i
 integer(IK) :: maxchist
 integer(IK) :: maxconhist
 integer(IK) :: maxfhist
 integer(IK) :: maxhist
 integer(IK) :: maxxhist
+integer(IK) :: n
+integer(IK) :: nhist
 character(len=*), parameter :: srname = 'SAVEHIST'
 
 ! Sizes
@@ -201,14 +205,14 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
     call assert(all(is_finite(xhist(:, 1:min(nf - 1_IK, maxxhist)))), 'XHIST is finite', srname)
     call assert(.not. any(is_nan(fhist(1:min(nf - 1_IK, maxfhist))) .or. &
         & is_posinf(fhist(1:min(nf - 1_IK, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
-    !----------------------------------------------------------------------------------------------!
-    ! The following test is not applicable to LINCOA.
-    ! !if (present(chist)) then
-    ! !    call assert(.not. any(chist(1:min(nf - 1_IK, maxchist)) < 0 .or. &
-    ! !        & is_nan(chist(1:min(nf - 1_IK, maxchist))) .or. is_posinf(chist(1:min(nf - 1_IK, maxchist)))), &
-    ! !        & 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
-    ! !end if
-    !----------------------------------------------------------------------------------------------!
+    if (present(chist)) then
+        call assert(.not. any(chist(1:min(nf - 1_IK, maxchist)) < 0), 'CHIST does not contain negative values', srname)
+        !------------------------------------------------------------------------------------------!
+        ! The following test is not applicable to LINCOA.
+        ! !call assert(.not. any(is_nan(chist(1:min(nf - 1_IK, maxchist))) .or. &
+        ! !    & is_posinf(chist(1:min(nf - 1_IK, maxchist)))), 'CHIST does not contain NaN/+Inf', srname)
+        !------------------------------------------------------------------------------------------!
+    end if
     if (present(conhist)) then
         call assert(.not. any(is_nan(conhist(:, 1:min(nf - 1_IK, maxconhist))) .or. &
             & is_posinf(conhist(:, 1:min(nf - 1_IK, maxconhist)))), 'CONHIST does not contain NaN/Inf', srname)
@@ -218,14 +222,13 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
     call assert(.not. any(is_nan(x)), 'X does not contain NaN', srname)
     ! F cannot be NaN/+Inf due to the moderated extreme barrier.
     call assert(.not. (is_nan(f) .or. is_posinf(f)), 'F is not NaN/+Inf', srname)
-    !----------------------------------------------------------------------------------------------!
-    ! The following test is not applicable to LINCOA.
-    ! !if (present(cstrv)) then
-    ! !    ! CSTRV cannot be NaN/+Inf due to the moderated extreme barrier.
-    ! !    call assert(.not. (cstrv < 0 .or. is_nan(cstrv) .or. is_posinf(cstrv)), &
-    ! !        & 'CSTRV is nonnegative and not NaN/+Inf', srname)
-    ! !end if
-    !----------------------------------------------------------------------------------------------!
+    if (present(cstrv)) then
+        call assert(.not. (cstrv < 0), 'CSTRV is not negative', srname)
+        !------------------------------------------------------------------------------------------!
+        ! The following test is not applicable to LINCOA.
+        ! !call assert(.not. (is_nan(cstrv) .or. is_posinf(cstrv)), 'CSTRV is NaN/+Inf', srname)
+        !------------------------------------------------------------------------------------------!
+    end if
     if (present(constr)) then
         ! CONSTR cannot contain NaN/+Inf due to the moderated extreme barrier.
         call assert(.not. any(is_nan(constr) .or. is_posinf(constr)), 'CONSTR does not contain NaN/+Inf', srname)
@@ -266,20 +269,37 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
     call assert(size(fhist) == maxfhist, 'SIZE(FHIST) == MAXFHIST', srname)
     call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. is_posinf(fhist(1:min(nf, maxfhist)))), &
         & 'FHIST does not contain NaN/+Inf', srname)
-    !----------------------------------------------------------------------------------------------!
-    ! The following test is not applicable to LINCOA.
-    ! !if (present(chist)) then
-    ! !    call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
-    ! !    call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
-    ! !        & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
-    ! !end if
-    !----------------------------------------------------------------------------------------------!
+    if (present(chist)) then
+        call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
+        call assert(.not. any(chist(1:min(nf, maxchist)) < 0), 'CHIST does not contain negative values', srname)
+        !------------------------------------------------------------------------------------------!
+        ! The following test is not applicable to LINCOA.
+        ! !call assert(.not. any(is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist)))), &
+        ! !    & 'CHIST does not contain NaN/+Inf', srname)
+        !------------------------------------------------------------------------------------------!
+    end if
     if (present(conhist) .and. present(constr)) then
         call assert(size(conhist, 1) == size(constr) .and. size(conhist, 2) == maxconhist, &
             & 'SIZE(CONHIST) == [SIZE(CONSTR), MAXCONHIST]', srname)
         call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
             & is_posinf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/+Inf', srname)
     end if
+
+    ! The following code checks that XHIST does not contain a segment that repeats. If such a segment
+    ! is found, we believe that the solver has encountered an infinite cycle, which would be a bug.
+    ! Note that we check this only if NF > (N+1)*(N+2)/2, so that the initialization has (surely)
+    ! finished. This is because XHIST may contain repeating segments during the initialization if
+    ! X0 + RHOBEG == X0, which can happen if all entries of X0 are excessively large compared with
+    ! RHOBEG. It is possible to revise the initialization subroutine to avoid repetition, but we
+    ! choose not to, a motivation being to keep the initialization parallelizable.
+    nhist = min(nf, maxxhist)
+    n = int(size(x), kind(n))
+    do i = 1, 10
+        if (nhist >= 2 * i .and. nf > (n + 1) * (n + 2) / 2) then
+            call wassert(.not. all(abs(xhist(:, nhist - i + 1:nhist) - xhist(:, nhist - 2 * i + 1:nhist - i)) <= 0), &
+                & 'XHIST does not contain a repeating segment of length '//num2str(i), srname)
+        end if
+    end do
 end if
 
 end subroutine savehist
@@ -345,13 +365,14 @@ if (DEBUGGING) then
     ! The last calculated X can be Inf (finite + finite can be Inf numerically).
     call assert(.not. any(is_nan(fhist(1:min(nf, maxfhist))) .or. &
         & is_posinf(fhist(1:min(nf, maxfhist)))), 'FHIST does not contain NaN/+Inf', srname)
-    !----------------------------------------------------------------------------------------------!
-    ! The following test is not applicable to LINCOA
-    ! !if (present(chist)) then
-    ! !call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
-    ! !    & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
-    ! !end if
-    !----------------------------------------------------------------------------------------------!
+    if (present(chist)) then
+        call assert(.not. any(chist(1:min(nf, maxchist)) < 0), 'CHIST does not contain negative values', srname)
+        !------------------------------------------------------------------------------------------!
+        ! The following test is not applicable to LINCOA.
+        ! !call assert(.not. any(is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist)))), &
+        ! !    & 'CHIST does not contain NaN/+Inf', srname)
+        !------------------------------------------------------------------------------------------!
+    end if
     if (present(conhist)) then
         call assert(.not. any(is_nan(conhist(:, 1:min(nf, maxconhist))) .or. &
             & is_posinf(conhist(:, 1:min(nf, maxconhist)))), 'CONHIST does not contain NaN/+Inf', srname)
@@ -405,10 +426,11 @@ if (DEBUGGING) then
         & 'FHIST does not contain NaN/+Inf', srname)
     if (present(chist)) then
         call assert(size(chist) == maxchist, 'SIZE(CHIST) == MAXCHIST', srname)
+        call assert(.not. any(chist(1:min(nf, maxchist)) < 0), 'CHIST does not contain negative values', srname)
         !------------------------------------------------------------------------------------------!
-        ! The following test is not applicable to LINCOA
-        ! !call assert(.not. any(chist(1:min(nf, maxchist)) < 0 .or. is_nan(chist(1:min(nf, maxchist))) .or. &
-        ! !    & is_posinf(chist(1:min(nf, maxchist)))), 'CHIST does not contain nonnegative values or NaN/+Inf', srname)
+        ! The following test is not applicable to LINCOA.
+        ! !call assert(.not. any(is_nan(chist(1:min(nf, maxchist))) .or. is_posinf(chist(1:min(nf, maxchist)))), &
+        ! !    & 'CHIST does not contain NaN/+Inf', srname)
         !------------------------------------------------------------------------------------------!
     end if
     if (present(conhist)) then
