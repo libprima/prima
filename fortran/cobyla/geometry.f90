@@ -8,7 +8,7 @@ module geometry_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Thursday, March 14, 2024 PM07:23:41
+! Last Modified: Tuesday, March 19, 2024 PM08:45:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -183,7 +183,7 @@ end if
 !vsig = ONE / sqrt(sum(simi**2, dim=2))
 !sigbar = abs(simid) * vsig
 !
-!! The following JDROP will overwrite the previous one if its premise holds.
+!! The following JDROP will overwrite the previous one if its premise holds. FACTOR_DELTA = 1.1.
 !mask = (veta > factor_delta * delta .and. (sigbar >= factor_alpha * delta .or. sigbar >= vsig))
 !if (any(mask)) then
 !    jdrop = int(maxloc(veta, mask=mask, dim=1), kind(jdrop))

@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, March 19, 2024 PM06:46:06
+! Last Modified: Tuesday, March 19, 2024 PM08:44:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -158,15 +158,16 @@ real(RP) :: xfilt(size(x), size(cfilt))
 ! 312--314 of Powell's cobylb.f code. Powell's code revises ACTREM to CVAL(N + 1) - CSTRV and PREREM
 ! to PREREC in this case, which is crucial for feasibility problems.
 real(RP), parameter :: cpenmin = EPS
-! FACTOR_ALPHA, FACTOR_BETA, FACTOR_GAMMA, and FACTOR_DELTA are four factors that COBYLB uses
-! when managing the simplex. Note the following.
-! 1. FACTOR_ALPHA < FACTOR_GAMMA < 1 < FACTOR_DELTA <= FACTOR_BETA.
-! 2. FACTOR_DELTA has nothing to do with DELTA, which is the trust-region radius.
-! 3. FACTOR_GAMMA has nothing to do with GAMMA1 and GAMMA2, which are the contracting/expanding
+! FACTOR_ALPHA, FACTOR_BETA, and FACTOR_GAMMA are factors that COBYLB uses when managing the
+! simplex. Note the following.
+! 1. FACTOR_ALPHA < FACTOR_GAMMA < 1 < FACTOR_BETA.
+! 2. FACTOR_GAMMA has nothing to do with GAMMA1 and GAMMA2, which are the contracting/expanding
 ! factors for updating the trust-region radius DELTA.
+! 3. Powell's used one more factor FACTOR_DELTA = 1.1 (in general, 1 < FACTOR_DELTA <= FACTOR_BETA).
+! It has nothing to do with DELTA, which is the trust-region radius. It was used when defining
+! JDROP_TR. We use a completely different scheme (see SETDROP_TR), which does not need FACTOR_DELTA.
 real(RP), parameter :: factor_alpha = QUART  ! The factor alpha in the COBYLA paper
 real(RP), parameter :: factor_beta = 2.1_RP  ! The factor beta in the COBYLA paper
-real(RP), parameter :: factor_delta = 1.1_RP  ! The factor delta in the COBYLA paper
 real(RP), parameter :: factor_gamma = HALF  ! The factor gamma in the COBYLA paper
 
 ! Sizes
@@ -203,7 +204,7 @@ if (DEBUGGING) then
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
     call assert(factor_alpha > 0 .and. factor_alpha < factor_gamma .and. factor_gamma < 1, &
         & '0 < FACTOR_ALPHA < FACTOR_GAMMA < 1', srname)
-    call assert(factor_beta >= factor_delta .and. factor_delta > 1, 'FACTOR_BETA >= FACTOR_DELTA > 1', srname)
+    call assert(factor_beta > 1, 'FACTOR_BETA > 1', srname)
 end if
 
 !====================!
