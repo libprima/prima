@@ -74,11 +74,11 @@ use
 RHOBEG = MINVAL([MAX(X-XL, (XU-X) / 2), MAX(XU-X, (X-XL) / 2)]).
 
 15. Fortran test: implement semi_circle and semi_ellipse to test problems with both linear and
-nonlineqar constraints, to see whether the SEGFAULT of AOCC Flang on big problems is due to the
+nonlinear constraints, to see whether the SEGFAULT of AOCC Flang on big problems is due to the
 presence of both linear and nonlinear constraints.
 
 16. Fix profiling of various NPT and compiler options.
 
 17. Fix CVAL in LINCOA.
 
-18. Recalculate the model if non-finite values appear. 
+18. Recalculate the model if non-finite values appear.

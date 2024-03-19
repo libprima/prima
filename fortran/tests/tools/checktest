@@ -19,6 +19,7 @@ WARNINGS="$(grep -i "warning\|Remark\|Questionable\|attention\|F[0-9]*-W\|F[0-9]
     | grep -vi "Only the history of the last [0-9]* function evaluation(s) is recorded" \
     | grep -vi "circle\.f90(36): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
     | grep -vi "warningid\|warningmsg" \
+    | grep -vi "Warning: SAVEHIST: Assertion fails: XHIST" \
     | grep -vi "Warning: TRSTEP: Assertion fails: D is initialized." \
 	| grep -vi "Warning: UOBYQA: \|Warning: NEWUOA: \|Warning: BOBYQA: \|Warning: LINCOA: \|Warning: COBYLA: " \
     | grep -vi "maybe due to overflow, or the input is not an integer" \
