@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, March 19, 2024 PM08:44:31
+! Last Modified: Tuesday, March 19, 2024 PM10:40:31
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -163,8 +163,8 @@ real(RP), parameter :: cpenmin = EPS
 ! 1. FACTOR_ALPHA < FACTOR_GAMMA < 1 < FACTOR_BETA.
 ! 2. FACTOR_GAMMA has nothing to do with GAMMA1 and GAMMA2, which are the contracting/expanding
 ! factors for updating the trust-region radius DELTA.
-! 3. Powell's used one more factor FACTOR_DELTA = 1.1 (in general, 1 < FACTOR_DELTA <= FACTOR_BETA).
-! It has nothing to do with DELTA, which is the trust-region radius. It was used when defining
+! 3. Powell used one more factor FACTOR_DELTA = 1.1 (in general, 1 < FACTOR_DELTA <= FACTOR_BETA).
+! It had nothing to do with DELTA, which is the trust-region radius. It was used when defining
 ! JDROP_TR. We use a completely different scheme (see SETDROP_TR), which does not need FACTOR_DELTA.
 real(RP), parameter :: factor_alpha = QUART  ! The factor alpha in the COBYLA paper
 real(RP), parameter :: factor_beta = 2.1_RP  ! The factor beta in the COBYLA paper
@@ -579,9 +579,9 @@ do tr = 1, maxtr
         ! objective and constraints at X, assuming them to have the values at the closest point.
         ! N.B.:
         ! 1. If this happens, do NOT include X into the filter, as F and CONSTR are inaccurate.
-        ! 2. In precise arithmetic, X - SIM(:, N+1) = D has a length of FACTOR_ALPHA * DELTA > 0.
-        ! Due to rounding, however, X may be quite close to SIM(:, N+1). In experiments with single
-        ! precision on 20240317, X = SIM(:, N+1) did happen.
+        ! 2. In precise arithmetic, the geometry improving step ensures that the distance between X
+        ! and any interpolation point is at least FACTOR_GAMMA*DELTA, yet X may be close to them due
+        ! to rounding. In an experiment with single precision on 20240317, X = SIM(:, N+1) occurred.
         distsq(n + 1) = sum((x - sim(:, n + 1))**2)
         distsq(1:n) = [(sum((x - (sim(:, n + 1) + sim(:, j)))**2), j=1, n)]  ! Implied do-loop
         !!MATLAB: distsq(1:n) = sum((x - (sim(:,1:n) + sim(:, n+1)))**2, 1)  % Implicit expansion
@@ -681,7 +681,6 @@ call rangehist(nf, xhist, fhist, chist, conhist)
 
 ! Print a return message according to IPRINT.
 call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
-
 !====================!
 !  Calculation ends  !
 !====================!
