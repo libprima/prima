@@ -171,42 +171,11 @@ PYBIND11_MODULE(_prima, m) {
 
       prima_algorithm_t algorithm = pystr_method_to_algorithm(method);
 
-      if ( algorithm == PRIMA_COBYLA ) {
-        if (python_nonlinear_constraint_function_holder.is_none()) {
-          throw std::invalid_argument("nonlinear_constraint_function must be provided if nonlinear constraints are provided");
-        }
-
-        // gather information needed to define the problem
-        py::object constraints = python_nonlinear_constraint_function_holder(py_x0);
-        try
-        {
-          py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
-          if (constr_list_buffer_info.format != "d")
-          {
-            throw std::invalid_argument("nonlinear_constraint_function must return a double array");
-          }
-          problem.m_nlcon = constr_list_buffer_info.size;
-          problem.nlconstr0 = (double*)malloc(problem.m_nlcon * sizeof(double));
-          if (problem.nlconstr0 == NULL) {
-            throw std::bad_alloc();
-          }
-          // We need to copy. We cannot set the pointer since we are not passed a pointer-to-pointer
-          for (int i = 0; i < constr_list_buffer_info.size; i++) {
-            problem.nlconstr0[i] = ((double*)constr_list_buffer_info.ptr)[i];
-          }
-        }
-        catch(const std::exception& e)
-        {
-          throw(std::invalid_argument("nonlinear_constraint_function must return a double or a double array"));
-        }
-        if (args.size() > 0) {
-          problem.f0 = python_objective_function_holder(py_x0, args).cast<double>();
-        } else {
-          problem.f0 = python_objective_function_holder(py_x0).cast<double>();
-        }
-
-        // create the combined objective/constraint function
-        problem.calcfc = [](const double x[], double *f, double constr[], const void *data) {
+      // We set up the C style objective function evaluator in such a way that it can be reused in the
+      // case of COBYLA, where we need to evaluate the constraints as well. Making it static lets it be
+      // captured by the COBYLA function. Also we re-use this to get f0 in the case of COBYLA.
+      static prima_obj_t calfun = nullptr;
+      calfun = [](const double x[], double *f, const void *data) {
           // In order for xlist to not copy the data from x, we need to provide a dummy base object
           // Ideally pybind11 would provide a facility to do this instead of us having to do this hacky
           // thing but oh well. Reference: https://github.com/pybind/pybind11/issues/323#issuecomment-575717041
@@ -220,7 +189,50 @@ PYBIND11_MODULE(_prima, m) {
             result = python_objective_function_holder(xlist).cast<double>();
           }
           *f = result;
+      };
 
+      // In order to use automatic memory management, we create an std::vector here to store the initial
+      // value of the constraints. This way the memory is guaranteed to be freed in case we hit any of the
+      // exceptions.
+      std::vector<double> nlconstr0;
+      if ( algorithm == PRIMA_COBYLA ) {
+        if (python_nonlinear_constraint_function_holder.is_none()) {
+          throw std::invalid_argument("nonlinear_constraint_function must be provided if nonlinear constraints are provided");
+        }
+
+        // Gather information needed to define the problem.
+        // We copy some of the code used below to evaluate the constraint function. Unfortunately
+        // we cannot reuse it since we need to extract the number of constraints from the return value
+        // in addition to the constraint values.
+        py::object constraints = python_nonlinear_constraint_function_holder(py_x0);
+        try
+        {
+          py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
+          if (constr_list_buffer_info.format != "d")
+          {
+            throw std::invalid_argument("nonlinear_constraint_function must return a double array");
+          }
+          problem.m_nlcon = constr_list_buffer_info.size;
+          nlconstr0.resize(problem.m_nlcon);
+          memcpy(nlconstr0.data(), constr_list_buffer_info.ptr, constr_list_buffer_info.size * constr_list_buffer_info.itemsize);
+          problem.nlconstr0 = nlconstr0.data();
+        }
+        catch(const std::exception& e)
+        {
+          throw(std::invalid_argument("nonlinear_constraint_function must return a double or a double array"));
+        }
+        // obtain f0
+        calfun(problem.x0, &(problem.f0), &args);
+
+        // create the combined objective/constraint function
+        problem.calcfc = [](const double x[], double *f, double constr[], const void *data) {
+          calfun(x, f, data);
+
+          // In order for xlist to not copy the data from x, we need to provide a dummy base object
+          // Ideally pybind11 would provide a facility to do this instead of us having to do this hacky
+          // thing but oh well. Reference: https://github.com/pybind/pybind11/issues/323#issuecomment-575717041
+          py::none dummybaseobject;
+          py::array_t<double> xlist(x0_shape, x, dummybaseobject);
           py::object constraints = python_nonlinear_constraint_function_holder(xlist);
           try
           {
@@ -242,22 +254,8 @@ PYBIND11_MODULE(_prima, m) {
         };
 
       } else {
-        // For all other algorithms we have a different, simpler signature for the objective function
-        problem.calfun = [](const double x[], double *f, const void *data) {
-          // In order for xlist to not copy the data from x, we need to provide a dummy base object
-          // Ideally pybind11 would provide a facility to do this instead of us having to do this hacky
-          // thing but oh well. Reference: https://github.com/pybind/pybind11/issues/323#issuecomment-575717041
-          py::none dummybaseobject;
-          py::array_t<double> xlist(x0_shape, x, dummybaseobject);
-          py::args args = *((py::args*)data);
-          double result;
-          if (args.size() > 0) {
-            result = python_objective_function_holder(xlist, args).cast<double>();
-          } else {
-            result = python_objective_function_holder(xlist).cast<double>();
-          }
-          *f = result;
-        };
+        // For all other algorithms just use calfun.
+        problem.calfun = calfun;
       }
 
       prima_callback_t cpp_callback_function_wrapper = nullptr;
