@@ -124,8 +124,7 @@ PYBIND11_MODULE(_prima, m) {
                       const py::object& b_ineq,
                       const py::object& nonlinear_constraint_function,
                       const py::object& python_callback_function,
-                      const py::object& options_dict,
-                      const py::object& nlconstr0)
+                      const py::object& options_dict)
     {
       // Reference for how to go from a python function to a C style function pointer: https://stackoverflow.com/questions/74480093
       // Basically, we need to create a function with a C signature that calls the python function, and
@@ -173,23 +172,40 @@ PYBIND11_MODULE(_prima, m) {
       prima_algorithm_t algorithm = pystr_method_to_algorithm(method);
 
       if ( algorithm == PRIMA_COBYLA ) {
-        if (python_nonlinear_constraint_function_holder.is_none() ||  nlconstr0.is_none()) {
-          throw std::invalid_argument("nonlinear_constraint_function and nlconstr0 must both be provided if nonlinear constraints are provided");
+        if (python_nonlinear_constraint_function_holder.is_none()) {
+          throw std::invalid_argument("nonlinear_constraint_function must be provided if nonlinear constraints are provided");
         }
 
-        auto nlconstr0_buffer_info = nlconstr0.cast<py::buffer>().request();
-        if (nlconstr0_buffer_info.format != "d")
+        // gather information needed to define the problem
+        py::object constraints = python_nonlinear_constraint_function_holder(py_x0);
+        try
         {
-          throw std::invalid_argument("nlconstr0 must be a double array");
+          py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
+          if (constr_list_buffer_info.format != "d")
+          {
+            throw std::invalid_argument("nonlinear_constraint_function must return a double array");
+          }
+          problem.m_nlcon = constr_list_buffer_info.size;
+          problem.nlconstr0 = (double*)malloc(problem.m_nlcon * sizeof(double));
+          if (problem.nlconstr0 == NULL) {
+            throw std::bad_alloc();
+          }
+          // We need to copy. We cannot set the pointer since we are not passed a pointer-to-pointer
+          for (int i = 0; i < constr_list_buffer_info.size; i++) {
+            problem.nlconstr0[i] = ((double*)constr_list_buffer_info.ptr)[i];
+          }
         }
-        problem.nlconstr0 = (double*) nlconstr0_buffer_info.ptr;
-        problem.m_nlcon   = nlconstr0_buffer_info.size;
+        catch(const std::exception& e)
+        {
+          throw(std::invalid_argument("nonlinear_constraint_function must return a double or a double array"));
+        }
         if (args.size() > 0) {
           problem.f0 = python_objective_function_holder(py_x0, args).cast<double>();
         } else {
           problem.f0 = python_objective_function_holder(py_x0).cast<double>();
         }
 
+        // create the combined objective/constraint function
         problem.calcfc = [](const double x[], double *f, double constr[], const void *data) {
           // In order for xlist to not copy the data from x, we need to provide a dummy base object
           // Ideally pybind11 would provide a facility to do this instead of us having to do this hacky
@@ -198,17 +214,14 @@ PYBIND11_MODULE(_prima, m) {
           py::array_t<double> xlist(x0_shape, x, dummybaseobject);
           py::args args = *((py::args*)data);
           double result;
-          py::object constraints;
           if (args.size() > 0) {
             result = python_objective_function_holder(xlist, args).cast<double>();
-            constraints = python_nonlinear_constraint_function_holder(xlist, args);
           } else {
             result = python_objective_function_holder(xlist).cast<double>();
-            constraints = python_nonlinear_constraint_function_holder(xlist);
           }
-
           *f = result;
 
+          py::object constraints = python_nonlinear_constraint_function_holder(xlist);
           try
           {
             py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
@@ -327,6 +340,6 @@ PYBIND11_MODULE(_prima, m) {
            "lb"_a=py::none(), "ub"_a=py::none(), "A_eq"_a=py::none(), "b_eq"_a=py::none(),
            "A_ineq"_a=py::none(), "b_ineq"_a=py::none(),
            "nonlinear_constraint_function"_a=py::none(),
-           "callback"_a=nullptr, "options"_a=py::none(), "nlconstr0"_a=py::none()
+           "callback"_a=nullptr, "options"_a=py::none()
   );
 }

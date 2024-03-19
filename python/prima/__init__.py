@@ -32,10 +32,10 @@ def get_constraint_type(constraint):
         raise ValueError("Constraint type not recognized")
 
 
-def process_constraints(constraints, x0):
+def process_constraints(constraints):
     # First throw it back if it's an empty tuple
     if not constraints:
-        return None, None, None
+        return None, None
     # Next figure out if it's a list of constraints or a single constraint
     # If it's a single constraint, make it a list, and then the remaining logic
     # doesn't have to change
@@ -59,10 +59,9 @@ def process_constraints(constraints, x0):
             raise ValueError("Constraint type not recognized")
 
     if len(nonlinear_constraints) > 0:
-        nonlinear_constraint_function, nlconstr0 = process_nl_constraints(nonlinear_constraints, x0)
+        nonlinear_constraint_function = process_nl_constraints(nonlinear_constraints)
     else:
         nonlinear_constraint_function = None
-        nlconstr0 = None
 
     # Determine if we have multiple linear constraints, just 1, or none, and process accordingly
     if len(linear_constraints) > 1:
@@ -72,12 +71,12 @@ def process_constraints(constraints, x0):
     else:
         linear_constraint = None
 
-    return linear_constraint, nonlinear_constraint_function, nlconstr0
+    return linear_constraint, nonlinear_constraint_function
 
 
 def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callback=None, options=None):
 
-    linear_constraint, nonlinear_constraint_function, nlconstr0 = process_constraints(constraints, x0)
+    linear_constraint, nonlinear_constraint_function = process_constraints(constraints)
         
     quiet = options.get("quiet", True) if options is not None else True
 
@@ -142,6 +141,5 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         b_ineq,
         nonlinear_constraint_function,
         callback,
-        options,
-        nlconstr0
+        options
     )
