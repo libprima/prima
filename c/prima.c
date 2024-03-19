@@ -57,6 +57,7 @@ int prima_init_options(prima_options_t *const options)
     options->rhoend = NAN;  // Will be interpreted by Fortran as not present
     options->iprint = PRIMA_MSG_NONE;
     options->ftarget = -INFINITY;
+    options->ctol = NAN;  // Will be interpreted by Fortran as not present
     return 0;
 }
 
@@ -213,7 +214,8 @@ int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, c
              const int m_eq, const double Aeq[], const double beq[],
              const double xl[], const double xu[],
              const double f0, const double nlconstr0[],
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *const info);
+             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const double ctol,
+             const prima_callback_t callback, int *const info);
 
 int bobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f, const double xl[], const double xu[],
              int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
@@ -227,7 +229,8 @@ int uobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], doub
 int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
              double *const cstrv, const int m_ineq, const double Aineq[], const double bineq[],
              const int m_eq, const double Aeq[], const double beq[], const double xl[], const double xu[],
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
+             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const double ctol,
+             const prima_callback_t callback, int *const info);
 
 
 // The function that does the minimization using a PRIMA solver
@@ -250,13 +253,13 @@ int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t prob
             case PRIMA_COBYLA:
                 cobyla_c(problem.m_nlcon, problem.calcfc, options.data, problem.n, result->x, &(result->f), &(result->cstrv), result->nlconstr,
                             problem.m_ineq, problem.Aineq, problem.bineq, problem.m_eq, problem.Aeq, problem.beq,
-                            problem.xl, problem.xu, problem.f0, problem.nlconstr0, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.iprint, options.callback, &info);
+                            problem.xl, problem.xu, problem.f0, problem.nlconstr0, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.iprint, options.ctol, options.callback, &info);
                 break;
 
             case PRIMA_LINCOA:
                 lincoa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), &(result->cstrv),
                             problem.m_ineq, problem.Aineq, problem.bineq, problem.m_eq, problem.Aeq, problem.beq,
-                            problem.xl, problem.xu, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, options.callback, &info);
+                            problem.xl, problem.xu, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, options.ctol, options.callback, &info);
                 break;
 
             case PRIMA_NEWUOA:

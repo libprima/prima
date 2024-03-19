@@ -14,7 +14,7 @@ contains
 
 
 subroutine lincoa_c(cobj_ptr, data_ptr, n, x, f, cstrv, m_ineq, Aineq, bineq, m_eq, Aeq, beq, xl, xu, &
-    & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, callback_ptr, info) bind(C)
+    & nf, rhobeg, rhoend, ftarget, maxfun, npt, iprint, ctol, callback_ptr, info) bind(C)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER, C_F_POINTER
 use, non_intrinsic :: cintrf_mod, only : COBJ, CCALLBACK
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -45,6 +45,7 @@ real(C_DOUBLE), intent(in), value :: ftarget
 integer(C_INT), intent(in), value :: maxfun
 integer(C_INT), intent(in), value :: npt
 integer(C_INT), intent(in), value :: iprint
+real(C_DOUBLE), intent(in), value :: ctol
 type(C_FUNPTR), intent(in), value :: callback_ptr
 integer(C_INT), intent(out) :: info
 
@@ -72,6 +73,7 @@ real(RP) :: ftarget_loc
 real(RP) :: x_loc(n)
 real(RP), allocatable :: rhobeg_loc
 real(RP), allocatable :: rhoend_loc
+real(RP), allocatable :: ctol_loc
 real(RP), allocatable :: xl_loc(:)
 real(RP), allocatable :: xu_loc(:)
 
@@ -118,6 +120,9 @@ if (npt /= 0) then
     npt_loc = int(npt, kind(npt_loc))
 end if
 iprint_loc = int(iprint, kind(iprint_loc))
+if (.not. is_nan(ctol)) then
+    ctol_loc = real(ctol, kind(ctol_loc))
+end if
 
 ! Call the Fortran code
 if (c_associated(callback_ptr)) then
@@ -127,12 +132,12 @@ if (c_associated(callback_ptr)) then
     ! We then provide the closure to the algorithm.
     call lincoa(calfun, x_loc, f_loc, cstrv=cstrv_loc, Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, &
         & beq=beq_loc, xl=xl_loc, xu=xu_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
-        & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, &
+        & ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, &
         & callback_fcn=callback_fcn, info=info_loc)
 else
     call lincoa(calfun, x_loc, f_loc, cstrv=cstrv_loc, Aineq=Aineq_loc, bineq=bineq_loc, Aeq=Aeq_loc, &
         & beq=beq_loc, xl=xl_loc, xu=xu_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
-        & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, &
+        & ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, &
         & info=info_loc)
 end if
 
