@@ -342,6 +342,7 @@ output_xhist = options.output_xhist;
 output_nlchist = options.output_nlchist;
 maxfilt = options.maxfilt;
 iprint = options.iprint;
+iprint = -3
 precision = options.precision;
 debug_flag = options.debug;
 if options.classical

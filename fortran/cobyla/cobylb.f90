@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, March 19, 2024 PM10:40:31
+! Last Modified: Wednesday, March 20, 2024 AM12:26:32
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -362,6 +362,9 @@ do tr = 1, maxtr
     d = trstlp(A, -conmat(:, n + 1), delta, g)
     dnorm = min(delta, norm(d))
     x = sim(:, n + 1) + d
+    write (16, *) 'tr', nf, d
+    write (16, *) 'tr x', x
+    write (16, *) 'tr sim', sim
 
     ! Is the trust-region trial step short? Note that we compare DNORM with RHO, not DELTA.
     ! Powell's code essentially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
@@ -424,6 +427,7 @@ do tr = 1, maxtr
 
         ! Calculate the reduction ratio by REDRAT, which handles Inf/NaN carefully.
         ratio = redrat(actrem, prerem, eta1)
+        write (16, *) 'ratio', actrem, prerem, ratio
 
         ! Update DELTA. After this, DELTA < DNORM may hold.
         ! N.B.: 1. Powell's code uses RHO as the trust-region radius and updates it as follows.
@@ -444,10 +448,13 @@ do tr = 1, maxtr
         ! without reducing DELTA. However, according to a test on 20230206, it does not improve the
         ! performance if we skip the update of DELTA when ADEQUATE_GEO is FALSE and RATIO < 0.1.
         ! Therefore, we choose to update DELTA without checking ADEQUATE_GEO.
+        write (16, *) 'old delta', delta
         delta = trrad(delta, dnorm, eta1, eta2, gamma1, gamma2, ratio)
+        write (16, *) 'new delta', delta
         if (delta <= gamma3 * rho) then
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
+        write (16, *) 'delta', delta, rho, dnorm
 
         ! Is the newly generated X better than current best point?
         ximproved = (actrem > 0)  ! If ACTREM is NaN, then XIMPROVED should & will be FALSE.
@@ -456,6 +463,7 @@ do tr = 1, maxtr
         ! is no good point to replace, and X will not be included into the simplex; in this case,
         ! the geometry of the simplex likely needs improvement, which will be handled below.
         jdrop_tr = setdrop_tr(ximproved, d, delta, rho, sim, simi)
+        write (16, *) 'jdrop_tr', jdrop_tr
 
         ! Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_TR) is replaced with D.
         ! UPDATEXFC does nothing if JDROP_TR == 0, as the algorithm decides to discard X.
@@ -491,6 +499,8 @@ do tr = 1, maxtr
     improve_geo = (bad_trstep .and. .not. adequate_geo)
     ! REDUCE_RHO: Should we enhance the resolution by reducing RHO?
     reduce_rho = (bad_trstep .and. adequate_geo .and. max(delta, dnorm) <= rho)
+
+    write (16, *) bad_trstep, improve_geo, reduce_rho
 
     ! COBYLA never sets IMPROVE_GEO and REDUCE_RHO to TRUE simultaneously.
     ! !call assert(.not. (improve_geo .and. reduce_rho), 'IMPROVE_GEO or REDUCE_RHO are not both TRUE', srname)
@@ -554,6 +564,7 @@ do tr = 1, maxtr
         ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
         ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
         jdrop_geo = setdrop_geo(delta, factor_alpha, factor_beta, sim, simi)
+        write (16, *) 'jdrop_ge', jdrop_geo
 
         ! The following JDROP_GEO comes from UOBYQA/NEWUOA/BOBYQA/LINCOA. It performs poorly!
         !!jdrop_geo = maxloc(sum(sim(:, 1:n)**2, dim=1), dim=1)
@@ -574,6 +585,9 @@ do tr = 1, maxtr
         ! by DELTA instead of DELBAR as in (14) of the COBYLA paper. See GEOSTEP for more detail.
         d = geostep(jdrop_geo, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamma, simi)
         x = sim(:, n + 1) + d
+        write (16, *) 'ge', nf, d
+        write (16, *) 'ge x', x
+        write (16, *) 'ge sim', sim
 
         ! If X is close to one of the points in the interpolation set, then we do not evaluate the
         ! objective and constraints at X, assuming them to have the values at the closest point.
@@ -681,6 +695,8 @@ call rangehist(nf, xhist, fhist, chist, conhist)
 
 ! Print a return message according to IPRINT.
 call retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
+
+close (16)
 !====================!
 !  Calculation ends  !
 !====================!
