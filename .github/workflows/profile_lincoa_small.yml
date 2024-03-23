@@ -93,7 +93,7 @@ jobs:
           products: Parallel_Computing_Toolbox
 
       - name: Revise warnoff.m
-      - run: |
+        run: |
           cd matlab/tests/private || exit 42 
           sed -i "/Invalid\|ExtremeBarrier\|Abnormal\|Failure\|FMXAPI/d" warnoff.m
 
