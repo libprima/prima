@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, March 24, 2024 AM02:46:18
+! Last Modified: Sunday, March 24, 2024 AM02:53:57
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -554,7 +554,7 @@ do tr = 1, maxtr
         ! N.B.: 1. COBYLA never sets JDROP_GEO = N + 1.
         ! 2. The following JDROP_GEO comes from UOBYQA/NEWUOA/BOBYQA/LINCOA.
         ! 3. In Powell's original algorithm, the geometry of the simplex is considered acceptable
-        ! iif the distance between any vertex and the pole is at most 2.1*DELTA, and the distance
+        ! iff the distance between any vertex and the pole is at most 2.1*DELTA, and the distance
         ! between any vertex and the opposite face of the simplex is at least 0.25*DELTA, as
         ! specified in (14) of the COBYLA paper. Correspondingly, JDROP_GEO is set to the index of
         ! the vertex with the largest distance to the pole provided that the distance is larger than

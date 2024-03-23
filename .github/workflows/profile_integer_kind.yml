@@ -111,6 +111,11 @@ jobs:
           cd matlab/tests/private || exit 1
           sed -i "s|return|for ifile = 1 : length(config_files), ifile, cfile = fullfile(config_dir, config_files{ifile}) , system(['cat ', cfile]); end|" set_compiler_options.m
 
+      - name: Revise warnoff.m
+      - run: |
+          cd matlab/tests/private || exit 42 
+          sed -i "/Invalid\|ExtremeBarrier\|Abnormal\|Failure\|FMXAPI/d" warnoff.m
+
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.1.0
         with:
