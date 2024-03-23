@@ -55,7 +55,7 @@ cellfun(@(solver) warning('off', [solver, ':NaNInLB']), solvers);
 cellfun(@(solver) warning('off', [solver, ':NaNInUB']), solvers);
 cellfun(@(solver) warning('off', [solver, ':NaNInequality']), solvers);
 cellfun(@(solver) warning('off', [solver, ':NaNEquality']), solvers);
-cellfun(@(solver) warning('off', [solver, ':InfInquality']), solvers);
+cellfun(@(solver) warning('off', [solver, ':InfInequality']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InfEquality']), solvers);
 %cellfun(@(solver) warning('off', ['FMXAPI:', upper(solver)]), solvers);
 
