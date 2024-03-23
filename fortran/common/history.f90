@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tuesday, March 19, 2024 PM10:31:28
+! Last Modified: Saturday, March 23, 2024 PM10:40:11
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -297,8 +297,8 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
     nhist = min(nf, maxxhist)
     n = int(size(x), kind(n))
     if (n > 1 .and. nf > (n + 1) * (n + 2) / 2) then
-        do i = 1, min(10_IK, nhist / 2_IK)
-            call wassert(.not. all(abs(xhist(:, nhist - i + 1:nhist) - xhist(:, nhist - 2 * i + 1:nhist - i)) <= 0), &
+        do i = 1, min(100_IK, nhist / 2_IK)
+            call assert(.not. all(abs(xhist(:, nhist - i + 1:nhist) - xhist(:, nhist - 2 * i + 1:nhist - i)) <= 0), &
                 & 'XHIST does not contain a repeating segment of length '//num2str(i), srname)
         end do
     end if

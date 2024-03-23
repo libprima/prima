@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, March 23, 2024 PM10:05:37
+! Last Modified: Sunday, March 24, 2024 AM02:46:18
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -532,14 +532,14 @@ do tr = 1, maxtr
     ! two blocks are exchangeable: IF (IMPROVE_GEO) ... END IF and IF (REDUCE_RHO) ... END IF.
 
     ! Improve the geometry of the simplex by removing a point and adding a new one.
-    ! If the current interpolation set has acceptable geometry, then we skip the geometry step.
+    ! If the current interpolation set has adequate geometry, then we skip the geometry step.
     ! The code has a small difference from Powell's original code here: If the current geometry
-    ! is acceptable, then we will continue with a new trust-region iteration; however, at the
+    ! is adequate, then we will continue with a new trust-region iteration; however, at the
     ! beginning of the iteration, CPEN may be updated, which may alter the pole point SIM(:, N+1)
     ! by UPDATEPOLE; the quality of the interpolation point depends on SIM(:, N + 1), meaning
     ! that the same interpolation set may have good or bad geometry with respect to different
     ! "poles"; if the geometry turns out bad with the new pole, the original COBYLA code will
-    ! take a geometry step, but our code here will NOT do it but continue to take a trust-region
+    ! take a geometry step, yet our code here will NOT do it but continue to take a trust-region
     ! step. The argument is this: even if the geometry step is not skipped in the first place, the
     ! geometry may turn out bad again after the pole is altered due to an update to CPEN; should
     ! we take another geometry step in that case? If no, why should we do it here? Indeed, this
@@ -550,9 +550,29 @@ do tr = 1, maxtr
         ! explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
         ! Decide a vertex to drop from the simplex. It will be replaced with SIM(:, N + 1) + D to
-        ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
-        ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
-        ! The following JDROP_GEO comes from UOBYQA/NEWUOA/BOBYQA/LINCOA.
+        ! improve the geometry of the simplex.
+        ! N.B.: 1. COBYLA never sets JDROP_GEO = N + 1.
+        ! 2. The following JDROP_GEO comes from UOBYQA/NEWUOA/BOBYQA/LINCOA.
+        ! 3. In Powell's original algorithm, the geometry of the simplex is considered acceptable
+        ! iif the distance between any vertex and the pole is at most 2.1*DELTA, and the distance
+        ! between any vertex and the opposite face of the simplex is at least 0.25*DELTA, as
+        ! specified in (14) of the COBYLA paper. Correspondingly, JDROP_GEO is set to the index of
+        ! the vertex with the largest distance to the pole provided that the distance is larger than
+        ! 2.1*DELTA, or the vertex with the smallest distance to the opposite face of the simplex,
+        ! in which case the distance must be less than 0.25*DELTA, as the current simplex does not
+        ! have acceptable geometry (see (15)--(16) of the COBYLA paper). Once JDROP_GEO is set, the
+        ! algorithm replaces SIM(:, JDROP_GEO) with D specified in (17) of the COBYLA paper, which
+        ! is orthogonal to the face opposite to SIM(:, JDROP_GEO) and has a length of 0.5*DELTA,
+        ! intending to improve the geometry of the simplex as per (14).
+        ! 4. Powell's geometry-improving procedure outlined above has an intrinsic flaw: it may lead
+        ! to infinite cycling, as was observed in a test on 20240320. In this test, the geometry-
+        ! improving point introduced in the previous iteration was replaced with the trust-region
+        ! trial point in the current iteration, which was then replaced with the same geometry-
+        ! improving point in the next iteration, and so on. In this process, the simplex alternated
+        ! between two configurations, neither of which had acceptable geometry. Thus RHO was never
+        ! reduced, leading to infinite cycling. (N.B.: our implementation uses DELTA as the trust
+        ! region radius, with RHO being its lower bound. When the infinite cycling occurred in this
+        ! test, DELTA = RHO and it could not be reduced due to the requirement that DELTA >= RHO.)
         jdrop_geo = int(maxloc(sum(sim(:, 1:n)**2, dim=1), dim=1), kind(jdrop_geo))
 
         ! Calculate the geometry step D.
