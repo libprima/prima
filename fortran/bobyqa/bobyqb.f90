@@ -32,7 +32,7 @@ module bobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 16, 2024 PM04:44:48
+! Last Modified: Saturday, March 23, 2024 PM10:00:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -324,7 +324,7 @@ do tr = 1, maxtr
     ! Generate the next trust region step D.
     call trsbox(delta, gopt, hq, pq, sl, su, trtol, xpt(:, kopt), xpt, crvmin, d)
     dnorm = min(delta, norm(d))
-    shortd = (dnorm < HALF * rho)
+    shortd = (dnorm <= HALF * rho)  ! `<=` works better than `<` in case of underflow.
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.

@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, March 23, 2024 PM05:30:36
+! Last Modified: Saturday, March 23, 2024 PM10:05:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -55,7 +55,7 @@ use, non_intrinsic :: redrho_mod, only : redrho
 use, non_intrinsic :: selectx_mod, only : savefilt, selectx, isbetter
 
 ! Solver-specific modules
-use, non_intrinsic :: geometry_cobyla_mod, only : assess_geo, setdrop_geo, setdrop_tr, geostep
+use, non_intrinsic :: geometry_cobyla_mod, only : setdrop_tr, geostep
 use, non_intrinsic :: initialize_cobyla_mod, only : initxfc, initfilt
 use, non_intrinsic :: trustregion_cobyla_mod, only : trstlp, trrad
 use, non_intrinsic :: update_cobyla_mod, only : updatexfc, updatepole
@@ -343,8 +343,8 @@ do tr = 1, maxtr
         exit  ! Better action to take? Geometry step, or simply continue?
     end if
 
-    ! Does the interpolation set have acceptable geometry? It affects IMPROVE_GEO and REDUCE_RHO.
-    adequate_geo = assess_geo(delta, factor_alpha, factor_beta, sim, simi)
+    ! Does the interpolation set have adequate geometry? It affects IMPROVE_GEO and REDUCE_RHO.
+    adequate_geo = all(sum(sim(:, 1:n)**2, dim=1) <= 4.0_RP * delta**2)
 
     ! Calculate the linear approximations to the objective and constraint functions.
     ! N.B.: TRSTLP accesses A mostly by columns, so it is more reasonable to save A instead of A^T.
@@ -352,7 +352,7 @@ do tr = 1, maxtr
     ! the linear systems SIM^T*G = FVAL(1:N)-FVAL(N+1) and SIM^T*A = CONMAT(:, 1:N)-CONMAT(:, N+1)
     ! does not seem to improve or worsen the performance of COBYLA in terms of the number of function
     ! evaluations. The system was solved by SOLVE in LINALG_MOD based on a QR factorization of SIM
-    ! (not necessarily a good algorithm). No preconditioning was used.
+    ! (not necessarily a good algorithm). No preconditioning or scaling was used.
     g = matprod(fval(1:n) - fval(n + 1), simi)
     A(:, 1:m_lcon) = amat
     A(:, m_lcon + 1:m) = transpose(matprod(conmat(m_lcon + 1:m, 1:n) - spread(conmat(m_lcon + 1:m, n + 1), dim=2, ncopies=n), simi))
@@ -368,7 +368,7 @@ do tr = 1, maxtr
     ! TENTH seems to work better than HALF or QUART, especially for linearly constrained problems.
     ! Note that LINCOA has a slightly more sophisticated way of defining SHORTD, taking into account
     ! whether D causes a change to the active set. Should we try the same here?
-    shortd = (dnorm <= TENTH * rho)
+    shortd = (dnorm <= TENTH * rho)  ! `<=` works better than `<` in case of underflow.
 
     ! Predict the change to F (PREREF) and to the constraint violation (PREREC) due to D.
     ! We have the following in precise arithmetic. They may fail to hold due to rounding errors.
@@ -545,26 +545,15 @@ do tr = 1, maxtr
     ! we take another geometry step in that case? If no, why should we do it here? Indeed, this
     ! distinction makes no practical difference for CUTEst problems with at most 100 variables
     ! and 5000 constraints, while the algorithm framework is simplified.
-    if (improve_geo .and. .not. assess_geo(delta, factor_alpha, factor_beta, sim, simi)) then
+    if (improve_geo .and. .not. all(sum(sim(:, 1:n)**2, dim=1) <= 4.0_RP * delta**2)) then
         ! Before the geometry step, UPDATEPOLE has been called either implicitly by UPDATEXFC or
         ! explicitly after CPEN is updated, so that SIM(:, N + 1) is the optimal vertex.
 
         ! Decide a vertex to drop from the simplex. It will be replaced with SIM(:, N + 1) + D to
         ! improve acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
         ! N.B.: COBYLA never sets JDROP_GEO = N + 1.
-        jdrop_geo = setdrop_geo(delta, factor_alpha, factor_beta, sim, simi)
-
-        ! The following JDROP_GEO comes from UOBYQA/NEWUOA/BOBYQA/LINCOA. It performs poorly!
-        !!jdrop_geo = maxloc(sum(sim(:, 1:n)**2, dim=1), dim=1)
-
-        ! JDROP_GEO is between 1 and N unless SIM and SIMI contain NaN, which should not happen
-        ! at this point unless there is a bug. Nevertheless, for robustness, we include the
-        ! following instruction to exit when JDROP_GEO == 0 (if JDROP_GEO does become 0, then
-        ! memory error will occur if we continue, as JDROP_GEO will be used as an index of arrays.)
-        if (jdrop_geo == 0) then
-            info = DAMAGING_ROUNDING
-            exit
-        end if
+        ! The following JDROP_GEO comes from UOBYQA/NEWUOA/BOBYQA/LINCOA.
+        jdrop_geo = int(maxloc(sum(sim(:, 1:n)**2, dim=1), dim=1), kind(jdrop_geo))
 
         ! Calculate the geometry step D.
         ! In NEWUOA, GEOSTEP takes DELBAR = MAX(MIN(TENTH * SQRT(MAXVAL(DISTSQ)), HALF * DELTA), RHO)

@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 16, 2024 PM04:46:01
+! Last Modified: Saturday, March 23, 2024 PM09:59:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -278,7 +278,8 @@ do tr = 1, maxtr
     call trsapp(delta, gopt, hq, pq, trtol, xpt, crvmin, d)
     dnorm = min(delta, norm(d))
     ! SHORTD corresponds to Box 3 of the NEWUOA paper. N.B.: we compare DNORM with RHO, not DELTA.
-    shortd = (dnorm < HALF * rho)  ! HALF seems to work better than TENTH or QUART.
+    ! HALF seems to work better than TENTH or QUART.
+    shortd = (dnorm <= HALF * rho)  ! `<=` works better than `<` in case of underflow.
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.

@@ -8,89 +8,15 @@ module geometry_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tuesday, March 19, 2024 PM08:45:03
+! Last Modified: Saturday, March 23, 2024 PM09:49:28
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: assess_geo, setdrop_geo, setdrop_tr, geostep
+public :: setdrop_tr, geostep
 
 
 contains
-
-
-function assess_geo(delta, factor_alpha, factor_beta, sim, simi) result(adequate_geo)
-!--------------------------------------------------------------------------------------------------!
-! This function checks if an interpolation set has acceptable geometry as (14) of the COBYLA paper.
-!--------------------------------------------------------------------------------------------------!
-
-! Common modules
-use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : isinv
-
-implicit none
-
-! Inputs
-real(RP), intent(in) :: delta
-real(RP), intent(in) :: factor_alpha
-real(RP), intent(in) :: factor_beta
-real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
-real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
-
-! Outputs
-logical :: adequate_geo
-
-! Local variables
-character(len=*), parameter :: srname = 'ASSESS_GEO'
-integer(IK) :: n
-real(RP) :: veta_scaled(size(sim, 1))
-real(RP) :: vsig_scaled(size(sim, 1))
-real(RP), parameter :: itol = TENTH
-
-! Sizes
-n = int(size(sim, 1), kind(n))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
-    call assert(all(is_finite(sim)), 'SIM is finite', srname)
-    call assert(all(sum(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
-    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
-    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
-    call assert(delta > 0, 'DELTA > 0', srname)
-    call assert(factor_alpha > 0 .and. factor_alpha < 1, '0 < FACTOR_ALPHA < 1', srname)
-    call assert(factor_beta > 1, 'FACTOR_BETA > 1', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-! Calculate the values of sigma and eta.
-! VETA(J) (1 <= J <= N) is the distance between vertices J and 0 (the best vertex) of the simplex.
-! VSIG(J) is the distance from vertex J to its opposite face of the simplex. Thus VSIG <= VETA.
-! N.B.: What about the distance from vertex N+1 to the its opposite face? Consider the simplex
-! {V_{N+1}, V_{N+1} + L*e_1, ..., V_{N+1} + L*e_N}, where V_{N+1} is vertex N+1, namely the current
-! "best" point, [e_1, ..., e_n] is an orthogonal matrix, and L is a constant in the order of DELTA.
-! This simplex is optimal in the sense that the interpolation system has the minimal condition
-! number, i.e., one. For this simplex, the distance from V_{N+1} to its opposite face is L/SQRT{N}.
-!!vsig = ONE / sqrt(sum(simi**2, dim=2))
-!!veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
-!!adequate_geo = all(vsig >= factor_alpha * delta) .and. all(veta <= factor_beta * delta)
-
-! Zaikun 20240314: We use the scaled versions of VETA and VSIG, as is explained in SETDROP_GEO.
-vsig_scaled = ONE / sqrt(sum((simi * delta)**2, dim=2))
-veta_scaled = sqrt(sum((sim(:, 1:n) / delta)**2, dim=1))
-adequate_geo = all(vsig_scaled >= factor_alpha) .and. all(veta_scaled <= factor_beta)
-
-!====================!
-!  Calculation ends  !
-!====================!
-end function assess_geo
 
 
 function setdrop_tr(ximproved, d, delta, rho, sim, simi) result(jdrop)
@@ -266,102 +192,6 @@ if (DEBUGGING) then
 end if
 
 end function setdrop_tr
-
-
-function setdrop_geo(delta, factor_alpha, factor_beta, sim, simi) result(jdrop)
-!--------------------------------------------------------------------------------------------------!
-! This subroutine finds (the index) of a current interpolation point to be replaced with a
-! geometry-improving point. See (15)--(16) of the COBYLA paper.
-! N.B.: COBYLA never sets JDROP = N + 1.
-!--------------------------------------------------------------------------------------------------!
-
-! Common modules
-use, non_intrinsic :: consts_mod, only : IK, RP, ONE, TENTH, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : isinv
-
-implicit none
-
-! Inputs
-real(RP), intent(in) :: delta
-real(RP), intent(in) :: factor_alpha
-real(RP), intent(in) :: factor_beta
-real(RP), intent(in) :: sim(:, :)   ! SIM(N, N+1)
-real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
-
-! Outputs
-integer(IK) :: jdrop
-
-! Local variables
-character(len=*), parameter :: srname = 'SETDROP_GEO'
-integer(IK) :: n
-real(RP) :: veta_scaled(size(sim, 1))
-real(RP) :: vsig_scaled(size(sim, 1))
-real(RP), parameter :: itol = TENTH
-
-! Sizes
-n = int(size(sim, 1), kind(n))
-
-! Preconditions
-if (DEBUGGING) then
-    call assert(n >= 1, 'N >= 1', srname)
-    call assert(size(sim, 1) == n .and. size(sim, 2) == n + 1, 'SIZE(SIM) == [N, N+1]', srname)
-    call assert(all(is_finite(sim)), 'SIM is finite', srname)
-    call assert(all(sum(abs(sim(:, 1:n)), dim=1) > 0), 'SIM(:, 1:N) has no zero column', srname)
-    call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
-    call assert(all(is_finite(simi)), 'SIMI is finite', srname)
-    call assert(isinv(sim(:, 1:n), simi, itol), 'SIMI = SIM(:, 1:N)^{-1}', srname)
-    call assert(factor_alpha > 0 .and. factor_alpha < 1, '0 < FACTOR_ALPHA < 1', srname)
-    call assert(factor_beta > 1, 'FACTOR_BETA > 1', srname)
-    call assert(.not. assess_geo(delta, factor_alpha, factor_beta, sim, simi), &
-        & 'The geometry is not adequate when '//srname//' is called', srname)
-end if
-
-!====================!
-! Calculation starts !
-!====================!
-
-! Calculate the values of sigma and eta.
-! VSIG(J) (J=1, .., N) is the Euclidean distance from vertex J to the opposite face of the simplex.
-!!veta = sqrt(sum(sim(:, 1:n)**2, dim=1))
-!!vsig = ONE / sqrt(sum(simi**2, dim=2))
-
-! Zaikun 20240314: We use the scaled versions of VETA and VSIG, which works better if DELTA is small
-! and SIMI contains large values. This prevents an infinite loop that occurred when RP is REAL16
-! (half precision). In that case, VSIG was evaluated to be zero due to rounding, although all entries
-! of VSIG_SCALED ere close to 0.5, and the geometry-improving step turns out to be exactly the same
-! as SIM(:, JDORP), which led to a dead loop.
-veta_scaled = sqrt(sum((sim(:, 1:n) / delta)**2, dim=1))
-vsig_scaled = ONE / sqrt(sum((simi * delta)**2, dim=2))
-
-! Decide which vertex to drop from the simplex. It will be replaced with a new point to improve the
-! acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
-if (any(veta_scaled > factor_beta)) then
-    jdrop = int(maxloc(veta_scaled, mask=(.not. is_nan(veta_scaled)), dim=1), kind(jdrop))
-    !!MATLAB: [~, jdrop] = max(veta_scaled, [], 'omitnan');
-elseif (any(vsig_scaled < factor_alpha)) then
-    jdrop = int(minloc(vsig_scaled, mask=(.not. is_nan(vsig_scaled)), dim=1), kind(jdrop))
-    !!MATLAB: [~, jdrop] = min(vsig_scaled, [], 'omitnan');
-else
-    ! We arrive here if VSIG_SCALED and VETA_SCALED are all NaN, which can happen due to NaN in SIM
-    ! and SIMI, which should not happen unless there is a bug.
-    jdrop = 0
-end if
-
-! Zaikun 20230202: What if we consider VETA and VSIG together? The following attempts do not work well.
-! !jdrop = maxloc(sum(sim(:, 1:n)**2, dim=1) * sum(simi**2, dim=2)) ! Condition number
-! !jdrop = maxloc(sum(sim(:, 1:n)**2, dim=1)**2 * sum(simi**2, dim=2)) ! Condition number times distance
-
-!====================!
-!  Calculation ends  !
-!====================!
-
-!Postconditions
-if (DEBUGGING) then
-    call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
-end if
-end function setdrop_geo
 
 
 function geostep(jdrop, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamma, simi) result(d)

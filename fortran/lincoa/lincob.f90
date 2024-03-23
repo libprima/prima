@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 16, 2024 PM04:59:49
+! Last Modified: Saturday, March 23, 2024 PM10:00:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -404,7 +404,8 @@ do tr = 1, maxtr
     ! N.B. The magic number 0.1999 seems to be related to the fact that a linear constraint is
     ! considered nearly active if the point under consideration is within 0.2*DELTA to the boundary
     ! of the constraint. See the subroutine GETACT and Section 3 of Powell (2015) for more details.
-    shortd = ((dnorm < HALF * delta .and. ngetact < 2) .or. dnorm < 0.1999_RP * delta)
+    ! `<=` works better than `<` in case of underflow.
+    shortd = ((dnorm <= HALF * delta .and. ngetact < 2) .or. dnorm <= 0.1999_RP * delta)
     !------------------------------------------------------------------------------------------!
     ! The SHORTD defined above needs NGETACT, which relies on Powell's trust region subproblem
     ! solver. If a different subproblem solver is used, we can take the following SHORTD adopted
