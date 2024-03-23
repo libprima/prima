@@ -322,7 +322,7 @@ if single_test
     test_options.output_nlchist = true;
 end
 test_options.maxfilt = floor(randn*500);
-test_options.iprint = floor(3*rand);
+test_options.iprint = floor(3*abs(randn));
 test_options.quiet = (rand < 0.9);
 % Test all precisions. For unavailable precisions, the double-precision version will be called.
 if rand < 0.7  % Prob = 0.6

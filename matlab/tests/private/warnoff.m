@@ -51,6 +51,12 @@ cellfun(@(solver) warning('off', [solver, ':InvalidRhobeg']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InvalidRhoend']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InvalidNpt']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InvalidMaxfun']), solvers);
+cellfun(@(solver) warning('off', [solver, ':NaNInLB']), solvers);
+cellfun(@(solver) warning('off', [solver, ':NaNInUB']), solvers);
+cellfun(@(solver) warning('off', [solver, ':NaNInequality']), solvers);
+cellfun(@(solver) warning('off', [solver, ':NaNEquality']), solvers);
+cellfun(@(solver) warning('off', [solver, ':InfInquality']), solvers);
+cellfun(@(solver) warning('off', [solver, ':InfEquality']), solvers);
 %cellfun(@(solver) warning('off', ['FMXAPI:', upper(solver)]), solvers);
 
 return

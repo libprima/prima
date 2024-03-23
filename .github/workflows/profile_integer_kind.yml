@@ -114,7 +114,7 @@ jobs:
       - name: Revise warnoff.m
         run: |
           cd matlab/tests/private || exit 42 
-          sed -i "/Invalid\|ExtremeBarrier\|Abnormal\|Failure\|FMXAPI/d" warnoff.m
+          sed -i "/Invalid\|ExtremeBarrier\|Abnormal\|Failure\|FMXAPI\|NaN\|Inf/d" warnoff.m
 
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.1.0
