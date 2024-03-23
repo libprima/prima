@@ -51,6 +51,7 @@ cellfun(@(solver) warning('off', [solver, ':InvalidRhobeg']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InvalidRhoend']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InvalidNpt']), solvers);
 cellfun(@(solver) warning('off', [solver, ':InvalidMaxfun']), solvers);
+cellfun(@(solver) warning('off', [solver, ':InvalidIprint']), solvers);
 cellfun(@(solver) warning('off', [solver, ':NaNInLB']), solvers);
 cellfun(@(solver) warning('off', [solver, ':NaNInUB']), solvers);
 cellfun(@(solver) warning('off', [solver, ':NaNInequality']), solvers);
