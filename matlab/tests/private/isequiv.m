@@ -311,7 +311,7 @@ test_options.fortran = true;
 test_options.output_xhist = (rand > 0.5);
 %test_options.output_xhist = 1;
 test_options.output_nlchist = (rand > 0.5);
-test_options.maxhist = floor((randn+2)*100*n);
+test_options.maxhist = floor((randn+6)*100*n);
 %test_options.maxhist = test_options.maxfun;
 if single_test
     % DO NOT INVOKE ANY RANDOMIZATION WITHIN THIS IF. Otherwise, a single test cannot reproduce the

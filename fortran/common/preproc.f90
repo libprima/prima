@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, February 25, 2024 PM07:53:08
+! Last Modified: Sunday, March 24, 2024 AM10:58:31
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -148,7 +148,7 @@ case default  ! CASE ('NEWUOA', 'BOBYQA', 'LINCOA')
     min_maxfun = int(n) + 3
     min_maxfun_str = 'N + 3'
 end select
-if (maxfun <= max(0, min_maxfun)) then
+if (maxfun <= max(0, min_maxfun - 1)) then
     if (maxfun > 0) then
         maxfun = int(min_maxfun, kind(maxfun))
     else  ! We assume that non-positive values of MAXFUN are produced by overflow.
@@ -158,7 +158,7 @@ if (maxfun <= max(0, min_maxfun)) then
         ! https://fortran-lang.discourse.group/t/loop-variable-reaching-integer-huge-causes-infinite-loop
         ! https://fortran-lang.discourse.group/t/loops-dont-behave-like-they-should
     end if
-    call warning(solver, 'Invalid MAXFUN; it should be at least '//min_maxfun_str//'; it is set to '//num2str(maxfun))
+    call warning(solver, 'prima, Invalid MAXFUN; it should be at least '//min_maxfun_str//'; it is set to '//num2str(maxfun))
 end if
 
 ! Validate MAXHIST
