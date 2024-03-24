@@ -1,5 +1,8 @@
 task:
 
+  # Skip the task if the folders or files specified below are not changed
+  skip:  "!changesInclude('.cirrus.yml', 'fortran/*', 'c/*', 'python/*')"
+
   matrix:
     - name: FreeBSD
       freebsd_instance:
