@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, March 24, 2024 AM02:53:57
+! Last Modified: Sunday, March 24, 2024 PM05:17:30
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -40,8 +40,7 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, et
 
 ! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, QUART, TENTH, EPS, REALMAX, &
-    & DEBUGGING, MIN_MAXFILT
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, EPS, REALMAX, DEBUGGING, MIN_MAXFILT
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
@@ -132,6 +131,7 @@ real(RP) :: conmat(size(constr), size(x) + 1)
 real(RP) :: cpen  ! Penalty parameter for constraint in merit function (PARMU in Powell's code)
 real(RP) :: cval(size(x) + 1)
 real(RP) :: d(size(x))
+real(RP) :: delbar
 real(RP) :: delta
 real(RP) :: distsq(size(x) + 1)
 real(RP) :: dnorm
@@ -158,17 +158,6 @@ real(RP) :: xfilt(size(x), size(cfilt))
 ! 312--314 of Powell's cobylb.f code. Powell's code revises ACTREM to CVAL(N + 1) - CSTRV and PREREM
 ! to PREREC in this case, which is crucial for feasibility problems.
 real(RP), parameter :: cpenmin = EPS
-! FACTOR_ALPHA, FACTOR_BETA, and FACTOR_GAMMA are factors that COBYLB uses when managing the
-! simplex. Note the following.
-! 1. FACTOR_ALPHA < FACTOR_GAMMA < 1 < FACTOR_BETA.
-! 2. FACTOR_GAMMA has nothing to do with GAMMA1 and GAMMA2, which are the contracting/expanding
-! factors for updating the trust-region radius DELTA.
-! 3. Powell used one more factor FACTOR_DELTA = 1.1 (in general, 1 < FACTOR_DELTA <= FACTOR_BETA).
-! It had nothing to do with DELTA, which is the trust-region radius. It was used when defining
-! JDROP_TR. We use a completely different scheme (see SETDROP_TR), which does not need FACTOR_DELTA.
-real(RP), parameter :: factor_alpha = QUART  ! The factor alpha in the COBYLA paper
-real(RP), parameter :: factor_beta = 2.1_RP  ! The factor beta in the COBYLA paper
-real(RP), parameter :: factor_gamma = HALF  ! The factor gamma in the COBYLA paper
 
 ! Sizes
 m_lcon = int(size(bvec), kind(m_lcon))
@@ -202,9 +191,6 @@ if (DEBUGGING) then
     call assert(size(conhist, 1) == m .and. maxconhist * (maxconhist - maxhist) == 0, &
         & 'SIZE(CONHIST, 1) == M, SIZE(CONHIST, 2) == 0 or MAXHIST', srname)
     call assert(maxchist * (maxchist - maxhist) == 0, 'SIZE(CHIST) == 0 or MAXHIST', srname)
-    call assert(factor_alpha > 0 .and. factor_alpha < factor_gamma .and. factor_gamma < 1, &
-        & '0 < FACTOR_ALPHA < FACTOR_GAMMA < 1', srname)
-    call assert(factor_beta > 1, 'FACTOR_BETA > 1', srname)
 end if
 
 !====================!
@@ -475,8 +461,8 @@ do tr = 1, maxtr
 
 
     !----------------------------------------------------------------------------------------------!
-    ! Before the next trust-region iteration, we possibly improve the geometry of simplex or
-    ! reduces RHO according to IMPROVE_GEO and REDUCE_RHO. Now we decide these indicators.
+    ! Before the next trust-region iteration, we possibly improve the geometry of simplex or reduce
+    ! RHO according to IMPROVE_GEO and REDUCE_RHO. Now we decide these indicators.
     ! N.B.: We must ensure that the algorithm does not set IMPROVE_GEO = TRUE at infinitely many
     ! consecutive iterations without moving SIM(:, N+1) or reducing RHO. Otherwise, the algorithm
     ! will get stuck in repetitive invocations of GEOSTEP. This is ensured by the following facts.
@@ -570,17 +556,14 @@ do tr = 1, maxtr
         ! trial point in the current iteration, which was then replaced with the same geometry-
         ! improving point in the next iteration, and so on. In this process, the simplex alternated
         ! between two configurations, neither of which had acceptable geometry. Thus RHO was never
-        ! reduced, leading to infinite cycling. (N.B.: our implementation uses DELTA as the trust
+        ! reduced, leading to infinite cycling. (N.B.: Our implementation uses DELTA as the trust
         ! region radius, with RHO being its lower bound. When the infinite cycling occurred in this
         ! test, DELTA = RHO and it could not be reduced due to the requirement that DELTA >= RHO.)
         jdrop_geo = int(maxloc(sum(sim(:, 1:n)**2, dim=1), dim=1), kind(jdrop_geo))
 
         ! Calculate the geometry step D.
-        ! In NEWUOA, GEOSTEP takes DELBAR = MAX(MIN(TENTH * SQRT(MAXVAL(DISTSQ)), HALF * DELTA), RHO)
-        ! rather than DELTA. This should not be done here, because D should improve the geometry of
-        ! the simplex when SIM(:, JDROP) is replaced with D; the quality of the geometry is defined
-        ! by DELTA instead of DELBAR as in (14) of the COBYLA paper. See GEOSTEP for more detail.
-        d = geostep(jdrop_geo, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamma, simi)
+        delbar = HALF * delta
+        d = geostep(jdrop_geo, amat, bvec, conmat, cpen, cval, delbar, fval, simi)
         x = sim(:, n + 1) + d
 
         ! If X is close to one of the points in the interpolation set, then we do not evaluate the
@@ -588,8 +571,8 @@ do tr = 1, maxtr
         ! N.B.:
         ! 1. If this happens, do NOT include X into the filter, as F and CONSTR are inaccurate.
         ! 2. In precise arithmetic, the geometry improving step ensures that the distance between X
-        ! and any interpolation point is at least FACTOR_GAMMA*DELTA, yet X may be close to them due
-        ! to rounding. In an experiment with single precision on 20240317, X = SIM(:, N+1) occurred.
+        ! and any interpolation point is at least DELBAR, yet X may be close to them due to
+        ! rounding. In an experiment with single precision on 20240317, X = SIM(:, N+1) occurred.
         distsq(n + 1) = sum((x - sim(:, n + 1))**2)
         distsq(1:n) = [(sum((x - (sim(:, n + 1) + sim(:, j)))**2), j=1, n)]  ! Implied do-loop
         !!MATLAB: distsq(1:n) = sum((x - (sim(:,1:n) + sim(:, n+1)))**2, 1)  % Implicit expansion

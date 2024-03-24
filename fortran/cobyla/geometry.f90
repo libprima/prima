@@ -8,7 +8,7 @@ module geometry_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, March 23, 2024 PM09:49:28
+! Last Modified: Sunday, March 24, 2024 PM05:13:08
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -109,7 +109,8 @@ end if
 !vsig = ONE / sqrt(sum(simi**2, dim=2))
 !sigbar = abs(simid) * vsig
 !
-!! The following JDROP will overwrite the previous one if its premise holds. FACTOR_DELTA = 1.1.
+!! The following JDROP will overwrite the previous one if its premise holds. FACTOR_DELTA = 1.1
+!! and FACTOR_ALPHA = 0.25.
 !mask = (veta > factor_delta * delta .and. (sigbar >= factor_alpha * delta .or. sigbar >= vsig))
 !if (any(mask)) then
 !    jdrop = int(maxloc(veta, mask=mask, dim=1), kind(jdrop))
@@ -194,7 +195,7 @@ end if
 end function setdrop_tr
 
 
-function geostep(jdrop, amat, bvec, conmat, cpen, cval, delta, fval, factor_gamma, simi) result(d)
+function geostep(jdrop, amat, bvec, conmat, cpen, cval, delbar, fval, simi) result(d)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates a geometry step so that the geometry of the interpolation set is improved
 ! when SIM(:, JDRO_GEO) is replaced with SIM(:, N+1) + D. See (15)--(17) of the COBYLA paper.
@@ -215,8 +216,7 @@ real(RP), intent(in) :: bvec(:)
 real(RP), intent(in) :: conmat(:, :)    ! CONMAT(M, N+1)
 real(RP), intent(in) :: cpen
 real(RP), intent(in) :: cval(:)     ! CVAL(N+1)
-real(RP), intent(in) :: delta
-real(RP), intent(in) :: factor_gamma
+real(RP), intent(in) :: delbar
 real(RP), intent(in) :: fval(:)     ! FVAL(N+1)
 real(RP), intent(in) :: simi(:, :)  ! SIMI(N, N)
 
@@ -242,7 +242,7 @@ n = int(size(simi, 1), kind(n))
 if (DEBUGGING) then
     call assert(m >= m_lcon .and. m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
-    call assert(delta > 0, 'DELTA > 0', srname)
+    call assert(delbar > 0, 'DELBAR > 0', srname)
     call assert(cpen > 0, 'CPEN > 0', srname)
     call assert(size(simi, 1) == n .and. size(simi, 2) == n, 'SIZE(SIMI) == [N, N]', srname)
     call assert(all(is_finite(simi)), 'SIMI is finite', srname)
@@ -253,7 +253,6 @@ if (DEBUGGING) then
     call assert(size(cval) == n + 1 .and. .not. any(cval < 0 .or. is_nan(cval) .or. is_posinf(cval)), &
         & 'SIZE(CVAL) == NPT and CVAL does not contain negative NaN/+Inf', srname)
     call assert(jdrop >= 1 .and. jdrop <= n, '1 <= JDROP <= N', srname)
-    call assert(factor_gamma > 0 .and. factor_gamma < 1, '0 < FACTOR_GAMMA < 1', srname)
 end if
 
 !====================!
@@ -261,12 +260,9 @@ end if
 !====================!
 
 ! SIMI(JDROP, :) is a vector perpendicular to the face of the simplex to the opposite of vertex
-! JDROP. Set D to the vector in this direction and with length FACTOR_GAMMA * DELTA. Since
-! FACTOR_ALPHA < FACTOR_GAMMA < FACTOR_BETA, D improves the geometry of the simplex as per (14) of
-! the COBYLA paper. This also explains why this subroutine does not replace DELTA with
-! DELBAR = MAX(MIN(TENTH * SQRT(MAXVAL(DISTSQ)), HALF * DELTA), RHO) as in NEWUOA.
+! JDROP. Set D to the vector in this direction and with length DELBAR.
 d = simi(jdrop, :)
-d = factor_gamma * delta * (d / norm(d))
+d = delbar * (d / norm(d))
 
 ! The code below chooses the direction of D according to an approximation of the merit function.
 ! See (17) of the COBYLA paper and  line 225 of Powell's cobylb.f.
@@ -293,10 +289,10 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(size(d) == n .and. all(is_finite(d)), 'SIZE(D) == N, D is finite', srname)
-    ! In theory, ||S|| == FACTOR_GAMMA*DELTA, which may be false due to rounding, but not too far.
+    ! In theory, ||S|| == DELBAR, which may be false due to rounding, but not too far.
     ! It is crucial to ensure that the geometry step is nonzero, which holds in theory.
-    call assert(norm(d) > 0.9_RP * factor_gamma * delta .and. norm(d) <= 1.1_RP * factor_gamma * delta, &
-        & '||D|| == FACTOR_GAMMA*DELTA', srname)
+    call assert(norm(d) > 0.9_RP * delbar .and. norm(d) <= 1.1_RP * delbar, &
+        & '||D|| == DELBAR', srname)
 end if
 end function geostep
 
