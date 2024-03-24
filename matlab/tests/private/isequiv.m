@@ -287,7 +287,6 @@ elseif isfield(options, 'seed')
 else
     yw = year_week('Asia/Shanghai');
 end
-fprintf('\nYW = %d\n', yw);
 rseed = max(0, min(2^32 - 1,  sum(pname) + n + ir + yw));  % A random seed defined by the current test and yw
 orig_rng_state = rng();  % Save the current random number generator settings
 rng(rseed);  % Set the random seed for reproducibility
@@ -312,7 +311,7 @@ test_options.fortran = true;
 test_options.output_xhist = (rand > 0.5);
 %test_options.output_xhist = 1;
 test_options.output_nlchist = (rand > 0.5);
-test_options.maxhist = floor(randn*1.5*test_options.maxfun);
+test_options.maxhist = floor((randn+2)*100*n);
 %test_options.maxhist = test_options.maxfun;
 if single_test
     % DO NOT INVOKE ANY RANDOMIZATION WITHIN THIS IF. Otherwise, a single test cannot reproduce the
@@ -322,7 +321,7 @@ if single_test
     test_options.output_nlchist = true;
 end
 test_options.maxfilt = floor(randn*500);
-test_options.iprint = floor(3*abs(randn));
+test_options.iprint = floor(0.6*abs(randn));
 test_options.quiet = (rand < 0.9);
 % Test all precisions. For unavailable precisions, the double-precision version will be called.
 if rand < 0.7  % Prob = 0.6
@@ -582,6 +581,7 @@ if ~isempty(exception)
         prob1.Aeq
         prob1.beq
         test_options
+        fprintf('\nThe seed is\t\t%d\n\n', yw);
         rethrow(exception)
     end
 end
@@ -625,6 +625,7 @@ if ~equiv
     prob1.Aeq
     prob1.beq
     test_options
+    fprintf('\nThe seed is\t\t%d\n\n', yw);
     if single_test && options.sequential
         cd(options.olddir);
         keyboard

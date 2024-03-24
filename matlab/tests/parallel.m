@@ -17,7 +17,7 @@ elseif isfield(options, 'seed')
 else
     yw = year_week('Asia/Shanghai');
 end
-fprintf('\nYW = %d\n', yw);
+fprintf('\nThe seed is\t\t%d\n\n', yw);
 % Define the random seed by yw
 random_seed = yw;
 orig_rng_state = rng();  % Save the current random number generator settings
