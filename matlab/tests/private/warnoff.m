@@ -1,5 +1,13 @@
-function orig_warning_state = warnoff(solvers)
+function orig_warning_state = warnoff(solvers, verbose)
 orig_warning_state = warning;
+
+if nargin < 2
+    verbose = false;
+end
+
+if verbose
+    return  % Do nothing bu return `orig_warning_state`
+end
 
 for isol = 1 : length(solvers)
     if endsWith(solvers{isol}, '_classical')

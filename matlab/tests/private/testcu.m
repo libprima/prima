@@ -188,7 +188,7 @@ if sequential
     for ip = minip : maxip
 
         % Turn off unwanted warnings
-        orig_warning_state = warnoff(solvers);
+        orig_warning_state = warnoff(solvers, verbose);
 
         pname = plist{ip};
         [~, time] = system('date +%y%m%d_%H%M%S');
@@ -267,7 +267,7 @@ else
     parfor ip = minip : maxip
 
         % Turn off unwanted warnings
-        orig_warning_state = warnoff(solvers);
+        orig_warning_state = warnoff(solvers, verbose);
 
         pname = plist{ip};
         [~, time] = system('date +%y%m%d_%H%M%S');
