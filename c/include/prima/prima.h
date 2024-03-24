@@ -225,7 +225,7 @@ typedef struct {
     // N.B.: 1. ctol is absolute, not relative.
     // 2. ctol is used for choosing the returned x. It does not affect the iterations of the algorithm.
     // Default: NaN, which will be interpreted in Fortran as not present, in which case a default value
-    // of machine epsilon will be used.
+    // of sqrt(machine epsilon) will be used.
     double ctol;
 
     // data: user data, will be passed through the objective function callback
