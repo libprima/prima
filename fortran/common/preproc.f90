@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 24, 2024 AM10:58:31
+! Last Modified: Sunday, March 24, 2024 AM11:21:48
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -158,7 +158,7 @@ if (maxfun <= max(0, min_maxfun - 1)) then
         ! https://fortran-lang.discourse.group/t/loop-variable-reaching-integer-huge-causes-infinite-loop
         ! https://fortran-lang.discourse.group/t/loops-dont-behave-like-they-should
     end if
-    call warning(solver, 'prima, Invalid MAXFUN; it should be at least '//min_maxfun_str//'; it is set to '//num2str(maxfun))
+    call warning(solver, 'Invalid MAXFUN; it should be at least '//min_maxfun_str//'; it is set to '//num2str(maxfun))
 end if
 
 ! Validate MAXHIST
