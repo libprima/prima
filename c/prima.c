@@ -98,7 +98,7 @@ int prima_init_result(prima_result_t *const result, const prima_problem_t proble
     if (!result->x)
         return PRIMA_MEMORY_ALLOCATION_FAILS;
     for (int i = 0; i < problem.n; i++)
-        result->x[i] = problem.x0[i];
+        result->x[i] = NAN;
 
     // f: objective function value at the returned point
     result->f = NAN;
@@ -238,12 +238,19 @@ int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t prob
 {
     int use_constr = (algorithm == PRIMA_COBYLA);
 
-    int info = prima_check_problem(problem, use_constr, algorithm);
+    int info = prima_init_result(result, problem);
 
     if (info == 0)
-        info = prima_init_result(result, problem);
+        info = prima_check_problem(problem, use_constr, algorithm);
 
     if (info == 0) {
+        // We copy x0 into result->x only after prima_check_problem has succeeded,
+        // so that if prima_check_problem failed, result->x will not contained a
+        // seemingly valid value.
+        for (int i = 0; i < problem.n; i++) {
+            result->x[i] = problem.x0[i];
+        }
+
         switch (algorithm) {
             case PRIMA_BOBYQA:
                 bobyqa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), problem.xl, problem.xu, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, options.callback, &info);
@@ -275,10 +282,10 @@ int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t prob
             default:
                 return PRIMA_INVALID_INPUT;
         }
-
-        result->status = info;
-        result->message = prima_get_rc_string(info);
     }
+
+    result->status = info;
+    result->message = prima_get_rc_string(info);
 
     return info;
 }
