@@ -93,31 +93,11 @@ int prima_init_result(prima_result_t *const result, const prima_problem_t proble
 
     memset(result, 0, sizeof(prima_result_t));
 
-    // x: returned point
-    result->x = (double*)malloc(problem.n * sizeof(double));
-    if (!result->x)
-        return PRIMA_MEMORY_ALLOCATION_FAILS;
-    for (int i = 0; i < problem.n; i++)
-        result->x[i] = NAN;
-
     // f: objective function value at the returned point
     result->f = NAN;
 
     // cstrv: constraint violation at the returned point (COBYLA and LINCOA only)
     result->cstrv = NAN;
-
-    // nlconstr: nonlinear constraint values at the returned point, of size m_nlcon (COBYLA only)
-    if (problem.m_nlcon <= 0)
-        result->nlconstr = NULL;
-    else {
-        result->nlconstr = (double*)malloc(problem.m_nlcon * sizeof(double));
-        if (!result->nlconstr) {
-            free(result->x);
-            return PRIMA_MEMORY_ALLOCATION_FAILS;
-        }
-        for (int i = 0; i < problem.m_nlcon; i++)
-            result->nlconstr[i] = NAN;
-    }
 
     // nf: number of function evaluations
     result->nf = INT_MIN;
@@ -127,6 +107,22 @@ int prima_init_result(prima_result_t *const result, const prima_problem_t proble
 
     // message: exit message
     result->message = NULL;
+
+    // x: returned point
+    result->x = (double*)malloc(problem.n * sizeof(double));
+    if (!result->x)
+        return PRIMA_MEMORY_ALLOCATION_FAILS;
+    for (int i = 0; i < problem.n; i++)
+        result->x[i] = NAN;
+
+    // nlconstr: nonlinear constraint values at the returned point, of size m_nlcon (COBYLA only)
+    result->nlconstr = (double*)malloc(problem.m_nlcon * sizeof(double));
+    if (!result->nlconstr) {
+        free(result->x);
+        return PRIMA_MEMORY_ALLOCATION_FAILS;
+    }
+    for (int i = 0; i < problem.m_nlcon; i++)
+        result->nlconstr[i] = NAN;
 
     return 0;
 }
