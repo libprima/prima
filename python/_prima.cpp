@@ -154,6 +154,10 @@ PYBIND11_MODULE(_prima, m) {
       prima_problem_t problem;
       prima_init_problem(&problem, py_x0.size());
       problem.x0 = py_x0.mutable_data();
+      // In order to use automatic memory management, we create an std::vector here to store the initial
+      // value of the constraints. This way the memory is guaranteed to be freed in case we hit any of the
+      // exceptions.
+      std::vector<double> nlconstr0;
 
       // Process options.
       prima_options_t options;
@@ -164,8 +168,26 @@ PYBIND11_MODULE(_prima, m) {
         if(options_dict.contains("maxfev"))    { options.maxfun    = options_dict["maxfev"].cast<int>(); }
         if(options_dict.contains("maxfun"))    { options.maxfun    = options_dict["maxfun"].cast<int>(); }
         if(options_dict.contains("npt"))       { options.npt       = options_dict["npt"].cast<int>(); }
+        if(options_dict.contains("ctol"))      { options.ctol      = options_dict["ctol"].cast<double>(); }
         if(options_dict.contains("rhobeg"))    { options.rhobeg    = options_dict["rhobeg"].cast<double>(); }
         if(options_dict.contains("rhoend"))    { options.rhoend    = options_dict["rhoend"].cast<double>(); }
+        // The following are not options, but part of the problem. We are using the options dictionary
+        // as a convenient way to pass them to C++.
+        if(options_dict.contains("f0"))        { problem.f0        = options_dict["f0"].cast<double>(); }
+        if(options_dict.contains("m_nlcon"))   { problem.m_nlcon   = options_dict["m_nlcon"].cast<double>(); }
+        if(options_dict.contains("nlconstr0"))    {
+          try
+          {
+            py::buffer_info constr_list_buffer_info = options_dict["nlconstr0"].cast<py::buffer>().request();
+            nlconstr0.resize(problem.m_nlcon);
+            memcpy(nlconstr0.data(), constr_list_buffer_info.ptr, constr_list_buffer_info.size * constr_list_buffer_info.itemsize);
+            problem.nlconstr0 = nlconstr0.data();
+          }
+          catch(const std::exception& e)
+          {
+            throw(std::invalid_argument("nonlinear_constraint_function must return a double or a double array"));
+          }
+        }
       }
       options.data = (void*)&args;
 
@@ -191,38 +213,10 @@ PYBIND11_MODULE(_prima, m) {
           *f = result;
       };
 
-      // In order to use automatic memory management, we create an std::vector here to store the initial
-      // value of the constraints. This way the memory is guaranteed to be freed in case we hit any of the
-      // exceptions.
-      std::vector<double> nlconstr0;
       if ( algorithm == PRIMA_COBYLA ) {
         if (python_nonlinear_constraint_function_holder.is_none()) {
           throw std::invalid_argument("nonlinear_constraint_function must be provided if nonlinear constraints are provided");
         }
-
-        // Gather information needed to define the problem.
-        // We copy some of the code used below to evaluate the constraint function. Unfortunately
-        // we cannot reuse it since we need to extract the number of constraints from the return value
-        // in addition to the constraint values.
-        py::object constraints = python_nonlinear_constraint_function_holder(py_x0);
-        try
-        {
-          py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
-          if (constr_list_buffer_info.format != "d")
-          {
-            throw std::invalid_argument("nonlinear_constraint_function must return a double array");
-          }
-          problem.m_nlcon = constr_list_buffer_info.size;
-          nlconstr0.resize(problem.m_nlcon);
-          memcpy(nlconstr0.data(), constr_list_buffer_info.ptr, constr_list_buffer_info.size * constr_list_buffer_info.itemsize);
-          problem.nlconstr0 = nlconstr0.data();
-        }
-        catch(const std::exception& e)
-        {
-          throw(std::invalid_argument("nonlinear_constraint_function must return a double or a double array"));
-        }
-        // obtain f0
-        calfun(problem.x0, &(problem.f0), &args);
 
         // create the combined objective/constraint function
         problem.calcfc = [](const double x[], double *f, double constr[], const void *data) {
@@ -237,10 +231,6 @@ PYBIND11_MODULE(_prima, m) {
           try
           {
             py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
-            if (constr_list_buffer_info.format != "d")
-            {
-              throw std::invalid_argument("nonlinear_constraint_function must return a double array");
-            }
 
             // We need to copy. We cannot set the pointer since we are not passed a pointer-to-pointer
             for (int i = 0; i < constr_list_buffer_info.size; i++) {

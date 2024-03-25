@@ -30,8 +30,9 @@ def transform_constraint_function(nlc):
         
         # Combine the upper and lower bounds to transform the function into the form
         # expected by the Fortran backend.
-        return np.concatenate(([vi - ub_ii for ub_ii, vi in zip(ub, values) if ub_ii < np.inf],
-                                [lb_ii - vi for lb_ii, vi in zip(lb, values) if lb_ii > -np.inf]))
+        return np.concatenate(([lb_ii - vi for lb_ii, vi in zip(lb, values) if lb_ii > -np.inf],
+                               [vi - ub_ii for ub_ii, vi in zip(ub, values) if ub_ii < np.inf],
+                            ))
     return newconstraint
 
 
@@ -41,7 +42,7 @@ def process_nl_constraints(nlcs):
         fun_i = transform_constraint_function(nlc)
         functions.append(fun_i)
     def constraint_function(x):
-        values = np.empty(0)
+        values = np.empty(0, dtype=np.float64)
         for fun in functions:
             values = np.concatenate((values, fun(x)))
         return values

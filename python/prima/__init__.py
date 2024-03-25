@@ -77,8 +77,9 @@ def process_constraints(constraints):
 def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callback=None, options=None):
 
     linear_constraint, nonlinear_constraint_function = process_constraints(constraints)
-        
-    quiet = options.get("quiet", True) if options is not None else True
+
+    options = {'quiet': True} if options is None else options
+    quiet = options.get("quiet", True)
 
     if method is None:
         if nonlinear_constraint_function is not None:
@@ -127,6 +128,19 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         A_eq, b_eq, A_ineq, b_ineq = separate_LC_into_eq_and_ineq(linear_constraint)
     else:
         A_eq, b_eq, A_ineq, b_ineq = None, None, None, None
+
+    if nonlinear_constraint_function is not None:
+        # If there is a nonlinear constraint function, we will call COBYLA, which needs the number of nonlinear
+        # constraints (m_nlcon). In order to get this number we need to evaluate the constraint function at x0.
+        # The constraint value at x0 (nlconstr0) is not discarded but passed down to the Fortran backend, as its
+        # evaluation is assumed to be expensive. We also evaluate the objective function at x0 and pass the result
+        # (f0) down to the Fortran backend, which expects nlcontr0 and f0 to be provided in sync.
+
+        f0 = fun(x0, *args)
+        nlconstr0 = nonlinear_constraint_function(x0)
+        options['f0'] = f0
+        options['nlconstr0'] = nlconstr0
+        options['m_nlcon'] = len(nlconstr0)
 
     return _minimize(
         fun,

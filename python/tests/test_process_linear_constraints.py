@@ -27,5 +27,5 @@ def test_separate_LC_into_eq_and_ineq():
     A_eq, b_eq, A_ineq, b_ineq = separate_LC_into_eq_and_ineq(linear_constraint)
     assert (A_eq == np.array([[1, 2]])).all()
     assert all(b_eq == [5])
-    assert (A_ineq == np.array([[3, 4], [-3, -4]])).all()
-    assert all(b_ineq == [8, -6])
+    assert (A_ineq == np.array([[-3, -4], [3, 4]])).all()
+    assert all(b_ineq == [-6, 8])
