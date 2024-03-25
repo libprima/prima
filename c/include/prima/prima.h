@@ -245,6 +245,9 @@ int prima_init_options(prima_options_t *const options);
 
 
 // Structure to hold the result
+// prima_minimize will allocate the memory for x and nlconstr (if needed),
+// and as such the user is expected to free the memory using prima_free_result
+// once they are done using the contents of the result (or have saved the contents).
 typedef struct {
 
     // x: returned point
@@ -277,11 +280,14 @@ int prima_free_result(prima_result_t *const result);
 
 
 /*
- * The function that does the minimization using a PRIMA solver
- * algorithm : optimization algorithm (see prima_algorithm)
- * problem   : optimization problem (see prima_problem)
- * options   : optimization options (see prima_options)
- * result    : optimization result (see prima_result)
+ * The function that does the minimization using a PRIMA solver.
+ * After using (or saving) the result, the user is expected to call
+ * prima_free_result, regardless of the return value of prima_minimize,
+ * in order to avoid memory leaks.
+ * algorithm : optimization algorithm (see prima_algorithm_t)
+ * problem   : optimization problem (see prima_problem_t)
+ * options   : optimization options (see prima_options_t)
+ * result    : optimization result (see prima_result_t)
  * return    : see prima_rc_t enum for return codes
  */
 PRIMAC_API
