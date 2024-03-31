@@ -78,7 +78,7 @@ jobs:
 
       - name: Set up MATLAB with optimization toolbox
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox == 'yes' }}
-        uses: matlab-actions/setup-matlab@v2.1.0
+        uses: matlab-actions/setup-matlab@v2.1.1
         with:
           release: ${{ matrix.matlab }}
           cache: true
@@ -86,7 +86,7 @@ jobs:
 
       - name: Set up MATLAB without optimization toolbox
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true' && matrix.with_optim_toolbox != 'yes' }}
-        uses: matlab-actions/setup-matlab@v2.1.0
+        uses: matlab-actions/setup-matlab@v2.1.1
         with:
           release: ${{ matrix.matlab }}
           cache: true
