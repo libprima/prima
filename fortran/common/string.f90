@@ -6,7 +6,7 @@ module string_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, March 31, 2024 PM07:17:07
+! Last Modified: Sunday, March 31, 2024 PM09:44:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -121,9 +121,9 @@ character(len=:), allocatable :: s
 character(len=*), parameter :: srname = 'REAL2STR_SCALAR'
 character(len=:), allocatable :: sformat
 character(len=MAX_NUM_STR_LEN) :: str
-integer(IK) :: ndgt_loc  ! The number of decimal digits to print
-integer(IK) :: nexp_loc  ! The number of digits in the exponent
-integer(IK) :: wx  ! The width of the printed X
+integer :: ndgt_loc  ! The number of decimal digits to print
+integer :: nexp_loc  ! The number of digits in the exponent
+integer :: wx  ! The width of the printed X
 
 ! Preconditions
 if (DEBUGGING) then
@@ -141,27 +141,28 @@ end if
 ! Calculation starts !
 !====================!
 
+if (present(ndgt)) then
+    ndgt_loc = ndgt
+else
+    ! By default, we print at most the same number of decimal digits as the double precision.
+    ndgt_loc = min(precision(x), precision(0.0_DP)) + 1
+end if
+ndgt_loc = min(ndgt_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0))  ! Safeguard
+if (present(nexp)) then
+    nexp_loc = nexp
+else
+    nexp_loc = ceiling(log10(real(range(x) + 0.1)))  ! Use + 0.1 in case RANGE(X) = 10^k.
+end if
+nexp_loc = min(nexp_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0))
+
 if (.not. is_finite(x)) then
     write (str, *) x
     s = strip(str)  ! Remove the leading and trailing spaces, if any.
 else
-    if (present(ndgt)) then
-        ndgt_loc = int(ndgt, IK)
-    else
-        ! By default, we print at most the same number of decimal digits as the double precision.
-        ndgt_loc = int(min(precision(x), precision(0.0_DP)), IK)
-    end if
-    ndgt_loc = min(ndgt_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0, IK))
-    if (present(nexp)) then
-        nexp_loc = int(nexp, IK)
-    else
-        nexp_loc = ceiling(log10(real(range(x) + 0.1)), IK)  ! Use + 0.1 in case RANGE(X) = 10^k.
-    end if
-    nexp_loc = min(nexp_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0, IK))
-    wx = ndgt_loc + nexp_loc + 5_IK
+    wx = ndgt_loc + nexp_loc + 5
     call validate(wx <= MAX_NUM_STR_LEN, 'The width of the printed number is at most ' &
         & //int2str(int(MAX_NUM_STR_LEN, IK)), srname)
-    sformat = '(1PE'//int2str(wx)//'.'//int2str(ndgt_loc)//'E'//int2str(nexp_loc)//')'
+    sformat = '(1PE'//int2str(int(wx, IK))//'.'//int2str(int(ndgt_loc, IK))//'E'//int2str(int(nexp_loc, IK))//')'
     write (str, sformat) x
     s = trim(str)  ! Remove the trailing spaces, but keep the leading ones, if any.
 end if
@@ -246,9 +247,9 @@ if (present(ndgt)) then
     ndgt_loc = ndgt
 else
     ! By default, we print at most the same number of decimal digits as the double precision.
-    ndgt_loc = min(precision(x), precision(0.0_DP))
+    ndgt_loc = min(precision(x), precision(0.0_DP)) + 1
 end if
-ndgt_loc = min(ndgt_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0))
+ndgt_loc = min(ndgt_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0))  ! Safeguard
 
 if (present(nexp)) then
     nexp_loc = nexp
