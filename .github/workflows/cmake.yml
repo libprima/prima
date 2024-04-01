@@ -31,6 +31,8 @@ jobs:
       matrix:
         # See https://github.com/fortran-lang/setup-fortran?tab=readme-ov-file#runner-compatibility
         # for the toolchains provided by fortran-lang/setup-fortran. We test the latest three on each OS.
+        # N.B.: As of 20240401, setup-fortran fails constantly with windows-latest and intel-clasic
+        # 2021.8. Thus this combination is not included (see the Windows part below).
         # First define the toolchains on Linux and macOS.
         os: [ubuntu-latest, macos-latest, macos-13]
         toolchain:
@@ -65,8 +67,6 @@ jobs:
             toolchain: {compiler: intel, version: '2024.0', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
             toolchain: {compiler: intel, version: '2024.0', cflags: '', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
-          - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.8', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.9', cflags: '/Qdiag-disable:10441', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
