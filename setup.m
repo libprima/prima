@@ -159,10 +159,11 @@ fprintf('\nVerifying the setup of MEX ... \n');
 language = 'Fortran'; % Language to compile
 mex_well_conf = try_mex_setup(language);
 if mex_well_conf == 0
-    fprintf('\nThe MEX of your MATLAB is not properly configured for compiling Fortran.');
-    fprintf('\nPlease configure MEX before using this package. Try ''help mex'' for more information.');
-    fprintf('\nNote that MEX is a product of MathWorks, and its configuration is not part of this package.\n\n');
+    fprintf('\nMATLAB needs you to set MEX up for Fortran.');
+    fprintf('\nTry ''help mex'' or ask a MATLAB expert about MEX setup.');
+    fprintf('\nNote: MEX is a product of MathWorks. Its configuration is not part of this package.\n\n');
     return
+
 elseif mex_well_conf == -1
     fprintf('\nmex(''-setup'', ''%s'') runs successfully but we cannot verify that MEX works properly.', language);
     fprintf('\nWe will try to continue.\n\n');

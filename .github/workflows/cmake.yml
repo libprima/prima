@@ -31,7 +31,7 @@ jobs:
       matrix:
         # See https://github.com/fortran-lang/setup-fortran?tab=readme-ov-file#runner-compatibility
         # for the toolchains provided by fortran-lang/setup-fortran. We test the latest three on each OS.
-        # N.B.: As of 20240401, setup-fortran fails constantly with windows-latest and intel-clasic
+        # N.B.: As of 20240401, setup-fortran fails constantly with windows-latest and intel-classic
         # 2021.8. Thus this combination is not included (see the Windows part below).
         # First define the toolchains on Linux and macOS.
         os: [ubuntu-latest, macos-latest, macos-13]
