@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 31, 2024 PM08:14:18
+! Last Modified: Wednesday, April 03, 2024 AM12:02:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -135,6 +135,7 @@ real(RP) :: qred
 real(RP) :: ratio
 real(RP) :: rho
 real(RP) :: xbase(size(x))
+real(RP) :: xdrop(size(x))
 real(RP) :: xpt(size(x), size(distsq))
 real(RP), allocatable :: pl(:, :)
 real(RP), parameter :: trtol = 1.0E-2_RP  ! Convergence tolerance of trust-region subproblem solver
@@ -343,13 +344,14 @@ do tr = 1, maxtr
         ! DDMOVE is norm square of DMOVE in the UOBYQA paper. See Steps 6--7 in Sec. 5 of the paper.
         ddmove = ZERO
         if (knew_tr > 0) then
-            ddmove = sum((xpt(:, knew_tr) - xpt(:, kopt))**2)  ! KOPT is unupdated.
+            xdrop = xpt(:, knew_tr)
             ! Update PL, PQ, XPT, FVAL, and KOPT so that XPT(:, KNEW_TR) becomes XOPT + D.
             call update(knew_tr, d, f, moderr, kopt, fval, pl, pq, xpt)
             if (.not. (all(is_finite(pq)))) then
                 info = NAN_INF_MODEL
                 exit
             end if
+            ddmove = sum((xdrop - xpt(:, kopt))**2)  ! KOPT is updated.
         end if
     end if  ! End of IF (SHORTD .OR. TRFAIL). The normal trust-region calculation ends.
 
