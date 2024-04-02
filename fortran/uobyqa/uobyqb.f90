@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 03, 2024 AM12:02:22
+! Last Modified: Wednesday, April 03, 2024 AM12:45:05
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -408,7 +408,7 @@ do tr = 1, maxtr
     !bad_trstep = (shortd .or. trfail .or. ratio <= eta1 .or. knew_tr == 0)  ! Works poorly!
     improve_geo = bad_trstep .and. .not. adequate_geo
     ! BAD_TRSTEP (for REDUCE_RHO): Is the last trust-region step bad?
-    bad_trstep = (shortd .or. trfail .or. ratio <= 0 .or. knew_tr == 0)  ! Performs better than the below from Powell.
+    bad_trstep = (shortd .or. trfail .or. ratio <= 0 .or. knew_tr == 0)  ! Performs better than the one below from Powell.
     !bad_trstep = (shortd .or. trfail .or. (ratio <= 0 .and. ddmove <= 4.0_RP * delta**2) .or. knew_tr == 0)
     reduce_rho = bad_trstep .and. adequate_geo .and. small_trrad
 

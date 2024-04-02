@@ -8,7 +8,7 @@ module geometry_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tuesday, March 12, 2024 PM09:58:03
+! Last Modified: Wednesday, April 03, 2024 AM12:49:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -99,14 +99,16 @@ end if
 ! However, Powell's LINCOA code is different. In his code, the KNEW after a trust-region step is
 ! picked in lines 72--96 of the update.f for LINCOA, where DISTSQ is calculated as the square of the
 ! distance to XPT(KOPT, :) (Powell recorded the interpolation points in rows). However, note that
-! the trust-region trial point has not been included into XPT yet --- it can not be included
-! without knowing KNEW (see lines 332-344 and 404--431 of lincob.f). Hence Powell's LINCOA code
-! picks KNEW based on the distance to the un-updated "optimal point", which is unreasonable.
-! This has been corrected in our implementation of LINCOA, yet it does not boost the performance.
+! the trust-region trial point has not been included into XPT yet --- it cannot be included without
+! knowing KNEW (see lines 332-344 and 404--431 of lincob.f). Hence Powell's LINCOA code picks KNEW
+! based on the distance to the un-updated "optimal point", which is unreasonable. This has been
+! corrected in our implementation of LINCOA, yet it does not boost the performance.
 if (ximproved) then
     distsq = sum((xpt - spread(xpt(:, kopt) + d, dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - (xpt(:, kopt) + d)).^2)  % d should be a column! Implicit expansion
 else
     distsq = sum((xpt - spread(xpt(:, kopt), dim=2, ncopies=npt))**2, dim=1)
+    !!MATLAB: distsq = sum((xpt - xpt(:, kopt)).^2)  % Implicit expansion
 end if
 
 weight = max(ONE, distsq / rho**2)**4
