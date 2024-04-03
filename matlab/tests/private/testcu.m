@@ -34,7 +34,8 @@ ctol = 1e-10;  % A point is considered feasible if its constraint violation is l
 ctol_multiple = 1;  % The real ctol to use is ctol*ctol_multiple.
 cpenalty = 1e10;  % The penalty to use when the constraint violation is greater than ctol.
 type = 'ubln'; % The default types of problems to test
-mindim = 1; % The default minimal dimension of problems to test
+mindim = 2; % The default minimal dimension of problems to test
+% We do not test 1D problems, because they are not interesting, and because the classical uobyqa cannot handle them.
 if any(startsWith(solvers, 'cobyla'))
     maxdim = 20; % The default maximal dimension of problems to test
 else
