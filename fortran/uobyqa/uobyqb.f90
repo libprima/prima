@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 04, 2024 AM11:21:53
+! Last Modified: Thursday, April 04, 2024 PM10:07:42
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -564,6 +564,10 @@ if (info == SMALL_TR_RADIUS .and. shortd .and. norm(x - (xbase + xpt(:, kopt))) 
         fval(kopt) = f
     end if
 end if
+
+! Choose the [X, F] to return.
+x = xbase + xpt(:, kopt)
+f = fval(kopt)
 
 ! Arrange FHIST and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist)

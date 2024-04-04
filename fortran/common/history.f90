@@ -7,7 +7,7 @@ module history_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 04, 2024 PM12:50:43
+! Last Modified: Thursday, April 04, 2024 PM10:15:40
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -294,10 +294,19 @@ if (DEBUGGING) then  ! Called after each function evaluation when debugging; can
     ! possible to revise the initialization subroutine to avoid repetition, but we choose not to,
     ! a motivation being to keep the initialization parallelizable.
     ! 2. We skip the test if N = 1, as false positive may occur (also possible when N > 1, but rare).
+    ! 3. For segments of length 1, we check whether it repeats three times. For segments of length
+    ! i > 1, we check whether it repeats twice. Due to rounding errors, it may happen that the same
+    ! point is repeated twice, but the solver is not in an infinite cycle, which was observed in an
+    ! experiment of NEWUOA on 20240404.
     nhist = min(nf, maxxhist)
     n = int(size(x), kind(n))
     if (n > 1 .and. nf > (n + 1) * (n + 2) / 2) then
-        do i = 1, min(100_IK, nhist / 2_IK)
+        if (nhist >= 3) then
+            call wassert(.not. (all(abs(xhist(:, nhist) - xhist(:, nhist - 1)) <= 0) .and. &
+                & all(abs(xhist(:, nhist - 1) - xhist(:, nhist - 2)) <= 0)), &
+                & 'XHIST does not contain a repeating segment of length 1', srname)
+        end if
+        do i = 2, min(100_IK, nhist / 2_IK)
             call wassert(.not. all(abs(xhist(:, nhist - i + 1:nhist) - xhist(:, nhist - 2 * i + 1:nhist - i)) <= 0), &
                 & 'XHIST does not contain a repeating segment of length '//num2str(i), srname)
         end do

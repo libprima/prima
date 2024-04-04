@@ -8,7 +8,7 @@ module trustregion_newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 16, 2024 AM05:16:56
+! Last Modified: Thursday, April 04, 2024 PM09:31:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
