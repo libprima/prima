@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, March 31, 2024 PM07:43:03
+! Last Modified: Wednesday, April 03, 2024 PM08:37:51
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -347,7 +347,6 @@ do tr = 1, maxtr
     ! Calculate the trust-region trial step D. Note that D does NOT depend on CPEN.
     d = trstlp(A, -conmat(:, n + 1), delta, g)
     dnorm = min(delta, norm(d))
-    x = sim(:, n + 1) + d
 
     ! Is the trust-region trial step short? Note that we compare DNORM with RHO, not DELTA.
     ! Powell's code essentially defines SHORTD by SHORTD = (DNORM < HALF * RHO). In our tests,
@@ -379,9 +378,11 @@ do tr = 1, maxtr
             delta = rho  ! Set DELTA to RHO when it is close to or below.
         end if
     else
+        ! Calculate the next value of the objective and constraint functions.
         ! If X is close to one of the points in the interpolation set, then we do not evaluate the
         ! objective and constraints at X, assuming them to have the values at the closest point.
         ! N.B.: If this happens, do NOT include X into the filter, as F and CONSTR are inaccurate.
+        x = sim(:, n + 1) + d
         distsq(n + 1) = sum((x - sim(:, n + 1))**2)
         distsq(1:n) = [(sum((x - (sim(:, n + 1) + sim(:, j)))**2), j=1, n)]  ! Implied do-loop
         !!MATLAB: distsq(1:n) = sum((x - (sim(:,1:n) + sim(:, n+1)))**2, 1)  % Implicit expansion
@@ -564,8 +565,8 @@ do tr = 1, maxtr
         ! Calculate the geometry step D.
         delbar = HALF * delta
         d = geostep(jdrop_geo, amat, bvec, conmat, cpen, cval, delbar, fval, simi)
-        x = sim(:, n + 1) + d
 
+        ! Calculate the next value of the objective and constraint functions.
         ! If X is close to one of the points in the interpolation set, then we do not evaluate the
         ! objective and constraints at X, assuming them to have the values at the closest point.
         ! N.B.:
@@ -573,6 +574,7 @@ do tr = 1, maxtr
         ! 2. In precise arithmetic, the geometry improving step ensures that the distance between X
         ! and any interpolation point is at least DELBAR, yet X may be close to them due to
         ! rounding. In an experiment with single precision on 20240317, X = SIM(:, N+1) occurred.
+        x = sim(:, n + 1) + d
         distsq(n + 1) = sum((x - sim(:, n + 1))**2)
         distsq(1:n) = [(sum((x - (sim(:, n + 1) + sim(:, j)))**2), j=1, n)]  ! Implied do-loop
         !!MATLAB: distsq(1:n) = sum((x - (sim(:,1:n) + sim(:, n+1)))**2, 1)  % Implicit expansion
@@ -645,7 +647,8 @@ do tr = 1, maxtr
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the last trust-region step if it has not been tried yet.
-! Ensure that X has not been updated after SHORTD == TRUE occurred, or the code below is incorrect.
+! Ensure that D has not been updated after SHORTD == TRUE occurred, or the code below is incorrect.
+x = sim(:, n + 1) + d
 if (info == SMALL_TR_RADIUS .and. shortd .and. norm(x - sim(:, n + 1)) > 1.0E-3_RP * rhoend .and. nf < maxfun) then
     call evaluate(calcfc_internal, x, f, constr)
     cstrv = maximum([ZERO, constr])

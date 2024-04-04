@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 03, 2024 AM12:45:05
+! Last Modified: Thursday, April 04, 2024 AM01:10:44
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -94,6 +94,7 @@ real(RP), intent(out) :: xhist(:, :)  ! XHIST(N, MAXXHIST)
 ! Local variables
 character(len=*), parameter :: solver = 'UOBYQA'
 character(len=*), parameter :: srname = 'UOBYQB'
+integer(IK) :: k
 integer(IK) :: knew_geo
 integer(IK) :: knew_tr
 integer(IK) :: kopt
@@ -284,9 +285,9 @@ do tr = 1, maxtr
     g = pq(1:n) + smat_mul_vec(pq(n + 1:npt - 1), xpt(:, kopt))
     h = vec2smat(pq(n + 1:npt - 1))
     call trstep(delta, g, h, trtol, d, crvmin)
+    dnorm = min(delta, norm(d))
 
     ! Check whether D is too short to invoke a function evaluation.
-    dnorm = min(delta, norm(d))
     shortd = (dnorm <= HALF * rho)  ! `<=` works better than `<` in case of underflow.
 
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
@@ -302,21 +303,24 @@ do tr = 1, maxtr
         end if
     else
         ! Calculate the next value of the objective function.
+        ! If X is close to one of the points in the interpolation set, then we do not evaluate the
+        ! objective function X, assuming it to have the value at the closest point.
         x = xbase + (xpt(:, kopt) + d)
-        call evaluate(calfun, x, f)
-        nf = nf + 1_IK
+        distsq = [(sum((x - (xbase + xpt(:, k)))**2, dim=1), k=1, npt)]  ! Implied do-loop
+        !!MATLAB: distsq = sum((x - (xbase + xpt))**2, 1)  % Implicit expansion
+        if (any(distsq <= (1.0E-4 * rhoend)**2)) then
+            k = int(minloc(distsq, mask=(.not. is_nan(distsq)), dim=1), kind(k))
+            f = fval(k)
+        else
+            ! Evaluate the objective function at X, taking care of possible Inf/NaN values.
+            call evaluate(calfun, x, f)
+            nf = nf + 1_IK
+            ! Save X and F into the history.
+            call savehist(nf, x, xhist, f, fhist)
+        end if
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, 'Trust region', iprint, nf, delta, f, x)
-        ! Save X, F into the history.
-        call savehist(nf, x, xhist, f, fhist)
-
-        ! Check whether to exit
-        subinfo = checkexit(maxfun, nf, f, ftarget, x)
-        if (subinfo /= INFO_DFT) then
-            info = subinfo
-            exit
-        end if
 
         ! Update DNORM_REC and MODERR_REC.
         ! DNORM_REC records the DNORM of the recent function evaluations with the current RHO.
@@ -352,6 +356,13 @@ do tr = 1, maxtr
                 exit
             end if
             ddmove = sum((xdrop - xpt(:, kopt))**2)  ! KOPT is updated.
+        end if
+
+        ! Check whether to exit
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
+            exit
         end if
     end if  ! End of IF (SHORTD .OR. TRFAIL). The normal trust-region calculation ends.
 
@@ -456,21 +467,24 @@ do tr = 1, maxtr
         d = geostep(knew_geo, kopt, delbar, pl, xpt)
 
         ! Calculate the next value of the objective function.
+        ! If X is close to one of the points in the interpolation set, then we do not evaluate the
+        ! objective function X, assuming it to have the value at the closest point.
         x = xbase + (xpt(:, kopt) + d)
-        call evaluate(calfun, x, f)
-        nf = nf + 1_IK
+        distsq = [(sum((x - (xbase + xpt(:, k)))**2, dim=1), k=1, npt)]  ! Implied do-loop
+        !!MATLAB: distsq = sum((x - (xbase + xpt))**2, 1)  % Implicit expansion
+        if (any(distsq <= (1.0E-4 * rhoend)**2)) then
+            k = int(minloc(distsq, mask=(.not. is_nan(distsq)), dim=1), kind(k))
+            f = fval(k)
+        else
+            ! Evaluate the objective function at X, taking care of possible Inf/NaN values.
+            call evaluate(calfun, x, f)
+            nf = nf + 1_IK
+            ! Save X and F into the history.
+            call savehist(nf, x, xhist, f, fhist)
+        end if
 
         ! Print a message about the function evaluation according to IPRINT.
         call fmsg(solver, 'Geometry', iprint, nf, delbar, f, x)
-        ! Save X, F into the history.
-        call savehist(nf, x, xhist, f, fhist)
-
-        ! Check whether to exit
-        subinfo = checkexit(maxfun, nf, f, ftarget, x)
-        if (subinfo /= INFO_DFT) then
-            info = subinfo
-            exit
-        end if
 
         ! Update DNORM_REC and MODERR_REC.
         ! DNORM_REC records the DNORM of the recent function evaluations with the current RHO.
@@ -485,6 +499,13 @@ do tr = 1, maxtr
         call update(knew_geo, d, f, moderr, kopt, fval, pl, pq, xpt)
         if (.not. (all(is_finite(pq)))) then
             info = NAN_INF_MODEL
+            exit
+        end if
+
+        ! Check whether to exit
+        subinfo = checkexit(maxfun, nf, f, ftarget, x)
+        if (subinfo /= INFO_DFT) then
+            info = subinfo
             exit
         end if
     end if  ! End of IF (IMPROVE_GEO). The procedure of improving geometry ends.
@@ -528,22 +549,25 @@ end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 deallocate (pl)
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
-if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm >= TENTH * rhoend .and. nf < maxfun) then
-    x = xbase + (xpt(:, kopt) + d)
+! Ensure that D has not been updated after SHORTD == TRUE occurred, or the code below is incorrect.
+x = xbase + (xpt(:, kopt) + d)
+if (info == SMALL_TR_RADIUS .and. shortd .and. norm(x - (xbase + xpt(:, kopt))) >= TENTH * rhoend .and. nf < maxfun) then
     call evaluate(calfun, x, f)
     nf = nf + 1_IK
+    ! Save X, F into the history.
+    call savehist(nf, x, xhist, f, fhist)
     ! Print a message about the function evaluation according to IPRINT.
     ! Zaikun 20230512: DELTA has been updated. RHO is only indicative here. TO BE IMPROVED.
     call fmsg(solver, 'Trust region', iprint, nf, rho, f, x)
-    ! Save X, F into the history.
-    call savehist(nf, x, xhist, f, fhist)
+    if (f < fval(kopt)) then
+        xpt(:, kopt) = xpt(:, kopt) + d
+        fval(kopt) = f
+    end if
 end if
 
-! Choose the [X, F] to return: either the current [X, F] or [XBASE + XOPT, FOPT].
-if (fval(kopt) < f .or. is_nan(f)) then
-    x = xbase + xpt(:, kopt)
-    f = fval(kopt)
-end if
+! Choose the [X, F] to return.
+x = xbase + xpt(:, kopt)
+f = fval(kopt)
 
 ! Arrange FHIST and XHIST so that they are in the chronological order.
 call rangehist(nf, xhist, fhist)
