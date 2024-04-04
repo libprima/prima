@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 04, 2024 PM09:32:11
+! Last Modified: Thursday, April 04, 2024 PM10:26:06
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -306,7 +306,7 @@ do tr = 1, maxtr
         distsq = [(sum((x - (xbase + xpt(:, k)))**2, dim=1), k=1, npt)]  ! Implied do-loop
         !!MATLAB: distsq = sum((x - (xbase + xpt))**2, 1)  % Implicit expansion
         k = int(minloc(distsq, dim=1), kind(k))
-        if (distsq(k) <= (1.0E-2 * rhoend)**2) then
+        if (distsq(k) <= (1.0E-3 * rhoend)**2) then
             f = fval(k)
         else
             ! Evaluate the objective function at X, taking care of possible Inf/NaN values.
@@ -553,7 +553,7 @@ do tr = 1, maxtr
         distsq = [(sum((x - (xbase + xpt(:, k)))**2, dim=1), k=1, npt)]  ! Implied do-loop
         !!MATLAB: distsq = sum((x - (xbase + xpt))**2, 1)  % Implicit expansion
         k = int(minloc(distsq, dim=1), kind(k))
-        if (distsq(k) <= (1.0E-2 * rhoend)**2) then
+        if (distsq(k) <= (1.0E-3 * rhoend)**2) then
             f = fval(k)
         else
             ! Evaluate the objective function at X, taking care of possible Inf/NaN values.
