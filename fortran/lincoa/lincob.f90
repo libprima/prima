@@ -15,7 +15,7 @@ module lincob_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, March 31, 2024 PM07:35:26
+! Last Modified: Thursday, April 04, 2024 PM05:55:00
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -701,7 +701,7 @@ do tr = 1, maxtr
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
-if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm >= TENTH * rhoend .and. nf < maxfun) then
+if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm > TENTH * rhoend .and. nf < maxfun) then
     x = xbase + (xpt(:, kopt) + d)
     call evaluate(calfun, x, f)
     nf = nf + 1_IK

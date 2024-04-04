@@ -646,7 +646,7 @@ do tr = 1, maxtr
 end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 
 ! Return from the calculation, after trying the Newton-Raphson step if it has not been tried yet.
-if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm >= TENTH * rhoend .and. nf < maxfun) then
+if (info == SMALL_TR_RADIUS .and. shortd .and. dnorm > TENTH * rhoend .and. nf < maxfun) then
     x = xinbd(xbase, xpt(:, kopt) + d, xl, xu, sl, su)  ! In precise arithmetic, X = XBASE + XOPT + D.
     call evaluate(calfun, x, f)
     nf = nf + 1_IK

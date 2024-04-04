@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Wednesday, April 03, 2024 PM08:37:51
+! Last Modified: Thursday, April 04, 2024 AM11:23:03
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -386,8 +386,8 @@ do tr = 1, maxtr
         distsq(n + 1) = sum((x - sim(:, n + 1))**2)
         distsq(1:n) = [(sum((x - (sim(:, n + 1) + sim(:, j)))**2), j=1, n)]  ! Implied do-loop
         !!MATLAB: distsq(1:n) = sum((x - (sim(:,1:n) + sim(:, n+1)))**2, 1)  % Implicit expansion
-        if (any(distsq <= (1.0E-4 * rhoend)**2)) then
-            j = int(minloc(distsq, mask=(.not. is_nan(distsq)), dim=1), kind(j))
+        j = int(minloc(distsq, dim=1), kind(j))
+        if (distsq(j) <= (1.0E-4 * rhoend)**2) then
             f = fval(j)
             constr = conmat(:, j)
             cstrv = cval(j)
@@ -578,8 +578,8 @@ do tr = 1, maxtr
         distsq(n + 1) = sum((x - sim(:, n + 1))**2)
         distsq(1:n) = [(sum((x - (sim(:, n + 1) + sim(:, j)))**2), j=1, n)]  ! Implied do-loop
         !!MATLAB: distsq(1:n) = sum((x - (sim(:,1:n) + sim(:, n+1)))**2, 1)  % Implicit expansion
-        if (any(distsq <= (1.0E-4_RP * rhoend)**2)) then
-            j = int(minloc(distsq, mask=(.not. is_nan(distsq)), dim=1), kind(j))
+        j = int(minloc(distsq, dim=1), kind(j))
+        if (distsq(j) <= (1.0E-4 * rhoend)**2) then
             f = fval(j)
             constr = conmat(:, j)
             cstrv = cval(j)
