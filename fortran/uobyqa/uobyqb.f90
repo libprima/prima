@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, April 04, 2024 AM01:10:44
+! Last Modified: Thursday, April 04, 2024 AM10:36:16
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -308,7 +308,7 @@ do tr = 1, maxtr
         x = xbase + (xpt(:, kopt) + d)
         distsq = [(sum((x - (xbase + xpt(:, k)))**2, dim=1), k=1, npt)]  ! Implied do-loop
         !!MATLAB: distsq = sum((x - (xbase + xpt))**2, 1)  % Implicit expansion
-        if (any(distsq <= (1.0E-4 * rhoend)**2)) then
+        if (any(distsq <= (1.0E-2 * rhoend)**2)) then
             k = int(minloc(distsq, mask=(.not. is_nan(distsq)), dim=1), kind(k))
             f = fval(k)
         else
@@ -472,7 +472,7 @@ do tr = 1, maxtr
         x = xbase + (xpt(:, kopt) + d)
         distsq = [(sum((x - (xbase + xpt(:, k)))**2, dim=1), k=1, npt)]  ! Implied do-loop
         !!MATLAB: distsq = sum((x - (xbase + xpt))**2, 1)  % Implicit expansion
-        if (any(distsq <= (1.0E-4 * rhoend)**2)) then
+        if (any(distsq <= (1.0E-2 * rhoend)**2)) then
             k = int(minloc(distsq, mask=(.not. is_nan(distsq)), dim=1), kind(k))
             f = fval(k)
         else
