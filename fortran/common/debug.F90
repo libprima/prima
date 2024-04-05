@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Saturday, September 16, 2023 AM09:14:37
+! Last Modified: Thursday, April 04, 2024 PM11:00:27
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -150,8 +150,9 @@ call backtrace  ! gfortran: if `-std=f20xy` is imposed, then `-fall-intrinsics` 
 use, non_intrinsic :: ifcore, only : tracebackqq
 implicit none
 call tracebackqq(user_exit_code=-1)
-! According to "Intel Fortran Compiler 19.1 Developer Guide and Reference", item "TRACEBACKQQ":
-! By specifying a user exit code of -1, control returns to the calling program. Specifying a user
+! According to
+! https://www.intel.com/content/www/us/en/docs/fortran-compiler/developer-guide-reference/2024-1/tracebackqq.html,
+! by specifying a user exit code of -1, control returns to the calling program. Specifying a user
 ! exit code with a positive value requests that specified value be returned to the operating system.
 ! The default value is 0, which causes the application to abort execution.
 #endif

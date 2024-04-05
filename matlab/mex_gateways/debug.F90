@@ -11,7 +11,7 @@ module debug_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Monday, January 08, 2024 AM04:12:18
+! Last Modified: Thursday, April 04, 2024 PM10:59:38
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -155,8 +155,9 @@ call backtrace
 use, non_intrinsic :: ifcore, only : tracebackqq
 implicit none
 call tracebackqq(user_exit_code=-1)
-! According to "Intel Fortran Compiler 19.1 Developer Guide and Reference", item "TRACEBACKQQ":
-! By specifying a user exit code of -1, control returns to the calling program. Specifying a user
+! According to
+! https://www.intel.com/content/www/us/en/docs/fortran-compiler/developer-guide-reference/2024-1/tracebackqq.html,
+! by specifying a user exit code of -1, control returns to the calling program. Specifying a user
 ! exit code with a positive value requests that specified value be returned to the operating system.
 ! The default value is 0, which causes the application to abort execution.
 #endif
