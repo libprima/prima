@@ -34,8 +34,26 @@ jobs:
         competitor: [classical, default]
         exclude:
           - dim: large
+            npt: 0.5*(n+1)*(n+2)
+          - dim: large
+            npt: 0.25*n*n
+          - dim: large
             npt: n*sqrt(n)
-            solver: bobyqa
+          - dim: large
+            npt: 4*n
+
+          - dim: big
+            npt: 0.5*(n+1)*(n+2)
+          - dim: big
+            npt: 0.25*n*n
+          - dim: big
+            npt: n*sqrt(n)
+          - dim: big
+            npt: 4*n
+
+          - dim: big
+            npt: 3*n
+            solver: newuoa
 
     steps:
 
