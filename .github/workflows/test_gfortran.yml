@@ -78,11 +78,12 @@ jobs:
           which gfortran && gfortran --version
 
       - name: Revise linalg.f90 regarding a postcondition of p_norm, so that we know what is happening if it fails
+        shell: bash
         run: |
           cd fortran/common || exit 42
           $SEDI "s|'Y >= 0 unless X contains NaN'|'Y >= 0 unless X contains NaN'\&\n\&\/\/num2str(y)\/\/num2str(sum(abs(x)))\/\/num2str(int(is_nan(sum(abs(x)))))\/\/num2str(x)|" linalg.f90
           $SEDI "s|function p_norm(x, p) result(y)|function p_norm(x, p) result(y)\nuse, non_intrinsic :: string_mod, only : num2str|" linalg.f90
-          cat linalg.f90  
+          cat linalg.f90
 
       - name: Conduct the test
         shell: bash  # Important; otherwise, `<` will not work on Windows.
