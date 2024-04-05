@@ -76,13 +76,21 @@ jobs:
 
           # As of 20240316, CMake test fails on cobyla with the Classic flang, AOCC flang, and
           # nvfortran. See https://github.com/libprima/prima/issues/165
-          ctest --output-on-failure -V -E "stress|cobyla"
+          if [[ $FC == 'gfortran' ]] ; then
+              ctest --output-on-failure -V -E "stress"
+          else
+              ctest --output-on-failure -V -E "stress|cobyla"
+          fi
 
       - name: Stress test
         if: ${{ github.event_name == 'schedule' || github.event.inputs.stress-test == 'true' }}
         shell: bash
         run: |
-          ctest --output-on-failure -V -R stress -E cobyla
+          if [[ $FC == 'gfortran' ]] ; then
+              ctest --output-on-failure -V -R stress
+          else
+              ctest --output-on-failure -V -R stress -E cobyla
+          fi
 
 
   # The following job check whether the tests were successful or cancelled due to timeout.
