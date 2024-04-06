@@ -8,7 +8,7 @@ module trustregion_newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 04, 2024 PM09:31:44
+! Last Modified: Saturday, April 06, 2024 PM11:03:07
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -133,7 +133,7 @@ end if
 ! Note that CRVMIN must be scaled back if it is nonzero, but the step is scale invariant.
 ! N.B.: It is faster and safer to scale by multiplying a reciprocal than by division. See
 ! https://fortran-lang.discourse.group/t/ifort-ifort-2021-8-0-1-0e-37-1-0e-38-0/
-if (maxval(abs(gopt_in)) > 1.0E10) then   ! The threshold is empirical.
+if (maxval(abs(gopt_in)) > 1.0E12) then   ! The threshold is empirical.
     modscal = max(TWO * REALMIN, ONE / maxval(abs(gopt_in)))  ! MAX: precaution against underflow.
     gopt = gopt_in * modscal
     pq = pq_in * modscal
