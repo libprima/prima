@@ -8,7 +8,7 @@ module newuob_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, April 06, 2024 PM11:42:10
+! Last Modified: Sunday, April 07, 2024 AM12:31:14
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -626,8 +626,8 @@ do tr = 1, maxtr
     ! Powell's original criteria for shifting XBASE is as follows.
     ! 1. After a trust region step that is not short, shift XBASE if SUM(XOPT**2) >= 1.0E3*DNORM**2.
     ! 2. Before a geometry step, shift XBASE if SUM(XOPT**2) >= 1.0E3*DELBAR**2.
-    ! 1.0E2 works better than 1.0E3 on 20230227.
-    ! 1.0E2 works better than 5.0E2 on 20240406, especially if RP = REAL32.
+    ! 3. 1.0E2 works better than 1.0E3 on 20230227. In addition, 1.0E2 works better than 2.0E2,
+    ! 5.0E2, and 1.0E3 on 20240406, especially if RP = REAL32.
     if (sum(xpt(:, kopt)**2) >= 1.0E2_RP * delta**2) then
         call shiftbase(kopt, xbase, xpt, zmat, bmat, pq, hq, idz)
     end if
