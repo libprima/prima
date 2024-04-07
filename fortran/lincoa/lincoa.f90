@@ -36,7 +36,7 @@ module lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Saturday, March 09, 2024 PM01:43:05
+! Last Modified: Sunday, April 07, 2024 PM04:11:56
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -533,7 +533,7 @@ else
 end if
 !--------------------------------------------------------------------------------------------------!
 
-! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
+! Deallocate variables not needed any more. Indeed, automatic deallocation will take place at exit.
 deallocate (Aineq_loc, Aeq_loc, amat, bineq_loc, beq_loc, bvec)
 
 

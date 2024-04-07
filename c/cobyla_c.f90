@@ -160,7 +160,7 @@ nf = int(nf_loc, kind(nf))
 info = int(info_loc, kind(info))
 nlconstr = real(nlconstr_loc, kind(nlconstr))
 
-! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
+! Deallocate variables not needed any more. Indeed, automatic deallocation will take place at exit.
 if (allocated(maxfun_loc)) deallocate (maxfun_loc)
 if (allocated(rhoend_loc)) deallocate (rhoend_loc)
 if (allocated(rhobeg_loc)) deallocate (rhobeg_loc)
@@ -268,7 +268,7 @@ if (present(terminate)) then
     terminate = logical(terminate_loc, kind(terminate))
 end if
 
-! Deallocate variables not needed any more. Indeed, automatic allocation will take place at exit.
+! Deallocate variables not needed any more. Indeed, automatic deallocation will take place at exit.
 if (allocated(nlconstr_sub_loc)) deallocate (nlconstr_sub_loc)
 
 end subroutine callback_fcn
