@@ -72,6 +72,7 @@ try
     else
         yw = year_week('Asia/Shanghai');
     end
+    options.yw = yw;  % options.yw is needed in `isequiv`.
     if mod(yw, 4) == 0
         options.integer_kind = 0;
     else

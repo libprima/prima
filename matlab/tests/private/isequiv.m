@@ -262,8 +262,8 @@ disp(['prob_start_runs_dir = ', prob_start_runs_dir]);
 disp(['prob_end_dir = ', prob_end_dir]);
 disp(['prob_end_time_dir = ', prob_end_time_dir]);
 disp(['prob_end_runs_dir = ', prob_end_runs_dir]);
-
-fprintf('\n\nSucceed!\n\n');   % Declare success if we arrive here without an error.
+fprintf('\nThe seed is\t\t%d\n', options.yw);
+fprintf('\nSucceed!\n\n');   % Declare success if we arrive here without an error.
 
 return
 
@@ -277,16 +277,8 @@ x0 = prob.x0;
 n = length(x0);
 
 % Some randomization
-% Set seed using pname, n, and ir. We ALTER THE SEED weekly to test the solvers as much as possible.
-% N.B.: The weeknum function considers the week containing January 1 to be the first week of the
-% year, and increments the number every SUNDAY.
-if isfield(options, 'yw')
-    yw = options.yw;
-elseif isfield(options, 'seed')
-    yw = options.seed;
-else
-    yw = year_week('Asia/Shanghai');
-end
+% Set seed using pname, n, and ir. We ALTER THE RANDOM SEED weekly to test the solvers as much as possible.
+yw = options.yw;
 rseed = max(0, min(2^32 - 1,  sum(pname) + n + ir + yw));  % A random seed defined by the current test and yw
 orig_rng_state = rng();  % Save the current random number generator settings
 rng(rseed);  % Set the random seed for reproducibility
@@ -630,7 +622,7 @@ if ~equiv
         cd(options.olddir);
         keyboard
     end
-    error('PRIMA:VerificationFailure', 'Verification failed!');
+    error('PRIMA:VerificationFailure', 'Verification failed on %s at the %dth run with seed %d!', pname, ir, yw);
 end
 
 return
