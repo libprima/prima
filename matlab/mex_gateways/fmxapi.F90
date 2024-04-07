@@ -12,7 +12,7 @@ module fmxapi_mod
 !
 ! Started in July 2020
 !
-! Last Modified: Tuesday, January 02, 2024 PM02:27:24
+! Last Modified: Sunday, April 07, 2024 PM04:30:44
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -460,7 +460,7 @@ if (kind(x) /= kind(x_dp)) then
     end if
 end if
 
-! Deallocate X_DP. Indeed, automatic deallocation would take place.
+! Deallocate X_DP. We prefer explicit deallocation to the automatic one.
 deallocate (x_dp)
 end subroutine read_rvector
 
@@ -514,7 +514,7 @@ if (kind(x) /= kind(x_dp)) then
     end if
 end if
 
-! Deallocate X_DP. Indeed, automatic deallocation would take place.
+! Deallocate X_DP. We prefer explicit deallocation to the automatic one.
 deallocate (x_dp)
 end subroutine read_rmatrix
 

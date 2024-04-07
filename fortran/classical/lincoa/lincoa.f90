@@ -392,7 +392,7 @@ call lincob(calfun, n, npt_loc, m, w(iamat), w(ib), x, rhobeg_loc, rhoend_loc, i
 & int(size(chist_loc), kind=IK))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Deallocate A_LOC, B_LOC, etc. Indeed, automatic deallocation will take place at exit.
+! Deallocate A_LOC, B_LOC, etc. We prefer explicit deallocation to the automatic one.
 deallocate (A_loc)
 deallocate (b_loc)
 deallocate (iact)

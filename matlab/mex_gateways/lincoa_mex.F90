@@ -11,7 +11,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Sunday, February 25, 2024 AM11:26:14
+! Last Modified: Sunday, April 07, 2024 PM04:31:37
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"
@@ -139,7 +139,7 @@ call fmxWriteMPtr(chist(1:min(nf, int(size(chist), IK))), poutput(8), 'row')
 ! It can happen that 0 < SIZE(XHIST, 2) < MAXHIST or 0 < SIZE(FHIST) < MAXHIST due to the memory
 ! limit in the Fortran code. Similar for CHIST.
 
-! Free memory. Indeed, automatic deallocation would take place.
+! Free memory. We prefer explicit deallocation to the automatic one.
 deallocate (x) ! Allocated by fmxReadMPtr.
 deallocate (Aineq) ! Allocated by fmxReadMPtr.
 deallocate (bineq) ! Allocated by fmxReadMPtr.
