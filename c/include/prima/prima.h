@@ -185,7 +185,6 @@ typedef struct {
 PRIMAC_API
 int prima_init_problem(prima_problem_t *const problem, const int n);
 
-
 // Structure to hold the options
 // In the following, "Default" refers to the value set by `prima_init_options`.
 typedef struct {
@@ -291,7 +290,7 @@ int prima_free_result(prima_result_t *const result);
  * return    : see prima_rc_t enum for return codes
  */
 PRIMAC_API
-int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result);
+int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t *problem, const prima_options_t *options, prima_result_t *const result);
 
 
 #ifdef __cplusplus
