@@ -13,10 +13,10 @@ task:
         image_family: freebsd-14-0
         architecture: amd64
 
-    - name: ARM64 FreeBSD
-      freebsd_instance:
-        image_family: freebsd-14-0
-        architecture: arm64
+    # - name: ARM64 FreeBSD
+    #   freebsd_instance:
+    #     image_family: freebsd-14-0
+    #     architecture: arm64  # Seems not available as of 20240409. See https://github.com/cirruslabs/cirrus-ci-docs/issues/906
 
     - name: MacOS Silicon
       macos_instance:

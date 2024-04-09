@@ -2181,3 +2181,4 @@ CERI
 HIMMELP
 nuse
 nxbdi
+amd
