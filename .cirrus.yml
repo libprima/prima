@@ -120,18 +120,20 @@ task:
     cd $ROOT_DIR/fortran/tests
 
     # Decide the solver to test by date
-    SOLVER_NUM=$(($(date +%-d) % 4))
-    if [ $SOLVER_NUM==0 ] ; then
+    SOLVER_NUM=$(($(date +%-d) % 5))
+    if [ $SOLVER_NUM -eq 0 ] ; then
         SOLVER=uobyqa
-    elif [ $SOLVER_NUM==1 ] ; then
+    elif [ $SOLVER_NUM -eq 1 ] ; then
         SOLVER=newuoa
-    elif [ $SOLVER_NUM==2 ] ; then
+    elif [ $SOLVER_NUM -eq 2 ] ; then
         SOLVER=bobyqa
-    elif [ $SOLVER_NUM==3 ] ; then
+    elif [ $SOLVER_NUM -eq 3 ] ; then
         SOLVER=lincoa
     else
         SOLVER=cobyla
     fi
+
+    echo $SOLVER_NUM $SOLVER
 
     $MK clean && $MK gtest_i2.$SOLVER
 
