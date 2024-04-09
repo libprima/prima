@@ -87,7 +87,7 @@ int main(int argc, char * argv[])
   printf("Random seed = %d\n", seed);
   srand(seed);
 
-  // Set up the options 
+  // Set up the options
   prima_options_t options;
   prima_init_options(&options);
   options.iprint = PRIMA_MSG_RHO;
@@ -168,7 +168,7 @@ int main(int argc, char * argv[])
 
   // Call the solver
   prima_result_t result;
-  rc = prima_minimize(algorithm, problem, options, &result);
+  rc = prima_minimize(algorithm, &problem, &options, &result);
 
   // Print the result
   printf("f* = %g, cstrv = %g, nlconstr = {%g}, rc = %d, msg = '%s', evals = %d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
