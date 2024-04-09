@@ -48,6 +48,8 @@ int main(int argc, char * argv[])
     problem.calcfc = &fun;
     // Provide the initial values of the objective function and the nonlinear constraints.
     // This is OPTIONAL, and end users should NOT do it in general. Here, we do it for testing.
+    // problme.f0 and problem.nlconstr0 are used when interfacing with Python and Julia etc.
+    // They are not designed for C users.See the documentation of `prima_problem_t` for details.
 #if PROVIDE_INITIAL_F_AND_NLCONSTR
     double nlconstr0[M_NLCON] = {0};
     fun(x0, &(problem.f0), nlconstr0, NULL);

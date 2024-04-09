@@ -165,15 +165,20 @@ typedef struct {
     double *Aeq;
     double *beq;
 
-    // m_nlcon: number of nonlinear constraints
+    // m_nlcon: number of nonlinear constraints defined by calcfc
     // Should be 0 for UOBYQA, NEWUOA, BOBYQA, and LINCOA
     // Default: 0
     int m_nlcon;
 
     // f0, nlconstr0: initial objective function value and constraint values (COBYLA only)
-    // Should ONLY be used when interfacing with MATLAB/Python/Julia/R, where we need to evaluate
-    // the constraints at the initial point to get m_nlcon
-    // C end users should leave them as the default, i.e., f0 = NAN and nlconstr0 = NULL.
+    // It should ONLY be used when interfacing with high-level languages such as MATLAB/Python/
+    // Julia/R. In these languages, instead of asking the user to provide m_nlcon, we should
+    // evaluate the constraints at the initial point to get m_nlcon; we evaluate the objective
+    // function at the initial point as well to keep the objective and constraint evaluations
+    // synchronized; after this, we pass the initial object and constraint values to the solver
+    // via f0 and nlconstr0 to avoid re-evaluating them, as the evaluations are expensive.
+    // C end users should leave f0 and nlconstr0 as the default set by prima_init_problem and
+    // set m_nlcon to the number of nonlinear constraints.
     // Default: f0 = NAN and nlconstr0 = NULL
     double f0;
     double *nlconstr0;
