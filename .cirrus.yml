@@ -11,12 +11,12 @@ task:
     - name: AMD64 FreeBSD
       freebsd_instance:
         image_family: freebsd-14-0
-        cpu_architecture: x86_64
+        architecture: x86_64
 
     - name: ARM64 FreeBSD
       freebsd_instance:
         image_family: freebsd-14-0
-        cpu_architecture: aarch64
+        architecture: arm64
 
     - name: MacOS Silicon
       macos_instance:
