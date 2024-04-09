@@ -293,6 +293,123 @@ PRIMAC_API
 int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t *problem, const prima_options_t *options, prima_result_t *const result);
 
 
+typedef struct {
+    prima_algorithm_t algorithm;
+    prima_problem_t problem;
+    prima_options_t options;
+    prima_result_t result;
+} prima_context_t;
+
+PRIMAC_API
+prima_context_t* prima_context_create(const int n);
+
+PRIMAC_API
+void prima_context_destroy(prima_context_t* context);
+
+PRIMAC_API
+int prima_context_solve(prima_algorithm_t algorithm, prima_context_t* context);
+
+/* Accessors. */
+
+PRIMAC_API
+int prima_context_set_callfun(prima_context_t* context, prima_obj_t calfun, void* data);
+
+PRIMAC_API
+int prima_context_set_calcfc(prima_context_t* context, prima_objcon_t calcfc, void* data, int m_nlcon);
+
+PRIMAC_API
+int prima_context_set_x0(prima_context_t* context, double *x0);
+
+PRIMAC_API
+int prima_context_set_bounds(prima_context_t* context, double *xl, double *xu);
+
+PRIMAC_API
+int prima_context_set_ineq(prima_context_t* context, int m_ineq, double Aineq[], double *bineq);
+
+PRIMAC_API
+int prima_context_set_eq(prima_context_t* context, int m_eq, double Aeq[], double *beq);
+
+PRIMAC_API
+int prima_context_set_f0(prima_context_t* context, double f0);
+
+PRIMAC_API
+int prima_context_set_nlconstr0(prima_context_t* context, double* nlconstr0);
+
+PRIMAC_API
+int prima_context_get_n(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_get_m_ineq(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_get_m_eq(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_get_m_nlcon(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_set_rho(prima_context_t* context, double rhobeg, double rhoend);
+
+PRIMAC_API
+double prima_context_get_rhobeg(const prima_context_t* context);
+
+PRIMAC_API
+double prima_context_get_rhoend(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_set_maxfun(prima_context_t* context, int maxfun);
+
+PRIMAC_API
+int prima_context_get_maxfun(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_set_iprint(prima_context_t* context, int iprint);
+
+PRIMAC_API
+int prima_context_get_iprint(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_set_npt(prima_context_t* context, int npt);
+
+PRIMAC_API
+int prima_context_get_npt(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_set_ftarget(prima_context_t* context, double ftarget);
+
+PRIMAC_API
+double prima_context_get_ftarget(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_set_ctol(prima_context_t* context, double ctol);
+
+PRIMAC_API
+double prima_context_get_ctol(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_set_callback(prima_context_t* context, prima_callback_t callback);
+
+PRIMAC_API
+double* prima_context_get_x(const prima_context_t* context);
+
+PRIMAC_API
+double prima_context_get_f(const prima_context_t* context);
+
+PRIMAC_API
+double prima_context_get_cstrv(const prima_context_t* context);
+
+PRIMAC_API
+double* prima_context_get_nlconstr(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_get_nf(const prima_context_t* context);
+
+PRIMAC_API
+int prima_context_get_status(const prima_context_t* context);
+
+PRIMAC_API
+const char* prima_context_get_message(const prima_context_t* context);
+
 #ifdef __cplusplus
 }
 #endif

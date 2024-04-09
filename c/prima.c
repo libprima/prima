@@ -288,3 +288,225 @@ int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t *pro
 
     return info;
 }
+
+prima_context_t* prima_context_create(const int n)
+{
+    size_t size = sizeof(prima_context_t);
+    prima_context_t* context = malloc(size);
+    if (context == NULL) {
+        return NULL;
+    }
+    memset(context, 0, size);
+    if (prima_init_problem(&context->problem, n) != 0 ||
+        prima_init_options(&context->options) != 0 ||
+        prima_init_result(&context->result, &context->problem) != 0) {
+        /* some error occurred */
+        prima_context_destroy(context);
+        return NULL;
+    }
+    return context;
+}
+
+void prima_context_destroy(prima_context_t* context)
+{
+    if (context != NULL) {
+        prima_free_result(&context->result);
+        free(context);
+    }
+}
+
+int prima_context_solve(prima_algorithm_t algorithm, prima_context_t* context)
+{
+    return prima_minimize(algorithm, &context->problem, &context->options, &context->result);
+}
+
+/* Accessors. */
+
+int prima_context_set_callfun(prima_context_t* context, prima_obj_t calfun, void* data)
+{
+    context->problem.calfun = calfun;
+    context->options.data = data;
+    return 0;
+}
+
+int prima_context_set_calcfc(prima_context_t* context, prima_objcon_t calcfc, void* data, int m_nlcon)
+{
+    context->problem.calcfc = calcfc;
+    context->problem.m_nlcon = m_nlcon;
+    context->options.data = data;
+    return 0;
+}
+
+int prima_context_set_x0(prima_context_t* context, double *x0)
+{
+    context->problem.x0 = x0;
+    return 0;
+}
+
+int prima_context_set_bounds(prima_context_t* context, double *xl, double *xu)
+{
+    context->problem.xl = xl;
+    context->problem.xu = xu;
+    return 0;
+}
+
+int prima_context_set_ineq(prima_context_t* context, int m_ineq, double Aineq[], double *bineq)
+{
+    context->problem.m_ineq = m_ineq;
+    context->problem.Aineq = Aineq;
+    context->problem.bineq = bineq;
+    return 0;
+}
+
+int prima_context_set_eq(prima_context_t* context, int m_eq, double Aeq[], double *beq)
+{
+    context->problem.m_eq = m_eq;
+    context->problem.Aeq = Aeq;
+    context->problem.beq = beq;
+    return 0;
+}
+
+int prima_context_set_f0(prima_context_t* context, double f0)
+{
+    context->problem.f0 = f0;
+    return 0;
+}
+
+int prima_context_set_nlconstr0(prima_context_t* context, double* nlconstr0)
+{
+    context->problem.nlconstr0 = nlconstr0;
+    return 0;
+}
+
+int prima_context_get_n(const prima_context_t* context)
+{
+    return context->problem.n;
+}
+
+int prima_context_get_m_ineq(const prima_context_t* context)
+{
+    return context->problem.m_ineq;
+}
+
+int prima_context_get_m_eq(const prima_context_t* context)
+{
+    return context->problem.m_eq;
+}
+
+int prima_context_get_m_nlcon(const prima_context_t* context)
+{
+    return context->problem.m_nlcon;
+}
+
+int prima_context_set_rho(prima_context_t* context, double rhobeg, double rhoend)
+{
+    context->options.rhobeg = rhobeg;
+    context->options.rhoend = rhoend;
+    return 0;
+}
+
+double prima_context_get_rhobeg(const prima_context_t* context)
+{
+    return context->options.rhobeg;
+}
+
+double prima_context_get_rhoend(const prima_context_t* context)
+{
+    return context->options.rhoend;
+}
+
+int prima_context_set_maxfun(prima_context_t* context, int maxfun)
+{
+    context->options.maxfun = maxfun;
+    return 0;
+}
+
+int prima_context_get_maxfun(const prima_context_t* context)
+{
+    return context->options.maxfun;
+}
+
+int prima_context_set_iprint(prima_context_t* context, int iprint)
+{
+    context->options.iprint = iprint;
+    return 0;
+}
+
+int prima_context_get_iprint(const prima_context_t* context)
+{
+    return context->options.iprint;
+}
+
+int prima_context_set_npt(prima_context_t* context, int npt)
+{
+    context->options.npt = npt;
+    return 0;
+}
+
+int prima_context_get_npt(const prima_context_t* context)
+{
+    return context->options.npt;
+}
+
+int prima_context_set_ftarget(prima_context_t* context, double ftarget)
+{
+    context->options.ftarget = ftarget;
+    return 0;
+}
+
+double prima_context_get_ftarget(const prima_context_t* context)
+{
+    return context->options.ftarget;
+}
+
+int prima_context_set_ctol(prima_context_t* context, double ctol)
+{
+    context->options.ctol = ctol;
+    return 0;
+}
+
+double prima_context_get_ctol(const prima_context_t* context)
+{
+    return context->options.ctol;
+}
+
+int prima_context_set_callback(prima_context_t* context, prima_callback_t callback)
+{
+    context->options.callback = callback;
+    return 0;
+}
+
+double* prima_context_get_x(const prima_context_t* context)
+{
+    return context->result.x;
+}
+
+double prima_context_get_f(const prima_context_t* context)
+{
+    return context->result.f;
+}
+
+double prima_context_get_cstrv(const prima_context_t* context)
+{
+    return context->result.cstrv;
+}
+
+double* prima_context_get_nlconstr(const prima_context_t* context)
+{
+    return context->result.nlconstr;
+}
+
+int prima_context_get_nf(const prima_context_t* context)
+{
+    return context->result.nf;
+}
+
+int prima_context_get_status(const prima_context_t* context)
+{
+    return context->result.status;
+}
+
+const char* prima_context_get_message(const prima_context_t* context)
+{
+    return context->result.message;
+}
