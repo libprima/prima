@@ -63,7 +63,7 @@ int prima_init_options(prima_options_t *const options)
 
 
 // Function to check whether the problem matches the algorithm
-int prima_check_problem(const prima_problem_t problem, const int use_constr, const prima_algorithm_t algorithm)
+int prima_check_problem(const prima_problem_t problem, const prima_algorithm_t algorithm)
 {
     if (algorithm != PRIMA_COBYLA && (problem.calcfc || problem.nlconstr0 || problem.m_nlcon > 0))
         return PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS;
@@ -78,7 +78,7 @@ int prima_check_problem(const prima_problem_t problem, const int use_constr, con
     if (!problem.x0)
         return PRIMA_NULL_X0;
 
-    if ((use_constr && !problem.calcfc) || (!use_constr && !problem.calfun))
+    if ((algorithm == PRIMA_COBYLA && !problem.calcfc) || (algorithm != PRIMA_COBYLA && !problem.calfun))
         return PRIMA_NULL_FUNCTION;
 
     return 0;
@@ -232,12 +232,10 @@ int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], doub
 // The function that does the minimization using a PRIMA solver
 int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result)
 {
-    int use_constr = (algorithm == PRIMA_COBYLA);
-
     int info = prima_init_result(result, problem);
 
     if (info == 0)
-        info = prima_check_problem(problem, use_constr, algorithm);
+        info = prima_check_problem(problem, algorithm);
 
     if (info == 0) {
         // We copy x0 into result->x only after prima_check_problem has succeeded,
