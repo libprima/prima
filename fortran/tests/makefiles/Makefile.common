@@ -446,7 +446,7 @@ else
 	GFORT := $(GFORT) -fno-stack-arrays -fstack-check
 endif
 # -fsanitize=leak,address does not work with gdb.
-FSAN := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 && $(OSTYPE) != 'MAC' ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
+FSAN := #$(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 && $(OSTYPE) != 'MAC' ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
 GFORT := $(GFORT) $(GFSTD) -fall-intrinsics -frecursive \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized \
 	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \

@@ -8,7 +8,13 @@ task:
   only_if: "changesInclude('.cirrus.yml', 'fortran/**', 'c/**', 'python/**')"
 
   matrix:
-    - name: FreeBSD
+    - name: AMD64 FreeBSD
+      container:
+      freebsd_instance:
+        image_family: freebsd-14-0
+
+    - name: ARM64 FreeBSD
+      arm_container:
       freebsd_instance:
         image_family: freebsd-14-0
 
