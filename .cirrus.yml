@@ -11,7 +11,7 @@ task:
     - name: AMD64 FreeBSD
       freebsd_instance:
         image_family: freebsd-14-0
-        architecture: x86_64
+        architecture: amd64
 
     - name: ARM64 FreeBSD
       freebsd_instance:
