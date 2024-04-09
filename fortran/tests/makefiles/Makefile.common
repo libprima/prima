@@ -394,7 +394,7 @@ FFORT := $(FFORT) -fimplicit-none -Werror
 ifeq ($(TESTDIM),small)
 	FFORT := $(FFORT)
 endif
-FFORT := $(FFORT) -std=f2018 -pedantic #-Kieee
+FFORT := $(FFORT) -std=f2018 -pedantic  # As of flang 19.0, only -std=f2008 is supported
 
 ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
 	FCO := $(FFORT) $(FFLAGSO)

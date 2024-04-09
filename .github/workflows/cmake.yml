@@ -159,7 +159,7 @@ jobs:
           # Classic Flang family with -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
           # As of 20240220, aflang with -Mbounds would fail due to the bug at https://github.com/flang-compiler/flang/issues/1238
           - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk'}
-          - {compiler: flang, cflags: '-Wall', fflags: '-pedantic'}
+          - {compiler: flang, cflags: '-Werror', fflags: '-pedantic'}
           - {compiler: aflang, cflags: '-Wall', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
 
     steps:
