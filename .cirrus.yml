@@ -1,8 +1,11 @@
 task:
 
-  # Perform the task only if the folders or files specified below are not changed
-  only_if: "changesInclude('.cirrus.yml', 'fortran/**', 'c/**', 'python/**')"
+  # Perform the task only if the folders or files specified below are changed
+  # See https://cirrus-ci.org/guide/writing-tasks/#conditional-task-execution
+  # skip: the task will be created / triggered, but its execution will be skipped, and it will be marked as successful.
   #skip: "!changesInclude('.cirrus.yml', 'fortran/**', 'c/**', 'python/**')"
+  # only_if: the task will not be created / triggered.
+  only_if: "changesInclude('.cirrus.yml', 'fortran/**', 'c/**', 'python/**')"
 
   matrix:
     - name: FreeBSD
