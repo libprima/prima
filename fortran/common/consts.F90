@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 10, 2024 AM01:23:33
+! Last Modified: Wednesday, April 10, 2024 AM01:55:03
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -155,11 +155,10 @@ integer, parameter :: MAXPOW10 = range(ZERO)
 integer, parameter :: HALF_MAXPOW10 = floor(real(MAXPOW10) / 2.0)
 
 ! TINYCV is used in LINCOA. Powell set TINYCV = 1.0D-60. What about setting TINYCV = REALMIN?
-#if (defined __llvm__ && defined __flang__)
-! This is a workaround for the following issue with LLVM flang 19.0:
+! N.B.: The `if` is a workaround for the following issues with LLVM flang 19.0.0 and nvfortran 24.3.0:
 ! https://fortran-lang.discourse.group/t/flang-new-19-0-warning-overflow-on-power-with-integer-exponent/7801
-! Note that the following line will cause nvfortran to fail with
-! nvfortran-Fatal-/opt/nvidia/hpc_sdk/Linux_x86_64/24.3/compilers/bin/tools/fort1 TERMINATED by signal 11
+! https://forums.developer.nvidia.com/t/bug-of-nvfortran-24-3-0-fort1-terminated-by-signal-11/289026
+#if (defined __llvm__ && defined __flang__)
 real(RP), parameter :: TINYCV = TEN**max(-60.0, -real(MAXPOW10))
 #else
 real(RP), parameter :: TINYCV = TEN**max(-60, -MAXPOW10)
