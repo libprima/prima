@@ -4,7 +4,7 @@
 # 9: G95 (compilation only; no compilation of test_*.f90 and other testing code, which contains F03 constructs unsupported by G95)
 # a: Absoft af95 (compilation only; the compiler is buggy and not maintained anymore)
 # d: AOCC flang
-# f: Classic flang or Huawei Bisheng flang
+# f: LLVM flang
 # g: GNU gfortran
 # n: NAG nagfor
 # i: Intel ifort
@@ -160,7 +160,7 @@ CHCKTST := $(TOOLS_DIR)/checktest
 # Define the tests.
 ######################################################################################
 # Decide whether to test QP, i.e., REAL128.
-# Flang 17.0 and nvfortran 24.1 do not support REAL128;
+# Classic Flang 17.0 and nvfortran 24.1 do not support REAL128;
 # AOCC Flang 4.2 complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 TESTS_QP = atest gtest ntest itest stest 9test xtest
 TESTS_NO_QP = dtest ftest rtest vtest
@@ -383,18 +383,18 @@ dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d
 dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
 	FCF := $(DFORT) -ffp-exception-behavior=strict $(DFF)
 
-# Classic Flang
+# LLVM Flang
 # We must define FFORT as follows, because AOCC will also provide "flang", except that it is
 # located under /opt/AMD. Similar for ARM Flang.
 FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local /tmp -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
 FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
 FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
 FFORT := $(FFORT) -I$(FFINC) -L$(FFLIB)
-FFORT := $(FFORT) -pedantic-errors -Werror
+FFORT := $(FFORT) -fimplicit-none -Werror
 ifeq ($(TESTDIM),small)
-	FFORT := $(FFORT) -Mstack_arrays
+	FFORT := $(FFORT)
 endif
-FFORT := $(FFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mrecursive -Mchkptr #-Kieee
+FFORT := $(FFORT) -std=f2018 -pedantic #-Kieee
 
 ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
 	FCO := $(FFORT) $(FFLAGSO)
@@ -992,7 +992,7 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/gsrc ./ ; \
 	fi
-	@if echo $@ | grep -q "ftest\|rtest\|dtest"; then \
+	@if echo $@ | grep -q "rtest\|dtest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/frdsrc ./ ; \
 	fi

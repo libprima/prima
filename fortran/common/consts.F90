@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 16, 2024 AM01:29:42
+! Last Modified: Wednesday, April 10, 2024 AM12:54:17
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -155,7 +155,10 @@ integer, parameter :: MAXPOW10 = range(ZERO)
 integer, parameter :: HALF_MAXPOW10 = floor(real(MAXPOW10) / 2.0)
 
 ! TINYCV is used in LINCOA. Powell set TINYCV = 1.0D-60. What about setting TINYCV = REALMIN?
-real(RP), parameter :: TINYCV = TEN**max(-60, -MAXPOW10)
+!real(RP), parameter :: TINYCV = TEN**max(-60, -MAXPOW10)
+! The above code would lead to a warning with LLVM flang 19.0. See
+! https://fortran-lang.discourse.group/t/flang-new-19-0-warning-overflow-on-power-with-integer-exponent/7801
+real(RP), parameter :: TINYCV = TEN**max(-60.0, -real(MAXPOW10))
 ! FUNCMAX is used in the moderated extreme barrier. All function values are projected to the
 ! interval [-FUNCMAX, FUNCMAX] before passing to the solvers, and NaN is replaced with FUNCMAX.
 ! CONSTRMAX plays a similar role for constraints.

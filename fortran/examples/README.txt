@@ -19,7 +19,7 @@ compliant with Fortran 2008 and above.
 5. As of March 2024, the examples run successfully with the following compilers on Ubuntu 22.04.
 - AMD AOCC Flang 4.2
 - Arm Fortran Compiler 23.10
-- Classic Flang 17.0
+- LLVM Flang 19.0
 - GNU gfortran 13.1
 - Intel ifx 2024.0
 - Intel ifort 2021.11.1

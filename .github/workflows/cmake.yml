@@ -156,10 +156,10 @@ jobs:
       fail-fast: false
       matrix:
         toolchain:
-          # Flang family with -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
-          # As of 20240220, flang and aflang with -Mbounds would fail due to the bug at https://github.com/flang-compiler/flang/issues/1238
+          # Classic Flang family with -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
+          # As of 20240220, aflang with -Mbounds would fail due to the bug at https://github.com/flang-compiler/flang/issues/1238
           - {compiler: nvfortran, cflags: '-Wall', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk'}
-          - {compiler: flang, cflags: '-Wall', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
+          - {compiler: flang, cflags: '-Wall', fflags: '-pedantic'}
           - {compiler: aflang, cflags: '-Wall', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
 
     steps:
@@ -205,8 +205,8 @@ jobs:
           cmake --build . --target install
           cmake --build . --target tests
 
-          # As of 20240316, CMake test fails on cobyla with the Classic flang, AOCC flang, and
-          # nvfortran. See https://github.com/libprima/prima/issues/165
+          # As of 20240316, CMake test fails on cobyla with the AOCC flang and nvfortran.
+          # See https://github.com/libprima/prima/issues/165
           ctest --output-on-failure -V -E "stress|cobyla"
         shell: bash
         env:
