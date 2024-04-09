@@ -9,14 +9,12 @@ task:
 
   matrix:
     - name: AMD64 FreeBSD
-      container:
       freebsd_instance:
         image_family: freebsd-14-0
 
     - name: ARM64 FreeBSD
       arm_container:
-      freebsd_instance:
-        image_family: freebsd-14-0
+        image: freebsd/aarch64:14.0
 
     - name: MacOS Silicon
       macos_instance:

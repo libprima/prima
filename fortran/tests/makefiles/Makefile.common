@@ -258,15 +258,16 @@ $(foreach TST, $(TESTS_INT_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 .PHONY: all test test_c clean $(TESTS) $(TESTS_C) $(TESTS_INT) $(TESTS_INT_C) source_* clean*
 
 # Operating system.
-OSTYPE :=
+OSTYPE := LINUX   # We assume the OS is LINUX by default.
 ifeq ($(OS),Windows_NT)
 	OSTYPE := WINDOWS
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Darwin)
 		OSTYPE := MAC
-	else # We assume the OS is LINUX by default.
-		OSTYPE := LINUX
+	endif
+	ifeq ($(UNAME_S),FreeBSD)
+		OSTYPE := FREEBSD
 	endif
 endif
 
@@ -446,7 +447,7 @@ else
 	GFORT := $(GFORT) -fno-stack-arrays -fstack-check
 endif
 # -fsanitize=leak,address does not work with gdb.
-FSAN := #$(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 && $(OSTYPE) != 'MAC' ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
+FSAN := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 && $(OSTYPE) != 'MAC' && $(OSTYPE) != 'FREEBSD' ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
 GFORT := $(GFORT) $(GFSTD) -fall-intrinsics -frecursive \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion -Wuninitialized -Wmaybe-uninitialized \
 	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
