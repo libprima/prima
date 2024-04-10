@@ -4,7 +4,7 @@
 # 9: G95
 # a: Absoft af95
 # d: AOCC flang
-# f: Classic flang
+# f: LLVM flang
 # g: GNU gfortran
 # n: NAG nagfor
 # i: Intel ifort
@@ -251,10 +251,13 @@ dtest_i2_r16_d1_tst dtest_i4_r16_d1_tst dtest_i8_r16_d1_tst dtest_i2_r16_d0_tst 
 dtest_i2_r16_d1_tst dtest_i4_r16_d1_tst dtest_i8_r16_d1_tst dtest_i2_r16_d0_tst dtest_i4_r16_d0_tst dtest_i8_r16_d0_tst: \
 	FC2 := $(DFORT) $(FFLAGS2) -ffp-exception-behavior=strict
 
-# Classic Flang
-FFORT := flang
-FFORT := $(FFORT) -pedantic-errors -Werror
-FFORT := $(FFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkptr -Kieee
+# LLVM Flang
+FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local /tmp -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
+FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
+FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
+FFORT := $(FFORT) -fimplicit-none -Werror
+# -std or -pedantic does not work due to the non-standard code in the MEX API provided by MathWorks
+#FFORT := $(FFORT) -std=f2018 -pedantic
 
 ftest_i2_r4_d1_tst ftest_i4_r4_d1_tst ftest_i8_r4_d1_tst ftest_i2_r4_d0_tst ftest_i4_r4_d0_tst ftest_i8_r4_d0_tst: \
 	FC1 := $(FFORT) $(FFLAGS1)

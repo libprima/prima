@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 10, 2024 AM01:55:03
+! Last Modified: Wednesday, April 10, 2024 PM09:18:10
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -158,7 +158,7 @@ integer, parameter :: HALF_MAXPOW10 = floor(real(MAXPOW10) / 2.0)
 ! N.B.: The `if` is a workaround for the following issues with LLVM flang 19.0.0 and nvfortran 24.3.0:
 ! https://fortran-lang.discourse.group/t/flang-new-19-0-warning-overflow-on-power-with-integer-exponent/7801
 ! https://forums.developer.nvidia.com/t/bug-of-nvfortran-24-3-0-fort1-terminated-by-signal-11/289026
-#if (defined __llvm__ && defined __flang__)
+#if (defined __flang__ && __flang_major__ <= 19)
 real(RP), parameter :: TINYCV = TEN**max(-60.0, -real(MAXPOW10))
 #else
 real(RP), parameter :: TINYCV = TEN**max(-60, -MAXPOW10)
