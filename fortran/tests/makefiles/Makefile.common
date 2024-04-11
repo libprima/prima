@@ -392,7 +392,9 @@ FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
 FFORT := $(FFORT) -I$(FFINC) -L$(FFLIB)
 FFORT := $(FFORT) -fimplicit-none -Werror
 ifeq ($(TESTDIM),small)
-	FFORT := $(FFORT)
+	FFORT := $(FFORT) -fstack-arrays
+else
+	FFORT := $(FFORT) -fno-stack-arrays -mmlir -fdynamic-heap-array
 endif
 FFORT := $(FFORT) -std=f2018 -pedantic  # As of flang 19.0, only -std=f2018 is supported
 

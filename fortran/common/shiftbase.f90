@@ -9,7 +9,7 @@ module shiftbase_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Saturday, March 09, 2024 PM01:41:58
+! Last Modified: Thursday, April 11, 2024 AM10:50:53
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,10 +42,10 @@ subroutine shiftbase_lfqint(kopt, xbase, xpt, zmat, bmat, pq, hq, idz)
 !--------------------------------------------------------------------------------------------------!
 
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, HALF, QUART, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, ZERO, HALF, QUART, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric
+use, non_intrinsic :: linalg_mod, only : inprod, matprod, outprod, issymmetric, r2update
 
 implicit none
 
@@ -72,7 +72,7 @@ real(RP) :: bymat(size(xbase), size(xbase))
 real(RP) :: qxoptq
 real(RP) :: sxpt(size(xpt, 2))
 real(RP) :: v(size(xbase))
-real(RP) :: vxopt(size(xbase), size(xbase))
+!real(RP) :: vxopt(size(xbase), size(xbase))
 real(RP) :: xopt(size(xbase))
 real(RP) :: xoptsq
 real(RP) :: xptxav(size(xpt, 1), size(xpt, 2))
@@ -142,8 +142,9 @@ bmat(:, 1:npt) = bmat(:, 1:npt) + matprod(yzmat_c, transpose(zmat))
 ! Update the quadratic model. Note that PQ remains unchanged. For HQ, see (7.14) of the NEWUOA paper.
 !v = matprod(xptxav, pq)  ! Vector V in (7.14) of the NEWUOA paper
 v = matprod(xpt, pq) - HALF * sum(pq) * xopt ! This one seems to work better numerically.
-vxopt = outprod(v, xopt)  !!MATLAB: vxopt = v * xopt';  % v and xopt should be both columns
-hq = (vxopt + transpose(vxopt)) + hq !call r2update(hq, ONE, xopt, v)
+!vxopt = outprod(v, xopt)  !!MATLAB: vxopt = v * xopt';  % v and xopt should be both columns
+!hq = (vxopt + transpose(vxopt)) + hq
+call r2update(hq, ONE, xopt, v)
 !call symmetrize(hq)  ! Do this if the update above does not ensure symmetry.
 
 ! The following instructions complete the shift of XBASE.
