@@ -163,12 +163,11 @@ PYBIND11_MODULE(_prima, m) {
       prima_options_t options;
       prima_init_options(&options);
       if ( ! options_dict.is_none()) {
+        if(options_dict.contains("ctol"))      { options.ctol      = options_dict["ctol"].cast<double>(); }
         if(options_dict.contains("ftarget"))   { options.ftarget   = options_dict["ftarget"].cast<double>(); }
         if(options_dict.contains("iprint"))    { options.iprint    = options_dict["iprint"].cast<int>(); }
         if(options_dict.contains("maxfev"))    { options.maxfun    = options_dict["maxfev"].cast<int>(); }
-        if(options_dict.contains("maxfun"))    { options.maxfun    = options_dict["maxfun"].cast<int>(); }
         if(options_dict.contains("npt"))       { options.npt       = options_dict["npt"].cast<int>(); }
-        if(options_dict.contains("ctol"))      { options.ctol      = options_dict["ctol"].cast<double>(); }
         if(options_dict.contains("rhobeg"))    { options.rhobeg    = options_dict["rhobeg"].cast<double>(); }
         if(options_dict.contains("rhoend"))    { options.rhoend    = options_dict["rhoend"].cast<double>(); }
         // The following are not options, but part of the problem. We are using the options dictionary

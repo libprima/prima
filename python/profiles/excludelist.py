@@ -3,7 +3,7 @@ def excludelist(problem_type):
     # points, e.g., [88.1351318; 12829.9219; 1.0e-5], maybe due to an infinite cycling.
     excludelist = ['HS76']
     # ARGLALE results in a segfault from slsqp when trying to project x0. We disable it for now
-    excludelist += ['ARGLALE']
+    excludelist += ['ARGLALE', 'ARGLBLE', 'ARGLCLE']
 
     if problem_type == 'unconstrained':
         # With the following excludelist, there is no unconstrained problem in CUTEst (as of 20230130) with

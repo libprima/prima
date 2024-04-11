@@ -5,72 +5,161 @@ from excludelist import excludelist
 from optiprofiler import set_cutest_problem_options, find_cutest_problems, run_benchmark
 import argparse
 from time import time
+import matlab.engine
+import threading
+import socket
+import struct
 
 
-def pdfo_uobyqa(fun, x0):
-    from pdfo import pdfo
+MAX_PORT_NUMBER = 65535  # Ports above 65535 are invalid.
+MIN_PORT_NUMBER = 1025  # Ports below 1024 are privileged.
+nondefault_options = lambda n, f0: {
+    'npt' : np.floor(min(3.14*n, n**1.23)),
+    'rhobeg' : 2.718,
+    'rhoend' : 3.14*1.0e-4,
+    'maxfev' : 271*n, # if this is doable, 2718 otherwise
+    'ftarget' : f0 - 314 # if this is doable, 3.14 otherwise
+}
 
-    res = pdfo(fun, x0, method='uobyqa')
-    return res.x
+def get_matlab_options(n, f0):
+    if os.environ.get('NONDEFAULT_MATLAB') == 'True':
+        return nondefault_options(n, f0)
+    return {}
 
 
-def prima_uobyqa(fun, x0):
-    from prima import minimize
+def get_python_options(n, f0):
+    if os.environ.get('NONDEFAULT_PYTHON') == 'True':
+        return nondefault_options(n, f0)
+    return {}
+
+
+def get_matlab_engine():
+    '''
+    This function is essentially following the singleton design pattern
+    (https://gameprogrammingpatterns.com/singleton.html).
     
-    res = minimize(fun, x0, method='uobyqa')
-    return res.x
+    Despite the above link recommending against this pattern we use it for
+    two reasons.
+    
+    1) The "lazy-loading" means that the MATLAB engine won't be started until
+    after OptiProfiler has created separate processes via the multiprocessing
+    module. If OptiProfiler stops using multiprocessing this approach may need
+    to be reviewed.
+    
+    2) Starting a MATLAB engine takes as much as 30s, so we only want to do it
+    once per process and keep the resulting engine. If future versions can
+    start up much more quickly then this might not be necessary.
+    
+    '''
+    if not hasattr(get_matlab_engine, 'eng'):
+        get_matlab_engine.eng = matlab.engine.start_matlab()
+    return get_matlab_engine.eng
 
 
-def pdfo_newuoa(fun, x0):
-    from pdfo import pdfo
+def fun_wrapper(port, obj_fun, num_vars):
+    socket1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socket1.bind(('localhost', port))
+    socket1.listen(1)
+    conn, addr = socket1.accept()
+    with conn:
+        print('Connected by', addr)
+        while True:
+            bufsize = num_vars * 8  # 8 being sizeof(double)
+            data = conn.recv(bufsize)
+            if not data: break  # This indicates the connection was closed
+            x = struct.unpack(f'{num_vars}d', data)
+            x = np.array(x, dtype=np.float64)
+            fx = obj_fun(x)
+            conn.sendall(struct.pack('d', fx))
+            
+            
+def nl_constraints_wrapper(port, cineq_fun, ceq_fun, num_vars):
+    socket1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socket1.bind(('localhost', port))
+    socket1.listen(1)
+    conn, addr = socket1.accept()
+    with conn:
+        print('Connected by', addr)
+        while True:
+            bufsize = num_vars * 8  # 8 being sizeof(double)
+            data = conn.recv(bufsize)
+            if not data: break  # This indicates the connection was closed
+            x = struct.unpack(f'{num_vars}d', data)
+            x = np.array(x, dtype=np.float64)
+            cineq = cineq_fun(x)
+            ceq = ceq_fun(x)
+            if len(cineq) > 0:
+                conn.sendall(struct.pack(f'{len(cineq)}d', *cineq))
+            if len(ceq) > 0:
+                conn.sendall(struct.pack(f'{len(ceq)}d', *ceq))
 
-    res = pdfo(fun, x0, method='newuoa')
-    return res.x
+
+def matlab_uobyqa(fun, x0):
+    port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
+    threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
+    x0 = matlab.double(x0)
+    result = get_matlab_engine().matlab_wrapper(port, 'uobyqa', get_matlab_options(len(x0), fun(x0)), x0, nargout=4)
+    x = np.array(result[0].tomemoryview().tolist())
+    return x
 
 
-def prima_newuoa(fun, x0):
+def python_uobyqa(fun, x0):
     from prima import minimize
-
-    res = minimize(fun, x0, method='newuoa')
+    res = minimize(fun, x0, method='uobyqa', options=get_python_options(len(x0), fun(x0)))
     return res.x
 
 
-def pdfo_bobyqa(fun, x0, lb, ub):
-    from pdfo import pdfo
+def matlab_newuoa(fun, x0):
+    port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
+    threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
+    x0 = matlab.double(x0)
+    result = get_matlab_engine().matlab_wrapper(port, 'newuoa', get_matlab_options(len(x0), fun(x0)), x0, nargout=4)
+    x = np.array(result[0].tomemoryview().tolist())
+    return x
+
+
+def python_newuoa(fun, x0):
+    from prima import minimize
+    res = minimize(fun, x0, method='newuoa', options=get_python_options(len(x0), fun(x0)))
+    return res.x
+
+
+def matlab_bobyqa(fun, x0, lb, ub):
+    port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
+    threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
+    x0 = matlab.double(x0)
+    lb = matlab.double(lb)
+    ub = matlab.double(ub)
+    result = get_matlab_engine().matlab_wrapper(port, 'bobyqa', get_matlab_options(len(x0), fun(x0)), x0, lb, ub, nargout=4)
+    x = np.array(result[0].tomemoryview().tolist())
+    return x
+
+
+def python_bobyqa(fun, x0, lb, ub):
+    from prima import minimize
     from scipy.optimize import Bounds
 
     bounds = Bounds(lb, ub)
-    res = pdfo(fun, x0, method='bobyqa', bounds=bounds)
+    res = minimize(fun, x0, method='bobyqa', bounds=bounds, options=get_python_options(len(x0), fun(x0)))
     return res.x
 
 
-def prima_bobyqa(fun, x0, lb, ub):
-    from prima import minimize
-    from scipy.optimize import Bounds
-
-    bounds = Bounds(lb, ub)
-    res = minimize(fun, x0, method='bobyqa', bounds=bounds)
-    return res.x
-
-
-def pdfo_lincoa(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq):
-    from pdfo import pdfo
-    from scipy.optimize import Bounds, LinearConstraint
-
-    # Until we include the elimination of linear equality constraints in PRIMA,
-    # we disable it in PDFO to make the comparison fair.
-    options = {'eliminate_lin_eq': False}
-    bounds = Bounds(lb, ub)
-    constraints = []
-    if b_ub.size > 0:
-        constraints.append(LinearConstraint(a_ub, -np.inf, b_ub))
-    if b_eq.size > 0:
-        constraints.append(LinearConstraint(a_eq, b_eq, b_eq))
-    res = pdfo(fun, x0, method='lincoa', bounds=bounds, constraints=constraints, options=options)
-    return res.x
+def matlab_lincoa(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq):
+    port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
+    threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
+    x0 = matlab.double(x0)
+    lb = matlab.double(lb)
+    ub = matlab.double(ub)
+    a_ub = matlab.double(a_ub)
+    b_ub = matlab.double(b_ub)
+    a_eq = matlab.double(a_eq)
+    b_eq = matlab.double(b_eq)
+    result = get_matlab_engine().matlab_wrapper(port, 'lincoa', get_matlab_options(len(x0), fun(x0)), x0, lb, ub, a_ub, b_ub, a_eq, b_eq, nargout=4)
+    x = np.array(result[0].tomemoryview().tolist())
+    return x
 
 
-def prima_lincoa(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq):
+def python_lincoa(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq):
     from prima import minimize, Bounds, LinearConstraint
 
     bounds = Bounds(lb, ub)
@@ -79,34 +168,32 @@ def prima_lincoa(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq):
         constraints.append(LinearConstraint(a_ub, -np.inf, b_ub))
     if b_eq.size > 0:
         constraints.append(LinearConstraint(a_eq, b_eq, b_eq))
-    res = minimize(fun, x0, method='lincoa', bounds=bounds, constraints=constraints)
+    res = minimize(fun, x0, method='lincoa', bounds=bounds, constraints=constraints, options=get_python_options(len(x0), fun(x0)))
     return res.x
 
 
-def pdfo_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ub, c_eq):
-    from pdfo import pdfo
-    from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint
-
-    # Until we include the elimination of linear equality constraints in PRIMA,
-    # we disable it in PDFO to make the comparison fair.
-    options = {'eliminate_lin_eq': False}
-    bounds = Bounds(lb, ub)
-    constraints = []
-    if b_ub.size > 0:
-        constraints.append(LinearConstraint(a_ub, -np.inf, b_ub))
-    if b_eq.size > 0:
-        constraints.append(LinearConstraint(a_eq, b_eq, b_eq))
-    c_ub_x0 = c_ub(x0)
-    if c_ub_x0.size > 0:
-        constraints.append(NonlinearConstraint(c_ub, -np.inf, np.zeros_like(c_ub_x0)))
+def matlab_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ineq, c_eq):
+    port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
+    threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
+    port_nonlcon = (os.getpid()+1000) % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
+    threading.Thread(target=nl_constraints_wrapper, args=(port_nonlcon, c_ineq, c_eq, len(x0))).start()
+    x0 = matlab.double(x0)
+    lb = matlab.double(lb)
+    ub = matlab.double(ub)
+    a_ub = matlab.double(a_ub)
+    b_ub = matlab.double(b_ub)
+    a_eq = matlab.double(a_eq)
+    b_eq = matlab.double(b_eq)
+    c_ineq_x0 = c_ineq(x0)
+    m_c_ineq = c_ineq_x0.size
     c_eq_x0 = c_eq(x0)
-    if c_eq_x0.size > 0:
-        constraints.append(NonlinearConstraint(c_eq, np.zeros_like(c_eq_x0), np.zeros_like(c_eq_x0)))
-    res = pdfo(fun, x0, method='cobyla', bounds=bounds, constraints=constraints, options=options)
-    return res.x
+    m_c_eq = c_eq_x0.size
+    result = get_matlab_engine().matlab_wrapper(port, 'cobyla', get_matlab_options(len(x0), fun(x0)), x0, lb, ub, a_ub, b_ub, a_eq, b_eq, m_c_ineq, m_c_eq, port_nonlcon, nargout=4)
+    x = np.array(result[0].tomemoryview().tolist())
+    return x
 
 
-def prima_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ub, c_eq):
+def python_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ineq, c_eq):
     from prima import minimize, Bounds, LinearConstraint, NonlinearConstraint
 
     bounds = Bounds(lb, ub)
@@ -115,13 +202,13 @@ def prima_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ub, c_eq):
         constraints.append(LinearConstraint(a_ub, -np.inf, b_ub))
     if b_eq.size > 0:
         constraints.append(LinearConstraint(a_eq, b_eq, b_eq))
-    c_ub_x0 = c_ub(x0)
-    if c_ub_x0.size > 0:
-        constraints.append(NonlinearConstraint(c_ub, -np.inf, np.zeros_like(c_ub_x0)))
+    c_ineq_x0 = c_ineq(x0)
+    if c_ineq_x0.size > 0:
+        constraints.append(NonlinearConstraint(c_ineq, -np.inf, np.zeros_like(c_ineq_x0)))
     c_eq_x0 = c_eq(x0)
     if c_eq_x0.size > 0:
         constraints.append(NonlinearConstraint(c_eq, np.zeros_like(c_eq_x0), np.zeros_like(c_eq_x0)))
-    res = minimize(fun, x0, method='cobyla', bounds=bounds, constraints=constraints)
+    res = minimize(fun, x0, method='cobyla', bounds=bounds, constraints=constraints, options=get_python_options(len(x0), fun(x0)))
     return res.x
 
 
@@ -134,8 +221,9 @@ if __name__ == '__main__':
     # If we run this script from a directory other than the one that contains it, pycutest's call to importlib will fail,
     # unless we insert the current working directory into the path.
     sys.path.insert(0, os.getcwd())
+    os.environ['PYCUTEST_CACHE'] = os.getcwd()
     
-    parser = argparse.ArgumentParser(description='Generate performance profiles comparing PRIMA to PDFO. '
+    parser = argparse.ArgumentParser(description='Generate performance profiles comparing PRIMA MATLAB to PRIMA Python. '
                                      'By default no profiles are run. To run one or more profiles use the flags '
                                      'specified below. Multiple flags may be specified to run multiple profiles, '
                                      'but please note they will be run sequentially.')
@@ -145,16 +233,38 @@ if __name__ == '__main__':
     parser.add_argument('-b', '--bobyqa', action='store_true', help='Run the BOBYQA benchmark')
     parser.add_argument('-l', '--lincoa', action='store_true', help='Run the LINCOA benchmark')
     parser.add_argument('-c', '--cobyla', action='store_true', help='Run the COBYLA benchmark')
+    parser.add_argument('--default_only', action='store_true', help='Run only the default options for both MATLAB and Python')
     args = parser.parse_args()
     
-    os.environ['PYCUTEST_CACHE'] = os.getcwd()
+
+    def run_three_benchmarks(matlab_fun, python_fun, algorithm, cutest_problem_names, default_only, n_jobs):
+        '''
+        Proper validation of both default and nondefault options requires 3 runs: Both default, both nondefault, and
+        one default one nondefault. The first two should look identical, and so the third run confirms that our
+        experiment setup is valid (i.e. it rules out a scenario where even though options are provided, both algorithms
+        end up using default options anyway).
+        '''
+        # Sharing state with multiprocessing is hard when we can't control the function signature,
+        # so we resort to using the environment to pass options.
+        os.environ['NONDEFAULT_MATLAB'] = "False"
+        os.environ['NONDEFAULT_PYTHON'] = "False"
+        algorithm = algorithm.lower()
+        ALGORITHM = algorithm.upper()
+        run_benchmark([matlab_fun, python_fun], [f'MATLAB-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_default_options', n_jobs=n_jobs)
+        if not default_only:
+            os.environ['NONDEFAULT_MATLAB'] = "True"
+            os.environ['NONDEFAULT_PYTHON'] = "True"
+            run_benchmark([matlab_fun, python_fun], [f'MATLAB-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_nondefault_options', n_jobs=n_jobs)
+            os.environ['NONDEFAULT_MATLAB'] = "True"
+            os.environ['NONDEFAULT_PYTHON'] = "False"
+            run_benchmark([matlab_fun, python_fun], [f'MATLAB-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_different_options', n_jobs=n_jobs)
     
     if args.newuoa:
         start = time()
         print("Running profiles for NEWUOA")
         set_cutest_problem_options(n_min=1, n_max=200, m_min = 0, m_max=0)
         cutest_problem_names = get_problems('unconstrained')
-        run_benchmark([pdfo_newuoa, prima_newuoa], ['PDFO-NEWUOA', 'PRIMA-NEWUOA'], cutest_problem_names, benchmark_id='newuoa', n_jobs=args.n_jobs)
+        run_three_benchmarks(matlab_newuoa, python_newuoa, 'newuoa', cutest_problem_names, args.default_only, args.n_jobs)
         print(f'Completed NEWUOA profile in {time() - start:.2f} seconds')
     
     if args.uobyqa:
@@ -162,7 +272,7 @@ if __name__ == '__main__':
         print("Running profiles for UOBYQA")
         set_cutest_problem_options(n_min=1, n_max=100, m_min = 0, m_max=0)
         cutest_problem_names = get_problems('unconstrained')
-        run_benchmark([pdfo_uobyqa, prima_uobyqa], ['PDFO-UOBYQA', 'PRIMA-UOBYQA'], cutest_problem_names, benchmark_id='uobyqa', n_jobs=args.n_jobs)
+        run_three_benchmarks(matlab_uobyqa, python_uobyqa, 'uobyqa', cutest_problem_names, args.default_only, args.n_jobs)
         print(f'Completed UOBYQA profile in {time() - start:.2f} seconds')
     
     if args.bobyqa:
@@ -170,7 +280,7 @@ if __name__ == '__main__':
         print("Running profiles for BOBYQA")
         set_cutest_problem_options(n_min=1, n_max=200, m_min = 0, m_max=0)
         cutest_problem_names = get_problems('bound')
-        run_benchmark([pdfo_bobyqa, prima_bobyqa], ['PDFO-BOBYQA', 'PRIMA-BOBYQA'], cutest_problem_names, benchmark_id='bobyqa', n_jobs=args.n_jobs)
+        run_three_benchmarks(matlab_bobyqa, python_bobyqa, 'bobyqa', cutest_problem_names, args.default_only, args.n_jobs)
         print(f'Completed BOBYQA profile in {time() - start:.2f} seconds')
     
     if args.lincoa:
@@ -178,7 +288,7 @@ if __name__ == '__main__':
         print("Running profiles for LINCOA")
         set_cutest_problem_options(n_min=1, n_max=200, m_min=1, m_max=20_000)
         cutest_problem_names = get_problems('adjacency linear')
-        run_benchmark([pdfo_lincoa, prima_lincoa], ['PDFO-LINCOA', 'PRIMA-LINCOA'], cutest_problem_names, benchmark_id='lincoa', n_jobs=args.n_jobs)
+        run_three_benchmarks(matlab_lincoa, python_lincoa, 'lincoa', cutest_problem_names, args.default_only, args.n_jobs)
         print(f'Completed LINCOA profile in {time() - start:.2f} seconds')
     
     if args.cobyla:
@@ -186,6 +296,5 @@ if __name__ == '__main__':
         print("Running profiles for COBYLA")
         set_cutest_problem_options(n_min=1, n_max=100, m_min=1, m_max=20_000)
         cutest_problem_names = get_problems('quadratic other')
-        run_benchmark([pdfo_cobyla, prima_cobyla], ['PDFO-COBYLA', 'PRIMA-COBYLA'], cutest_problem_names, benchmark_id='cobyla', n_jobs=args.n_jobs)
+        run_three_benchmarks(matlab_cobyla, python_cobyla, 'cobyla', cutest_problem_names, args.default_only, args.n_jobs)
         print(f'Completed COBYLA profile in {time() - start:.2f} seconds')
-
