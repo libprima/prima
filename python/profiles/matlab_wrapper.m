@@ -17,23 +17,17 @@ arguments
 end
 
 obj_fun_conn = tcpclient('127.0.0.1', port);
-fopen(obj_fun_conn);
 if algorithm == "bobyqa"
     [x, fx, flags, details] = bobyqa(@obj_fun, x0, lb, ub, options);
 elseif algorithm == "cobyla"
     nonlcon_fun_conn = tcpclient('127.0.0.1', port_nonlcon);
-    fopen(nonlcon_fun_conn);
-    [x, fx, flags, details] = cobyla(@obj_fun, x0, Aineq, bineq, Aeq, beq, lb, ub, @nonlcon);
+    [x, fx, flags, details] = cobyla(@obj_fun, x0, Aineq, bineq, Aeq, beq, lb, ub, @nonlcon, options);
     clear nonlcon_fun_conn;  % Close the connection
 elseif algorithm == "lincoa"
-    [x, fx, flags, details] = lincoa(@obj_fun, x0, Aineq, bineq, Aeq, beq, lb, ub);
+    [x, fx, flags, details] = lincoa(@obj_fun, x0, Aineq, bineq, Aeq, beq, lb, ub, options);
 elseif algorithm == "newuoa"
     [x, fx, flags, details] = newuoa(@obj_fun, x0, options);
 elseif algorithm == "uobyqa"
-    disp(options)
-    if isfield(options, 'maxfun')
-        disp(options.maxfun)
-    end
     [x, fx, flags, details] = uobyqa(@obj_fun, x0, options);
 end
 

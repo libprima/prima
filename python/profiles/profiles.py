@@ -97,40 +97,50 @@ def nl_constraints_wrapper(port, cineq_fun, ceq_fun, num_vars):
 def matlab_uobyqa(fun, x0):
     port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
     threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
+    f0 = fun.__self__._fun(x0)
     x0 = matlab.double(x0)
-    result = get_matlab_engine().matlab_wrapper(port, 'uobyqa', get_matlab_options(len(x0), fun(x0)), x0, nargout=4)
+    result = get_matlab_engine().matlab_wrapper(port, 'uobyqa', get_matlab_options(len(x0), f0), x0, nargout=4)
     x = np.array(result[0].tomemoryview().tolist())
     return x
 
 
 def python_uobyqa(fun, x0):
     from prima import minimize
-    res = minimize(fun, x0, method='uobyqa', options=get_python_options(len(x0), fun(x0)))
+    f0 = fun.__self__._fun(x0)
+    res = minimize(fun, x0, method='uobyqa', options=get_python_options(len(x0), f0))
     return res.x
 
 
 def matlab_newuoa(fun, x0):
     port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
     threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
+    # We need to reach into the internals of fun in order to call the original function object
+    # so that we don't add to the number of function evaluations. Otherwise OptiProfiler will
+    # end up throwing an exception as we hit max_eval. In the future when OptiProfiler offers
+    # the signature where it provides the problem itself we'll be able to do this without reaching
+    # into the internals like this.
+    f0 = fun.__self__._fun(x0)
     x0 = matlab.double(x0)
-    result = get_matlab_engine().matlab_wrapper(port, 'newuoa', get_matlab_options(len(x0), fun(x0)), x0, nargout=4)
+    result = get_matlab_engine().matlab_wrapper(port, 'newuoa', get_matlab_options(len(x0), f0), x0, nargout=4)
     x = np.array(result[0].tomemoryview().tolist())
     return x
 
 
 def python_newuoa(fun, x0):
     from prima import minimize
-    res = minimize(fun, x0, method='newuoa', options=get_python_options(len(x0), fun(x0)))
+    f0 = fun.__self__._fun(x0)
+    res = minimize(fun, x0, method='newuoa', options=get_python_options(len(x0), f0))
     return res.x
 
 
 def matlab_bobyqa(fun, x0, lb, ub):
     port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
     threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
+    f0 = fun.__self__._fun(x0)
     x0 = matlab.double(x0)
     lb = matlab.double(lb)
     ub = matlab.double(ub)
-    result = get_matlab_engine().matlab_wrapper(port, 'bobyqa', get_matlab_options(len(x0), fun(x0)), x0, lb, ub, nargout=4)
+    result = get_matlab_engine().matlab_wrapper(port, 'bobyqa', get_matlab_options(len(x0), f0), x0, lb, ub, nargout=4)
     x = np.array(result[0].tomemoryview().tolist())
     return x
 
@@ -139,14 +149,16 @@ def python_bobyqa(fun, x0, lb, ub):
     from prima import minimize
     from scipy.optimize import Bounds
 
+    f0 = fun.__self__._fun(x0)
     bounds = Bounds(lb, ub)
-    res = minimize(fun, x0, method='bobyqa', bounds=bounds, options=get_python_options(len(x0), fun(x0)))
+    res = minimize(fun, x0, method='bobyqa', bounds=bounds, options=get_python_options(len(x0), f0))
     return res.x
 
 
 def matlab_lincoa(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq):
     port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
     threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
+    f0 = fun.__self__._fun(x0)
     x0 = matlab.double(x0)
     lb = matlab.double(lb)
     ub = matlab.double(ub)
@@ -154,7 +166,7 @@ def matlab_lincoa(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq):
     b_ub = matlab.double(b_ub)
     a_eq = matlab.double(a_eq)
     b_eq = matlab.double(b_eq)
-    result = get_matlab_engine().matlab_wrapper(port, 'lincoa', get_matlab_options(len(x0), fun(x0)), x0, lb, ub, a_ub, b_ub, a_eq, b_eq, nargout=4)
+    result = get_matlab_engine().matlab_wrapper(port, 'lincoa', get_matlab_options(len(x0), f0), x0, lb, ub, a_ub, b_ub, a_eq, b_eq, nargout=4)
     x = np.array(result[0].tomemoryview().tolist())
     return x
 
@@ -162,13 +174,14 @@ def matlab_lincoa(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq):
 def python_lincoa(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq):
     from prima import minimize, Bounds, LinearConstraint
 
+    f0 = fun.__self__._fun(x0)
     bounds = Bounds(lb, ub)
     constraints = []
     if b_ub.size > 0:
         constraints.append(LinearConstraint(a_ub, -np.inf, b_ub))
     if b_eq.size > 0:
         constraints.append(LinearConstraint(a_eq, b_eq, b_eq))
-    res = minimize(fun, x0, method='lincoa', bounds=bounds, constraints=constraints, options=get_python_options(len(x0), fun(x0)))
+    res = minimize(fun, x0, method='lincoa', bounds=bounds, constraints=constraints, options=get_python_options(len(x0), f0))
     return res.x
 
 
@@ -177,6 +190,7 @@ def matlab_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ineq, c_eq):
     threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
     port_nonlcon = (os.getpid()+1000) % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
     threading.Thread(target=nl_constraints_wrapper, args=(port_nonlcon, c_ineq, c_eq, len(x0))).start()
+    f0 = fun.__self__._fun(x0)
     x0 = matlab.double(x0)
     lb = matlab.double(lb)
     ub = matlab.double(ub)
@@ -188,7 +202,7 @@ def matlab_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ineq, c_eq):
     m_c_ineq = c_ineq_x0.size
     c_eq_x0 = c_eq(x0)
     m_c_eq = c_eq_x0.size
-    result = get_matlab_engine().matlab_wrapper(port, 'cobyla', get_matlab_options(len(x0), fun(x0)), x0, lb, ub, a_ub, b_ub, a_eq, b_eq, m_c_ineq, m_c_eq, port_nonlcon, nargout=4)
+    result = get_matlab_engine().matlab_wrapper(port, 'cobyla', get_matlab_options(len(x0), f0), x0, lb, ub, a_ub, b_ub, a_eq, b_eq, m_c_ineq, m_c_eq, port_nonlcon, nargout=4)
     x = np.array(result[0].tomemoryview().tolist())
     return x
 
@@ -196,6 +210,7 @@ def matlab_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ineq, c_eq):
 def python_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ineq, c_eq):
     from prima import minimize, Bounds, LinearConstraint, NonlinearConstraint
 
+    f0 = fun.__self__._fun(x0)
     bounds = Bounds(lb, ub)
     constraints = []
     if b_ub.size > 0:
@@ -208,7 +223,7 @@ def python_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ineq, c_eq):
     c_eq_x0 = c_eq(x0)
     if c_eq_x0.size > 0:
         constraints.append(NonlinearConstraint(c_eq, np.zeros_like(c_eq_x0), np.zeros_like(c_eq_x0)))
-    res = minimize(fun, x0, method='cobyla', bounds=bounds, constraints=constraints, options=get_python_options(len(x0), fun(x0)))
+    res = minimize(fun, x0, method='cobyla', bounds=bounds, constraints=constraints, options=get_python_options(len(x0), f0))
     return res.x
 
 
