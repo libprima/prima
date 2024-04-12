@@ -2249,3 +2249,9 @@ excludelist
 slsqp
 optiprofiler
 manylinux
+Opti
+pathspec
+itemsize
+tcpclient
+tomemoryview
+scm

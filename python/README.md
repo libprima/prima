@@ -26,7 +26,7 @@ After running the `coverage` command, you can run `coverage html` to generate an
 
 This is one more variant on the normal build which will install an editable version of prima, so that any changes do not have to go through the build-uninstall-reinstall loop in order to get tested. With this setup, anytime prima is imported it will be rebuilt.
 
-From [scikit-build-core docs](https://scikit-build-core.readthedocs.io/en/latest/configuration.html#editable-installs), run the following from the repo root. You may get some errors about missing Python libraries that need to be installed. As of thei writing you need `pyproject_metadata scikit_build_core pathspec setuptools_scm` as well as cmake and ninja, which can be installed on Linux via `apt install ninja-build cmake`.
+From [scikit-build-core docs](https://scikit-build-core.readthedocs.io/en/latest/configuration.html#editable-installs), run the following from the repo root. You may get some errors about missing Python libraries that need to be installed. As of this writing you need `pyproject_metadata scikit_build_core pathspec setuptools_scm` as well as cmake and ninja, which can be installed on Linux via `apt install ninja-build cmake`.
 
 `pip install --no-build-isolation -Ceditable.rebuild=true -Cbuild-dir=build -ve .`
 

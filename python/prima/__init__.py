@@ -134,7 +134,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         # constraints (m_nlcon). In order to get this number we need to evaluate the constraint function at x0.
         # The constraint value at x0 (nlconstr0) is not discarded but passed down to the Fortran backend, as its
         # evaluation is assumed to be expensive. We also evaluate the objective function at x0 and pass the result
-        # (f0) down to the Fortran backend, which expects nlcontr0 and f0 to be provided in sync.
+        # (f0) down to the Fortran backend, which expects nlconstr0 and f0 to be provided in sync.
 
         f0 = fun(x0, *args)
         nlconstr0 = nonlinear_constraint_function(x0)

@@ -13,7 +13,7 @@ def transform_constraint_function(nlc):
     def newconstraint(x):
         values = np.atleast_1d(np.array(nlc.fun(x), dtype=np.float64))
         
-        # Ugrade the lower/upper bounds to vectors if necessary
+        # Upgrade the lower/upper bounds to vectors if necessary
         lb = nlc.lb
         if not hasattr(lb, '__len__'):
             lb = np.array([nlc.lb]*len(values), dtype=np.float64)
