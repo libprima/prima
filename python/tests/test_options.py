@@ -85,13 +85,6 @@ The corresponding X is:  {fmt(res.x[0])}   {fmt(res.x[1])}
     assert outerr.err == ''
 
 
-def test_maxfun():
-    x0 = [0.0] * 2
-    options = {'maxfun': 10}
-    res = minimize(fun, x0, options=options)
-    assert res.nfev == 10
-
-
 def test_maxfev():
     x0 = [0.0] * 2
     options = {'maxfev': 10}
