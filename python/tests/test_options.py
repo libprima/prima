@@ -76,7 +76,7 @@ def test_iprint(capfd):
     # In order to account for some machines (i.e. 32bit machines we test on) providing
     # slightly different values, we use this formatting function to get the numbers in
     # the right format, whatever they may be.
-    fmt = lambda x: np.format_float_scientific(x, precision=16, exp_digits=3).upper()
+    fmt = lambda x: np.format_float_scientific(x, precision=16, unique=False, exp_digits=3).upper()
     assert outerr.out == f'''
 Return from NEWUOA because the trust region radius reaches its lower bound.
 Number of function values = {res.nfev}   Least value of F =  {fmt(res.fun)}
