@@ -14,16 +14,20 @@ import struct
 MAX_PORT_NUMBER = 65535  # Ports above 65535 are invalid.
 MIN_PORT_NUMBER = 1025  # Ports below 1024 are privileged.
 nondefault_options = lambda n, f0: {
-    'npt' : np.floor(min(3.14*n, n**1.23)),
+    'npt' : int(min(3.14*n, n**1.23)),
     'rhobeg' : 2.718,
     'rhoend' : 3.14*1.0e-4,
-    'maxfev' : 271*n, # if this is doable, 2718 otherwise
+    'maxfev' : 271*n,
     'ftarget' : f0 - 314 # if this is doable, 3.14 otherwise
 }
 
+
 def get_matlab_options(n, f0):
     if os.environ.get('NONDEFAULT_MATLAB') == 'True':
-        return nondefault_options(n, f0)
+        options = nondefault_options(n, f0)
+        # Change the option name
+        options['maxfun'] = matlab.int32(options.pop('maxfev'))
+        return options
     return {}
 
 
@@ -60,9 +64,8 @@ def fun_wrapper(port, obj_fun, num_vars):
     socket1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     socket1.bind(('localhost', port))
     socket1.listen(1)
-    conn, addr = socket1.accept()
+    conn, _ = socket1.accept()
     with conn:
-        print('Connected by', addr)
         while True:
             bufsize = num_vars * 8  # 8 being sizeof(double)
             data = conn.recv(bufsize)
@@ -98,9 +101,9 @@ def matlab_uobyqa(fun, x0):
     port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
     threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
     f0 = fun.__self__._fun(x0)
-    x0 = matlab.double(x0)
-    result = get_matlab_engine().matlab_wrapper(port, 'uobyqa', get_matlab_options(len(x0), f0), x0, nargout=4)
-    x = np.array(result[0].tomemoryview().tolist())
+    x0_m = matlab.double(x0)
+    result = get_matlab_engine().matlab_wrapper(port, 'uobyqa', get_matlab_options(len(x0), f0), x0_m, nargout=4)
+    x = np.array(matlab.double(result[0]).tomemoryview().tolist())  # Wrap result in matlab.double in case of n=1
     return x
 
 
@@ -120,9 +123,9 @@ def matlab_newuoa(fun, x0):
     # the signature where it provides the problem itself we'll be able to do this without reaching
     # into the internals like this.
     f0 = fun.__self__._fun(x0)
-    x0 = matlab.double(x0)
-    result = get_matlab_engine().matlab_wrapper(port, 'newuoa', get_matlab_options(len(x0), f0), x0, nargout=4)
-    x = np.array(result[0].tomemoryview().tolist())
+    x0_m = matlab.double(x0)
+    result = get_matlab_engine().matlab_wrapper(port, 'newuoa', get_matlab_options(len(x0), f0), x0_m, nargout=4)
+    x = np.array(matlab.double(result[0]).tomemoryview().tolist())  # Wrap result in matlab.double in case of n=1
     return x
 
 
@@ -137,11 +140,11 @@ def matlab_bobyqa(fun, x0, lb, ub):
     port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
     threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
     f0 = fun.__self__._fun(x0)
-    x0 = matlab.double(x0)
+    x0_m = matlab.double(x0)
     lb = matlab.double(lb)
     ub = matlab.double(ub)
-    result = get_matlab_engine().matlab_wrapper(port, 'bobyqa', get_matlab_options(len(x0), f0), x0, lb, ub, nargout=4)
-    x = np.array(result[0].tomemoryview().tolist())
+    result = get_matlab_engine().matlab_wrapper(port, 'bobyqa', get_matlab_options(len(x0), f0), x0_m, lb, ub, nargout=4)
+    x = np.array(matlab.double(result[0]).tomemoryview().tolist())  # Wrap result in matlab.double in case of n=1
     return x
 
 
@@ -159,15 +162,15 @@ def matlab_lincoa(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq):
     port = os.getpid() % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
     threading.Thread(target=fun_wrapper, args=(port, fun, len(x0))).start()
     f0 = fun.__self__._fun(x0)
-    x0 = matlab.double(x0)
+    x0_m = matlab.double(x0)
     lb = matlab.double(lb)
     ub = matlab.double(ub)
     a_ub = matlab.double(a_ub)
     b_ub = matlab.double(b_ub)
     a_eq = matlab.double(a_eq)
     b_eq = matlab.double(b_eq)
-    result = get_matlab_engine().matlab_wrapper(port, 'lincoa', get_matlab_options(len(x0), f0), x0, lb, ub, a_ub, b_ub, a_eq, b_eq, nargout=4)
-    x = np.array(result[0].tomemoryview().tolist())
+    result = get_matlab_engine().matlab_wrapper(port, 'lincoa', get_matlab_options(len(x0), f0), x0_m, lb, ub, a_ub, b_ub, a_eq, b_eq, nargout=4)
+    x = np.array(matlab.double(result[0]).tomemoryview().tolist())  # Wrap result in matlab.double in case of n=1
     return x
 
 
@@ -191,7 +194,7 @@ def matlab_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ineq, c_eq):
     port_nonlcon = (os.getpid()+1000) % (MAX_PORT_NUMBER - MIN_PORT_NUMBER) + MIN_PORT_NUMBER
     threading.Thread(target=nl_constraints_wrapper, args=(port_nonlcon, c_ineq, c_eq, len(x0))).start()
     f0 = fun.__self__._fun(x0)
-    x0 = matlab.double(x0)
+    x0_m = matlab.double(x0)
     lb = matlab.double(lb)
     ub = matlab.double(ub)
     a_ub = matlab.double(a_ub)
@@ -202,8 +205,8 @@ def matlab_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ineq, c_eq):
     m_c_ineq = c_ineq_x0.size
     c_eq_x0 = c_eq(x0)
     m_c_eq = c_eq_x0.size
-    result = get_matlab_engine().matlab_wrapper(port, 'cobyla', get_matlab_options(len(x0), f0), x0, lb, ub, a_ub, b_ub, a_eq, b_eq, m_c_ineq, m_c_eq, port_nonlcon, nargout=4)
-    x = np.array(result[0].tomemoryview().tolist())
+    result = get_matlab_engine().matlab_wrapper(port, 'cobyla', get_matlab_options(len(x0), f0), x0_m, lb, ub, a_ub, b_ub, a_eq, b_eq, m_c_ineq, m_c_eq, port_nonlcon, nargout=4)
+    x = np.array(matlab.double(result[0]).tomemoryview().tolist())  # Wrap result in matlab.double in case of n=1
     return x
 
 
