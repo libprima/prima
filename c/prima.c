@@ -34,7 +34,7 @@
 
 
 // Function to initialize the problem
-int prima_init_problem(prima_problem_t *const problem, const int n)
+prima_rc_t prima_init_problem(prima_problem_t *const problem, const int n)
 {
     if (!problem)
         return PRIMA_NULL_PROBLEM;
@@ -47,7 +47,7 @@ int prima_init_problem(prima_problem_t *const problem, const int n)
 
 
 // Function to initialize the options
-int prima_init_options(prima_options_t *const options)
+prima_rc_t prima_init_options(prima_options_t *const options)
 {
     if (!options)
         return PRIMA_NULL_OPTIONS;
@@ -63,7 +63,7 @@ int prima_init_options(prima_options_t *const options)
 
 
 // Function to check whether the problem matches the algorithm
-int prima_check_problem(const prima_problem_t problem, const prima_algorithm_t algorithm)
+prima_rc_t prima_check_problem(const prima_problem_t problem, const prima_algorithm_t algorithm)
 {
     if (algorithm != PRIMA_COBYLA && (problem.calcfc || problem.nlconstr0 || problem.m_nlcon > 0))
         return PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS;
@@ -86,7 +86,7 @@ int prima_check_problem(const prima_problem_t problem, const prima_algorithm_t a
 
 
 // Function to initialize the result
-int prima_init_result(prima_result_t *const result, const prima_problem_t problem)
+prima_rc_t prima_init_result(prima_result_t *const result, const prima_problem_t problem)
 {
     if (!result)
         return PRIMA_NULL_RESULT;
@@ -129,7 +129,7 @@ int prima_init_result(prima_result_t *const result, const prima_problem_t proble
 
 
 // Function to free the result
-int prima_free_result(prima_result_t *const result)
+prima_rc_t prima_free_result(prima_result_t *const result)
 {
     if (!result)
         return PRIMA_NULL_RESULT;
@@ -230,9 +230,9 @@ int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], doub
 
 
 // The function that does the minimization using a PRIMA solver
-int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result)
+prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result)
 {
-    int info = prima_init_result(result, problem);
+    prima_rc_t info = prima_init_result(result, problem);
 
     if (info == 0)
         info = prima_check_problem(problem, algorithm);
