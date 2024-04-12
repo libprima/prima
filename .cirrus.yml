@@ -7,6 +7,8 @@ task:
   # only_if: the task will not be created / triggered.
   only_if: "changesInclude('.cirrus.yml', 'fortran/**', 'c/**', 'python/**')"
 
+  timeout_in: 120m  # There is a hard limit of 2 hours for free tasks.
+
   matrix:
     - name: AMD64 FreeBSD
       freebsd_instance:
