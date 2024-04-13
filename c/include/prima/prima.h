@@ -47,6 +47,7 @@ typedef enum {
 
 // Possible return values
 typedef enum {
+    PRIMA_RC_DFT = 0,
     PRIMA_SMALL_TR_RADIUS = 0,
     PRIMA_FTARGET_ACHIEVED = 1,
     PRIMA_TRSUBP_FAILED = 2,

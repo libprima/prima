@@ -168,10 +168,10 @@ int main(int argc, char * argv[])
 
   // Call the solver
   prima_result_t result;
-  rc = prima_minimize(algorithm, problem, options, &result);
+  const prima_rc_t rc2 = prima_minimize(algorithm, problem, options, &result);
 
   // Print the result
-  printf("f* = %g, cstrv = %g, nlconstr = {%g}, rc = %d, msg = '%s', evals = %d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
+  printf("f* = %g, cstrv = %g, nlconstr = {%g}, rc = %d, msg = '%s', evals = %d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc2, result.message, result.nf);
 
   // Free the result
   prima_free_result(&result);
