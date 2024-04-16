@@ -77,6 +77,14 @@ jobs:
           sudo ln -sf $(which gfortran-${{ matrix.version }}) $(dirname $(which gfortran-${{ matrix.version }}))/gfortran
           which gfortran && gfortran --version
 
+      - name: Revise string.f90, so that we know what is happening if assertion fails
+        if: ${{ matrix.os == 'macos-14' }}
+        shell: bash
+        run: |
+          cd fortran/common || exit 42
+          $SEDI "s|\(if (abs(x) < REALMAX) then\)|\1\nwrite(*,*) '====> x = ', x, 's = ', s, 'sx = ', str2real(s)|" string.f90
+          cat string.f90
+
       - name: Revise linalg.f90 regarding a postcondition of p_norm, so that we know what is happening if it fails
         shell: bash
         run: |
