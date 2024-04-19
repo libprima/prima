@@ -62,7 +62,7 @@ static void fun_con(const double x[], double *const f, double constr[], const vo
   (void)data;
 }
 
-unsigned int get_random_seed() {
+unsigned int get_random_seed(void) {
   // Set the random seed to year/week
   char buf[10] = {0};
   time_t t = time(NULL);
