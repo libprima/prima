@@ -30,7 +30,7 @@ static void fun(const double x[], double *const f, const void *data)
     // Objective: Rosenbrock function
     *f = 0.0;
     for (int i = 0; i < n-1; ++ i)
-      *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]*x[i]) * (x[i+1] - x[i]*x[i]);
+        *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]*x[i]) * (x[i+1] - x[i]*x[i]);
 
     static int nf = 0;
     if (debug) {
@@ -46,11 +46,11 @@ static void fun_con(const double x[], double *const f, double constr[], const vo
     // Objective: Rosenbrock function
     *f = 0.0;
     for (int i = 0; i < n-1; ++ i)
-      *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]*x[i]) * (x[i+1] - x[i]*x[i]);
+        *f += (x[i] - 1.0) * (x[i] - 1.0) + alpha * (x[i+1] - x[i]*x[i]) * (x[i+1] - x[i]*x[i]);
 
     // Constraint: x_{i+1} <= x_i^2
     for (int i = 0; i < MIN(M_NLCON, n-1); ++ i)
-      constr[i] = x[i+1] - x[i] * x[i];
+        constr[i] = x[i+1] - x[i] * x[i];
 
     static int nf = 0;
     if (debug) {
@@ -100,21 +100,19 @@ int main(int argc, char * argv[])
     double x0[N_MAX];
     double xl[N_MAX];
     double xu[N_MAX];
-    for (int i = 0; i < N_MAX; ++ i)
-    {
+    for (int i = 0; i < N_MAX; ++ i) {
         x0[i] = random_gen(-1.0, 1.0);
         xl[i] = random_gen(-2.0, -1.0);
         xu[i] = random_gen(1.0, 2.0);
     }
     double *Aineq = malloc(N_MAX*M_INEQ_MAX*sizeof(double));
-    for (int i = 0; i < N_MAX; ++ i)
-    {
+    for (int i = 0; i < N_MAX; ++ i) {
         for (int j = 0; j < m_ineq; ++ j)
-          Aineq[j*N_MAX+i] = random_gen(-1.0, 1.0);
+            Aineq[j*N_MAX+i] = random_gen(-1.0, 1.0);
     }
     double bineq[M_INEQ_MAX];
     for (int j = 0; j < M_INEQ_MAX; ++ j)
-      bineq[j] = random_gen(-1.0, 1.0);
+        bineq[j] = random_gen(-1.0, 1.0);
 
     // Define the algorithm and the problem according to `algo`
     prima_problem_t problem;

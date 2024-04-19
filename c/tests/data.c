@@ -78,17 +78,17 @@ int main(int argc, char * argv[])
 
     // Data for the problem
     double x0[] = {0.0,
-        0.0};
+                   0.0};
     double xl[] = {-6.0,
-        -6.0};
+                   -6.0};
     double xu[] = {6.0,
-        6.0};
+                   6.0};
     double Aineq[3*2] = {1.0, 0.0,
-        0.0, 1.0,
-        1.0, 1.0};
+                         0.0, 1.0,
+                         1.0, 1.0};
     double bineq[3] = {4.0,
-        3.0,
-        10.0};
+                       3.0,
+                       10.0};
 
     // Define the algorithm and the problem according to `algo`
     prima_problem_t problem;
