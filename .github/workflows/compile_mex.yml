@@ -32,11 +32,11 @@ jobs:
           - os: macos-11
             matlab: R2021b
 
-          - os: macos-latest
+          - os: macos-12
             matlab: R2020b
-          - os: macos-latest
+          - os: macos-12
             matlab: R2021a
-          - os: macos-latest
+          - os: macos-12
             matlab: R2021b
 
           - os: macos-13
@@ -61,17 +61,17 @@ jobs:
         # Below R2022a, MEX does not work on windows-latest due to the version of MS Visual Studio;
         # R2022a/b should work according to the documentation of MathWorks and GitHub Actions, but
         # they do not as of March 2022
-          - os: windows-latest
+          - os: windows-2021
             matlab: R2020a
-          - os: windows-latest
+          - os: windows-2021
             matlab: R2020b
-          - os: windows-latest
+          - os: windows-2021
             matlab: R2021a
-          - os: windows-latest
+          - os: windows-2021
             matlab: R2021b
-          - os: windows-latest
+          - os: windows-2021
             matlab: R2022a
-          - os: windows-latest
+          - os: windows-2021
             matlab: R2022b
 
 
