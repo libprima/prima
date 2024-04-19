@@ -128,7 +128,7 @@ jobs:
             options.classical = false;
             options.verbose = true;
             setup(options);
-            test prima;
+            testprima;
             cd matlab/examples;
             rosenbrock_example;
 
