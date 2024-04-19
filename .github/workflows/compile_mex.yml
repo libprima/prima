@@ -50,8 +50,6 @@ jobs:
           - os: windows-2019
             matlab: R2020b
           - os: windows-2019
-            matlab: R2021a
-          - os: windows-2019
             matlab: R2022b
           - os: windows-2019
             matlab: R2023a
