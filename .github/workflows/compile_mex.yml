@@ -136,4 +136,4 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         with:
           name: ${{ matrix.os }}-${{ matrix.matlab }}
-          path: ${{ env.TEST_DIR }}/prima/
+          path: prima
