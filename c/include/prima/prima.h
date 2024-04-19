@@ -47,6 +47,7 @@ typedef enum {
 
 // Possible return values
 typedef enum {
+    PRIMA_RC_DFT = 0,
     PRIMA_SMALL_TR_RADIUS = 0,
     PRIMA_FTARGET_ACHIEVED = 1,
     PRIMA_TRSUBP_FAILED = 2,
@@ -188,7 +189,7 @@ typedef struct {
 
 // Function to initialize the problem
 PRIMAC_API
-int prima_init_problem(prima_problem_t *const problem, const int n);
+prima_rc_t prima_init_problem(prima_problem_t *const problem, const int n);
 
 
 // Structure to hold the options
@@ -246,7 +247,7 @@ typedef struct {
 
 // Function to initialize the options
 PRIMAC_API
-int prima_init_options(prima_options_t *const options);
+prima_rc_t prima_init_options(prima_options_t *const options);
 
 
 // Structure to hold the result
@@ -281,7 +282,7 @@ typedef struct {
 
 // Function to free the result
 PRIMAC_API
-int prima_free_result(prima_result_t *const result);
+prima_rc_t prima_free_result(prima_result_t *const result);
 
 
 /*
@@ -296,7 +297,7 @@ int prima_free_result(prima_result_t *const result);
  * return    : see prima_rc_t enum for return codes
  */
 PRIMAC_API
-int prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result);
+prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result);
 
 
 #ifdef __cplusplus

@@ -62,6 +62,18 @@ static void fun_con(const double x[], double *const f, double constr[], const vo
   (void)data;
 }
 
+unsigned int get_random_seed(void) {
+  // Set the random seed to year/week
+  char buf[10] = {0};
+  time_t t = time(NULL);
+  struct tm *tmp = localtime(&t);
+  int rc = strftime(buf, 10, "%y%W", tmp);
+  if (!rc)
+    return 42;
+  else
+    return atoi(buf);
+}
+
 // Main function
 int main(int argc, char * argv[])
 {
@@ -75,15 +87,7 @@ int main(int argc, char * argv[])
     debug = (strcmp(argv[2], "debug") == 0);
   printf("Debug = %d\n", debug);
 
-  // Set the random seed to year/week
-  // FIXME: Implement this as a function
-  char buf[10] = {0};
-  time_t t = time(NULL);
-  struct tm *tmp = localtime(&t);
-  int rc = strftime(buf, 10, "%y%W", tmp);
-  if (!rc)
-    return 1;
-  unsigned seed = atoi(buf);
+  unsigned int seed = get_random_seed();
   printf("Random seed = %d\n", seed);
   srand(seed);
 
@@ -168,7 +172,7 @@ int main(int argc, char * argv[])
 
   // Call the solver
   prima_result_t result;
-  rc = prima_minimize(algorithm, problem, options, &result);
+  const prima_rc_t rc = prima_minimize(algorithm, problem, options, &result);
 
   // Print the result
   printf("f* = %g, cstrv = %g, nlconstr = {%g}, rc = %d, msg = '%s', evals = %d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);

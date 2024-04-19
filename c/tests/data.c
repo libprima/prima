@@ -144,7 +144,7 @@ int main(int argc, char * argv[])
 
   // Call the solver
   prima_result_t result;
-  int rc = prima_minimize(algorithm, problem, options, &result);
+  const prima_rc_t rc = prima_minimize(algorithm, problem, options, &result);
 
   // Print the result
   printf("f* = %g, cstrv = %g, nlconstr = {%g}, rc = %d, msg = '%s', evals = %d\n", result.f, result.cstrv, result.nlconstr ? result.nlconstr[0] : 0.0, rc, result.message, result.nf);
