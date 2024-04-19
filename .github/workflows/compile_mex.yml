@@ -127,8 +127,10 @@ jobs:
             options.quadruple = true;
             options.classical = false;
             options.verbose = true;
-            setup(options)
-
+            setup(options);
+            test prima;
+            cd matlab/examples;
+            rosenbrock_example;
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.3.1
