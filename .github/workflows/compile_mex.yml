@@ -137,7 +137,6 @@ jobs:
         with:
           name: ${{ matrix.os }}-${{ matrix.matlab }}
           path: |
-            ./fortran
-            ./matlab
-            ./c
-            ./*.*
+            ./*
+            !./benchmark
+            !./.*
