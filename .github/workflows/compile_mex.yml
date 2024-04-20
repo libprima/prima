@@ -157,7 +157,7 @@ jobs:
         run: bash .github/scripts/misc_setup
 
       - name: Conduct the test  # We do not use matlab-actions/run-command, which is not supported on macOS ARM64 as of 20240119
-        run: ${{ env.MATLAB }} -nojvm -batch "options.debug = true; options.half = true; options.single = true; options.quadruple = true; options.classical = false; options.verbose = true; setup(options); testprima; cd matlab/examples; rosenbrock_example;"
+        run: ${{ env.MATLAB }} -nojvm -nosplash -nodesktop -nodisplay -r "options.debug = true; options.half = true; options.single = true; options.quadruple = true; options.classical = false; options.verbose = true; setup(options); testprima; cd matlab/examples; rosenbrock_example; exit"
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.3.1
