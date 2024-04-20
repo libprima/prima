@@ -2183,3 +2183,4 @@ nuse
 nxbdi
 amd
 mmlir
+nojvm
