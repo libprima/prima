@@ -140,6 +140,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Parallel test, matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/parallel_test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/parallel_test_matlab_mac.yml)
     - [![Recursive test, matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/recursive_test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/recursive_test_matlab_mac.yml)
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
+    - [![Compile MEX](https://github.com/libprima/prima/actions/workflows/compile_mex.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/compile_mex.yml)
     - [![Lint the Fortran code and the MEX gateways with nagfor](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml)
 
 - <a name="verification"></a> [Tests](https://github.com/libsprima/prima/actions) at [libsprima/prima](https://github.com/libsprima/prima)
@@ -178,7 +179,6 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 - [Tests](https://github.com/opt4ai/prima/actions) at [opt4ai/prima](https://github.com/opt4ai/prima)
 
-    - [![Compile MEX](https://github.com/opt4ai/prima/actions/workflows/compile_mex.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/compile_mex.yml)
     - [![Test MATLAB](https://github.com/opt4ai/prima/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab.yml)
     - [![Test MATLAB, Linux](https://github.com/opt4ai/prima/actions/workflows/test_matlab_linux.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab_linux.yml)
 
