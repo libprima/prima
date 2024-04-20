@@ -68,7 +68,7 @@ jobs:
       #     cat cobylb.f
 
       - name: Conduct the test  # We do not use matlab-actions/run-command, which is not supported on macOS ARM64 as of 20240119
-        run: ${{ env.MATLAB }} -batch "cd matlab/tests; testprima_ex();"
+        run: ${{ env.MATLAB }} -nojvm -batch "cd matlab/tests; testprima_ex();"
 
   # The following job check whether the tests were successful or cancelled due to timeout.
   # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.
