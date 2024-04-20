@@ -10,6 +10,9 @@ on:
   # Trigger the workflow manually
   workflow_dispatch:
 
+env:
+  MATLAB: /Applications/MATLAB_R2023b.app/bin/matlab 
+
 jobs:
   test:
     name: Parallel test of PRIMA
@@ -38,7 +41,7 @@ jobs:
           submodules: recursive
 
       - name: Conduct the test  # We do not use matlab-actions/run-command, which is not supported on macOS ARM64 as of 20240119
-        run: /Applications/MATLAB_R2023b.app/bin/matlab -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); parallel('${{ matrix.solver }}'); copy_crash_dump_files(root_dir);"
+        run: ${{ env.MATLAB }} -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); parallel('${{ matrix.solver }}'); copy_crash_dump_files(root_dir);"
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.3.1

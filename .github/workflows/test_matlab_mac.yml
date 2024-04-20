@@ -17,6 +17,8 @@ on:
 # Show the git ref in the workflow name if it is invoked manually.
 run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
 
+env:
+  MATLAB: /Applications/MATLAB_R2023b.app/bin/matlab
 
 jobs:
   test:
@@ -66,7 +68,7 @@ jobs:
       #     cat cobylb.f
 
       - name: Conduct the test  # We do not use matlab-actions/run-command, which is not supported on macOS ARM64 as of 20240119
-        run: /Applications/MATLAB_R2023b.app/bin/matlab -batch "cd matlab/tests; testprima_ex();"
+        run: ${{ env.MATLAB }} -batch "cd matlab/tests; testprima_ex();"
 
   # The following job check whether the tests were successful or cancelled due to timeout.
   # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.
