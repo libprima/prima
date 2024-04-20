@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, latest]
+        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, latest]
 
     steps:
 
