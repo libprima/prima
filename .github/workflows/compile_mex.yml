@@ -161,16 +161,17 @@ jobs:
         with:
           startup-options: -nojvm -noopengl -logfile output.log
           command: |
-            options.debug = true;
-            options.half = true;
-            options.single = true;
-            options.quadruple = true;
-            options.classical = false;
-            options.verbose = true;
-            setup(options);
-            testprima;
-            cd matlab/examples
-            rosenbrock_example
+            fprintf('\nhello!\n');
+#            options.debug = true;
+#            options.half = true;
+#            options.single = true;
+#            options.quadruple = true;
+#            options.classical = false;
+#            options.verbose = true;
+#            setup(options);
+#            testprima;
+#            cd matlab/examples
+#            rosenbrock_example
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.3.1

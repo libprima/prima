@@ -2187,3 +2187,5 @@ nojvm
 nodesktop
 nodisplay
 nosplash
+noopengl
+ogfile
