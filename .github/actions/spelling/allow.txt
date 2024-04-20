@@ -2184,3 +2184,6 @@ nxbdi
 amd
 mmlir
 nojvm
+nodesktop
+nodisplay
+nosplash
