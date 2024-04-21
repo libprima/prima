@@ -43,15 +43,15 @@ def excludelist(problem_type):
             'TOINTPSP',
             'VARDIM',
         ]
-    elif problem_type == 'bound':
+    elif problem_type == 'bobyqa':
         # For the following problems, the classical bobyqa (single-precision) encounters SEGFAULT.
         excludelist += ['MGH17LS']
-    elif problem_type == 'adjacency linear':
+    elif problem_type == 'lincoa':
         excludelist += [
             'DALLASM', 
             'TARGUS',
         ]
-    elif problem_type == 'quadratic other':
+    elif problem_type == 'cobyla':
         # The following problems were observed to take excessive time during tests GitHub Actions and
         # make the tests run overtime. Some of them may not be very time-consuming during a "plain"
         # test but become more challenging with some perturbations or variations. The excessive time may

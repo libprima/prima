@@ -269,20 +269,22 @@ if __name__ == '__main__':
         os.environ['NONDEFAULT_PYTHON'] = "False"
         algorithm = algorithm.lower()
         ALGORITHM = algorithm.upper()
-        run_benchmark([matlab_fun, python_fun], [f'MATLAB-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_default_options', n_jobs=n_jobs, project_x0=True)
+        project_x0 = algorithm == 'lincoa'
+        run_benchmark([matlab_fun, python_fun], [f'MATLAB-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_default_options', n_jobs=n_jobs, project_x0=project_x0)
         if not default_only:
             os.environ['NONDEFAULT_MATLAB'] = "True"
             os.environ['NONDEFAULT_PYTHON'] = "True"
-            run_benchmark([matlab_fun, python_fun], [f'MATLAB-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_nondefault_options', n_jobs=n_jobs, project_x0=True)
+            run_benchmark([matlab_fun, python_fun], [f'MATLAB-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_nondefault_options', n_jobs=n_jobs, project_x0=project_x0)
             os.environ['NONDEFAULT_MATLAB'] = "True"
             os.environ['NONDEFAULT_PYTHON'] = "False"
-            run_benchmark([matlab_fun, python_fun], [f'MATLAB-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_different_options', n_jobs=n_jobs, project_x0=True)
+            run_benchmark([matlab_fun, python_fun], [f'MATLAB-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_different_options', n_jobs=n_jobs, project_x0=project_x0)
     
     if args.newuoa:
         start = time()
         print("Running profiles for NEWUOA")
         with open('uobyqa_newuoa.txt') as f:
             cutest_problem_names = f.read().splitlines()
+        cutest_problem_names = list(filter(lambda x: x not in excludelist('unconstrained'), cutest_problem_names))
         run_three_benchmarks(matlab_newuoa, python_newuoa, 'newuoa', cutest_problem_names, args.default_only, args.n_jobs)
         print(f'Completed NEWUOA profile in {time() - start:.2f} seconds')
     
@@ -291,6 +293,7 @@ if __name__ == '__main__':
         print("Running profiles for UOBYQA")
         with open('uobyqa_newuoa.txt') as f:
             cutest_problem_names = f.read().splitlines()
+        cutest_problem_names = list(filter(lambda x: x not in excludelist('unconstrained'), cutest_problem_names))
         run_three_benchmarks(matlab_uobyqa, python_uobyqa, 'uobyqa', cutest_problem_names, args.default_only, args.n_jobs)
         print(f'Completed UOBYQA profile in {time() - start:.2f} seconds')
     
@@ -299,6 +302,7 @@ if __name__ == '__main__':
         print("Running profiles for BOBYQA")
         with open('bobyqa.txt') as f:
             cutest_problem_names = f.read().splitlines()
+        cutest_problem_names = list(filter(lambda x: x not in excludelist('bobyqa'), cutest_problem_names))
         run_three_benchmarks(matlab_bobyqa, python_bobyqa, 'bobyqa', cutest_problem_names, args.default_only, args.n_jobs)
         print(f'Completed BOBYQA profile in {time() - start:.2f} seconds')
     
@@ -307,6 +311,7 @@ if __name__ == '__main__':
         print("Running profiles for LINCOA")
         with open('lincoa.txt') as f:
             cutest_problem_names = f.read().splitlines()
+        cutest_problem_names = list(filter(lambda x: x not in excludelist('lincoa'), cutest_problem_names))
         run_three_benchmarks(matlab_lincoa, python_lincoa, 'lincoa', cutest_problem_names, args.default_only, args.n_jobs)
         print(f'Completed LINCOA profile in {time() - start:.2f} seconds')
     
@@ -315,5 +320,6 @@ if __name__ == '__main__':
         print("Running profiles for COBYLA")
         with open('cobyla.txt') as f:
             cutest_problem_names = f.read().splitlines()
+        cutest_problem_names = list(filter(lambda x: x not in excludelist('cobyla'), cutest_problem_names))
         run_three_benchmarks(matlab_cobyla, python_cobyla, 'cobyla', cutest_problem_names, args.default_only, args.n_jobs)
         print(f'Completed COBYLA profile in {time() - start:.2f} seconds')
