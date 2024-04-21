@@ -8,7 +8,7 @@ module geometry_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, April 21, 2024 PM03:16:37
+! Last Modified: Sunday, April 21, 2024 PM03:25:55
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -168,6 +168,7 @@ if (.not. ximproved) then
     score(n + 1) = -ONE
 end if
 
+! SCORE(J) is NaN implies SIMID(J) is NaN, but we want ABS(SIMID) to be big. So we exclude such J.
 score(trueloc(is_nan(score))) = -ONE
 
 jdrop = 0
