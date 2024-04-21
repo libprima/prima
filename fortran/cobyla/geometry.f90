@@ -8,7 +8,7 @@ module geometry_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, March 24, 2024 PM05:13:08
+! Last Modified: Sunday, April 21, 2024 PM01:57:52
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -168,15 +168,16 @@ if (.not. ximproved) then
     score(n + 1) = -ONE
 end if
 
+jdrop = 0
 ! The following IF works a bit better than `IF (ANY(SCORE > 1) .OR. ANY(SCORE > 0) .AND. XIMPROVED)`
 ! from Powell's UOBYQA and NEWUOA code.
 if (any(score > 0)) then  ! Powell's BOBYQA and LINCOA code
     jdrop = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(jdrop))
     !!MATLAB: [~, jdrop] = max(score, [], 'omitnan');
-elseif (ximproved) then
+end if
+
+if ((ximproved .and. jdrop == 0) .or. jdrop < 0) then  ! JDROP < 0 is impossible in theory.
     jdrop = int(maxloc(distsq, dim=1), kind(jdrop))
-else
-    jdrop = 0  ! We arrive here when XIMPROVED = FALSE and no entry of SCORE is positive.
 end if
 
 !====================!
@@ -186,7 +187,7 @@ end if
 ! Postconditions
 if (DEBUGGING) then
     call assert(jdrop >= 0 .and. jdrop <= n + 1, '0 <= JDROP <= N+1', srname)
-    call assert(jdrop <= n .or. ximproved, 'JDROP >= 1 unless IMPROVEX = TRUE', srname)
+    call assert(jdrop <= n .or. ximproved, 'JDROP <= n unless IMPROVEX = TRUE', srname)
     call assert(jdrop >= 1 .or. .not. ximproved, 'JDROP >= 1 unless IMPROVEX = FALSE', srname)
     ! JDROP >= 1 when XIMPROVED = TRUE unless NaN occurs in DISTSQ, which should not happen if the
     ! starting point does not contain NaN and the trust-region/geometry steps never contain NaN.

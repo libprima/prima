@@ -8,7 +8,7 @@ module geometry_uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Wednesday, April 03, 2024 AM12:54:55
+! Last Modified: Sunday, April 21, 2024 PM01:52:04
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -132,21 +132,22 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
+knew = 0
 ! It makes almost no difference if we change the IF below to `IF (ANY(SCORE>0))`, which is used
 ! in Powell's BOBYQA and LINCOA code.
 if (any(score > 1) .or. (ximproved .and. any(score > 0))) then  ! Powell's UOBYQA and NEWUOA code
     ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
-elseif (ximproved) then
-    ! Powell's code does not include the following instructions. With Powell's code, if VLAG
-    ! consists of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE. Here, we set KNEW to the
-    ! following value, to make sure that the new trial point is included in the interpolation set.
-    ! However, the updating subroutine will likely need to skip the update of the Lagrange
-    ! polynomial, or they would be destroyed by the NaNs.
+end if
+
+! Powell's code does not include the following instructions. With Powell's code, if VLAG consists of
+! only NaN, then KNEW can be 0 even when XIMPROVED is TRUE. Here, we set KNEW to the following value,
+! to make sure that the new trial point is included in the interpolation set. However, the updating
+! subroutine will likely need to skip the update of the Lagrange polynomial, or they would be
+! destroyed by the NaNs.
+if ((ximproved .and. knew == 0) .or. knew < 0) then  ! KNEW < 0 is impossible in theory.
     knew = int(maxloc(distsq, dim=1), kind(knew))
-else
-    knew = 0
 end if
 
 !====================!

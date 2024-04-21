@@ -8,7 +8,7 @@ module geometry_newuoa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 03, 2024 AM12:55:24
+! Last Modified: Sunday, April 21, 2024 PM02:47:22
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -128,21 +128,22 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
+knew = 0
 ! The following IF works a bit better than `IF (ANY(SCORE > 0))` from Powell's BOBYQA and LINCOA code.
 if (any(score > 1) .or. (ximproved .and. any(score > 0))) then  ! Powell's UOBYQA and NEWUOA code
     ! See (7.5) of the NEWUOA paper for the definition of KNEW in this case.
     ! SCORE(K) is NaN implies ABS(DEN(K)) is NaN, but we want ABS(DEN) to be big. So we exclude such K.
     knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
     !!MATLAB: [~, knew] = max(score, [], 'omitnan');
-elseif (ximproved) then
-    ! Powell's code does not include the following instructions. With Powell's code, if DEN consists
-    ! of only NaN, then KNEW can be 0 even when XIMPROVED is TRUE. Here, we set KNEW to the
-    ! following value, to make sure that the new trial point is included in the interpolation set.
-    ! However, the updating subroutine will likely need to skip the update of the Lagrange
-    ! polynomials (i.e., H), or they would be destroyed by the NaNs.
+end if
+
+! Powell's code does not include the following instructions. With Powell's code, if DEN consists of
+! only NaN, then KNEW can be 0 even when XIMPROVED is TRUE. Here, we set KNEW to the following value,
+! to make sure that the new trial point is included in the interpolation set. However, the updating
+! subroutine will likely need to skip the update of the Lagrange polynomials (i.e., H), or they
+! would be destroyed by the NaNs.
+if ((ximproved .and. knew == 0) .or. knew < 0) then  ! KNEW < 0 is impossible in theory.
     knew = int(maxloc(distsq, dim=1), kind(knew))
-else
-    knew = 0
 end if
 
 !====================!

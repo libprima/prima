@@ -499,6 +499,7 @@ $(TESTS) $(TESTS_INT):
 	$(eval EXTRA_FLAGS := -DPRIMA_DEBUGGING=$(DBG) -DPRIMA_INTEGER_KIND=$(IK) -DPRIMA_REAL_PRECISION=$(RP) -DPRIMA_QP_AVAILABLE=$(QPAVLB))
 	@($(FC1) $(EXTRA_FLAGS) -c $(SRC) && $(FC2) $(EXTRA_FLAGS) -c $(SRC)) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
+	| grep -v "Using 'dlopen' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking" \
 	| grep -v "Absoft ANSI 1610:" \
 	| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
 	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
