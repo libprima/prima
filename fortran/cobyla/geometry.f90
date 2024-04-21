@@ -8,7 +8,7 @@ module geometry_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, April 21, 2024 PM01:57:52
+! Last Modified: Sunday, April 21, 2024 PM03:16:37
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -32,7 +32,7 @@ function setdrop_tr(ximproved, d, delta, rho, sim, simi) result(jdrop)
 
 ! Common modules
 use, non_intrinsic :: consts_mod, only : IK, RP, ZERO, ONE, TENTH, DEBUGGING
-use, non_intrinsic :: linalg_mod, only : matprod, isinv
+use, non_intrinsic :: linalg_mod, only : matprod, isinv, trueloc
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
 use, non_intrinsic :: debug_mod, only : assert
 
@@ -168,12 +168,14 @@ if (.not. ximproved) then
     score(n + 1) = -ONE
 end if
 
+score(trueloc(is_nan(score))) = -ONE
+
 jdrop = 0
 ! The following IF works a bit better than `IF (ANY(SCORE > 1) .OR. ANY(SCORE > 0) .AND. XIMPROVED)`
 ! from Powell's UOBYQA and NEWUOA code.
 if (any(score > 0)) then  ! Powell's BOBYQA and LINCOA code
-    jdrop = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(jdrop))
-    !!MATLAB: [~, jdrop] = max(score, [], 'omitnan');
+    jdrop = int(maxloc(score, dim=1), kind(jdrop))
+    !!MATLAB: [~, jdrop] = max(score);
 end if
 
 if ((ximproved .and. jdrop == 0) .or. jdrop < 0) then  ! JDROP < 0 is impossible in theory.

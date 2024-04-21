@@ -8,7 +8,7 @@ module geometry_uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 21, 2024 PM01:52:04
+! Last Modified: Sunday, April 21, 2024 PM03:17:27
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -41,6 +41,7 @@ function setdrop_tr(kopt, ximproved, d, pl, rho, xpt) result(knew)
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
+use, non_intrinsic :: linalg_mod, only : trueloc
 use, non_intrinsic :: powalg_mod, only : calvlag
 
 implicit none
@@ -132,13 +133,15 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
+! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we exclude such K.
+score(trueloc(is_nan(score))) = -ONE
+
 knew = 0
 ! It makes almost no difference if we change the IF below to `IF (ANY(SCORE>0))`, which is used
 ! in Powell's BOBYQA and LINCOA code.
 if (any(score > 1) .or. (ximproved .and. any(score > 0))) then  ! Powell's UOBYQA and NEWUOA code
-    ! SCORE(K) is NaN implies VLAG(K) is NaN, but we want ABS(VLAG) to be big. So we exclude such K.
-    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
-    !!MATLAB: [~, knew] = max(score, [], 'omitnan');
+    knew = int(maxloc(score, dim=1), kind(knew))
+    !!MATLAB: [~, knew] = max(score);
 end if
 
 ! Powell's code does not include the following instructions. With Powell's code, if VLAG consists of

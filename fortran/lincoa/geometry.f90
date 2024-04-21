@@ -8,7 +8,7 @@ module geometry_lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 21, 2024 PM01:54:26
+! Last Modified: Sunday, April 21, 2024 PM03:15:36
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -38,7 +38,7 @@ function setdrop_tr(idz, kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, TENTH, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : issymmetric
+use, non_intrinsic :: linalg_mod, only : issymmetric, trueloc
 use, non_intrinsic :: powalg_mod, only : calden
 
 implicit none
@@ -160,13 +160,15 @@ if (.not. ximproved) then
     score(kopt) = -ONE
 end if
 
+! SCORE(K) is NaN implies ABS(DEN(K)) is NaN, but we want ABS(DEN) to be big. So we exclude such K.
+score(trueloc(is_nan(score))) = -ONE
+
 knew = 0
 ! The following IF works a bit better than `IF (ANY(SCORE > 1) .OR. ANY(SCORE > 0) .AND. XIMPROVED)`
 ! from Powell's UOBYQA and NEWUOA code.
 if (any(score > 0)) then  ! Powell's BOBYQA and LINCOA code
-    ! SCORE(K) is NaN implies ABS(DEN(K)) is NaN, but we want ABS(DEN) to be big. So we exclude such K.
-    knew = int(maxloc(score, mask=(.not. is_nan(score)), dim=1), kind(knew))
-    !!MATLAB: [~, knew] = max(score, [], 'omitnan');
+    knew = int(maxloc(score, dim=1), kind(knew))
+    !!MATLAB: [~, knew] = max(score);
 end if
 
 ! Powell's code does not include the following instructions. With Powell's code, if DEN consists of
