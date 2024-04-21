@@ -82,7 +82,7 @@ jobs:
         shell: bash
         run: |
           cd fortran/common || exit 42
-          $SEDI "s|\(if (abs(x) < REALMAX) then\)|\1\nwrite(*,*) '====> x = ', x, 's = ', s, 'sx = ', str2real(s)|" string.f90
+          $SEDI "s|\(if (abs(x) < REALMAX) then\)|\1\nif (.not. abs(x - str2real(s)) <= abs(x) * 10.0**(-ndgt_loc)) then\nwrite(*,*) '====> x = ', x, 's = ', s, 'sx = ', str2real(s)\nend if|" string.f90
           cat string.f90
 
       - name: Revise linalg.f90 regarding a postcondition of p_norm, so that we know what is happening if it fails
