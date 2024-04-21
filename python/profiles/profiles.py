@@ -64,8 +64,10 @@ def fun_wrapper(server, obj_fun, num_vars):
     with conn:
         while True:
             bufsize = num_vars * 8  # 8 being sizeof(double)
-            data = conn.recv(bufsize)
+            flags = socket.MSG_WAITALL  # This helps with large (n ~ 5000) problems, i.e. TESTQUAD
+            data = conn.recv(bufsize, flags)
             if not data: break  # This indicates the connection was closed
+            if len(data) < bufsize: raise ValueError('Received incomplete data')
             x = struct.unpack(f'{num_vars}d', data)
             x = np.array(x, dtype=np.float64)
             fx = obj_fun(x)
@@ -78,7 +80,8 @@ def nl_constraints_wrapper(server, cineq_fun, ceq_fun, num_vars):
     with conn:
         while True:
             bufsize = num_vars * 8  # 8 being sizeof(double)
-            data = conn.recv(bufsize)
+            flags = socket.MSG_WAITALL  # This helps with large (n ~ 5000) problems
+            data = conn.recv(bufsize, flags)
             if not data: break  # This indicates the connection was closed
             x = struct.unpack(f'{num_vars}d', data)
             x = np.array(x, dtype=np.float64)
