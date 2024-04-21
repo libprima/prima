@@ -111,7 +111,7 @@ jobs:
           command: |
             ver;
             options.half = false;
-            options.single = strcmp('${{ matrix.os }}', 'macos-11') && verLessThan('matlab', '9.11');  % On macos-11 with MATLAB R2021b, MEX is slow
+            options.single = ~(strcmp('${{ matrix.os }}', 'macos-11') && verLessThan('matlab', '9.11'));  % On macos-11 with MATLAB R2021b, MEX is slow
             options.quadruple = options.single;
             options.debug = true;
             options.classical = false;
