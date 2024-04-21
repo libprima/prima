@@ -143,10 +143,13 @@ task:
     else
         SOLVER=cobyla
     fi
-
     echo $SOLVER_NUM $SOLVER
 
-    $MK clean && $MK gtest_i2.$SOLVER
+    # Decide the real kind by date
+    RK=$((2**($(date +%-d) % 3 + 2)))
+    echo $RK
+
+    $MK clean && $MK gtest_i2_r${RK}_d1_tst.$SOLVER
 
 
   on_failure:
