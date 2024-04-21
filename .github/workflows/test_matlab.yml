@@ -24,6 +24,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+
+      # The matrix is essentially the same as that of compile_mex.yml
       matrix:
         os: [ubuntu-20.04, ubuntu-latest, macos-11, macos-12, macos-13]
         matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, latest]

@@ -30,6 +30,8 @@ jobs:
     continue-on-error: true
     strategy:
       fail-fast: false
+
+      # The matrix is the same as that of recursive_test_matlab.yml, except for `test`.
       matrix:
         os: [ubuntu-20.04, ubuntu-latest, windows-2019, windows-latest, macos-11, macos-12, macos-13]
         matlab: [R2020b, R2021a, R2022a, R2023a, latest]
