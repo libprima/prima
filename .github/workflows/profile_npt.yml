@@ -51,14 +51,14 @@ jobs:
           - dim: big
             npt: 4*n
 
-          - dim: large 
+          - dim: large
             npt: 3*n
             solver: bobyqa
           - dim: big
             npt: 3*n
             solver: bobyqa
 
-          - dim: large 
+          - dim: large
             npt: 3*n
             solver: newuoa
           - dim: big
@@ -148,17 +148,17 @@ jobs:
 
             if  strcmp('${{ matrix.solver }}', 'lincoa')
                 if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)', '3*n', '4*n'})
-                    options.blacklist = {'AGG', 'ANTWERP', 'ARGLALE', 'ARGLBLE', 'AVION2', 'CVXQP1', 'DALLASS', 'DUAL1', 'DUAL3', 'GMNCASE1', 'GMNCASE2', 'GMNCASE3', 'HIMMELBI', 'HYDROELS', 'LEVYMONT', 'QPCBLEND', 'SMBANK', 'SPANHYD', 'SSEBLIN', 'DUAL2', 'QPNBLEND', 'GMNCASE4'};
+                    options.blacklist = {'AGG', 'ANTWERP', 'ARGLALE', 'ARGLBLE', 'AVION2', 'CVXQP1', 'DALLASS', 'DUAL1', 'DUAL3', 'GMNCASE1', 'GMNCASE2', 'GMNCASE3', 'HIMMELBI', 'HYDROELS', 'LEVYMONT', 'QPCBLEND', 'SMBANK', 'SPANHYD', 'SSEBLIN', 'DUAL2', 'QPNBLEND', 'GMNCASE4', 'DUAL4', 'LINSPANH'};
                 end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
                 if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)', '3*n', '4*n'})
-                    options.blacklist = {'CHEBYQAD', 'HOLMES', 'LEVYMONT', 'BQPGASIM', 'DECONVU'};
+                    options.blacklist = {'CHEBYQAD', 'HOLMES', 'LEVYMONT', 'BQPGASIM', 'DECONVU', 'DECONVB', '3PK'};
                 end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', '${{ matrix.competitor }}', options);
             else
                 if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)', '3*n', '4*n'})
-                    options.blacklist = {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'FBRAIN3LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN15LS', 'LUKSAN16LS', 'QING', 'SENSORS', 'SPIN2LS', 'TOINTPSP', 'TOINTQOR', 'METHANB8LS'};
+                    options.blacklist = {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'FBRAIN3LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN15LS', 'LUKSAN16LS', 'QING', 'SENSORS', 'SPIN2LS', 'TOINTPSP', 'TOINTQOR', 'METHANB8LS', 'TOINTGOR'};
                 end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
             end
