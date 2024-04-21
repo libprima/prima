@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# This script pre-processes the Fortran source code for LLVM Flang.
+
+DIR="$(realpath "$1")"
+LINALG="$DIR/common/linalg.f90"
+
+if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
+    printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
+    exit 1
+fi
+
+if [[ -f "$LINALG" ]] ; then
+    # See https://github.com/llvm/llvm-project/issues/89528
+    STR="Y is NaN if and only if X contains NaN"
+    sed -i "/$STR/d" "$LINALG"
+fi
+
+exit 0

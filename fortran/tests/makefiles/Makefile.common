@@ -986,7 +986,7 @@ source_%: $(SRC_DIRS)
 		\) -exec rm {} \;  # Cleaning up; important!!!
 	# Classic Flang 17.0, Huawei Bisheng Flang 2.1.0, Arm Fortran Compiler version 23.10, and AOCC
 	# 4.2 are buggy concerning 0-dimensional arrays, and they report false positive out-bound
-	# indices. Thus preprocessing by frdsrc is needed. See
+	# indices. Thus preprocessing by rdsrc is needed. See
 	# https://github.com/flang-compiler/flang/issues/1238
 	# Check it again when new versions are available. Make a test using
 	# https://github.com/zequipe/test_compiler/blob/master/test_solve.f90
@@ -994,9 +994,13 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/gsrc ./ ; \
 	fi
+	@if echo $@ | grep -q "ftest"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash $(TOOLS_DIR)/flsrc ./ ; \
+	fi
 	@if echo $@ | grep -q "rtest\|dtest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
-		bash $(TOOLS_DIR)/frdsrc ./ ; \
+		bash $(TOOLS_DIR)/rdsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "stest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \

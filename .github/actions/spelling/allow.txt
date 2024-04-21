@@ -898,7 +898,7 @@ funx
 fval
 fwrite
 fvdsrc
-frdsrc
+rdsrc
 gaussian
 gca
 gcc
