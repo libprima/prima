@@ -34,7 +34,7 @@ jobs:
         # N.B.: As of 20240401, setup-fortran fails constantly with windows-latest and intel-classic
         # 2021.8. Thus this combination is not included (see the Windows part below).
         # First define the toolchains on Linux and macOS.
-        os: [ubuntu-latest, macos-latest, macos-13]
+        os: [ubuntu-latest, macos-12, macos-13]
         toolchain:
           - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}

@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-13, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-12, macos-13, macos-14]
         compiler: [gcc]
         version: [12, 13]  # Too expensive to test all versions
         ikind: [i2, i8]

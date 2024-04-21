@@ -35,8 +35,8 @@ jobs:
       fail-fast: false
       matrix:
         # Only the following combinations of OS and MATLAB support parfor
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
-        matlab: [R2023a, latest]
+        os: [ubuntu-latest, windows-latest, macos-12, macos-13]
+        matlab: [R2023a, R2023b, R2024a, latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
 
 
