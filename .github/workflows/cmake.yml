@@ -58,11 +58,11 @@ jobs:
           - os: windows-latest
             toolchain: {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror-all -W5', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall /Werror-all /W5', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2024.0', cflags: '-Wall -Werror-all -W5', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel, version: '2024.0', cflags: '-Wall /Werror-all /W5', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror-all -W5', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall /Werror-all /W5', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
             toolchain: {compiler: intel, version: '2024.1', cflags:  '-Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
           # N.B.: As of 20240401, setup-fortran fails constantly with windows-latest and intel-classic
