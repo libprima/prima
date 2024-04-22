@@ -2191,3 +2191,5 @@ noopengl
 ogfile
 nend
 PARKCH
+TESTQUAD
+WAITALL
