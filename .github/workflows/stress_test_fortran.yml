@@ -115,12 +115,13 @@ jobs:
           cd "$ROOT_DIR"/fortran/tests
           export TESTDIM=${{ matrix.testdim }}
           RK=$((2**($(date +%-d) % 3 + 2)))
-          echo "RK = " $RK
           if [[ $RK==16 && dfrv == *${{ matrix.compiler }}* ]] ; then
               echo "r16 test is skipped for compiler " ${{ matrix.compiler }}
-          else
-              make ${{ matrix.compiler }}test_i2_r${RK}_d1_tst.${{ matrix.solver }}
+              echo "Test r8 instead"
+              RK=8
           fi
+          echo "RK = " $RK
+          make ${{ matrix.compiler }}test_i2_r${RK}_d1_tst.${{ matrix.solver }}
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.3.1
