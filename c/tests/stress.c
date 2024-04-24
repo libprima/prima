@@ -7,7 +7,7 @@
 #include <time.h>
 
 // Make PRIMA available
-#include "prima/prima.h"
+#include "prima/prima_internal.h"
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define N_MAX 2000
@@ -87,7 +87,7 @@ int main(int argc, char * argv[])
     printf("Debug = %d\n", debug);
 
     unsigned int seed = get_random_seed();
-    printf("Random seed = %d\n", seed);
+    printf("Random seed = %u\n", seed);
     srand(seed);
 
     // Set up the options
