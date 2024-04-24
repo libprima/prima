@@ -4,10 +4,10 @@
 #include "prima/prima.h"
 
 // Function to check whether the problem matches the algorithm
-prima_rc_t prima_check_problem(const prima_problem_t problem, const prima_algorithm_t algorithm)
+prima_rc_t prima_check_problem(const prima_problem_t problem, const prima_algorithm_t algorithm);
 
 // Function to initialize the result
-prima_rc_t prima_init_result(prima_result_t *const result, const prima_problem_t problem)
+prima_rc_t prima_init_result(prima_result_t *const result, const prima_problem_t problem);
 
 // Functions implemented in Fortran (*_c.f90)
 int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, const int n, double x[], double *const f, double *const cstrv, double nlconstr[],
