@@ -9,6 +9,13 @@
 // Make PRIMA available
 #include "prima/prima_internal.h"
 
+// Thread-safe version of localtime
+#ifdef _WIN32
+#define localtime_safe(a, b) localtime_s(a, b)
+#else
+#define localtime_safe(a, b) localtime_r(b, a)
+#endif
+
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define N_MAX 2000
 #define M_INEQ_MAX 1000
@@ -65,8 +72,9 @@ unsigned int get_random_seed(void) {
     // Set the random seed to year/week
     char buf[10] = {0};
     time_t t = time(NULL);
-    struct tm *tmp = localtime(&t);
-    int rc = strftime(buf, 10, "%y%W", tmp);
+    struct tm timeinfo;
+    localtime_safe(&timeinfo, &t);
+    int rc = strftime(buf, 10, "%y%W", timeinfo);
     if (!rc)
         return 42;
     else
