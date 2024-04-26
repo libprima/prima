@@ -74,7 +74,7 @@ unsigned int get_random_seed(void) {
     time_t t = time(NULL);
     struct tm timeinfo;
     localtime_safe(&timeinfo, &t);
-    int rc = strftime(buf, 10, "%y%W", timeinfo);
+    int rc = strftime(buf, 10, "%y%W", &timeinfo);
     if (!rc)
         return 42;
     else
