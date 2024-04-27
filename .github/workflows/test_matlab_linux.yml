@@ -80,8 +80,8 @@ jobs:
         shell: bash
         run: |
           ONEAPI_VERSION=
-          if [[ "${{ matrix.os }}" = "windows-*" ]] ; then
-              if [[ "${{ matrix.matlab }}" == "R2020*" || "${{ matrix.matlab }}" == "R2021*" || "${{ matrix.matlab }}" == "R2022*" || "${{ matrix.matlab }}" == "R2023*" ]] ; then
+          if [[ "${{ matrix.os }}" = "windows-"* ]] ; then
+              if [[ "${{ matrix.matlab }}" = "R2020"* || "${{ matrix.matlab }}" = "R2021"* || "${{ matrix.matlab }}" = "R2022"* || "${{ matrix.matlab }}" = "R2023"* ]] ; then
                   ONEAPI_VERSION=2023
               fi
           fi
