@@ -12,11 +12,11 @@ import struct
 
 
 nondefault_options = lambda n, f0: {
+    'ftarget' : f0 - 314, # if this is doable, 3.14 otherwise
+    'maxfev' : 271*n,
     'npt' : int(min(3.14*n, n**1.23)),
     'rhobeg' : 2.718,
     'rhoend' : 3.14*1.0e-4,
-    'maxfev' : 271*n,
-    'ftarget' : f0 - 314 # if this is doable, 3.14 otherwise
 }
 
 
