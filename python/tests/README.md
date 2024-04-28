@@ -14,8 +14,7 @@ order to run that test by itself.
 - [x] providing bounds alone calls BOBYQA and the bounds are successfully applied - test_basic_functionality.py::test_provide_bounds_alone
 - [x] providing bounds alone and selecting BOBYQA calls BOBYQA and the bounds are successfully applied - test_basic_functionality.py::test_provide_bounds_alone_and_select_BOBYQA
 - [x] not providing any bounds, linear constraints, or nonlinear constraints calls NEWUOA and provides the optimal unbounded/unconstrained solution - test_basic_functionality.py::test_not_providing_bounds_linear_constraints_or_nonlinear_constraints
-- [x] not providing any bounds, linear constraints, or nonlinear constraints and selecting NEWUOA calls NEWUOA and provides the optimal unbounded/unconstrained solution - test_basic_functionality.py::test_not_providing_bounds_linear_constraints_or_nonlinear_constraints_and_select_NEWUOA
-- [x] not providing any bounds, linear constraints, or nonlinear constraints and selecting UOBYQA calls UOBYQA and provides the optimal unbounded/unconstrained solution - test_basic_functionality.py::test_not_providing_bounds_linear_constraints_or_nonlinear_constraints_and_select_UOBYQA
+- [x] not providing any bounds, linear constraints, or nonlinear constraints and selecting any algorithm calls that algorithm and provides the optimal unbounded/unconstrained solution - test_basic_functionality.py::test_not_providing_bounds_linear_constraints_or_nonlinear_constraints_and_selecting_any_algorithm
 
 
 ## Requirements for combining constraints and bounds

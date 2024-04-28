@@ -194,7 +194,7 @@ PYBIND11_MODULE(_prima, m) {
 
       // We set up the C style objective function evaluator in such a way that it can be reused in the
       // case of COBYLA, where we need to evaluate the constraints as well. Making it static lets it be
-      // captured by the COBYLA function. Also we re-use this to get f0 in the case of COBYLA.
+      // captured by the COBYLA function.
       static prima_obj_t calfun = nullptr;
       calfun = [](const double x[], double *f, const void *data) {
           // In order for xlist to not copy the data from x, we need to provide a dummy base object
@@ -214,33 +214,38 @@ PYBIND11_MODULE(_prima, m) {
 
       if ( algorithm == PRIMA_COBYLA ) {
         if (python_nonlinear_constraint_function_holder.is_none()) {
-          throw std::invalid_argument("nonlinear_constraint_function must be provided if nonlinear constraints are provided");
-        }
+          // If we don't have a nonlinear constraint function, we can just use calfun.
+          // This occurs when the user is trying to use COBYLA without any nonlinear constraints.
+          // We can't just set calcfc to calfun because we need to match the signature of calcfc.
+          problem.calcfc = [](const double x[], double *f, double constr[], const void *data) {
+            calfun(x, f, data);
+          };
+        } else {
+          // create the combined objective/constraint function
+          problem.calcfc = [](const double x[], double *f, double constr[], const void *data) {
+            calfun(x, f, data);
 
-        // create the combined objective/constraint function
-        problem.calcfc = [](const double x[], double *f, double constr[], const void *data) {
-          calfun(x, f, data);
+            // In order for xlist to not copy the data from x, we need to provide a dummy base object
+            // Ideally pybind11 would provide a facility to do this instead of us having to do this hacky
+            // thing but oh well. Reference: https://github.com/pybind/pybind11/issues/323#issuecomment-575717041
+            py::none dummybaseobject;
+            py::array_t<double> xlist(x0_shape, x, dummybaseobject);
+            py::object constraints = python_nonlinear_constraint_function_holder(xlist);
+            try
+            {
+              py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
 
-          // In order for xlist to not copy the data from x, we need to provide a dummy base object
-          // Ideally pybind11 would provide a facility to do this instead of us having to do this hacky
-          // thing but oh well. Reference: https://github.com/pybind/pybind11/issues/323#issuecomment-575717041
-          py::none dummybaseobject;
-          py::array_t<double> xlist(x0_shape, x, dummybaseobject);
-          py::object constraints = python_nonlinear_constraint_function_holder(xlist);
-          try
-          {
-            py::buffer_info constr_list_buffer_info = constraints.cast<py::buffer>().request();
-
-            // We need to copy. We cannot set the pointer since we are not passed a pointer-to-pointer
-            for (int i = 0; i < constr_list_buffer_info.size; i++) {
-              constr[i] = ((double*)constr_list_buffer_info.ptr)[i];
+              // We need to copy. We cannot set the pointer since we are not passed a pointer-to-pointer
+              for (int i = 0; i < constr_list_buffer_info.size; i++) {
+                constr[i] = ((double*)constr_list_buffer_info.ptr)[i];
+              }
             }
-          }
-          catch(const std::exception& e)
-          {
-            throw(std::invalid_argument("nonlinear_constraint_function must return a double or a double array"));
-          }
-        };
+            catch(const std::exception& e)
+            {
+              throw(std::invalid_argument("nonlinear_constraint_function must return a double or a double array"));
+            }
+          };
+        }
 
       } else {
         // For all other algorithms just use calfun.
