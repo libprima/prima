@@ -69,7 +69,7 @@ jobs:
           # official documentation of the compiler mentions them. Why?
           # Comments on flags of `cl`:
           # -wd4820 disables the warning about "... bytes padding added after data member"
-          # -wd4464 disables the warning about "elative include path contains '..'"
+          # -wd4464 disables the warning about "relative include path contains '..'"
           # -wd4710 disables the warning about "... function is not inlined"
           - os: windows-latest
             toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
