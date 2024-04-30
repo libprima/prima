@@ -268,7 +268,7 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/../../../install/lib ./install/bin/cobyla_
 
 #### Python
 
-- An [interface](./python) is provided for [using the **modern** Fortran implementation in Python](./python/examples).
+- An [interface](./python) is provided for [using the **modern** Fortran implementation in Python](./python/examples/rosenbrock.py).
 - The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
 - A [native Python implementation of PRIMA](https://github.com/libprima/prima/pull/37) is under development.
 
