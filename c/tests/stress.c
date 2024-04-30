@@ -15,6 +15,8 @@
 #define M_NLCON 200
 
 // Thread-safe version of localtime
+// N.B.: localtime_s is typically associated with Microsoft's C runtime library while localtime_r
+// is typically associated with POSIX-compliant systems; they have different argument orders.
 #ifdef _WIN32
 #define localtime_safe(a, b) localtime_s(a, b)
 #else
