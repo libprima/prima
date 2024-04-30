@@ -121,7 +121,7 @@ const char *prima_get_rc_string(const prima_rc_t rc)
             return "NULL result";
         case PRIMA_NULL_FUNCTION:
             return "NULL function";
-        case PRIMA_RESULT_INITIALIZED
+        case PRIMA_RESULT_INITIALIZED:
             return "Result is initialized but not properly set";
         default:
             return "Invalid return code";
