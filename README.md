@@ -38,6 +38,7 @@ PRIMA is part of a research project funded by the
 the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at the
 [Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 The current version is ready to be used [in Fortran](#modern-fortran), [in C](#c),
+[in Python](https://github.com/libprima/prima#python),
 [in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md),
 and [in Julia](https://juliahub.com/ui/Packages/General/PRIMA).
 
