@@ -2,7 +2,7 @@
 
 
 #include "prima/prima.h"
-#include <limits.h>
+#include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,16 +65,6 @@ prima_rc_t prima_init_options(prima_options_t *const options)
 // Function to check whether the problem matches the algorithm
 prima_rc_t prima_check_problem(const prima_problem_t problem, const prima_algorithm_t algorithm)
 {
-    if (algorithm != PRIMA_COBYLA && (problem.calcfc || problem.nlconstr0 || problem.m_nlcon > 0))
-        return PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS;
-
-    if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA) &&
-        (problem.m_ineq > 0 || problem.m_eq > 0 || problem.Aineq || problem.bineq || problem.Aeq || problem.beq))
-        return PRIMA_PROBLEM_SOLVER_MISMATCH_LINEAR_CONSTRAINTS;
-
-    if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA && algorithm != PRIMA_BOBYQA) && (problem.xl || problem.xu))
-        return PRIMA_PROBLEM_SOLVER_MISMATCH_BOUNDS;
-
     if (!problem.x0)
         return PRIMA_NULL_X0;
 
@@ -100,10 +90,10 @@ prima_rc_t prima_init_result(prima_result_t *const result, const prima_problem_t
     result->cstrv = NAN;
 
     // nf: number of function evaluations
-    result->nf = INT_MIN;
+    result->nf = 0;
 
     // status: return code
-    result->status = INT_MIN;
+    result->status = PRIMA_RESULT_INITIALIZED;
 
     // message: exit message
     result->message = NULL;
@@ -192,12 +182,6 @@ const char *prima_get_rc_string(const prima_rc_t rc)
             return "NULL result";
         case PRIMA_NULL_FUNCTION:
             return "NULL function";
-        case PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS:
-            return "Nonlinear constraints were provided for an algorithm that cannot handle them";
-        case PRIMA_PROBLEM_SOLVER_MISMATCH_LINEAR_CONSTRAINTS:
-            return "Linear constraints were provided for an algorithm that cannot handle them";
-        case PRIMA_PROBLEM_SOLVER_MISMATCH_BOUNDS:
-            return "Bounds were provided for an algorithm that cannot handle them";
         default:
             return "Invalid return code";
     }
@@ -282,4 +266,10 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
     result->message = prima_get_rc_string(info);
 
     return info;
+}
+
+bool prima_is_success(const prima_result_t result)
+{
+    return (result.status == PRIMA_SMALL_TR_RADIUS ||
+            result.status == PRIMA_FTARGET_ACHIEVED) && (result.cstrv <= sqrt(DBL_EPSILON));
 }
