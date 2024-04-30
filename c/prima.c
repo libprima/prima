@@ -2,6 +2,7 @@
 
 
 #include "prima/prima_internal.h"
+#include <float.h>  // This providess DBL_EPSILON, which will be removed once ctol is introduced
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -239,4 +240,12 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
     result->message = prima_get_rc_string(info);
 
     return info;
+}
+
+
+// The function that checks whether the result is "successful"
+bool prima_is_success(const prima_result_t result)
+{
+    return (result.status == PRIMA_SMALL_TR_RADIUS ||
+            result.status == PRIMA_FTARGET_ACHIEVED) && (result.cstrv <= sqrt(DBL_EPSILON));
 }
