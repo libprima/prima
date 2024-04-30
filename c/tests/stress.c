@@ -68,7 +68,7 @@ static void fun_con(const double x[], double *const f, double constr[], const vo
 }
 
 // A function generating a seed that alters weekly
-unsigned int get_random_seed(void)
+static unsigned int get_random_seed(void)
 {
     // Set the random seed to year/week
     char buf[10] = {0};
