@@ -67,7 +67,7 @@ jobs:
           # 2. On windows-latest, we want to use '-Wall -W5 -Werror-all' as what we do for the intel-classic
           # compiler, but the (new) intel c compiler does not recognize '-W5 -Werror-all', even though the
           # official documentation of the compiler mentions them. Why?
-          # Comments on `cl`:
+          # Comments on flags of `cl`:
           # -wd4820 disables the warning about "... bytes padding added after data member"
           # -wd4464 disables the warning about "elative include path contains '..'"
           # -wd4710 disables the warning about "... function is not inlined"
