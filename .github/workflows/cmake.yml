@@ -85,7 +85,7 @@ jobs:
           - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-Qdiag-disable:10441 -Wall -W5 -Werror-all', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-wd4820 -wd4464 -ed4710 -Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
+            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-wd4820 -wd4464 -wd4710 -Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
 
     steps:
 
