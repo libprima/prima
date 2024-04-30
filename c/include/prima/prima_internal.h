@@ -3,8 +3,6 @@
 
 #include "prima/prima.h"
 
-unsigned int get_random_seed(void);
-
 // Function to check whether the problem matches the algorithm
 prima_rc_t prima_check_problem(const prima_problem_t problem, const prima_algorithm_t algorithm);
 
