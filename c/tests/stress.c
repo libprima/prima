@@ -14,6 +14,13 @@
 #define M_INEQ_MAX 1000
 #define M_NLCON 200
 
+// Thread-safe version of localtime
+#ifdef _WIN32
+#define localtime_safe(a, b) localtime_s(a, b)
+#else
+#define localtime_safe(a, b) localtime_r(b, a)
+#endif
+
 int n = 0;
 int m_ineq = 0;
 const double alpha = 4.0;
@@ -67,7 +74,7 @@ unsigned int get_random_seed(void)
     char buf[10] = {0};
     time_t t = time(NULL);
     struct tm timeinfo;
-    localtime_s(&timeinfo, &t);
+    localtime_safe(&timeinfo, &t);
     int rc = strftime(buf, 10, "%y%W", &timeinfo);
     if (!rc)
         return 42;
