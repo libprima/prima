@@ -156,9 +156,9 @@ jobs:
                     options.blacklist = {'CHEBYQAD', 'HOLMES', 'LEVYMONT', 'BQPGASIM', 'DECONVU', 'DECONVB', '3PK'};
                 end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', '${{ matrix.competitor }}', options);
-            else
+            else  % newuoa
                 if ismember('${{ matrix.npt }}', {'n*sqrt(n)', '0.25*n*n', '0.5*(n+1)*(n+2)', '3*n', '4*n'})
-                    options.blacklist = {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'FBRAIN3LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN15LS', 'LUKSAN16LS', 'QING', 'SENSORS', 'SPIN2LS', 'TOINTPSP', 'TOINTQOR', 'METHANB8LS', 'TOINTGOR'};
+                    options.blacklist = {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1LS', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'FBRAIN3LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN15LS', 'LUKSAN16LS', 'QING', 'SENSORS', 'SPIN2LS', 'TOINTPSP', 'TOINTQOR', 'METHANB8LS', 'TOINTGOR', 'HYDCAR6LS', 'METHANL8LS', 'PARKCH'};
                 end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
             end

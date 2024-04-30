@@ -24,6 +24,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+
+      # The matrix is essentially the same as that of compile_mex.yml
       matrix:
         os: [ubuntu-20.04, ubuntu-latest, macos-11, macos-12, macos-13]
         matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, latest]
@@ -129,14 +131,25 @@ jobs:
           fi
           bash .github/scripts/link_gfortran "$GFVER"
 
+      - name: Decide the version of oneAPI to use
+        shell: bash
+        run: |
+          ONEAPI_VERSION=
+          if [[ "${{ matrix.os }}" = "windows-"* ]] ; then
+              if [[ "${{ matrix.matlab }}" = "R2020"* || "${{ matrix.matlab }}" = "R2021"* || "${{ matrix.matlab }}" = "R2022"* || "${{ matrix.matlab }}" = "R2023"* ]] ; then
+                  ONEAPI_VERSION=2023
+              fi
+          fi
+          echo "ONEAPI_VERSION=$ONEAPI_VERSION" >> $GITHUB_ENV
+          echo "ONEAPI_VERSION:" $ONEAPI_VERSION
+
       - name: Install Intel oneAPI on macOS
         if: startsWith(matrix.os, 'macos')
-        run: bash .github/scripts/install_oneapi_macos.sh
+        run: bash .github/scripts/install_oneapi_macos.sh $ONEAPI_VERSION
 
       - name: Install Intel oneAPI on Windows
         if: startsWith(matrix.os, 'windows')
-        #run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat"'  # As of MATLAB R2023a, oneAPI 2024 does not work. Try again later.
-        run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat 2023"'
+        run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat %ONEAPI_VERSION%"'
 
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2.1.2

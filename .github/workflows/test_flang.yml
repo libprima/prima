@@ -13,9 +13,12 @@ on:
       git-ref:
         description: Git Ref (Optional)
         required: false
+      maxtr:
+        description: Maximum number of trust-region iterations
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}, maxtr {1}', inputs.git-ref, inputs.maxtr) || '' }}
 
 
 jobs:
@@ -57,11 +60,13 @@ jobs:
       - name: Revise maxtr
         # This is to see whether "GitHub Actions xx lost communication with the server" was caused
         # by maxtr = huge(maxtr) - 1_IK. We suspect this because the error occurs with ikind = i8
-        # but not ikind = i2.
-        if: ${{ matrix.ikind == 'i8' }}
+        # and ikind = i4 for all solvers when testdim = small, but not with ikind = i2 at all.
+        # Update 20240422: The error does not occur any more after the update. WHY? Does this imply
+        # INFINITE CYCLING in the code?
+        if: ${{ matrix.ikind != 'i2' && github.event.inputs.maxtr != '' }}
         run: |
           cd fortran/${{ matrix.solver }}
-          $SEDI 's|maxtr = huge(maxtr) - 1_IK|maxtr = 60000|' *.f90
+          $SEDI 's|maxtr = huge(maxtr) - 1_IK|maxtr = ${{ github.event.inputs.maxtr }}|' *.f90
           grep 'maxtr = ' *.f90
 
       - name: Conduct the test

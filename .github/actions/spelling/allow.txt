@@ -2256,3 +2256,6 @@ tcpclient
 tomemoryview
 scm
 nuj
+PARKCH
+TESTQUAD
+WAITALL
