@@ -75,7 +75,8 @@ jobs:
             toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
             # -wd4820 disables the warning about "... bytes padding added after data member"
-            toolchain: {compiler: intel, version: '2024.1', cflags:  '-wd4820 -Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
+            # -wd4464 disables the warning about "elative include path contains '..'"
+            toolchain: {compiler: intel, version: '2024.1', cflags:  '-wd4820 -wd4464 -Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
           # N.B.: As of 20240401, setup-fortran fails constantly with windows-latest and intel-classic
           # 2021.8. Thus this combination is not included.
           - os: windows-latest
@@ -83,7 +84,7 @@ jobs:
           - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-Qdiag-disable:10441 -Wall -W5 -Werror-all', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-wd4820 -Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
+            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-wd4820 -wd4464 -Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
 
     steps:
 
