@@ -190,10 +190,10 @@ const char *prima_get_rc_string(const prima_rc_t rc)
 // The function that does the minimization using a PRIMA solver
 prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result)
 {
-    int info = (int) prima_init_result(result, problem);
+    int info = prima_init_result(result, problem);
 
     if (info == PRIMA_RC_DFT)
-        info = (int) prima_check_problem(problem, algorithm);
+        info = prima_check_problem(problem, algorithm);
 
     if (info == PRIMA_RC_DFT) {
         // We copy x0 into result->x only after prima_check_problem has succeeded,
@@ -232,11 +232,11 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
                 break;
 
             default:
-                info = (int) PRIMA_INVALID_INPUT;
+                info = PRIMA_INVALID_INPUT;
         }
     }
 
-    result->status = (prima_result_t) info;
+    result->status = info;
     result->message = prima_get_rc_string(result->status);
 
     return result->status;
