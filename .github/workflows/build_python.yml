@@ -1,4 +1,4 @@
-name: Build python wheels
+name: Build Python wheels
 
 on: [push, pull_request]
 
