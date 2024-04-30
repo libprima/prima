@@ -2,7 +2,7 @@
 
 
 #include "prima/prima_internal.h"
-#include <float.h>  // This providess DBL_EPSILON, which will be removed once ctol is introduced
+#include <float.h>  // This provides DBL_EPSILON, which will be removed once ctol is introduced
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -190,14 +190,14 @@ const char *prima_get_rc_string(const prima_rc_t rc)
 // The function that does the minimization using a PRIMA solver
 prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result)
 {
-    prima_rc_t info = prima_init_result(result, problem);
+    int info = (int) prima_init_result(result, problem);
 
     if (info == PRIMA_RC_DFT)
-        info = prima_check_problem(problem, algorithm);
+        info = (int) prima_check_problem(problem, algorithm);
 
     if (info == PRIMA_RC_DFT) {
         // We copy x0 into result->x only after prima_check_problem has succeeded,
-        // so that if prima_check_problem failed, result->x will not contained a
+        // so that if prima_check_problem failed, result->x will not contain a
         // seemingly valid value.
         for (int i = 0; i < problem.n; i++) {
             result->x[i] = problem.x0[i];
@@ -232,14 +232,14 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
                 break;
 
             default:
-                return PRIMA_INVALID_INPUT;
+                info = (int) PRIMA_INVALID_INPUT;
         }
     }
 
-    result->status = info;
-    result->message = prima_get_rc_string(info);
+    result->status = (prima_result_t) info;
+    result->message = prima_get_rc_string(result->status);
 
-    return info;
+    return result->status;
 }
 
 
