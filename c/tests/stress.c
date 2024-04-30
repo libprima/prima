@@ -61,12 +61,14 @@ static void fun_con(const double x[], double *const f, double constr[], const vo
 }
 
 // A function generating a seed that alters weekly
-unsigned int get_random_seed(void) {
+unsigned int get_random_seed(void)
+{
     // Set the random seed to year/week
     char buf[10] = {0};
     time_t t = time(NULL);
-    struct tm *tmp = localtime(&t);
-    int rc = strftime(buf, 10, "%y%W", tmp);
+    struct tm timeinfo;
+    localtime_s(&timeinfo, &t);
+    int rc = strftime(buf, 10, "%y%W", &timeinfo);
     if (!rc)
         return 42;
     else
@@ -87,7 +89,7 @@ int main(int argc, char * argv[])
     printf("Debug = %d\n", debug);
 
     unsigned int seed = get_random_seed();
-    printf("Random seed = %d\n", seed);
+    printf("Random seed = %u\n", seed);
     srand(seed);
 
     // Set up the options

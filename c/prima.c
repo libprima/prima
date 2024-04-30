@@ -1,8 +1,8 @@
 // Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 
 
-#include "prima/prima.h"
-#include <float.h>
+#include "prima/prima_internal.h"
+#include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,6 +65,16 @@ prima_rc_t prima_init_options(prima_options_t *const options)
 // Function to check whether the problem matches the algorithm
 prima_rc_t prima_check_problem(const prima_problem_t problem, const prima_algorithm_t algorithm)
 {
+    if (algorithm != PRIMA_COBYLA && (problem.calcfc || problem.nlconstr0 || problem.m_nlcon > 0))
+        return PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS;
+
+    if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA) &&
+        (problem.m_ineq > 0 || problem.m_eq > 0 || problem.Aineq || problem.bineq || problem.Aeq || problem.beq))
+        return PRIMA_PROBLEM_SOLVER_MISMATCH_LINEAR_CONSTRAINTS;
+
+    if ((algorithm != PRIMA_COBYLA && algorithm != PRIMA_LINCOA && algorithm != PRIMA_BOBYQA) && (problem.xl || problem.xu))
+        return PRIMA_PROBLEM_SOLVER_MISMATCH_BOUNDS;
+
     if (!problem.x0)
         return PRIMA_NULL_X0;
 
@@ -90,10 +100,10 @@ prima_rc_t prima_init_result(prima_result_t *const result, const prima_problem_t
     result->cstrv = NAN;
 
     // nf: number of function evaluations
-    result->nf = 0;
+    result->nf = INT_MIN;
 
     // status: return code
-    result->status = PRIMA_RESULT_INITIALIZED;
+    result->status = INT_MIN;
 
     // message: exit message
     result->message = NULL;
@@ -182,36 +192,16 @@ const char *prima_get_rc_string(const prima_rc_t rc)
             return "NULL result";
         case PRIMA_NULL_FUNCTION:
             return "NULL function";
+        case PRIMA_PROBLEM_SOLVER_MISMATCH_NONLINEAR_CONSTRAINTS:
+            return "Nonlinear constraints were provided for an algorithm that cannot handle them";
+        case PRIMA_PROBLEM_SOLVER_MISMATCH_LINEAR_CONSTRAINTS:
+            return "Linear constraints were provided for an algorithm that cannot handle them";
+        case PRIMA_PROBLEM_SOLVER_MISMATCH_BOUNDS:
+            return "Bounds were provided for an algorithm that cannot handle them";
         default:
             return "Invalid return code";
     }
 }
-
-
-// Functions implemented in Fortran (*_c.f90)
-int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, const int n, double x[], double *const f, double *const cstrv, double nlconstr[],
-             const int m_ineq, const double Aineq[], const double bineq[],
-             const int m_eq, const double Aeq[], const double beq[],
-             const double xl[], const double xu[],
-             const double f0, const double nlconstr0[],
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const double ctol,
-             const prima_callback_t callback, int *const info);
-
-int bobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f, const double xl[], const double xu[],
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
-
-int newuoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
-
-int uobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *const info);
-
-int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
-             double *const cstrv, const int m_ineq, const double Aineq[], const double bineq[],
-             const int m_eq, const double Aeq[], const double beq[], const double xl[], const double xu[],
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const double ctol,
-             const prima_callback_t callback, int *const info);
-
 
 // The function that does the minimization using a PRIMA solver
 prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result)
@@ -266,10 +256,4 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
     result->message = prima_get_rc_string(info);
 
     return info;
-}
-
-bool prima_is_success(const prima_result_t result)
-{
-    return (result.status == PRIMA_SMALL_TR_RADIUS ||
-            result.status == PRIMA_FTARGET_ACHIEVED) && (result.cstrv <= sqrt(DBL_EPSILON));
 }
