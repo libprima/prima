@@ -75,67 +75,6 @@ prima_rc_t prima_check_problem(const prima_problem_t problem, const prima_algori
 }
 
 
-// Function to initialize the result
-prima_rc_t prima_init_result(prima_result_t *const result, const prima_problem_t problem)
-{
-    if (!result)
-        return PRIMA_NULL_RESULT;
-
-    memset(result, 0, sizeof(prima_result_t));
-
-    // f: objective function value at the returned point
-    result->f = NAN;
-
-    // cstrv: constraint violation at the returned point (COBYLA and LINCOA only)
-    result->cstrv = NAN;
-
-    // nf: number of function evaluations
-    result->nf = 0;
-
-    // status: return code
-    result->status = PRIMA_RESULT_INITIALIZED;
-
-    // message: exit message
-    result->message = NULL;
-
-    // x: returned point
-    result->x = (double*)malloc(problem.n * sizeof(double));
-    if (!result->x)
-        return PRIMA_MEMORY_ALLOCATION_FAILS;
-    for (int i = 0; i < problem.n; i++)
-        result->x[i] = NAN;
-
-    // nlconstr: nonlinear constraint values at the returned point, of size m_nlcon (COBYLA only)
-    result->nlconstr = (double*)malloc(problem.m_nlcon * sizeof(double));
-    if (!result->nlconstr) {
-        free(result->x);
-        return PRIMA_MEMORY_ALLOCATION_FAILS;
-    }
-    for (int i = 0; i < problem.m_nlcon; i++)
-        result->nlconstr[i] = NAN;
-
-    return PRIMA_RC_DFT;
-}
-
-
-// Function to free the result
-prima_rc_t prima_free_result(prima_result_t *const result)
-{
-    if (!result)
-        return PRIMA_NULL_RESULT;
-
-    if (result->nlconstr) {
-        free(result->nlconstr);
-        result->nlconstr = NULL;
-    }
-    if (result->x) {
-        free(result->x);
-        result->x = NULL;
-    }
-    return PRIMA_RC_DFT;
-}
-
-
 // Function to get the string corresponding to the return code
 const char *prima_get_rc_string(const prima_rc_t rc)
 {
@@ -182,10 +121,74 @@ const char *prima_get_rc_string(const prima_rc_t rc)
             return "NULL result";
         case PRIMA_NULL_FUNCTION:
             return "NULL function";
+        case PRIMA_RESULT_INITIALIZED
+            return "Result is initialized but not properly set";
         default:
             return "Invalid return code";
     }
 }
+
+
+// Function to initialize the result
+prima_rc_t prima_init_result(prima_result_t *const result, const prima_problem_t problem)
+{
+    if (!result)
+        return PRIMA_NULL_RESULT;
+
+    memset(result, 0, sizeof(prima_result_t));
+
+    // f: objective function value at the returned point
+    result->f = NAN;
+
+    // cstrv: constraint violation at the returned point (COBYLA and LINCOA only)
+    result->cstrv = NAN;
+
+    // nf: number of function evaluations
+    result->nf = 0;
+
+    // status: return code
+    result->status = PRIMA_RESULT_INITIALIZED;
+
+    // message: exit message
+    result->message = prima_get_rc_string(result->status);
+
+    // x: returned point
+    result->x = (double*)malloc(problem.n * sizeof(double));
+    if (!result->x)
+        return PRIMA_MEMORY_ALLOCATION_FAILS;
+    for (int i = 0; i < problem.n; i++)
+        result->x[i] = NAN;
+
+    // nlconstr: nonlinear constraint values at the returned point, of size m_nlcon (COBYLA only)
+    result->nlconstr = (double*)malloc(problem.m_nlcon * sizeof(double));
+    if (!result->nlconstr) {
+        free(result->x);
+        return PRIMA_MEMORY_ALLOCATION_FAILS;
+    }
+    for (int i = 0; i < problem.m_nlcon; i++)
+        result->nlconstr[i] = NAN;
+
+    return PRIMA_RC_DFT;
+}
+
+
+// Function to free the result
+prima_rc_t prima_free_result(prima_result_t *const result)
+{
+    if (!result)
+        return PRIMA_NULL_RESULT;
+
+    if (result->nlconstr) {
+        free(result->nlconstr);
+        result->nlconstr = NULL;
+    }
+    if (result->x) {
+        free(result->x);
+        result->x = NULL;
+    }
+    return PRIMA_RC_DFT;
+}
+
 
 // The function that does the minimization using a PRIMA solver
 prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result)
