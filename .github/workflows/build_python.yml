@@ -49,6 +49,7 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         with:
           compiler: gcc
+          version: 10
 
       # Copied from https://github.com/scipy/scipy/blob/main/.github/workflows/wheels.yml
       - name: win_amd64 - install rtools
