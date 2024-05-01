@@ -300,7 +300,7 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
 
 // Function to check if PRIMA returned normally or ran into abnormal conditions
 PRIMAC_API
-bool prima_is_success(const prima_result_t result);
+bool prima_is_success(const prima_result_t result, const prima_options_t options);
 
 #ifdef __cplusplus
 }
