@@ -22,7 +22,7 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}
 
 
 env:
-  GCC_FLGS: '-Wall -Wextra -Wpedantic -Werror'
+  GCC_FLAGS: '-Wall -Wextra -Wpedantic -Werror'
   GFORTRAN_FLAGS: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'
   ICC_FLAGS: '-diag-disable=10441 -Wall -w3 -Werror-all'
   IFORT_FLAGS: '-warn all -debug extended -fimplicit-none -standard-semantics'
