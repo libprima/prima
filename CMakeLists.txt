@@ -35,7 +35,7 @@ if (PRIMA_HEAP_ARRAYS)
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang")  # flang-new
     # See https://github.com/llvm/llvm-project/issues/88344
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -mmlir -fdynamic-heap-array")
-  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")  # Classic Flang
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")  # Classic Flang and AOCC Flang
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mrecursive")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "ARMClang")  # ARM Flang
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -Mrecursive")
