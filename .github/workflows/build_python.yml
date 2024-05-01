@@ -25,8 +25,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # As of 20240501, macos-13 is AMD64, and macOS-14 is ARM64.
-        os: [ubuntu-20.04, ubuntu-22.04, windows-2019, windows-2022, macos-13, macos-14]
+        # As of 20240501, macos-11/12/13 are AMD64, and macOS-14 is ARM64.
+        os: [ubuntu-20.04, ubuntu-22.04, windows-2019, windows-2022, macos-11, macos-12, macos-13, macos-14]
 
     steps:
       - name: Clone Repository (Latest)
@@ -46,12 +46,15 @@ jobs:
       - name: Checkout pybind11 submodule
         run: git submodule update --init python/pybind11
 
-      - uses: fortran-lang/setup-fortran@main
+      - name: Set up Fortran
+        uses: fortran-lang/setup-fortran@main
         if: ${{ runner.os == 'macOS' }}
         with:
           compiler: gcc
 
       # Copied from https://github.com/scipy/scipy/blob/main/.github/workflows/wheels.yml
+      # For rtools, see https://github.com/r-windows/rtools-installer/releases, which has been
+      # archived since 20231027.
       - name: win_amd64 - install rtools
         if: ${{ runner.os == 'Windows' }}
         run: |
@@ -62,6 +65,7 @@ jobs:
       - name: Check the versions of tools
         shell: bash
         run: |
+          which cmake && cmake --version
           which gcc && gcc --version
           which gfortran && gfortran --version
           if [[ $(uname) == "Darwin" ]]; then
