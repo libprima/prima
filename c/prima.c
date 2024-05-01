@@ -63,7 +63,7 @@ prima_rc_t prima_init_options(prima_options_t *const options)
 
 
 // Function to check whether the problem matches the algorithm
-prima_rc_t prima_check_problem(const prima_problem_t problem, const prima_algorithm_t algorithm)
+static prima_rc_t prima_check_problem(const prima_problem_t problem, const prima_algorithm_t algorithm)
 {
     if (!problem.x0)
         return PRIMA_NULL_X0;
@@ -76,7 +76,7 @@ prima_rc_t prima_check_problem(const prima_problem_t problem, const prima_algori
 
 
 // Function to get the string corresponding to the return code
-const char *prima_get_rc_string(const prima_rc_t rc)
+static const char *prima_get_rc_string(const prima_rc_t rc)
 {
     switch (rc) {
         case PRIMA_SMALL_TR_RADIUS:
@@ -130,7 +130,7 @@ const char *prima_get_rc_string(const prima_rc_t rc)
 
 
 // Function to initialize the result
-prima_rc_t prima_init_result(prima_result_t *const result, const prima_problem_t problem)
+static prima_rc_t prima_init_result(prima_result_t *const result, const prima_problem_t problem)
 {
     if (!result)
         return PRIMA_NULL_RESULT;
