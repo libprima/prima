@@ -23,24 +23,24 @@ endif ()
 option (PRIMA_HEAP_ARRAYS "allocate arrays on heap" ON)
 if (PRIMA_HEAP_ARRAYS)
   if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")  # gfortran
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} TEST_TEST -fno-stack-arrays -frecursive")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -frecursive")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel|IntelLLVM")  # Intel compilers
     if (WIN32)
-      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} TEST_TEST /heap-arrays /assume:recursion")
+      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /heap-arrays /assume:recursion")
     else ()
-      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} TEST_TEST -heap-arrays -assume recursion")
+      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -heap-arrays -assume recursion")
     endif ()
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NAG")  # nagfor
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} TEST_TEST -recursive")  # What about stack/heap?
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -recursive")  # What about stack/heap?
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang")  # flang-new
     # See https://github.com/llvm/llvm-project/issues/88344
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} TEST_TEST -fno-stack-arrays -mmlir -fdynamic-heap-array")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -mmlir -fdynamic-heap-array")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")  # Classic Flang
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} TEST_TEST -Mrecursive")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mrecursive")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "ARMClang")  # ARM Flang
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} TEST_TEST -fno-stack-arrays -Mrecursive")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -Mrecursive")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")  # nvfortran
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} TEST_TEST -Mnostack_arrays -Mrecursive")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mnostack_arrays -Mrecursive")
   endif ()
 endif ()
 

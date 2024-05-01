@@ -19,9 +19,12 @@ on:
       fflags:
         description: FFLAGS
         required: false
+      verbose-makefile:
+        description: Verbose Makefile (Optional, true or false)
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , {1}', inputs.git-ref, inputs.stress-test) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , {1}, {2}', inputs.git-ref, inputs.stress-test, inputs.verbose-makefile) || '' }}
 
 
 permissions:
@@ -72,7 +75,12 @@ jobs:
           $CC --version
           cmake --version
 
-          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
+          VERBOSE_MAKEFILE=OFF
+          if [[ ${{ github.event.inputs.verbose-makefile }} == 'true' ]] ; then
+              VERBOSE_MAKEFILE=ON
+          fi
+
+          cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=$VERBOSE_MAKEFILE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${CFLAGS}" -DCMAKE_Fortran_FLAGS="${FFLAGS}" .
           cmake --build . --target install
           cmake --build . --target tests
           ctest --output-on-failure -V -E stress
