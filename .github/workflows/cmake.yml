@@ -223,7 +223,7 @@ jobs:
           cmake --version
 
           VERBOSE_MAKEFILE=OFF
-          if [[ ${{ github.event.inputs.verbose-makefile }} == 'true' ]] ; then
+          if [[ "${{ github.event.inputs.verbose-makefile }}" == "true" ]] ; then
               VERBOSE_MAKEFILE=ON
           fi
 
