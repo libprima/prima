@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-11]
+        os: [ubuntu-20.04, ubuntu-22.04, windows-2019, windows-2022, macos-13, macos-14]
 
     steps:
       - uses: actions/checkout@v4
@@ -22,15 +22,20 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         with:
           compiler: gcc
-          version: 8
 
       # Copied from https://github.com/scipy/scipy/blob/main/.github/workflows/wheels.yml
       - name: win_amd64 - install rtools
+        if: ${{ runner.os == 'Windows' }}
         run: |
           # mingw-w64
           choco install rtools -y --no-progress --force --version=4.0.0.20220206
           echo "c:\rtools40\ucrt64\bin;" >> $env:GITHUB_PATH
-        if: ${{ runner.os == 'Windows' }}
+
+      - name: Check the versions of tools
+        shell: bash
+        run: |
+          which gcc && gcc --version
+          which gfortran && gfortran --version
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
