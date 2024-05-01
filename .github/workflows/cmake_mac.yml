@@ -69,7 +69,7 @@ jobs:
           CFLAGS="-Wall -Wextra -Wpedantic -Werror"
 
           export FC=${{ matrix.fc }}
-          export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'
+          export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'
 
           $FC --version
           $CC --version

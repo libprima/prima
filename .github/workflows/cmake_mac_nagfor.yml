@@ -65,11 +65,11 @@ jobs:
 
           export FC="nagfor"
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
-          export FFLAGS='-fpp -nan -ieee=stop -recursive -gline -u -C -C=alias -C=dangling -C=intovf -kind=unique -Warn=constant_coindexing -Warn=subnormal'
+          export FFLAGS='-fpp -nan -ieee=stop -gline -u -C -C=alias -C=dangling -C=intovf -kind=unique -Warn=constant_coindexing -Warn=subnormal'
           # Zaikun 20240121: With gcc 13.2 or AppleClang 1.5.0 and nagfor 7.1.7143, if '-C=undefined'
           # is included in FFLAGS, then the C tests will encounter a segmentation fault, although
           # the Fortran tests work correctly.
-          #export FFLAGS='-fpp -nan -ieee=stop -recursive -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=constant_coindexing -Warn=subnormal'
+          #export FFLAGS='-fpp -nan -ieee=stop -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique -Warn=constant_coindexing -Warn=subnormal'
 
           $FC -V
           $CC --version

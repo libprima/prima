@@ -62,7 +62,7 @@ jobs:
           if [[ -n "${{ github.event.inputs.fflags }}" ]]; then
               export FFLAGS="${{ github.event.inputs.fflags }}"
           else
-              export FFLAGS='-fpp -nan -ieee=stop -recursive -gline -u -C -C=alias -C=dangling -C=intovf -kind=unique -Warn=constant_coindexing -Warn=subnormal'
+              export FFLAGS='-fpp -nan -ieee=stop -gline -u -C -C=alias -C=dangling -C=intovf -kind=unique -Warn=constant_coindexing -Warn=subnormal'
               # Zaikun 20240121: With gcc 13.2 or AppleClang 1.5.0 and nagfor 7.1.7143, if '-C=undefined'
               # is included in FFLAGS, then the C tests will encounter a segmentation fault, although
               # the Fortran tests work correctly. According to NAG support, -C=undefined "is not compatible with calling C code via a BIND(C) interface".
