@@ -13,9 +13,12 @@ on:
       stress-test:
         description: Stress Test (Optional, true or false)
         required: false
+      verbose-makefile:
+        description: Verbose Makefile (Optional, true or false)
+        required: false
 
 # Show the git ref in the workflow name if it is invoked manually.
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , {1}', inputs.git-ref, inputs.stress-test) || '' }}
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , {1}, {2}', inputs.git-ref, inputs.stress-test, inputs.verbose-makefile) || '' }}
 
 
 permissions:
@@ -34,12 +37,12 @@ jobs:
         # First define the toolchains on Linux and macOS.
         os: [ubuntu-latest, macos-12, macos-13]
         toolchain:
-          - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: intel-classic, version: '2021.8', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
-          - {compiler: intel-classic, version: '2021.9', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
-          - {compiler: intel-classic, version: '2021.10', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
+          - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
+          - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
+          - {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
+          - {compiler: intel-classic, version: '2021.8', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
+          - {compiler: intel-classic, version: '2021.9', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
+          - {compiler: intel-classic, version: '2021.10', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
 
         include:
           # intel compiler (ifx) does not support macOS. So they are not included above but below.
@@ -48,19 +51,19 @@ jobs:
           # compiler, but the (new) intel c compiler does not recognize '-W3 -Werror-all', even though the
           # official documentation of the compiler mentions them. Why?
           - os: ubuntu-latest
-            toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
+            toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
           - os: ubuntu-latest
-            toolchain: {compiler: intel, version: '2024.0', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
+            toolchain: {compiler: intel, version: '2024.0', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
           - os: ubuntu-latest
-            toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics -assume recursion'}
+            toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
 
           # What follows contains the toolchains for Windows, including gcc, intel classic, and intel.
           - os: windows-latest
-            toolchain: {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+            toolchain: {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
-            toolchain: {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+            toolchain: {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
-            toolchain: {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'}
+            toolchain: {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
           # Zaikun 20240423:
           # 1. On windows-latest, the cflags will not be recognized correctly if we start them with `/` instead
           # of `-`, even though the former aligns with the official documentation of the compilers. Why?
@@ -68,21 +71,21 @@ jobs:
           # compiler, but the (new) intel c compiler does not recognize '-W5 -Werror-all', even though the
           # official documentation of the compiler mentions them. Why?
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2024.0', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel, version: '2024.0', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2024.1', cflags:  '-Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
+            toolchain: {compiler: intel, version: '2024.1', cflags:  '-Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics', cc: cl}
           # N.B.: As of 20240401, setup-fortran fails constantly with windows-latest and intel-classic
           # 2021.8. Thus this combination is not included.
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.9', cflags: '-Qdiag-disable:10441 -Wall -W5 -Werror-all', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel-classic, version: '2021.9', cflags: '-Qdiag-disable:10441 -Wall -W5 -Werror-all', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-Qdiag-disable:10441 -Wall -W5 -Werror-all', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion'}
+            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-Qdiag-disable:10441 -Wall -W5 -Werror-all', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
+            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics', cc: cl}
 
     steps:
 
@@ -144,7 +147,12 @@ jobs:
         run: |
           cmake --version
 
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
+          VERBOSE_MAKEFILE=OFF
+          if [[ ${{ github.event.inputs.verbose-makefile }} == 'true' ]] ; then
+              VERBOSE_MAKEFILE=ON
+          fi
+
+          cmake -G Ninja -DCMAKE_VERBOSE_MAKEFILE:BOOL=$VERBOSE_MAKEFILE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
           cmake --build . --target install
           cmake --build . --target tests
           ctest --output-on-failure -V -E stress
@@ -168,9 +176,9 @@ jobs:
         toolchain:
           # Classic Flang family with -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
           # As of 20240220, aflang with -Mbounds would fail due to the bug at https://github.com/flang-compiler/flang/issues/1238
-          - {compiler: nvfortran, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk'}
-          - {compiler: flang, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-std=f2018 -pedantic -fimplicit-none -Werror -fno-stack-arrays -mmlir -fdynamic-heap-array'}
-          - {compiler: aflang, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive'}
+          - {compiler: nvfortran, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk'}
+          - {compiler: flang, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-std=f2018 -pedantic -fimplicit-none -Werror'}
+          - {compiler: aflang, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard'}
 
     steps:
 
@@ -211,7 +219,12 @@ jobs:
           #$CC --version
           cmake --version
 
-          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
+          VERBOSE_MAKEFILE=OFF
+          if [[ ${{ github.event.inputs.verbose-makefile }} == 'true' ]] ; then
+              VERBOSE_MAKEFILE=ON
+          fi
+
+          cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=$VERBOSE_MAKEFILE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=. -LAH -DCMAKE_C_FLAGS="${{ matrix.toolchain.cflags }}" -DCMAKE_Fortran_FLAGS="${{ matrix.toolchain.fflags }}" .
           cmake --build . --target install
           cmake --build . --target tests
 
