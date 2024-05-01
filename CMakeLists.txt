@@ -45,6 +45,8 @@ endif ()
 # https://developer.apple.com/documentation/xcode-release-notes/xcode-15-release-notes#Linking
 # https://stackoverflow.com/questions/77525544/apple-linker-warning-ld-warning-undefined-error-is-deprecated
 # https://medium.com/@hackingwithcode/cmake-and-xcode-15-solving-the-undefined-error-puzzle-3c847e6d1008
+# Zaikun 20240501: "undefined,dynamic_lookup" seems included by default since CMake 3.28.1. We keep
+# the following code in case it is not included for some versions.
 if((APPLE) AND (CMAKE_Fortran_COMPILER_ID MATCHES "Intel"))
     add_link_options("-Wl,-undefined,dynamic_lookup")
 endif()
