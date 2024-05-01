@@ -48,6 +48,25 @@ endif ()
 if((APPLE) AND (CMAKE_Fortran_COMPILER_ID MATCHES "Intel"))
     add_link_options("-Wl,-undefined,dynamic_lookup")
 endif()
+# Zaikun 20240501: Fix "ld: Assertion failed: (resultIndex < sectData.atoms.size())", which happens
+# when building Python wheels on macOS 13 and 14. This is a bug of Xcode 15.0 on macOS and fixed in
+# Xcode 15.1 beta according to https://github.com/Homebrew/homebrew-core/issues/145991.
+# See also
+# https://forums.developer.apple.com/forums/thread/737707
+# https://github.com/hansec/OpenFUSIONToolkit/pull/29
+if(APPLE)
+    # Get the Xcode version
+    execute_process(
+        COMMAND xcodebuild -version
+        OUTPUT_VARIABLE XCODE_OUTPUT
+    )
+    string(REGEX MATCH "Xcode ([0-9]+\\.[0-9]+)" XCODE_VERSION "${XCODE_OUTPUT}")
+    # Set linker flags for Xcode 15.0
+    if(XCODE_VERSION MATCHES "15\\.0")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-ld_classic")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-ld_classic")
+    endif()
+endif()
 
 # For running tests with gdb. $_exitcode != 0 means the program ran without exiting
 # normally, and in this case we want to show a stack trace
