@@ -62,7 +62,7 @@ if(APPLE)
     )
     string(REGEX MATCH "Xcode ([0-9]+\\.[0-9]+)" XCODE_VERSION "${XCODE_OUTPUT}")
     # Set linker flags for Xcode 15.0
-    if(XCODE_VERSION MATCHES "15\\.0")
+    if(XCODE_VERSION MATCHES "15\\.0\\..*")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-ld_classic")
         set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-ld_classic")
     endif()

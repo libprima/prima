@@ -64,6 +64,9 @@ jobs:
         run: |
           which gcc && gcc --version
           which gfortran && gfortran --version
+          if [[ $(uname) == "Darwin" ]]; then
+              xcodebuild -version
+          fi
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
