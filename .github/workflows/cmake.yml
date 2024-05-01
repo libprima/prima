@@ -21,6 +21,20 @@ on:
 run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , {1}, {2}', inputs.git-ref, inputs.stress-test, inputs.verbose-makefile) || '' }}
 
 
+env:
+  GCC_FLGS: '-Wall -Wextra -Wpedantic -Werror'
+  GFORTRAN_FLAGS: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'
+  ICC_FLAGS: '-diag-disable=10441 -Wall -w3 -Werror-all'
+  IFORT_FLAGS: '-warn all -debug extended -fimplicit-none -standard-semantics'
+  ICX_FLAGS: '-Wall -Werror'
+  IFX_FLAGS: '-warn all -debug extended -fimplicit-none -standard-semantics'
+  ICC_FLAGS_WIN: '-Qdiag-disable:10441 -Wall -W5 -Werror-all'
+  IFORT_FLAGS_WIN: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'
+  ICX_FLAGS_WIN: '-Wall -Werror'
+  IFX_FLAGS_WIN: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'
+  CL_FLAGS: '-Wall -W4 -WX'
+
+
 permissions:
   contents: read
 
@@ -37,12 +51,12 @@ jobs:
         # First define the toolchains on Linux and macOS.
         os: [ubuntu-latest, macos-12, macos-13]
         toolchain:
-          - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: intel-classic, version: '2021.8', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
-          - {compiler: intel-classic, version: '2021.9', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
-          - {compiler: intel-classic, version: '2021.10', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
+          - {compiler: gcc, version: 11, cflags: ${{ env.GCC_FLAGS }}, fflags: ${{ env.GFORTRAN_FLAGS }}}
+          - {compiler: gcc, version: 12, cflags: ${{ env.GCC_FLAGS }}, fflags: ${{ env.GFORTRAN_FLAGS }}}
+          - {compiler: gcc, version: 13, cflags: ${{ env.GCC_FLAGS }}, fflags: ${{ env.GFORTRAN_FLAGS }}}
+          - {compiler: intel-classic, version: '2021.8', cflags: ${{ env.ICC_FLAGS }}, fflags: ${{ env.IFORT_FLAGS }}}
+          - {compiler: intel-classic, version: '2021.9', cflags: ${{ env.ICC_FLAGS }}, fflags: ${{ env.IFORT_FLAGS }}}
+          - {compiler: intel-classic, version: '2021.10', cflags: ${{ env.ICC_FLAGS }}, fflags: ${{ env.IFORT_FLAGS }}}
 
         include:
           # intel compiler (ifx) does not support macOS. So they are not included above but below.
@@ -51,19 +65,19 @@ jobs:
           # compiler, but the (new) intel c compiler does not recognize '-W3 -Werror-all', even though the
           # official documentation of the compiler mentions them. Why?
           - os: ubuntu-latest
-            toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
+            toolchain: {compiler: intel, version: '2023.2', cflags: ${{ env.ICX_FLAGS }}, fflags: ${{ env.IFX_FLAGS }}}
           - os: ubuntu-latest
-            toolchain: {compiler: intel, version: '2024.0', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
+            toolchain: {compiler: intel, version: '2024.0', cflags: ${{ env.ICX_FLAGS }}, fflags: ${{ env.IFX_FLAGS }}}
           - os: ubuntu-latest
-            toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
+            toolchain: {compiler: intel, version: '2024.1', cflags: ${{ env.ICX_FLAGS }}, fflags: ${{ env.IFX_FLAGS }}}
 
           # What follows contains the toolchains for Windows, including gcc, intel classic, and intel.
           - os: windows-latest
-            toolchain: {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
+            toolchain: {compiler: gcc, version: 11, cflags: ${{ env.GCC_FLAGS }}, fflags: ${{ env.GFORTRAN_FLAGS }}}
           - os: windows-latest
-            toolchain: {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
+            toolchain: {compiler: gcc, version: 12, cflags: ${{ env.GCC_FLAGS }}, fflags: ${{ env.GFORTRAN_FLAGS }}}
           - os: windows-latest
-            toolchain: {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
+            toolchain: {compiler: gcc, version: 13, cflags: ${{ env.GCC_FLAGS }}, fflags: ${{ env.GFORTRAN_FLAGS }}}
           # Zaikun 20240423:
           # 1. On windows-latest, the cflags will not be recognized correctly if we start them with `/` instead
           # of `-`, even though the former aligns with the official documentation of the compilers. Why?
@@ -71,21 +85,21 @@ jobs:
           # compiler, but the (new) intel c compiler does not recognize '-W5 -Werror-all', even though the
           # official documentation of the compiler mentions them. Why?
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
+            toolchain: {compiler: intel, version: '2023.2', cflags: ${{ env.ICX_FLAGS_WIN }}, fflags: ${{ env.IFX_FLAGS_WIN }}}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2024.0', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
+            toolchain: {compiler: intel, version: '2024.0', cflags: ${{ env.ICX_FLAGS_WIN }}, fflags: ${{ env.IFX_FLAGS_WIN }}}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
+            toolchain: {compiler: intel, version: '2024.1', cflags: ${{ env.ICX_FLAGS_WIN }}, fflags: ${{ env.IFX_FLAGS_WIN }}}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2024.1', cflags:  '-Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics', cc: cl}
+            toolchain: {compiler: intel, version: '2024.1', cflags:  ${{ env.CL_FLAGS }}, fflags: ${{ env.IFX_FLAGS_WIN }}, cc: cl}
           # N.B.: As of 20240401, setup-fortran fails constantly with windows-latest and intel-classic
           # 2021.8. Thus this combination is not included.
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.9', cflags: '-Qdiag-disable:10441 -Wall -W5 -Werror-all', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
+            toolchain: {compiler: intel-classic, version: '2021.9', cflags: ${{ env.ICC_FLAGS_WIN }}, fflags: ${{ env.IFORT_FLAGS_WIN }}}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-Qdiag-disable:10441 -Wall -W5 -Werror-all', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
+            toolchain: {compiler: intel-classic, version: '2021.10', cflags: ${{ env.ICC_FLAGS_WIN }}, fflags: ${{ env.IFORT_FLAGS_WIN }}}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics', cc: cl}
+            toolchain: {compiler: intel-classic, version: '2021.10', cflags: ${{ env.CL_FLAGS }}, fflags: ${{ env.IFORT_FLAGS_WIN }}, cc: cl}
 
     steps:
 
@@ -176,9 +190,9 @@ jobs:
         toolchain:
           # Classic Flang family with -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
           # As of 20240220, aflang with -Mbounds would fail due to the bug at https://github.com/flang-compiler/flang/issues/1238
-          - {compiler: nvfortran, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk'}
-          - {compiler: flang, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-std=f2018 -pedantic -fimplicit-none -Werror'}
-          - {compiler: aflang, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard'}
+          - {compiler: nvfortran, cflags: ${{ env.GCC_FLAGS }}, fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk'}
+          - {compiler: flang, cflags: ${{ env.GCC_FLAGS }}, fflags: '-std=f2018 -pedantic -fimplicit-none -Werror'}
+          - {compiler: aflang, cflags: ${{ env.GCC_FLAGS }}, fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard'}
 
     steps:
 
