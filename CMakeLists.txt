@@ -60,12 +60,11 @@ if(APPLE)
         COMMAND xcodebuild -version
         OUTPUT_VARIABLE XCODE_OUTPUT
     )
-    string(REGEX MATCH "Xcode ([0-9]+\\.[0-9]+)" XCODE_VERSION "${XCODE_OUTPUT}")
-    # Set linker flags for Xcode 15.0
-    add_link_options("-Wl,-ld_classic")
-    #if(XCODE_VERSION MATCHES "15\\.0\\..*")
-    #    add_link_options("-Wl,-ld_classic")
-    #endif()
+    string(REGEX MATCH "Xcode ([0-9]+\\.[0-9]+(\\.[0-9]+)?)" XCODE_VERSION "${XCODE_OUTPUT}")
+    # Set linker flags for Xcode 15.0 or 15.0.x
+    if(XCODE_VERSION MATCHES "Xcode 15\\.0(\\.[0-9]+)?")
+        add_link_options("-Wl,-ld_classic")
+    endif()
 endif()
 
 # For running tests with gdb. $_exitcode != 0 means the program ran without exiting
