@@ -141,6 +141,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Parallel test, matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/parallel_test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/parallel_test_matlab_mac.yml)
     - [![Recursive test, matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/recursive_test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/recursive_test_matlab_mac.yml)
     - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
+    - [![Build Python wheels](https://github.com/libprima/prima/actions/workflows/build_python.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/build_python.yml)
     - [![Compile MEX](https://github.com/libprima/prima/actions/workflows/compile_mex.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/compile_mex.yml)
     - [![Lint the Fortran code and the MEX gateways with nagfor](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml)
 

@@ -15,24 +15,32 @@ if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND CMAKE_VERSION VERSION_GREATER_EQ
 endif ()
 
 # Set additional Fortran compiler flags
+# 0. See https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html for compiler IDs.
 # 1. We require the compilers to allocate arrays on the heap instead of the stack, which is
 # slower (does not matter for DFO applications) but can avoid memory errors on large problems.
 # 2. We require the compilers to compile the solvers so that they can be called recursively.
 # See https://fortran-lang.discourse.group/t/frecursive-assume-recursion-and-recursion-thread-safety
 option (PRIMA_HEAP_ARRAYS "allocate arrays on heap" ON)
 if (PRIMA_HEAP_ARRAYS)
-  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")  # gfortran
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -frecursive")
-  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel|IntelLLVM")  # Intel compilers
     if (WIN32)
       set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /heap-arrays /assume:recursion")
     else ()
       set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -heap-arrays -assume recursion")
     endif ()
-  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mnostack_arrays -Mrecursive")
-  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NAG")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NAG")  # nagfor
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -recursive")  # What about stack/heap?
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang")  # flang-new
+    # See https://github.com/llvm/llvm-project/issues/88344
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -mmlir -fdynamic-heap-array")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")  # Classic Flang and AOCC Flang
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mrecursive")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "ARMClang")  # ARM Flang
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -Mrecursive")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")  # nvfortran
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mnostack_arrays -Mrecursive")
   endif ()
 endif ()
 
@@ -45,8 +53,28 @@ endif ()
 # https://developer.apple.com/documentation/xcode-release-notes/xcode-15-release-notes#Linking
 # https://stackoverflow.com/questions/77525544/apple-linker-warning-ld-warning-undefined-error-is-deprecated
 # https://medium.com/@hackingwithcode/cmake-and-xcode-15-solving-the-undefined-error-puzzle-3c847e6d1008
+# Zaikun 20240501: "undefined,dynamic_lookup" seems included by default since CMake 3.28.1. We keep
+# the following code in case it is not included for some versions.
 if((APPLE) AND (CMAKE_Fortran_COMPILER_ID MATCHES "Intel"))
     add_link_options("-Wl,-undefined,dynamic_lookup")
+endif()
+# Zaikun 20240501: Fix "ld: Assertion failed: (resultIndex < sectData.atoms.size())", which happens
+# when building Python wheels on macOS 13 and 14. This is a bug of Xcode 15.0 on macOS and fixed in
+# Xcode 15.1 beta according to https://github.com/Homebrew/homebrew-core/issues/145991.
+# See also
+# https://forums.developer.apple.com/forums/thread/737707
+# https://github.com/hansec/OpenFUSIONToolkit/pull/29
+if(APPLE)
+    # Get the Xcode version
+    execute_process(
+        COMMAND xcodebuild -version
+        OUTPUT_VARIABLE XCODE_OUTPUT
+    )
+    string(REGEX MATCH "Xcode ([0-9]+\\.[0-9]+(\\.[0-9]+)?)" XCODE_VERSION "${XCODE_OUTPUT}")
+    # Set linker flags for Xcode 15.0 or 15.0.x
+    if(XCODE_VERSION MATCHES "Xcode 15\\.0(\\.[0-9]+)?")
+        add_link_options("-Wl,-ld_classic")
+    endif()
 endif()
 
 # For running tests with gdb. $_exitcode != 0 means the program ran without exiting
