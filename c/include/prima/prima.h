@@ -73,11 +73,6 @@ typedef enum {
 } prima_rc_t;
 
 
-// Function to get the message string corresponding to a return code
-PRIMAC_API
-const char *prima_get_rc_string(const prima_rc_t rc);
-
-
 /*
  * Objective function required by UOBYQA, NEWUOA, BOBYQA, and LINCOA
  * x     : on input, the vector of variables (should not be modified)
