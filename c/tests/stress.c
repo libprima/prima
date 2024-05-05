@@ -14,6 +14,15 @@
 #define M_INEQ_MAX 1000
 #define M_NLCON 200
 
+// Thread-safe version of localtime
+// N.B.: localtime_s is typically associated with Microsoft's C runtime library while localtime_r
+// is typically associated with POSIX-compliant systems; they have different argument orders.
+#ifdef _WIN32
+#define localtime_safe(a, b) localtime_s(a, b)
+#else
+#define localtime_safe(a, b) localtime_r(b, a)
+#endif
+
 int n = 0;
 int m_ineq = 0;
 const double alpha = 4.0;
@@ -61,12 +70,14 @@ static void fun_con(const double x[], double *const f, double constr[], const vo
 }
 
 // A function generating a seed that alters weekly
-unsigned int get_random_seed(void) {
+static unsigned int get_random_seed(void)
+{
     // Set the random seed to year/week
     char buf[10] = {0};
     time_t t = time(NULL);
-    struct tm *tmp = localtime(&t);
-    int rc = strftime(buf, 10, "%y%W", tmp);
+    struct tm timeinfo;
+    localtime_safe(&timeinfo, &t);
+    size_t rc = strftime(buf, 10, "%y%W", &timeinfo);
     if (!rc)
         return 42;
     else
@@ -87,7 +98,7 @@ int main(int argc, char * argv[])
     printf("Debug = %d\n", debug);
 
     unsigned int seed = get_random_seed();
-    printf("Random seed = %d\n", seed);
+    printf("Random seed = %u\n", seed);
     srand(seed);
 
     // Set up the options

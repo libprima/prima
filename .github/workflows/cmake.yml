@@ -73,6 +73,10 @@ jobs:
           # 2. On windows-latest, we want to use '-Wall -W5 -Werror-all' as what we do for the intel-classic
           # compiler, but the (new) intel c compiler does not recognize '-W5 -Werror-all', even though the
           # official documentation of the compiler mentions them. Why?
+          # Comments on flags of `cl`:
+          # -wd4820 disables the warning about "... bytes padding added after data member"
+          # -wd4464 disables the warning about "relative include path contains '..'"
+          # -wd4710 disables the warning about "... function is not inlined"
           - os: windows-latest
             toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
           - os: windows-latest
@@ -80,7 +84,7 @@ jobs:
           - os: windows-latest
             toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
           - os: windows-latest
-            toolchain: {compiler: intel, version: '2024.1', cflags:  '-Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics', cc: cl}
+            toolchain: {compiler: intel, version: '2024.1', cflags:  '-wd4820 -wd4464 -wd4710 -Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
           # N.B.: As of 20240401, setup-fortran fails constantly with windows-latest and intel-classic
           # 2021.8. Thus this combination is not included.
           - os: windows-latest
@@ -88,7 +92,7 @@ jobs:
           - os: windows-latest
             toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-Qdiag-disable:10441 -Wall -W5 -Werror-all', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics'}
           - os: windows-latest
-            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics', cc: cl}
+            toolchain: {compiler: intel-classic, version: '2021.10', cflags: '-wd4820 -wd4464 -wd4710 -Wall -W4 -WX', fflags: '/warn:all /debug:extended /Z7 /fimplicit-none /standard-semantics /assume:recursion', cc: cl}
 
     steps:
 
