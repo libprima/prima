@@ -30,10 +30,9 @@ class SelfCleaningPyObject {
 
 struct PRIMAResult {
     // Construct PRIMAResult from prima_result_t
-    PRIMAResult(const prima_result_t& result, const int num_vars, const int num_constraints, const std::string method,
-                const prima_options_t& options)  :
+    PRIMAResult(const prima_result_t& result, const int num_vars, const int num_constraints, const std::string method)  :
     x(num_vars, result.x),
-    success(prima_is_success(result, options)),
+    success(result.success),
     status(result.status),
     message(result.message),
     fun(result.f),
@@ -326,7 +325,7 @@ PYBIND11_MODULE(_prima, m) {
       // Initialize the result, call the function, convert the return type, and return it.
       prima_result_t result;
       const prima_rc_t rc = prima_minimize(algorithm, problem, options, &result);
-      PRIMAResult result_copy(result, py_x0.size(), problem.m_nlcon, method.cast<std::string>(), options);
+      PRIMAResult result_copy(result, py_x0.size(), problem.m_nlcon, method.cast<std::string>());
       prima_free_result(&result);
       return result_copy;
     }, "fun"_a, "x0"_a, "args"_a=py::tuple(), "method"_a=py::none(),

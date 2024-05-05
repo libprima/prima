@@ -263,13 +263,9 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
     }
 
     result->status = info;
+    result->success = ((result->status == PRIMA_SMALL_TR_RADIUS && result->cstrv <= options.ctol) ||
+                       (result->status == PRIMA_FTARGET_ACHIEVED));
     result->message = prima_get_rc_string(info);
 
     return info;
-}
-
-bool prima_is_success(const prima_result_t result, const prima_options_t options)
-{
-    return ((result.status == PRIMA_SMALL_TR_RADIUS && result.cstrv <= options.ctol) ||
-            (result.status == PRIMA_FTARGET_ACHIEVED));
 }
