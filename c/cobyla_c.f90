@@ -71,6 +71,7 @@ real(RP) :: Aineq_loc(m_ineq, n)
 real(RP) :: beq_loc(m_eq)
 real(RP) :: bineq_loc(m_ineq)
 real(RP) :: cstrv_loc
+real(RP) :: ctol_loc
 real(RP) :: f_loc
 real(RP) :: ftarget_loc
 real(RP) :: nlconstr_loc(m_nlcon)
@@ -79,7 +80,6 @@ real(RP), allocatable :: f0_loc
 real(RP), allocatable :: nlconstr0_loc(:)
 real(RP), allocatable :: rhobeg_loc
 real(RP), allocatable :: rhoend_loc
-real(RP), allocatable :: ctol_loc
 real(RP), allocatable :: xl_loc(:)
 real(RP), allocatable :: xu_loc(:)
 
@@ -131,9 +131,7 @@ if (maxfun /= 0) then
     maxfun_loc = int(maxfun, kind(maxfun_loc))
 end if
 iprint_loc = int(iprint, kind(iprint_loc))
-if (.not. is_nan(ctol)) then
-    ctol_loc = real(ctol, kind(ctol_loc))
-end if
+ctol_loc = real(ctol, kind(ctol_loc))
 
 ! Call the Fortran code
 if (c_associated(callback_ptr)) then

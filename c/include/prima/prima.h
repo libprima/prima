@@ -73,11 +73,6 @@ typedef enum {
 } prima_rc_t;
 
 
-// Function to get the message string corresponding to a return code
-PRIMAC_API
-const char *prima_get_rc_string(const prima_rc_t rc);
-
-
 /*
  * Objective function required by UOBYQA, NEWUOA, BOBYQA, and LINCOA
  * x     : on input, the vector of variables (should not be modified)
@@ -272,6 +267,9 @@ typedef struct {
     // status: return code
     prima_rc_t status;
 
+    // success: whether the solver returned normally or ran into abnormal conditions
+    bool success;
+
     // message: exit message
     const char *message;
 
@@ -297,10 +295,6 @@ prima_rc_t prima_free_result(prima_result_t *const result);
 PRIMAC_API
 prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result);
 
-
-// Function to check if PRIMA returned normally or ran into abnormal conditions
-PRIMAC_API
-bool prima_is_success(const prima_result_t result);
 
 #ifdef __cplusplus
 }

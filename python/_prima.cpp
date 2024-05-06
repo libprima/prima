@@ -32,7 +32,7 @@ struct PRIMAResult {
     // Construct PRIMAResult from prima_result_t
     PRIMAResult(const prima_result_t& result, const int num_vars, const int num_constraints, const std::string method)  :
     x(num_vars, result.x),
-    success(prima_is_success(result)),
+    success(result.success),
     status(result.status),
     message(result.message),
     fun(result.f),

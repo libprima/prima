@@ -57,7 +57,7 @@ prima_rc_t prima_init_options(prima_options_t *const options)
     options->rhoend = NAN;  // Will be interpreted by Fortran as not present
     options->iprint = PRIMA_MSG_NONE;
     options->ftarget = -INFINITY;
-    options->ctol = NAN;  // Will be interpreted by Fortran as not present
+    options->ctol = sqrt(DBL_EPSILON);
     return PRIMA_RC_DFT;
 }
 
@@ -263,13 +263,9 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
     }
 
     result->status = info;
+    result->success = ((result->status == PRIMA_SMALL_TR_RADIUS && result->cstrv <= options.ctol) ||
+                       (result->status == PRIMA_FTARGET_ACHIEVED));
     result->message = prima_get_rc_string(info);
 
     return info;
-}
-
-bool prima_is_success(const prima_result_t result)
-{
-    return (result.status == PRIMA_SMALL_TR_RADIUS ||
-            result.status == PRIMA_FTARGET_ACHIEVED) && (result.cstrv <= sqrt(DBL_EPSILON));
 }
