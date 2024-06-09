@@ -98,11 +98,9 @@ jobs:
           compiler: gcc
           version: ${{ env.GFVER }}
 
-      - name: Link gfortran for MATLAB on Linux
+      - name: Check gfortran version
         if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          sudo ln -sf $(which gfortran-${{ env.GFVER }}) $(dirname $(which gfortran-${{ env.GFVER }}))/gfortran
-          which gfortran && gfortran --version
+        run: which gfortran && gfortran --version
 
       - name: Decide the version of oneAPI to use on macOS and Windows
         shell: bash
