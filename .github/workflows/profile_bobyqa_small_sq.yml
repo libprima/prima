@@ -172,7 +172,8 @@ jobs:
           repository: equipez/github_actions_scripts
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           path: scripts
-
+      - name: Check whether the tests were successful or cancelled due to timeout
+        run: bash scripts/check_success_timeout ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
 
   merge_artifacts:
     continue-on-error: true  # As of 20240218, this action may fail if there are too many artifacts. We ignore the failure.
