@@ -90,15 +90,13 @@ jobs:
               GFVER=9
           fi
           echo "GFVER=$GFVER" >> $GITHUB_ENV
-
       - name: Set up gfortran on Linux
         if: startsWith(matrix.os, 'ubuntu')
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: gcc
           version: ${{ env.GFVER }}
-
-      - name: Check gfortran version
+      - name: Check gfortran version on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: which gfortran && gfortran --version
 
