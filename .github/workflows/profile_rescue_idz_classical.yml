@@ -74,9 +74,15 @@ jobs:
           repository: matcutest/matcutest_compiled
           path: matcutest
 
-      - name: Link gfortran for MATLAB on Linux
+      - name: Set up gfortran on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: bash .github/scripts/link_gfortran ${{ env.GFORTRAN_VERSION }}
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: gcc
+          version: ${{ env.GFORTRAN_VERSION }}
+      - name: Check gfortran version on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: which gfortran && gfortran --version
 
       - name: Install epstopdf and ghostscript
         if: startsWith(matrix.os, 'ubuntu')
