@@ -119,3 +119,56 @@ jobs:
       #     $SEDI "s/cstrv = maxval(\[ZERO, -constr\])/cstrv = maxval([\ZERO, -constr\])\n       write(*,*) 'x = ', x(1:n)\n       write(*,*) 'f = ', f\n       write(*,*) 'constr = ', constr(1:m)\n       write(*,*) 'cstrv = ', cstrv/" cobylb.f
       #     cat cobylb.f
 
+      - name: Decide gfortran version for MATLAB on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          GFVER=${{ env.GFORTRAN_VERSION }}
+          if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
+              GFVER=11
+          fi
+          if [[ "${{ matrix.matlab }}" = "R2020b" || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" = "R2021b" ]] ; then
+              GFVER=9
+          fi
+          echo "GFVER=$GFVER" >> $GITHUB_ENV
+      - name: Set up gfortran on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        uses: fortran-lang/setup-fortran@main
+        with:
+          compiler: gcc
+          version: ${{ env.GFVER }}
+      - name: Check gfortran version on Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: which gfortran && gfortran --version
+
+      - name: Decide the version of oneAPI to use
+        shell: bash
+        run: |
+          ONEAPI_VERSION=
+          if [[ "${{ matrix.os }}" = "windows-"* ]] ; then
+              if [[ "${{ matrix.matlab }}" = "R2020"* || "${{ matrix.matlab }}" = "R2021"* || "${{ matrix.matlab }}" = "R2022"* || "${{ matrix.matlab }}" = "R2023"* ]] ; then
+                  ONEAPI_VERSION=2023
+              fi
+          fi
+          echo "ONEAPI_VERSION=$ONEAPI_VERSION" >> $GITHUB_ENV
+          echo "ONEAPI_VERSION:" $ONEAPI_VERSION
+
+      - name: Install Intel oneAPI on macOS
+        if: startsWith(matrix.os, 'macos')
+        run: bash .github/scripts/install_oneapi_macos.sh $ONEAPI_VERSION
+
+      - name: Install Intel oneAPI on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat %ONEAPI_VERSION%"'
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2.1.2
+        with:
+          release: ${{ matrix.matlab }}
+          cache: true
+          products: Parallel_Computing_Toolbox
+
+      - name: Conduct the test
+        uses: matlab-actions/run-command@v2.1.1
+        with:
+          command: |
+            cd matlab/tests; testprima_ex();
