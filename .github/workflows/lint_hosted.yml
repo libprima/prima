@@ -66,7 +66,7 @@ jobs:
       - name: Set up MATLAB
         id: set-up-matlab
         if: ${{ matrix.linter == 'mlint' }}
-        uses: matlab-actions/setup-matlab@v2.1.2
+        uses: matlab-actions/setup-matlab@v2.2.0
         with:
           release: latest
           cache: false  # We should not cache MATLAB; otherwise, an empty directory will be cached since we remove $MATLABROOT in the next step
