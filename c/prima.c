@@ -260,6 +260,8 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
             default:
                 return PRIMA_INVALID_INPUT;
         }
+    } else {
+        return info;
     }
 
     result->status = info;
@@ -267,5 +269,5 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
                        (result->status == PRIMA_FTARGET_ACHIEVED));
     result->message = prima_get_rc_string(info);
 
-    return info;
+    return PRIMA_RC_DFT;
 }
