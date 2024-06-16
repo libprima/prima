@@ -20,6 +20,9 @@ def test_pdfo():
     scipy = pytest.importorskip("scipy")
     if version.parse(scipy.__version__) < version.parse("1.11.0"):
         pytest.skip("scipy version too old for this test (its version of COBYLA does not accept bounds)")
+    numpy = pytest.importorskip("numpy")
+    if version.parse(numpy.__version__) >= version.parse("2.0.0"):
+        pytest.skip("numpy version too new for this test (pdfo does not yet support numpy v2)")
 
     from pdfo import pdfo
     from scipy.optimize import NonlinearConstraint as NLC, LinearConstraint as LC, Bounds
