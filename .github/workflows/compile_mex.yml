@@ -31,7 +31,7 @@ jobs:
 
       # The matrix is essentially the same as that of test_matlab.yml
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12, macos-13]
+        os: [ubuntu-20.04, ubuntu-22.04, macos-12, macos-13]
         matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a]
 
         include:
@@ -135,7 +135,7 @@ jobs:
             ver;
             options.half = false;
             options.single = true;
-            options.quadruple = ~(strcmp('${{ matrix.os }}', 'macos-11') && verLessThan('matlab', '9.12'));  % MEX is slow on macos-11 with MATLAB R2021b or below.
+            options.quadruple = true;
             options.debug = true;
             options.classical = false;
             options.verbose = true;
