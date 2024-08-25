@@ -202,7 +202,7 @@ end if
 ! function value (regardless of the constraint violation), and SIM(:, 1:N) holds the displacements
 ! from the other vertices to SIM(:, N+1). FVAL, CONMAT, and CVAL hold the function values,
 ! constraint values, and constraint violations on the vertices in the order corresponding to SIM.
-call initxfc(calcfc_internal, iprint, maxfun, constr, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
+call initxfc(calcfc, iprint, maxfun, constr, amat, bvec, ctol, f, ftarget, rhobeg, x, nf, chist, conhist, &
    & conmat, cval, fhist, fval, sim, simi, xhist, evaluated, subinfo)
 
 ! Report the current best value, and check if user asks for early termination.
@@ -393,7 +393,7 @@ do tr = 1, maxtr
             cstrv = cval(j)
         else
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-            call evaluate(calcfc_internal, x, f, constr)
+            call evaluate(calcfc, x, f, constr, amat, bvec)
             cstrv = maximum([ZERO, constr])
             nf = nf + 1_IK
             ! Save X, F, CONSTR, CSTRV into the history.
@@ -585,7 +585,7 @@ do tr = 1, maxtr
             cstrv = cval(j)
         else
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-            call evaluate(calcfc_internal, x, f, constr)
+            call evaluate(calcfc, x, f, constr, amat, bvec)
             cstrv = maximum([ZERO, constr])
             nf = nf + 1_IK
             ! Save X, F, CONSTR, CSTRV into the history.
@@ -650,7 +650,7 @@ end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 ! Ensure that D has not been updated after SHORTD == TRUE occurred, or the code below is incorrect.
 x = sim(:, n + 1) + d
 if (info == SMALL_TR_RADIUS .and. shortd .and. norm(x - sim(:, n + 1)) > 1.0E-3_RP * rhoend .and. nf < maxfun) then
-    call evaluate(calcfc_internal, x, f, constr)
+    call evaluate(calcfc, x, f, constr, amat, bvec)
     cstrv = maximum([ZERO, constr])
     nf = nf + 1_IK
     ! Save X, F, CONSTR, CSTRV into the history.
@@ -701,25 +701,6 @@ if (DEBUGGING) then
     call assert(.not. any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv, ctol)), &
         & 'No point in the history is better than X', srname)
 end if
-
-
-contains
-
-
-subroutine calcfc_internal(x_internal, f_internal, constr_internal)
-!--------------------------------------------------------------------------------------------------!
-! This internal subroutine evaluates the objective function and ALL the constraints.
-! In MATLAB/Python/R/Julia, this can be implemented as a lambda function / anonymous function.
-!--------------------------------------------------------------------------------------------------!b
-implicit none
-! Inputs
-real(RP), intent(in) :: x_internal(:)
-! Outputs
-real(RP), intent(out) :: f_internal
-real(RP), intent(out) :: constr_internal(:)
-constr_internal(1:m_lcon) = matprod(x_internal, amat) - bvec
-call calcfc(x_internal, f_internal, constr_internal(m_lcon + 1:m))
-end subroutine calcfc_internal
 
 end subroutine cobylb
 
