@@ -148,20 +148,23 @@ end if
 end subroutine evaluatef
 
 
-subroutine evaluatefc(calcfc, x, f, constr)
+subroutine evaluatefc(calcfc, x, f, constr, amat, bvec)
 !--------------------------------------------------------------------------------------------------!
 ! This function evaluates CALCFC at X, setting F to the objective function value and CONSTR to the
 ! constraint value. Nan/Inf are handled by a moderated extreme barrier.
 !--------------------------------------------------------------------------------------------------!
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: consts_mod, only : DEBUGGING, IK, RP
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic :: linalg_mod, only : matprod
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 implicit none
 
 ! Inputs
 procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
+real(RP), intent(in) :: amat(:, :)
+real(RP), intent(in) :: bvec(:)
 real(RP), intent(in) :: x(:)
 
 ! Outputs
@@ -170,6 +173,13 @@ real(RP), intent(out) :: constr(:)
 
 ! Local variables
 character(len=*), parameter :: srname = 'EVALUATEFC'
+integer(IK) :: m
+integer(IK) :: m_lcon
+
+! Sizes
+m = int(size(constr), kind(m))
+m_lcon = int(size(bvec), kind(m_lcon))
+
 
 ! Preconditions
 if (DEBUGGING) then
@@ -182,18 +192,20 @@ end if
 ! Calculation starts !
 !====================!
 
+constr(1:m_lcon) = matprod(x, amat) - bvec
+
 if (any(is_nan(x))) then
     ! Although this should not happen unless there is a bug, we include this case for robustness.
     ! Set F, CONSTR, and CSTRV to NaN.
     f = sum(x)
-    constr = f
+    constr(m_lcon + 1:m) = f
 else
-    call calcfc(moderatex(x), f, constr)  ! Evaluate F and CONSTR; We moderate X before doing so.
+    call calcfc(moderatex(x), f, constr(m_lcon + 1:m))  ! Evaluate F and CONSTR; We moderate X before doing so.
 
     ! Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
     ! finite value. This is naive, and better approaches surely exist.
     f = moderatef(f)
-    constr = moderatec(constr)
+    constr(m_lcon + 1:m) = moderatec(constr(m_lcon + 1:m))
 end if
 
 !====================!
