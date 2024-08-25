@@ -499,13 +499,14 @@ call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 ! If NLCONSTR0 is present, then F0 must be present, and we assume that F(X0) = F0 even if F0 is NaN.
 ! If NLCONSTR0 is absent, then F0 must be either absent or NaN, both of which will be interpreted as
 ! F(X0) is not provided and we have to evaluate F(X0) and NLCONSTR(X0) now.
-constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)
 if (present(f0) .and. present(nlconstr0) .and. all(is_finite(x))) then
     f_loc = moderatef(f0)
+    constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)
     constr_loc(m - m_nlcon + 1:m) = moderatec(nlconstr0)
 else
     x = moderatex(x)
-    call evaluate(calcfc, x, f_loc, constr_loc(m - m_nlcon + 1:m))
+    call evaluate(calcfc, x, f_loc, constr_loc, amat, bvec)
+    constr_loc(1:m - m_nlcon) = moderatec(constr_loc(1:m - m_nlcon))
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
