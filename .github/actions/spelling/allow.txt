@@ -2261,3 +2261,8 @@ TESTQUAD
 WAITALL
 xcodebuild
 ICX
+bglobal
+cglobal
+lglobal
+nglobal
+uglobal
