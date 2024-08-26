@@ -26,11 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         # As of 20240501, macos-12/13 are AMD64, and macOS-14 is ARM64.
-        # As of 20240616, ubuntu 24.04 is failing to copy files into the quay.io/pypa/manylinux2014_i686:2024-05-13-0983f6f container
-        # It fails with "tar: ./todo: Cannot utime: Function not implemented" for every file in the repo.
-        # This is strange since it worked for the quay.io/pypa/manylinux2014_x86_64:2024-05-13-0983f6f container.
-        # I suggest trying ubuntu-24.04 again in a month.
-        os: [ubuntu-20.04, ubuntu-22.04, windows-2019, windows-2022, macos-12, macos-13, macos-14]
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, windows-2019, windows-2022, macos-12, macos-13, macos-14]
 
     steps:
       - name: Clone Repository (Latest)
