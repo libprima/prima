@@ -71,6 +71,12 @@ argin = [varargin, {options}];
 output{7} = profile(argin{:});
 options = rmfield(options, {'eval_options'});
 
+% Precision of function evaluation ~ 1.0e-3
+options.eval_options = struct('signif', 3);
+argin = [varargin, {options}];
+output{8} = profile(argin{:});
+options = rmfield(options, {'eval_options'});
+
 
 outputfiles = struct();
 prob_types = fieldnames(output{1});
