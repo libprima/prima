@@ -815,7 +815,8 @@ if isfield(options, 'noise')
         case {'absolute', 'additive', 'add', 'a', '+'}
             f = f + noise.level*r;
         otherwise
-            f = f * (1 + noise.level*r);
+            %f = f * (1 + noise.level*r);
+            f = f + max(abs(f), 1)*noise.level*r;  % abs(f) is reasonable because the distribution of r is symmetric w.r.t. 0.
         end
     end
 end
@@ -829,7 +830,8 @@ if isfield(options, 'dnoise')
         case {'absolute', 'additive', 'add', 'a', '+'}
             f = f + dnoise.level*r;
         otherwise
-            f = f * (1 + dnoise.level*r);
+            %f = f * (1 + dnoise.level*r);
+            f = f + max(abs(f), 1)*dnoise.level*r;
         end
     end
 end
@@ -1063,7 +1065,7 @@ case 'cobyla'
         'OET6', ...
         'OET7', ...
         'QINGNE', ...
-        'QPCBLEND' , ...
+        'QPCBLEND', ...
         'SPANHYD', ...      % 15
         'SWOPF', ...        % 10
         'TAX13322', ...     % 5
