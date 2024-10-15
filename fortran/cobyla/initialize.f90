@@ -19,7 +19,7 @@ public :: initxfc, initfilt
 contains
 
 
-subroutine initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x0, nf, chist, &
+subroutine initxfc(calcfc, iprint, maxfun, constr0, amat, bvec, ctol, f0, ftarget, rhobeg, x0, nf, chist, &
     & conhist, conmat, cval, fhist, fval, sim, simi, xhist, evaluated, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization concerning X, function values, and constraints.
@@ -44,6 +44,8 @@ procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy proced
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
 real(RP), intent(in) :: constr0(:)  ! CONSTR0(M)
+real(RP), intent(in) :: amat(:, :)
+real(RP), intent(in) :: bvec(:)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: f0
 real(RP), intent(in) :: ftarget
@@ -156,7 +158,7 @@ do k = 1, n + 1_IK
     else
         j = k - 1_IK
         x(j) = x(j) + rhobeg
-        call evaluate(calcfc, x, f, constr)
+        call evaluate(calcfc, x, f, constr, amat, bvec)
     end if
     cstrv = maximum([ZERO, constr])
 
