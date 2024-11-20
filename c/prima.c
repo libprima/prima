@@ -189,6 +189,12 @@ const char *prima_get_rc_string(const prima_rc_t rc)
 
 
 // Functions implemented in Fortran (*_c.f90)
+#ifndef DONT_COMPILE_BOBYQA
+int bobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f, const double xl[], const double xu[],
+             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
+#endif
+
+#ifndef DONT_COMPILE_COBYLA
 int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, const int n, double x[], double *const f, double *const cstrv, double nlconstr[],
              const int m_ineq, const double Aineq[], const double bineq[],
              const int m_eq, const double Aeq[], const double beq[],
@@ -196,21 +202,25 @@ int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, c
              const double f0, const double nlconstr0[],
              int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const double ctol,
              const prima_callback_t callback, int *const info);
+#endif
 
-int bobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f, const double xl[], const double xu[],
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
-
-int newuoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
-
-int uobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *const info);
-
+#ifndef DONT_COMPILE_LINCOA
 int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
              double *const cstrv, const int m_ineq, const double Aineq[], const double bineq[],
              const int m_eq, const double Aeq[], const double beq[], const double xl[], const double xu[],
              int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const double ctol,
              const prima_callback_t callback, int *const info);
+#endif
+
+#ifndef DONT_COMPILE_NEWUOA
+int newuoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
+             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
+#endif
+
+#ifndef DONT_COMPILE_UOBYQA
+int uobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
+             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *const info);
+#endif
 
 
 // The function that does the minimization using a PRIMA solver
@@ -230,32 +240,42 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
         }
 
         switch (algorithm) {
+#ifndef DONT_COMPILE_BOBYQA
             case PRIMA_BOBYQA:
                 bobyqa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), problem.xl, problem.xu, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, options.callback, &info);
                 result->cstrv = 0.0;
                 break;
+#endif
 
+#ifndef DONT_COMPILE_COBYLA
             case PRIMA_COBYLA:
                 cobyla_c(problem.m_nlcon, problem.calcfc, options.data, problem.n, result->x, &(result->f), &(result->cstrv), result->nlconstr,
                             problem.m_ineq, problem.Aineq, problem.bineq, problem.m_eq, problem.Aeq, problem.beq,
                             problem.xl, problem.xu, problem.f0, problem.nlconstr0, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.iprint, options.ctol, options.callback, &info);
                 break;
+#endif
 
+#ifndef DONT_COMPILE_LINCOA
             case PRIMA_LINCOA:
                 lincoa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), &(result->cstrv),
                             problem.m_ineq, problem.Aineq, problem.bineq, problem.m_eq, problem.Aeq, problem.beq,
                             problem.xl, problem.xu, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, options.ctol, options.callback, &info);
                 break;
+#endif
 
+#ifndef DONT_COMPILE_NEWUOA
             case PRIMA_NEWUOA:
                 newuoa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, options.callback, &info);
                 result->cstrv = 0.0;
                 break;
+#endif
 
+#ifndef DONT_COMPILE_UOBYQA
             case PRIMA_UOBYQA:
                 uobyqa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.iprint, options.callback, &info);
                 result->cstrv = 0.0;
                 break;
+#endif
 
             default:
                 return PRIMA_INVALID_INPUT;
