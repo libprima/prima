@@ -1,10 +1,10 @@
-from prima.common.checkbreak import checkbreak_con
-from prima.common.consts import DEBUGGING, REALMAX
-from prima.common.infos import INFO_DEFAULT
-from prima.common.evaluate import evaluate, moderatec, moderatef
-from prima.common.history import savehist
-from prima.common.message import fmsg
-from prima.common.selectx import savefilt
+from primapy.common.checkbreak import checkbreak_con
+from primapy.common.consts import DEBUGGING, REALMAX
+from primapy.common.infos import INFO_DEFAULT
+from primapy.common.evaluate import evaluate, moderatec, moderatef
+from primapy.common.history import savehist
+from primapy.common.message import fmsg
+from primapy.common.selectx import savefilt
 
 import numpy as np
 

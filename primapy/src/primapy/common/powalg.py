@@ -1,6 +1,6 @@
 import numpy as np
-from prima.common.linalg import isminor, planerot
-from prima.common.consts import EPS
+from primapy.common.linalg import isminor, planerot
+from primapy.common.consts import EPS
 
 
 def qradd_Rdiag(c, Q, Rdiag, n):

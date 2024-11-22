@@ -1,5 +1,5 @@
 [project]
-name = "prima"
+name = "primapy"
 version = "0.0.1"
 dependencies = [
 	"numpy"
@@ -7,4 +7,4 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["src"]  # ["."] by default
-exclude = ["prima.examples*"]  # empty by default
+exclude = ["primapy.examples*"]  # empty by default

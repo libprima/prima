@@ -1,5 +1,5 @@
 import numpy as np
-from prima.cobyla.cobyla import cobyla
+from primapy.cobyla.cobyla import cobyla
 
 
 def test_chebyquad():

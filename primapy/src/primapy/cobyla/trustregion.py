@@ -10,9 +10,9 @@ Python implementation by Nickolai Belakovski
 
 import numpy as np
 import numpy.typing as npt
-from prima.common.consts import DEBUGGING, REALMIN, REALMAX, EPS
-from prima.common.powalg import qradd_Rdiag, qrexc_Rdiag
-from prima.common.linalg import isminor
+from primapy.common.consts import DEBUGGING, REALMIN, REALMAX, EPS
+from primapy.common.powalg import qradd_Rdiag, qrexc_Rdiag
+from primapy.common.linalg import isminor
 
 
 def trstlp(A_in, b_in, delta):

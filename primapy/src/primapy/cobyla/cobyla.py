@@ -1,10 +1,10 @@
-from prima.common.evaluate import evaluate, moderatex
-from prima.common.consts import EPS, RHOBEG_DEFAULT, RHOEND_DEFAULT, \
+from primapy.common.evaluate import evaluate, moderatex
+from primapy.common.consts import EPS, RHOBEG_DEFAULT, RHOEND_DEFAULT, \
     CTOL_DEFAULT, CWEIGHT_DEFAULT, FTARGET_DEFAULT, IPRINT_DEFAULT, \
     MAXFUN_DIM_DEFAULT, DEBUGGING
-from prima.common.preproc import preproc
-from prima.common.present import present
-from prima.cobyla.cobylb import cobylb
+from primapy.common.preproc import preproc
+from primapy.common.present import present
+from primapy.cobyla.cobylb import cobylb
 import numpy as np
 from dataclasses import dataclass
 

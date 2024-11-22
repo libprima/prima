@@ -1,19 +1,19 @@
 import numpy as np
-from prima.common.checkbreak import checkbreak_con
-from prima.common.consts import REALMAX, EPS, DEBUGGING, MIN_MAXFILT
-from prima.common.infos import INFO_DEFAULT, MAXTR_REACHED, DAMAGING_ROUNDING, \
+from primapy.common.checkbreak import checkbreak_con
+from primapy.common.consts import REALMAX, EPS, DEBUGGING, MIN_MAXFILT
+from primapy.common.infos import INFO_DEFAULT, MAXTR_REACHED, DAMAGING_ROUNDING, \
                     SMALL_TR_RADIUS
-from prima.common.evaluate import evaluate
-from prima.common.history import savehist
-from prima.common.linalg import isinv
-from prima.common.message import fmsg, retmsg, rhomsg
-from prima.common.ratio import redrat
-from prima.common.redrho import redrho
-from prima.common.selectx import savefilt, selectx
-from prima.cobyla.update import updatepole, findpole, updatexfc
-from prima.cobyla.geometry import assess_geo, setdrop_tr, geostep, setdrop_geo
-from prima.cobyla.trustregion import trstlp, trrad
-from prima.cobyla.initialize import initxfc, initfilt
+from primapy.common.evaluate import evaluate
+from primapy.common.history import savehist
+from primapy.common.linalg import isinv
+from primapy.common.message import fmsg, retmsg, rhomsg
+from primapy.common.ratio import redrat
+from primapy.common.redrho import redrho
+from primapy.common.selectx import savefilt, selectx
+from primapy.cobyla.update import updatepole, findpole, updatexfc
+from primapy.cobyla.geometry import assess_geo, setdrop_tr, geostep, setdrop_geo
+from primapy.cobyla.trustregion import trstlp, trrad
+from primapy.cobyla.initialize import initxfc, initfilt
 
 
 def cobylb(calcfc, iprint, maxfilt, maxfun, ctol, cweight, eta1, eta2, ftarget,
