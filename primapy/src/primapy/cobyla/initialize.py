@@ -71,7 +71,7 @@ def initxfc(calcfc, iprint, maxfun, constr0, amat, bvec, ctol, f0, ftarget, rhob
             j = k - 1
             x[j] += rhobeg
             f, constr = evaluate(calcfc, x, m_nlcon, amat, bvec)
-        cstrv = max(np.append(0, constr))
+        cstrv = np.max(np.append(0, constr))
         
         # Print a message about the function/constraint evaluation according to IPRINT.
         fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x, cstrv, constr)
