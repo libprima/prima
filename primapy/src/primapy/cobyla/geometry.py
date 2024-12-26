@@ -3,65 +3,16 @@ from primapy.common.linalg import isinv
 import numpy as np
 
 
-def assess_geo(delta, factor_alpha, factor_beta, sim, simi):
-    '''
-    This function checks if an interpolation set has acceptable geometry as (14) of the COBYLA paper
-    '''
-
-    # Local variables
-    itol = 0.1
-
-    # Sizes
-    num_vars = np.size(sim, 0)
-
-    # Preconditions
-    if DEBUGGING:
-        assert num_vars >= 1
-        assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
-        assert np.isfinite(sim).all()
-        assert all(np.max(abs(sim[:, :num_vars]), axis=0) > 0)
-        assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
-        assert np.isfinite(simi).all()
-        assert isinv(sim[:, :num_vars], simi, itol)
-        assert delta > 0
-        assert factor_alpha > 0 and factor_alpha < 1
-        assert factor_beta > 1
-
-    #====================#
-    # Calculation starts #
-    #====================#
-
-    # Calculate the values of sigma and eta
-    # veta[j] (0 <= j < num_vars) is the distance between the vertices j and 0 (the best vertex)
-    # of the simplex.
-    # vsig[j] (0 <= j < num_vars) is the distance from vertex j to its opposite face of the simplex.
-    # Thus vsig <= veta.
-    # N.B.: What about the distance from vertex N+1 to its opposite face? Consider the simplex
-    # {V_{N+1}, V_{N+1} + L*e_1,... v_{N+1} + L*e_N}, where V_{N+1} is vertex N+1,
-    # namely the current "best" point, [e_1, ..., e_n] is an orthogonal matrix, and L is a
-    # constant in the order of delta. This simplex is optimal in the sense that the interpolation
-    # system has the minimal condition number, i.e. 1. For this simplex, the distance from
-    # V_{N+1} to its opposite face is L/sqrt(n).
-    vsig = 1/np.sqrt(np.sum(simi**2, axis=1))
-    veta = np.sqrt(np.sum(sim[:, :num_vars]**2, axis=0))
-    adequate_geo = all(vsig >= factor_alpha * delta) and all(veta <= factor_beta * delta)
-
-    #==================#
-    # Calculation ends #
-    #==================#
-
-    return adequate_geo
-
-
 def setdrop_tr(ximproved, d, delta, rho, sim, simi):
     '''
-    This function finds (the index) of a current interpolation point to be replaced with the
-    trust-region trial point. See (19)-(22) of the COBYLA paper.
+    This function finds (the index) of a current interpolation point to be replaced with
+    the trust-region trial point. See (19)-(22) of the COBYLA paper.
     N.B.:
-    1. If XIMPROVED == True, then JDROP >= 0 so that D is included into XPT. Otherwise, it is a bug.
+    1. If XIMPROVED == True, then JDROP > 0 so that D is included into XPT. Otherwise,
+       it is a bug.
     2. COBYLA never sets JDROP = NUM_VARS
-    TODO: Check whether it improves the performance if JDROP = NUM_VARS is allowed when XIMPROVED is True.
-    Note that UPDATEXFC should be revised accordingly.
+    TODO: Check whether it improves the performance if JDROP = NUM_VARS is allowed when
+    XIMPROVED is True. Note that UPDATEXFC should be revised accordingly.
     '''
 
     # Local variables
@@ -169,15 +120,20 @@ def setdrop_tr(ximproved, d, delta, rho, sim, simi):
     # If XIMPORVED = False (D does not render a better X), set SCORE[NUM_VARS] = -1 to avoid JDROP = NUM_VARS.
     if not ximproved:
         score[num_vars] = -1
+
+    # score[j] is NaN implies SIMID[j] is NaN, but we want abs(SIMID) to be big. So we
+    # exclude such j.
+    score[np.isnan(score)] = -1
     
-    # The following if statement works a bit better than `if any(score > 1) or (any(score > 0) and ximproved)`
-    # from Powell's UOBYQA and NEWUOA code.
+    jdrop = None
+    # The following if statement works a bit better than
+    # `if any(score > 1) or (any(score > 0) and ximproved)` from Powell's UOBYQA and
+    # NEWUOA code.
     if any(score > 0):  # Powell's BOBYQA and LINCOA code.
-        jdrop = np.where(score == max(score[~np.isnan(score)]))[0][0]
-    elif ximproved:
+        jdrop = np.argmax(score)
+
+    if (ximproved and jdrop is None):
         jdrop = np.argmax(distsq)
-    else:
-        jdrop = None  # We arrive here when XIMPROVED = False and no entry of score is positive.
 
     #==================#
     # Calculation ends #
@@ -185,7 +141,7 @@ def setdrop_tr(ximproved, d, delta, rho, sim, simi):
 
     # Postconditions
     if DEBUGGING:
-        assert jdrop is None or (jdrop >= 0 and jdrop < num_vars + 1)
+        assert jdrop is None or (0 <= jdrop < num_vars + 1)
         assert jdrop <= num_vars or ximproved
         assert jdrop >= 0 or not ximproved
         # JDROP >= 1 when XIMPROVED = TRUE unless NaN occurs in DISTSQ, which should not happen if the
@@ -194,113 +150,57 @@ def setdrop_tr(ximproved, d, delta, rho, sim, simi):
     return jdrop
 
 
-def setdrop_geo(delta, factor_alpha, factor_beta, sim, simi):
-    '''
-    This function finds (the index) of a current interpolation point to be replaced with a
-    geometry-improving point. See (15)-(16) of the COBYLA paper.
-    N.B.: COBYLA never sets jdrop to NUM_VARS
-    '''
-
-    # Local variables
-    itol = 0.1
-
-    # Sizes
-    num_vars = np.size(sim, 0)
-
-    # Preconditions
-    if DEBUGGING:
-        assert num_vars >= 1
-        assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
-        assert np.isfinite(sim).all()
-        assert all(np.max(abs(sim[:, :num_vars]), axis=0) > 0)
-        assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
-        assert np.isfinite(simi).all()
-        assert isinv(sim[:, :num_vars], simi, itol)
-        assert factor_alpha > 0 and factor_alpha < 1
-        assert factor_beta > 1
-        assert not assess_geo(delta, factor_alpha, factor_beta, sim, simi)
-
-    #====================#
-    # Calculation starts #
-    #====================#
-
-    # Calculate the values of sigma and eta
-    # VSIG[j] for j = 0...NUM_VARS-1 is the Euclidean distance from vertex J to the opposite face of the simplex.
-    vsig = 1 / np.sqrt(np.sum(simi**2, axis=1))
-    veta = np.sqrt(np.sum(sim[:, :num_vars]**2, axis=0))
-
-    # Decide which vertex to drop from the simplex. It will be replaced with a new point to improve the
-    # acceptability of the simplex. See equations (15) and (16) of the COBYLA paper.
-    if any(veta > factor_beta * delta):
-        jdrop = np.where(veta == max(veta[~np.isnan(veta)]))[0][0]
-    elif any(vsig < factor_alpha * delta):
-        jdrop = np.where(vsig == min(vsig[~np.isnan(vsig)]))[0][0]
-    else:
-        # We arrive here if vsig and veta are all nan, which can happen due to nan in sim and simi
-        # which should not happen unless there is a bug
-        jdrop = None
-
-    # Zaikun 230202: What if we consider veta and vsig together? The following attempts do not work well.
-    # jdrop = max(np.sum(sim[:, :num_vars]**2, axis=0)*np.sum(simi**2, axis=1))  # Condition number
-    # jdrop = max(np.sum(sim[:, :num_vars]**2, axis=0)**2 * np.sum(simi**2, axis=1))  # Condition number times distance
-
-    #==================#
-    # Calculation ends #
-    #==================#
-
-    # Postconditions
-    if DEBUGGING:
-        assert jdrop >= 0 and jdrop < num_vars
-    return jdrop
 
 
-def geostep(jdrop, cpen, conmat, cval, delta, fval, factor_gamma, simi):
+def geostep(jdrop, amat, bvec, conmat, cpen, cval, delbar, fval, simi):
     '''
     This function calculates a geometry step so that the geometry of the interpolation set is improved
-    when SIM[: JDROP_GEO] is replaced with SIM[:NUM_VARS] + D. See (15)--(17) of the COBYLA paper.
+    when SIM[: JDROP_GEO] is replaced with SIM[:, NUM_VARS] + D. See (15)--(17) of the COBYLA paper.
     '''
 
     # Sizes
+    m_lcon = np.size(bvec, 0) if bvec is not None else 0
     num_constraints = np.size(conmat, 0)
     num_vars = np.size(simi, 0)
 
     # Preconditions
     if DEBUGGING:
-        assert num_constraints >= 0
+        assert num_constraints >= m_lcon >= 0
         assert num_vars >= 1
-        assert delta > 0
+        assert delbar > 0
         assert cpen > 0
         assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
         assert np.isfinite(simi).all()
         assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
         assert np.size(conmat, 0) == num_constraints and np.size(conmat, 1) == num_vars + 1
-        assert not (np.isnan(conmat) | np.isneginf(conmat)).any()
+        assert not np.any(np.isnan(conmat) | np.isposinf(conmat))
         assert np.size(cval) == num_vars + 1 and not any(cval < 0 | np.isnan(cval) | np.isposinf(cval))
-        assert jdrop >= 0 and jdrop < num_vars
-        assert factor_gamma > 0 and factor_gamma < 1
+        assert 0 <= jdrop < num_vars
 
     #====================#
     # Calculation starts #
     #====================#
 
     # SIMI[JDROP, :] is a vector perpendicular to the face of the simplex to the opposite of vertex
-    # JDROP. Thus VSIGJ * SIMI[JDROP, :] is the unit vector in this direction
-    vsigj = 1 / np.sqrt(np.sum(simi[jdrop, :]**2))
+    # JDROP. Set D to the vector in this direction and with length DELBAR.
+    d = simi[jdrop, :]
+    d = delbar * (d / np.linalg.norm(d))
 
-    # Set D to the vector in the above-mentioned direction and with length FACTOR_GAMMA * DELTA. Since
-    # FACTOR_ALPHA < FACTOR_GAMMA < FACTOR_BETA, D improves the geometry of the simplex as per (14) of
-    # the COBYLA paper. This also explains why this subroutine does not replace DELTA with
-    # DELBAR = max(min(0.1 * np.sqrt(max(DISTSQ)), 0.5 * DELTA), RHO) as in NEWUOA.
-    d = factor_gamma * delta * (vsigj * simi[jdrop, :])
+    # The code below chooses the direction of D according to an approximation of the merit function.
+    # See (17) of the COBYLA paper and  line 225 of Powell's cobylb.f.
 
-    # Calculate the coefficients of the linear approximations to the objective and constraint functions,
-    # placing minus the objective function gradient after the constraint gradients in the array A
-    A = np.zeros((num_vars, num_constraints + 1))
-    A[:, :num_constraints] = ((conmat[:, :num_vars] - np.tile(conmat[:, num_vars], (num_vars, 1)).T)@simi).T
-    A[:, num_constraints] = (fval[num_vars] - fval[:num_vars])@simi
-    cvmaxp = np.max(np.append(0, -d@A[:, :num_constraints] - conmat[:, num_vars]))
-    cvmaxn = np.max(np.append(0, d@A[:, :num_constraints] - conmat[:, num_vars]))
-    if 2 * np.dot(d, A[:, num_constraints]) < cpen * (cvmaxp - cvmaxn):
+    # Calculate the coefficients of the linear approximations to the objective and constraint functions.
+    # N.B.: CONMAT and SIMI have been updated after the last trust-region step, but G and A have not.
+    # So we cannot pass G and A from outside.
+    g = (fval[:num_vars] - fval[num_vars])@simi
+    A = np.zeros((num_vars, num_constraints))
+    A[:, :m_lcon] = amat
+    A[:, m_lcon:] = ((conmat[m_lcon:, :num_vars] - 
+                          np.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T)@simi).T
+    # CVPD and CVND are the predicted constraint violation of D and -D by the linear models.
+    cvpd = np.max(np.append(0, conmat[:, num_vars] + d@A))
+    cvnd = np.max(np.append(0, -d@A - conmat[:, num_vars]))
+    if -np.dot(d, g) + cpen * cvnd < np.dot(d, g) + cpen * cvpd:
         d *= -1
 
     #==================#
@@ -310,7 +210,7 @@ def geostep(jdrop, cpen, conmat, cval, delta, fval, factor_gamma, simi):
     # Postconditions
     if DEBUGGING:
         assert np.size(d) == num_vars and all(np.isfinite(d))
-        # In theory, ||S|| == FACTOR_GAMMA*DELTA, which may be false due to rounding, but not too far.
+        # In theory, ||S|| == DELBAR, which may be false due to rounding, but not too far.
         # It is crucial to ensure that the geometry step is nonzero, which holds in theory.
-        assert np.linalg.norm(d) > 0.9 * factor_gamma * delta and np.linalg.norm(d) <= 1.1 * factor_gamma * delta
+        assert 0.9 * delbar < np.linalg.norm(d) <= 1.1 * delbar
     return d

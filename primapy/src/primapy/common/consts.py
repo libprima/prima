@@ -11,6 +11,9 @@ FUNCMAX = 2.0**100
 CONSTRMAX = FUNCMAX
 EPS = np.finfo(float).eps
 
+# Any bound with an absolute value at least BOUNDMAX is considered as no bound.
+BOUNDMAX = REALMAX/4
+
 # Some default values
 RHOBEG_DEFAULT = 1
 RHOEND_DEFAULT = 1e-6

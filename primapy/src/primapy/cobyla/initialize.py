@@ -1,23 +1,28 @@
 from primapy.common.checkbreak import checkbreak_con
 from primapy.common.consts import DEBUGGING, REALMAX
 from primapy.common.infos import INFO_DEFAULT
-from primapy.common.evaluate import evaluate, moderatec, moderatef
+from primapy.common.evaluate import evaluate
 from primapy.common.history import savehist
 from primapy.common.message import fmsg
 from primapy.common.selectx import savefilt
 
 import numpy as np
 
-def initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x0, xhist, fhist, chist, conhist, maxhist, srname):
+def initxfc(calcfc, iprint, maxfun, constr0, amat, bvec, ctol, f0, ftarget, rhobeg, x0,
+            xhist, fhist, chist, conhist, maxhist):
     '''
-    This subroutine does the initialization concerning X, function values, and constraints.
+    This subroutine does the initialization concerning X, function values, and
+    constraints.
     '''
 
     # Local variables
     solver = 'COBYLA'
+    srname = "INITIALIZE"
 
     # Sizes
     num_constraints = np.size(constr0)
+    m_lcon = np.size(bvec) if bvec is not None else 0
+    m_nlcon = num_constraints - m_lcon
     num_vars = np.size(x0)
 
     # Preconditions
@@ -38,8 +43,8 @@ def initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x0, xhis
     # Calculation starts #
     #====================#
 
-    # Initialize info to the default value. At return, a value different from this value will
-    # indicate an abnormal return
+    # Initialize info to the default value. At return, a value different from this
+    # value will indicate an abnormal return
     info = INFO_DEFAULT
 
     # Initialize the simplex. It will be revised during the initialization.
@@ -51,8 +56,8 @@ def initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x0, xhis
 
     # Initialize fval
     fval = np.zeros(num_vars+1) + REALMAX
-    conmat = np.zeros((num_constraints, num_vars+1)) - REALMAX
     cval = np.zeros(num_vars+1) + REALMAX
+    conmat = np.zeros((num_constraints, num_vars+1)) + REALMAX
 
 
     for k in range(num_vars + 1):
@@ -60,13 +65,13 @@ def initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x0, xhis
         # We will evaluate F corresponding to SIM(:, J).
         if k == 0:
             j = num_vars
-            f = moderatef(f0)
-            constr = moderatec(constr0)
-            cstrv = np.max(np.append(-constr, 0))
+            f = f0
+            constr = constr0
         else:
             j = k - 1
             x[j] += rhobeg
-            f, constr, cstrv = evaluate(calcfc, x)
+            f, constr = evaluate(calcfc, x, m_nlcon, amat, bvec)
+        cstrv = max(np.append(0, constr))
         
         # Print a message about the function/constraint evaluation according to IPRINT.
         fmsg(solver, 'Initialization', iprint, k, rhobeg, f, x, cstrv, constr)

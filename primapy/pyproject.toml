@@ -8,3 +8,8 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["src"]  # ["."] by default
 exclude = ["primapy.examples*"]  # empty by default
+
+[tools.ruff]
+line-length=88
+select= ["D"]
+

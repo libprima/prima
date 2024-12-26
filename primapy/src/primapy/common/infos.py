@@ -15,6 +15,7 @@ NAN_INF_MODEL = -3
 NO_SPACE_BETWEEN_BOUNDS = 6
 DAMAGING_ROUNDING = 7
 ZERO_LINEAR_CONSTRAINT = 8
+CALLBACK_TERMINATE = 30
 
 # Stop-codes.
 # The following codes are used by ERROR STOP as stop-codes, which should be default integers.

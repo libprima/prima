@@ -31,7 +31,7 @@ def updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi):
         assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
         assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
         assert np.isfinite(sim).all()
-        assert all(np.max(abs(sim[:, :num_vars]), axis=0) > 0)
+        assert all(np.sum(abs(sim[:, :num_vars]), axis=0) > 0)
         assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
         assert np.isfinite(simi).all()
         assert isinv(sim[:, :num_vars], simi, itol)
@@ -95,7 +95,7 @@ def updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi):
         assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
         assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
         assert np.isfinite(sim).all()
-        assert all(np.max(abs(sim[:, :num_vars]), axis=0) > 0)
+        assert all(np.sum(abs(sim[:, :num_vars]), axis=0) > 0)
         assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
         assert np.isfinite(simi).all()
         assert isinv(sim[:, :num_vars], simi, itol) or info == DAMAGING_ROUNDING
@@ -188,7 +188,7 @@ def updatepole(cpen, conmat, cval, fval, sim, simi):
         assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
         assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
         assert np.isfinite(sim).all()
-        assert all(np.max(abs(sim[:, :num_vars]), axis=0) > 0)
+        assert all(np.sum(abs(sim[:, :num_vars]), axis=0) > 0)
         assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
         assert np.isfinite(simi).all()
         assert isinv(sim[:, :num_vars], simi, itol)
@@ -263,7 +263,7 @@ def updatepole(cpen, conmat, cval, fval, sim, simi):
         assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
         assert np.size(sim, 0) == num_vars and np.size(sim, 1) == num_vars + 1
         assert np.isfinite(sim).all()
-        assert all(np.max(abs(sim[:, :num_vars]), axis=0) > 0)
+        assert all(np.sum(abs(sim[:, :num_vars]), axis=0) > 0)
         assert np.size(simi, 0) == num_vars and np.size(simi, 1) == num_vars
         assert np.isfinite(simi).all()
         # Do not check SIMI = SIM[:, :num_vars]^{-1}, as it may not be true due to damaging rounding.

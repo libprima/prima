@@ -15,21 +15,19 @@ from primapy.common.powalg import qradd_Rdiag, qrexc_Rdiag
 from primapy.common.linalg import isminor
 
 
-def trstlp(A_in, b_in, delta):
+def trstlp(A, b, delta, g):
     '''
     This function calculated an n-component vector d by the following two stages. In the first
     stage, d is set to the shortest vector that minimizes the greatest violation of the constraints
-        np.dot(A[:n, k], d) >= b(k), k = 0, 1, 2, ..., m-1
+        A.T @ D <= B,  K = 1, 2, 3, ..., M,
     subject to the Euclidean length of d being at most delta. If its length is strictly less than
     delta, then the second stage uses the resultant freedom in d to minimize the objective function
-        np.dot(-A[:n, m], d)
-    subject to no increase in any greatest constraint violation. This notation allows the gradient of
-    the objective function to be regarded as the gradient of a constraint. Therefore the two stages
-    are distinguished by mcon == m and mcon > m respectively.
-
+        G.T @ D
+    subject to no increase in any greatest constraint violation.
+    
     It is possible but rare that a degeneracy may prevent d from attaining the target length delta.
 
-    cviol is the largest constraint violation of the current d: np.maximum(np.append(b[:m] - A[:,:m].T@d, 0)).
+    cviol is the largest constraint violation of the current d: max(max(A.T@D - b), 0)
     icon is the index of a most violated constraint if cviol is positive.
 
     nact is the number of constraints in the active set and iact[0], ..., iact[nact-1] are their indices,
@@ -50,58 +48,68 @@ def trstlp(A_in, b_in, delta):
     achieved by the shift cviol that makes the least residual zero.
 
     N.B.:
+    0. In Powell's implementation, the constraints are A.T @ D >= B. In other words, the A and B in
+    our implementation are the negative of those in Powell's implementation.
     1. The algorithm was NOT documented in the COBYLA paper. A note should be written to introduce it!
     2. As a major part of the algorithm (see trstlp_sub), the code maintains and updates the QR
     factorization of A[iact[:nact]], i.e. the gradients of all the active (linear) constraints. The
     matrix Z is indeed Q, and the vector zdota is the diagonal of R. The factorization is updated by
     Givens rotations when an index is added in or removed from iact.
-    3. There are probably better algorithms available for this trust-region linear programming problem.
+    3. There are probably better algorithms available for the trust-region linear programming problem.
     '''
 
-    A = A_in.copy()
-    b = b_in.copy()
-
     # Sizes
-    num_constraints = A.shape[1] - 1
+    num_constraints = A.shape[1]
+    num_vars = A.shape[0]
 
     # Preconditions
-    assert num_constraints >= 0
-    assert A.shape[0] >= 1 and A.shape[1] >= 1
-    assert b.shape[0] == A.shape[1]
-    assert delta > 0
+    if DEBUGGING:
+        assert num_vars >= 1
+        assert num_constraints >= 0
+        assert np.size(g) == num_vars
+        assert np.size(b) == num_constraints
+        assert delta > 0
 
     
-    vmultc = np.zeros(len(b))
-    iact = np.zeros(len(b), dtype=int)
+    vmultc = np.zeros(num_constraints + 1)
+    iact = np.zeros(num_constraints + 1, dtype=int)
     nact = 0
-    d = np.zeros(A_in.shape[0])
-    z = np.zeros((len(d), len(d)))
+    d = np.zeros(num_vars)
+    z = np.zeros((num_vars, num_vars))
 
+    # ==================
+    # Calculation starts
+    # ==================
+
+    # Form A_aug and B_aug. This allows the gradient of the objective function to be regarded as the
+    # gradient of a constraint in the second stage.
+    A_aug = np.hstack([A, g.reshape((num_vars, 1))])
+    b_aug = np.hstack([b, 0])
     
 
     # Scale the problem if A contains large values. Otherwise floating point exceptions may occur.
     # Note that the trust-region step is scale invariant.
-    for i in range(num_constraints+1):  # Note that A.shape[1] == len(b) == num_constraints+1 != num_constraints
-        if maxval:=max(abs(A_in[:, i]) > 1e12):
+    for i in range(num_constraints+1):  # Note that A_aug.shape[1] == num_constraints+1
+        if maxval:=max(abs(A_aug[:, i]) > 1e12):
             modscal = max(2*REALMIN, 1/maxval)
-            A[:, i] *= modscal
-            b[i] *= modscal
+            A_aug[:, i] *= modscal
+            b_aug[i] *= modscal
 
     # Stage 1: minimize the 1+infinity constraint violation of the linnearized constraints.
-    iact[:num_constraints], nact, d, vmultc[:num_constraints], z = trstlp_sub(iact[:num_constraints], nact, 1, A[:, :num_constraints], b[:num_constraints], delta, d, vmultc[:num_constraints], z)
+    iact[:num_constraints], nact, d, vmultc[:num_constraints], z = trstlp_sub(iact[:num_constraints], nact, 1, A_aug[:, :num_constraints], b_aug[:num_constraints], delta, d, vmultc[:num_constraints], z)
 
     # Stage 2: minimize the linearized objective without increasing the 1_infinity constraint violation.
-    iact, nact, d, vmultc, z = trstlp_sub(iact, nact, 2, A, b, delta, d, vmultc, z)
+    iact, nact, d, vmultc, z = trstlp_sub(iact, nact, 2, A_aug, b_aug, delta, d, vmultc, z)
     
     # ================
     # Calculation ends
     # ================
 
     # Postconditions
-    assert d.shape[0] == A.shape[0]
-    assert all(np.isfinite(d))
-    # Due to rounding, it may happen that ||D|| > DELTA, but ||D|| > 2*DELTA is highly improbable.
-    assert np.linalg.norm(d) <= 2 * delta
+    if DEBUGGING:
+        assert all(np.isfinite(d))
+        # Due to rounding, it may happen that ||D|| > DELTA, but ||D|| > 2*DELTA is highly improbable.
+        assert np.linalg.norm(d) <= 2 * delta
 
     return d
 
@@ -116,13 +124,13 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
     4. optnew. The two stages have different objectives, so optnew is updated differently.
     5. step. step <= cviol in stage 1.
     '''
-    # zdasav = np.zeros(z.shape[1])
+    zdasav = np.zeros(z.shape[1])
     vmultd = np.zeros(np.size(vmultc))
     zdota = np.zeros(np.size(z, 1))
 
     # Sizes
-    num_vars = np.size(A, 0)
     mcon = np.size(A, 1)
+    num_vars = np.size(A, 0)
     
     # Preconditions
     if DEBUGGING:
@@ -147,8 +155,8 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
         iact = np.linspace(0, mcon-1, mcon, dtype=int)
         nact = 0
         d = np.zeros(num_vars)
-        cviol = np.max(np.append(b, 0))
-        vmultc = cviol - b
+        cviol = np.max(np.append(0, -b))
+        vmultc = cviol + b
         z = np.eye(num_vars)
         if mcon == 0 or cviol <= 0:
             # Check whether a quick return is possible. Make sure the in-outputs have been initialized.
@@ -157,7 +165,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
         if all(np.isnan(b)):
             return iact, nact, d, vmultc, z
         else:
-            icon = np.where(b == max(b[~np.isnan(b)]))[0][0]
+            icon = np.nanargmax(-b)
         num_constraints = mcon
         sdirn = np.zeros(len(d))
     else:
@@ -172,7 +180,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
 
         # In Powell's code, stage 2 uses the zdota and cviol calculated by stage1. Here we recalculate
         # them so that they need not be passed from stage 1 to 2, and hence the coupling is reduced.
-        cviol = np.max(np.append(b[:num_constraints] - d@A[:, :num_constraints], 0))
+        cviol = np.max(np.append(0, d@A[:, :num_constraints] - b[:num_constraints]))
     zdota[:nact] = [np.dot(z[:, k], A[:, iact[k]]) for k in range(nact)]
 
     # More initialization
@@ -186,14 +194,14 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
     # problems: DANWOODLS, GAUSS1LS, GAUSS2LS, GAUSS3LS, KOEBHELB, TAX13322, TAXR13322. Indeed, in all
     # these cases, Inf/NaN appear in d due to extremely large values in A (up to 10^219). To resolve
     # this, we set the maximal number of iterations to maxiter, and terminate if Inf/NaN occurs in d.
-    maxiter = np.minimum(10000, 100*np.maximum(num_constraints, num_vars))
+    maxiter = np.minimum(10000, 100*max(num_constraints, num_vars))
     for iter in range(maxiter):
         if DEBUGGING:
             assert all(vmultc >= 0)
         if stage == 1:
             optnew = cviol
         else:
-            optnew = -np.dot(d, A[:, mcon-1])
+            optnew = np.dot(d, A[:, mcon-1])
         
         # End the current stage of the calculation if 3 consecutive iterations have either failed to
         # reduce the best calculated value of the objective function or to increase the number of active
@@ -209,11 +217,8 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
             break
 
         # If icon exceeds nact, then we add the constraint with index iact[icon] to the active set.
-        # Apply Givens rotations so that the last num_vars-nact-1 columns of Z are orthogonal to the gradient
-        # of the new constraint, a scalar product being set to 0 if its nonzero value could be due to
-        # computer rounding errors, which is tested by ISMINOR.
         if icon >= nact:  # In Python this needs to be >= since Python is 0-indexed (in Fortran we have 1 > 0, in Python we need 0 >= 0)
-            # zdasav[:nact] = zdota[:nact]
+            zdasav[:nact] = zdota[:nact]
             nactsav = nact
             z, zdota, nact = qradd_Rdiag(A[:, iact[icon]], z, zdota, nact)  # May update nact to nact+1
             # Indeed it suffices to pass zdota[:min(num_vars, nact+1)] to qradd as follows:
@@ -281,7 +286,9 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
             # iact[nact] != mcon??? If not, then how does the following procedure ensure that mcon is
             # the last of iact[:nact]?
             if stage == 2 and iact[nact - 1] != (mcon - 1): 
-                assert nact > 0, "nact > 0 is required"
+                if nact <= 1:
+                    # We must exit, as nact-2 is used as an index below. Powell's code does not have this.
+                    break
                 z, zdota[:nact] = qrexc_Rdiag(A[:, iact[:nact]], z, zdota[:nact], nact - 2)  # We pass nact-2 in Python instead of nact-1
                 # Indeed, it suffices to pass Z[:, :nact] to qrexc as follows:
                 # z[:, :nact], zdota[:nact] = qrexc(A[:, iact[:nact]], z[:, :nact], zdota[:nact], nact - 1)
@@ -299,9 +306,9 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
             # Usually during stage 1 the vector sdirn gives a search direction that reduces all the
             # active constraint violations by one simultaneously.
             if stage == 1:
-                sdirn -= ((np.dot(sdirn, A[:, iact[nact-1]]) - 1)/zdota[nact-1])*z[:, nact-1]
+                sdirn -= ((np.dot(sdirn, A[:, iact[nact-1]]) + 1)/zdota[nact-1])*z[:, nact-1]
             else:
-                sdirn = 1/zdota[nact-1]*z[:, nact-1]
+                sdirn = -1/zdota[nact-1]*z[:, nact-1]
         else:  # icon < nact
             # Delete the constraint with the index iact[icon] from the active set, which is done by
             # reordering iact[icont:nact] into [iact[icon+1:nact], iact[icon]] and then reduce nact to
@@ -321,7 +328,6 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
             # above. It did happen in stage 1 that nact became 0 after the reduction --- this is
             # extremely rare, and it was never observed until 20221212, after almost one year of
             # random tests. Maybe nact is theoretically positive even in stage 1?
-            assert stage == 1 or nact > 0, "nact > 0 is required in stage 2"
             if stage == 2 and nact < 0:
                 break  # If this case ever occurs, we have to break, as nact is used as an index below.
             if nact > 0:
@@ -333,7 +339,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
                 sdirn -= np.dot(sdirn, z[:, nact]) * z[:, nact]
                 # sdirn is orthogonal to z[:, nact+1]
             else:
-                sdirn = 1/zdota[nact-1] * z[:, nact-1]
+                sdirn = -1/zdota[nact-1] * z[:, nact-1]
         # end if icon > nact
 
         # Calculate the step to the trust region boundary or take the step that reduces cviol to 0.
@@ -387,7 +393,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
         # maximum residual if thage 1 is being done
         dnew = d + step * sdirn
         if stage == 1:
-            cviol = np.max(np.append(b[iact[:nact]] - dnew@A[:, iact[:nact]], 0))
+            cviol = np.max(np.append(0, dnew@A[:, iact[:nact]] - b[iact[:nact]]))
             # N.B.: cviol will be used when calculating vmultd[nact+1:mcon].
 
         # Zaikun 20211011:
@@ -398,11 +404,11 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
         # force multd[k] = 0 if deviations from this value can be attributed to computer rounding
         # errors. First calculate the new Lagrange multipliers.
         # vmultd[:nact] = lsqr(A[:, iact[:nact]], dnew, z[:, :nact], zdota[:nact])
-        vmultd[:nact] = np.linalg.lstsq(A[:, iact[:nact]], dnew, rcond=None)[0]
+        vmultd[:nact] = -np.linalg.lstsq(A[:, iact[:nact]], dnew, rcond=None)[0]
         if stage == 2:
             vmultd[nact-1] = max(0, vmultd[nact-1])  # This seems never activated.
         # Complete vmultd by finding the new constraint residuals. (Powell wrote "Complete vmultc ...")
-        cvshift = dnew@A[:, iact] - b[iact] + cviol  # Only cvshift[nact+1:mcon] is needed
+        cvshift = cviol - (dnew@A[:, iact] - b[iact])  # Only cvshift[nact+1:mcon] is needed
         cvsabs = abs(dnew)@abs(A[:, iact]) + abs(b[iact]) + cviol
         cvshift[isminor(cvshift, cvsabs)] = 0
         vmultd[nact:mcon] = cvshift[nact:mcon]
@@ -416,17 +422,17 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
         # Update d, vmultc, and cviol
         dold = d
         d = (1 - frac)*d + frac * dnew
-        # Break in the case of inf/nan in d.
-        if not np.isfinite(d).all():
+        vmultc = np.maximum(0, (1 - frac)*vmultc + frac*vmultd)
+        # Break in the case of inf/nan in d or vmultc.
+        if not (np.isfinite(np.sum(abs(d))) and np.isfinite(np.sum(abs(vmultc)))):
             d = dold  # Should we restore also iact, nact, vmultc, and z?
             break
 
-        vmultc = np.maximum(np.zeros(len(vmultc)), (1 - frac)*vmultc + frac*vmultd)
         if stage == 1:
             # cviol = (1 - frac) * cvold + frac * cviol  # Powell's version
-            # In theory, cviol = np.max(np.append(b[:num_constraints] - d@A[:, :num_constraints], 0)), yet the
+            # In theory, cviol = np.max(np.append(d@A - b, 0)), yet the
             # cviol updated as above can be quite different from this value if A has huge entries (e.g., > 1e20)
-            cviol = np.max(np.append(b[:num_constraints] - d@A[:, :num_constraints], 0))
+            cviol = np.max(np.append(0, d@A - b))
 
         if icon < 0 or icon >= mcon:
             # In Powell's code, the condition is icon == 0. Indeed, icon < 0 cannot hold unless
@@ -458,12 +464,12 @@ def trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio):
 
     # Preconditions
     if DEBUGGING:
-        assert delta_in >= dnorm and dnorm > 0
-        assert eta1 >= 0 and eta1 <= eta2 and eta2 < 1
-        assert eta1 >= 0 and eta1 <= eta2 and eta2 < 1
-        assert gamma1 > 0 and gamma1 < 1 and gamma2 > 1
-        # By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the actual reduction is
-        # NaN, which should NOT happen due to the moderated extreme barrier.
+        assert delta_in >= dnorm > 0
+        assert 0 <= eta1 <= eta2 < 1
+        assert 0 < gamma1 < 1 < gamma2
+        # By the definition of RATIO in ratio.f90, RATIO cannot be NaN unless the
+        # actual reduction is NaN, which should NOT happen due to the moderated extreme
+        # barrier. 
         assert not np.isnan(ratio)
 
     #====================#

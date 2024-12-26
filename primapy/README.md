@@ -6,10 +6,6 @@ This will install prima locally in an editable fashion. From there you can run t
 
 ## Style notes
 
-- In cases where there are Python or numpy functions that can achieve the same aim (i.e. sum vs np.sum) we prefer the numpy functions.
-  - Rationale:
-    - In some cases we must use the numpy function because it has functionality the Python function doesn't, i.e. np.sum has an axis argument, whereas sum does not.
-    - In light of this, for the sake of consistency we prefer to use the numpy functions everywhere.
 - Most of the comments are copied from Fortran verbatim, except in cases where they need to modified due to specifics of the Python language. In these cases a note will be made of the difference between Fortran and Python
   - Rationale:
       - The main purpose of this is to keep the Python and Fortran codebases as similar as possible.
@@ -17,26 +13,22 @@ This will install prima locally in an editable fashion. From there you can run t
   - Rationale:
     - Fortran uses `SIZE` so this helps us to be as consistent with the Fortran code as possible.
 
-## A note on Fortran's `max` and `maxval` and their Python equivalents
+## A note on Fortran's `maxval`, `maximum`, and `maxval` and their Python equivalents
 
-| Fortran | Python |
-|---------|--------|
-| `max`   | `np.maximum` |
-| `maxval` | `np.max` or `max` |
+| Fortran   | Python       | Return value |
+|-----------|--------------|--------------|
+| `maxval`  | `max`        | scalar       |
+| `maximum` | `np.max`     | scalar       |
+| `max`     | `np.maximum` | vector       |
 
-Fortran's `max` and numpy's `maximum` accept two arguments, either of which can be a scalar or an array,
+The difference between `maxval` and `maximum` is that `maximum` will return NaN if the input contains NaN. Python's `max`
+and numpy's `np.max` have a similar distinction.
+
+Fortran's `max` and numpy's `mp.maximum` accept two arguments, either of which can be a scalar or an array,
 and returns an elementwise maximum of the two arguments. In the case of a scalar and an array argument it
 returns an elementwise maximum of the scalar and each element of the array.
 
-Fortran's `maxval` takes a single argument and returns the largest item in the list, similar to numpy's `max`.
-Python's built-in `max` can either take a single argument and return the largest element, or it can take a
-variable number of arguments and return the largest of all of them.
-
-Per the style notes, prefer `np.max` over the built-in `max`.
-
-For the larger of two numbers Fortran uses `max`, and we prefer `np.maximum` over the Python `max` for consistenchy in the translation.
-
-This note applies to `min` and `minval` as well.
+This note applies to `minval`, `minimum`, and `min` as well.
 
 
 ## A note on indices

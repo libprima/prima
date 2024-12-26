@@ -1,60 +1,78 @@
 import numpy as np
 from primapy.common.consts import FUNCMAX, CONSTRMAX, REALMAX, DEBUGGING
 
-# This is a module evaluating the objective/constraint function with
-# Nan/Inf handling.
+# This is a module evaluating the objective/constraint function with Nan/Inf handling.
 
 
 def moderatex(x):
     '''
-    This function moderates a decision variable. It replaces NaN by 0 and Inf/-Inf by REALMAX/-REALMAX.
+    This function moderates a decision variable. It replaces NaN by 0 and Inf/-Inf by
+    REALMAX/-REALMAX.
     '''
-    y = x
-    y[np.isnan(x)] = 0
-    y = np.maximum(-REALMAX, np.minimum(REALMAX, y))
-    return y
+    x[np.isnan(x)] = 0
+    x = np.clip(x, -REALMAX, REALMAX)
+    return x
 
 def moderatef(f):
+    """
+    This function moderates the function value of a MINIMIZATION problem. It replaces
+    NaN and any value above FUNCMAX by FUNCMAX.
+    """
     f = FUNCMAX if np.isnan(f) else f
-    return min(FUNCMAX, f)
+    f = np.clip(f, -REALMAX, REALMAX)
+    # We may moderate huge negative function values as follows, but we decide not to.
+    # f = np.clip(f, -FUNCMAX, FUNCMAX)
+    return f
+
 
 def moderatec(c):
-    np.nan_to_num(c, copy=False, nan=-CONSTRMAX)
+    """
+    This function moderates the constraint value, the constraint demanding this value
+    to be NONNEGATIVE. It replaces any value below -CONSTRMAX by -CONSTRMAX, and any
+    NaN or value above CONSTRMAX by CONSTRMAX.
+    """
+    np.nan_to_num(c, copy=False, nan=CONSTRMAX)
     c = np.clip(c, -CONSTRMAX, CONSTRMAX)
     return c
 
 
-def evaluate(calcfc, x):
+def evaluate(calcfc, x, m_nlcon, amat, bvec):
     """
-    This function evaluates CALCFC at X, setting F to the objective function value, CONSTR to the
-    constraint value, and CSTRV to the constraint violation. Nan/Inf are handled by a moderated
-    extreme barrier.
+    This function evaluates CALCFC at X, returning the objective function value and the
+    constraint value. Nan/Inf are handled by a moderated extreme barrier.
     """
+
+    # Sizes
+    m_lcon = len(bvec) if bvec is not None else 0
 
     # Preconditions
     if DEBUGGING:
-        # X should not contain NaN if the initial X does not contain NaN and the subroutines generating
-        # trust-region/geometry steps work properly so that they never produce a step containing NaN/Inf.
+        # X should not contain NaN if the initial X does not contain NaN and the
+        # subroutines generating # trust-region/geometry steps work properly so that
+        # they never produce a step containing NaN/Inf. 
         assert not any(np.isnan(x))
 
     #====================#
     # Calculation starts #
     #====================#
 
-    if any(np.isnan(x)):
-        f = np.sum(x)
-        constr = f  # TODO: This is supposed to be an array, but I don't know how long it is here.
-        cstrv = f
-    else:
-        f, constr = calcfc(moderatex(x))  # Evaluate F and CONSTR; We moderate X before doing so.
-        
-        # Moderated extreme barrier: replace NaN/huge objective or constraint values with a large but
-        # finite value. This is naive, and better approaches surely exist.
-        f = moderatef(f)
-        constr = moderatec(constr)
+    constr = np.zeros(m_lcon + m_nlcon)
+    if amat is not None:
+        constr[:m_lcon] = amat @ x - bvec
 
-        # Evaluate the constraint violation for constraints CONSTR(X) >= 0.
-        cstrv = np.max(np.append(-constr, 0))
+    if any(np.isnan(x)):
+        # Although this should not happen unless there is a bug, we include this case
+        # for robustness.
+        f = np.sum(x)
+        constr = np.ones(m_nlcon) * f
+    else:
+        f, constr[m_lcon:] = calcfc(moderatex(x))
+        
+        # Moderated extreme barrier: replace NaN/huge objective or constraint values
+        # with a large but finite value. This is naive, and better approaches surely
+        # exist.
+        f = moderatef(f)
+        constr[m_lcon:] = moderatec(constr[m_lcon:])
 
     #==================#
     # Calculation ends #
@@ -62,10 +80,9 @@ def evaluate(calcfc, x):
 
     # Postconditions
     if DEBUGGING:
-        # With X not containing NaN, and with the moderated extreme barrier, F cannot be NaN/+Inf, and
-        # CONSTR cannot be NaN/-Inf.
+        # With X not containing NaN, and with the moderated extreme barrier, F cannot
+        # be NaN/+Inf, and CONSTR cannot be NaN/-Inf.
         assert not (np.isnan(f) or np.isposinf(f))
-        assert not any(np.isnan(constr) | np.isneginf(constr))
-        assert not (cstrv < 0 or np.isnan(cstrv) or np.isposinf(cstrv))
+        assert not any(np.isnan(constr) | np.isposinf(constr))
 
-    return f, constr, cstrv
+    return f, constr
