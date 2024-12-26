@@ -170,7 +170,7 @@ implicit none
 ! Inputs
 integer(IK), intent(in) :: stage
 real(RP), intent(in) :: A(:, :) ! A(N, MCON)
-real(RP), intent(in) :: b(:)    ! A(N, MCON)
+real(RP), intent(in) :: b(:)    ! B(M)
 real(RP), intent(in) :: delta
 
 ! In-outputs
