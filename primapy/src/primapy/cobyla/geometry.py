@@ -194,7 +194,7 @@ def geostep(jdrop, amat, bvec, conmat, cpen, cval, delbar, fval, simi):
     # So we cannot pass G and A from outside.
     g = (fval[:num_vars] - fval[num_vars])@simi
     A = np.zeros((num_vars, num_constraints))
-    A[:, :m_lcon] = amat
+    A[:, :m_lcon] = amat.T if amat is not None else amat
     A[:, m_lcon:] = ((conmat[m_lcon:, :num_vars] - 
                           np.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T)@simi).T
     # CVPD and CVND are the predicted constraint violation of D and -D by the linear models.

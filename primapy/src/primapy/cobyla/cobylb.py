@@ -218,7 +218,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         # system was solved by SOLVE in LINALG_MOD based on a QR factorization of SIM
         # (not necessarily a good algorithm). No preconditioning or scaling was used.
         g = (fval[:num_vars] - fval[num_vars])@simi
-        A[:, :m_lcon] = amat
+        A[:, :m_lcon] = amat.T if amat is not None else amat
         A[:, m_lcon:] = ((conmat[m_lcon:, :num_vars] - 
                           np.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T)@simi).T
 
@@ -635,7 +635,7 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
 
         # Calculate the linear approximations to the objective and constraint functions.
         g = (fval[:num_vars] - fval[num_vars])@simi
-        A[:, :m_lcon] = amat
+        A[:, :m_lcon] = amat.T if amat is not None else amat
         A[:, m_lcon:] = ((conmat[m_lcon:, :num_vars] - 
                           np.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T)@simi).T
 

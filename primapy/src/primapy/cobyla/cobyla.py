@@ -463,13 +463,13 @@ def get_lincon(Aeq=None, Aineq=None, beq=None, bineq=None, xl=None, xu=None):
     """
 
     # Sizes
-    if Aeq:
+    if Aeq is not None:
         num_vars = Aeq.shape[1]
-    elif Aineq:
+    elif Aineq is not None:
         num_vars = Aineq.shape[1]
-    elif xl:
+    elif xl is not None:
         num_vars = len(xl)
-    elif xu:
+    elif xu is not None:
         num_vars = len(xu)
     else:
         return None, None
