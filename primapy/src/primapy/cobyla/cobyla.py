@@ -501,7 +501,7 @@ def get_lincon(Aeq=None, Aineq=None, beq=None, bineq=None, xl=None, xu=None):
         -idmat[ixl, :] if ixl is not None else np.empty((0, num_vars)),
         idmat[ixu, :] if ixu is not None else np.empty((0, num_vars)),
         -Aeq if Aeq is not None else np.empty((0, num_vars)),
-        -Aeq if Aeq is not None else np.empty((0, num_vars)),
+        Aeq if Aeq is not None else np.empty((0, num_vars)),
         Aineq if Aineq is not None else np.empty((0, num_vars))
     ])
     bvec = np.hstack([

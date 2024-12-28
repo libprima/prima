@@ -493,7 +493,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
             # Print a message about the function/constraint evaluation accoring to iprint
             fmsg(solver, 'Geometry', iprint, nf, delta, f, x, cstrv, constr)
             # Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced with D.
-            subinfo = updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi)
+            sim, simi, fval, conmat, cval, subinfo = updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi)
             # Check whether to break due to damaging rounding in UPDATEXFC
             if subinfo == DAMAGING_ROUNDING:
                 info = subinfo
@@ -543,7 +543,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         # Zaikun 20230615: UPDATEXFC or UPDATEPOLE is not called since the last trust-region step. Hence
         # SIM[:, NUM_VARS] remains unchanged. Otherwise SIM[:, NUM_VARS] + D would not make sense.
         f, constr = evaluate(calcfc, x, m_nlcon, amat, bvec)
-        cstrv = max(np.append(0, constr))
+        cstrv = np.max(np.append(0, constr))
         nf += 1
         savehist(maxhist, x, xhist, f, fhist, cstrv, chist, constr, conhist)
         nfilt, cfilt, ffilt, xfilt, confilt = savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr, confilt)
@@ -690,8 +690,8 @@ def fcratio(conmat, fval):
     # Calculation starts #
     #====================#
 
-    cmin = np.min(conmat, axis=1)
-    cmax = np.max(conmat, axis=1)
+    cmin = np.min(-conmat, axis=1)
+    cmax = np.max(-conmat, axis=1)
     fmin = min(fval)
     fmax = max(fval)
     if any(cmin < 0.5 * cmax) and fmin < fmax:

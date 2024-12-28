@@ -90,7 +90,7 @@ def trstlp(A, b, delta, g):
     # Scale the problem if A contains large values. Otherwise floating point exceptions may occur.
     # Note that the trust-region step is scale invariant.
     for i in range(num_constraints+1):  # Note that A_aug.shape[1] == num_constraints+1
-        if maxval:=max(abs(A_aug[:, i]) > 1e12):
+        if (maxval:=max(abs(A_aug[:, i]))) > 1e12:
             modscal = max(2*REALMIN, 1/maxval)
             A_aug[:, i] *= modscal
             b_aug[i] *= modscal
@@ -416,8 +416,8 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
         # Calculate the fraction of the step from d to dnew that will be taken
         fracmult = [vmultc[i]/(vmultc[i] - vmultd[i]) if vmultd[i] < 0 else REALMAX for i in range(len(vmultd))]
         # Only the places with vmultd < 0 are relevant below, if any.
-        icon = np.where((temp_arr := np.array([1, *fracmult])) == min(temp_arr))[0][0] - 1
-        frac = min(temp_arr)
+        icon = np.argmin(np.append(1, fracmult)) - 1
+        frac = min(np.append(1, fracmult))
 
         # Update d, vmultc, and cviol
         dold = d

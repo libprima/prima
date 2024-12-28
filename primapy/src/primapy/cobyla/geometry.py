@@ -199,7 +199,7 @@ def geostep(jdrop, amat, bvec, conmat, cpen, cval, delbar, fval, simi):
                           np.tile(conmat[m_lcon:, num_vars], (num_vars, 1)).T)@simi).T
     # CVPD and CVND are the predicted constraint violation of D and -D by the linear models.
     cvpd = np.max(np.append(0, conmat[:, num_vars] + d@A))
-    cvnd = np.max(np.append(0, -d@A - conmat[:, num_vars]))
+    cvnd = np.max(np.append(0, conmat[:, num_vars] - d@A))
     if -np.dot(d, g) + cpen * cvnd < np.dot(d, g) + cpen * cvpd:
         d *= -1
 
