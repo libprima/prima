@@ -1,5 +1,5 @@
 '''
-This module provides subrouties concerning the trust-region calculations of COBYLA.
+This module provides subroutines concerning the trust-region calculations of COBYLA.
 
 Coded by Zaikun ZHANG (www.zhangzk.net) based on Powell's code and the COBYLA paper.
 
@@ -42,8 +42,8 @@ def trstlp(A, b, delta, g):
     zdota[j] is the scalar product of the jth column of Z with the gradient of the jth active
     constraint. d is the current vector of variables and here the residuals of the active constraints
     should be zero. Further, the active constraints have nonnegative Lagrange multipliers that are
-    held at the beginning of vmultc. The remaineder of this vector holds the residuals of the inactive
-    constraints at d, the ordering of the componenets of vmultc being in agreement with the permutation
+    held at the beginning of vmultc. The remainder of this vector holds the residuals of the inactive
+    constraints at d, the ordering of the components of vmultc being in agreement with the permutation
     of the indices of the constraints that is in iact. All these residuals are nonnegative, which is
     achieved by the shift cviol that makes the least residual zero.
 
@@ -95,7 +95,7 @@ def trstlp(A, b, delta, g):
             A_aug[:, i] *= modscal
             b_aug[i] *= modscal
 
-    # Stage 1: minimize the 1+infinity constraint violation of the linnearized constraints.
+    # Stage 1: minimize the 1+infinity constraint violation of the linearized constraints.
     iact[:num_constraints], nact, d, vmultc[:num_constraints], z = trstlp_sub(iact[:num_constraints], nact, 1, A_aug[:, :num_constraints], b_aug[:num_constraints], delta, d, vmultc[:num_constraints], z)
 
     # Stage 2: minimize the linearized objective without increasing the 1_infinity constraint violation.
@@ -117,7 +117,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
     '''
     This subroutine does the real calculations for trstlp, both stage 1 and stage 2.
     Major differences between stage 1 and stage 2:
-    1. Initializiation. Stage 2 inherits the values of some variables from stage 1, so they are
+    1. Initialization. Stage 2 inherits the values of some variables from stage 1, so they are
     initialized in stage 1 but not in stage 2.
     2. cviol. cviol is updated after at iteration in stage 1, while it remains a constant in stage2.
     3. sdirn. See the definition of sdirn in the code for details.
@@ -296,7 +296,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
                 sdirn = -1/zdota[nact-1]*z[:, nact-1]
         else:  # icon < nact
             # Delete the constraint with the index iact[icon] from the active set, which is done by
-            # reordering iact[icont:nact] into [iact[icon+1:nact], iact[icon]] and then reduce nact to
+            # reordering iact[icon:nact] into [iact[icon+1:nact], iact[icon]] and then reduce nact to
             # nact - 1. In theory, icon > 0.
             # assert icon > 0, "icon > 0 is required"  #  For Python I think this is irrelevant
             z, zdota[:nact] = qrexc_Rdiag(A[:, iact[:nact]], z, zdota[:nact], icon)  # qrexc does nothing if icon == nact
@@ -309,7 +309,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
             # Powell's code does not have the following. It avoids subsequent exceptions.
             # Zaikun 20221212: In theory, nact > 0 in stage 2, as the objective function should always
             # be considered as an "active constraint" --- more precisely, iact[nact] = mcon. However,
-            # looking at the copde, I cannot see why in stage 2 nact must be positive after the reduction
+            # looking at the code, I cannot see why in stage 2 nact must be positive after the reduction
             # above. It did happen in stage 1 that nact became 0 after the reduction --- this is
             # extremely rare, and it was never observed until 20221212, after almost one year of
             # random tests. Maybe nact is theoretically positive even in stage 1?
@@ -375,7 +375,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
             step = min(step, cviol)
 
         # Set dnew to the new variables if step is the steplength, and reduce cviol to the corresponding
-        # maximum residual if thage 1 is being done
+        # maximum residual if stage 1 is being done
         dnew = d + step * sdirn
         if stage == 1:
             cviol = np.max(np.append(0, dnew@A[:, iact[:nact]] - b[iact[:nact]]))
@@ -462,11 +462,11 @@ def trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio):
     #====================#
 
     if ratio <= eta1:
-        delta = gamma1 * dnorm  # Powell's UOBYQA/NEWOUA
+        delta = gamma1 * dnorm  # Powell's UOBYQA/NEWUOA
         # delta = gamma1 * delta_in  # Powell's COBYLA/LINCOA
         # delta = min(gamma1 * delta_in, dnorm)  # Powell's BOBYQA
     elif ratio <= eta2:
-        delta = max(gamma1 * delta_in, dnorm)  # Powell's UOBYQA/NEWOUA/BOBYQA/LINCOA
+        delta = max(gamma1 * delta_in, dnorm)  # Powell's UOBYQA/NEWUOA/BOBYQA/LINCOA
     else:
         delta = max(gamma1 * delta_in, gamma2 * dnorm)  # Powell's NEWUOA/BOBYQA
         # delta = max(delta_in, gamma2 * dnorm)  # Modified version. Works well for UOBYQA

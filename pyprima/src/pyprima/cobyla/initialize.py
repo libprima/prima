@@ -152,7 +152,7 @@ def initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, cfilt, confilt, 
     num_vars = sim.shape[0]
     maxfilt = len(ffilt)
 
-    # Precondictions
+    # Preconditions
     if DEBUGGING:
         assert num_constraints >= 0
         assert num_vars >= 1

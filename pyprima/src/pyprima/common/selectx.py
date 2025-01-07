@@ -1,5 +1,5 @@
 '''
-This module provides subroutines that ensure the returned X is optimal among all the calculted
+This module provides subroutines that ensure the returned X is optimal among all the calculated
 points in the sense that no other point achieves both lower function value and lower constraint
 violation at the same time. This module is needed only in the constrained case.
 
@@ -65,7 +65,7 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
     '''
     This subroutine saves X, F, and CSTRV in XFILT, FFILT, and CFILT (and CONSTR in CONFILT
     if they are present), unless a vector in XFILT[:, :NFILT] is better than X.
-    If X is better than some vectors in XFLIT[:, :NFILT] then these vectors will be
+    If X is better than some vectors in XFILT[:, :NFILT] then these vectors will be
     removed. If X is not better than any of XFILT[:, :NFILT], but NFILT == MAXFILT,
     then we remove a column from XFILT according to the merit function
     PHI = FFILT + CWEIGHT * max(CFILT - CTOL, 0)
@@ -120,7 +120,7 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
     # Calculation starts #
     #====================#
 
-    # Return immeditely if any column of XFILT is better than X.
+    # Return immediately if any column of XFILT is better than X.
     if any((isbetter(ffilt_i, cfilt_i, f, cstrv, ctol) for ffilt_i, cfilt_i in zip(ffilt[:nfilt], cfilt[:nfilt]))) or \
         any(np.logical_and(ffilt[:nfilt] <= f, cfilt[:nfilt] <= cstrv)):
         return nfilt, cfilt, ffilt, xfilt, confilt

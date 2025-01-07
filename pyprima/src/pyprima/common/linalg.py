@@ -10,7 +10,7 @@ def planerot(x):
     1. The G defined above is continuous with respect to X except at 0. Following this definition,
     G = np.array([[np.sign(x[0]), 0], [0, np.sign(x[0])]]) if x[1] == 0,
     G = np.array([[0, np.sign(x[1])], [np.sign(x[1]), 0]]) if x[0] == 0
-    Yet some implementations ignore the signs, leading to discontinuity and numberical instability.
+    Yet some implementations ignore the signs, leading to discontinuity and numerical instability.
     2. Difference from MATLAB: if x contains NaN of consists of only Inf, MATLAB returns a NaN matrix,
     but we return an identity matrix or a matrix of +/-np.sqrt(2). We intend to keep G always orthogonal.
     '''
@@ -98,7 +98,7 @@ def isminor(x, ref):
     This function tests whether x is minor compared to ref. It is used by Powell, e.g., in COBYLA.
     In precise arithmetic, isminor(x, ref) is true if and only if x == 0; in floating point
     arithmetic, isminor(x, ref) is true if x is 0 or its nonzero value can be attributed to
-    computer rounding errrors according to ref.
+    computer rounding errors according to ref.
     Larger sensitivity means the function is more strict/precise, the value 0.1 being due to Powell.
 
     For example:

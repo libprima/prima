@@ -273,7 +273,7 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
         assert num_vars >= 1, f'{srname} N >= 1'
 
         assert present(Aineq) == present(bineq), \
-            f'{srname} Aineq and Bineq are both present orboth absent'
+            f'{srname} Aineq and Bineq are both present or both absent'
         if (present(Aineq)):
             assert Aineq.shape == (mineq, num_vars), f'{srname} SIZE(Aineq) == [Mineq, N]'
         
@@ -427,7 +427,7 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
     # prehist(maxhist, num_vars, present(xhist), xhist_loc, present(fhist), fhist_loc, &
     #     & present(chist), chist_loc, m, present(conhist), conhist_loc)
 
-    # call coblyb, which performs the real calculations
+    # call cobylb, which performs the real calculations
     x, f, constr, cstrv, nf, xhist, fhist, chist, conhist, info = cobylb(
         calcfc,
         iprint,

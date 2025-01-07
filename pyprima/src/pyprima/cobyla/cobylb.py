@@ -84,10 +84,10 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
       maxfun, constr, amat, bvec, ctol, f, ftarget, rhobeg, x,
       xhist, fhist, chist, conhist, maxhist)
     
-    # Initialize the filter, including xfilt, ffilt, confiolt, cfilt, and nfilt.
+    # Initialize the filter, including xfilt, ffilt, confilt, cfilt, and nfilt.
     # N.B.: The filter is used only when selecting which iterate to return. It does not
     # interfere with the iterations. COBYLA is NOT a filter method but a trust-region
-    # method based on an L-inifinity merit function. Powell's implementation does not
+    # method based on an L-infinity merit function. Powell's implementation does not
     # use a filter to select the iterate, possibly returning a suboptimal iterate.
     cfilt = np.zeros(np.minimum(np.maximum(maxfilt, 1), maxfun))
     confilt = np.zeros((np.size(constr), np.size(cfilt)))
@@ -215,7 +215,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         # DELTA. Powell's code especially defines SHORTD by SHORTD = (DNORM < 0.5 *
         # RHO). In our tests 1/10 seems to work better than 1/2 or 1/4, especially for
         # linearly constrained problems. Note that LINCOA has a slightly more
-        # sophisticated way of defining SHORTD, taking into account whether D casues a
+        # sophisticated way of defining SHORTD, taking into account whether D causes a
         # change to the active set. Should we try the same here?
         shortd = (dnorm <= 0.1 * rho)
 
@@ -277,7 +277,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
                                                                x, nfilt, cfilt, ffilt,
                                                                xfilt, constr, confilt)
 
-            # Print a message about the function/constraint evaluation accoring to
+            # Print a message about the function/constraint evaluation according to
             # iprint
             fmsg(solver, 'Trust region', iprint, nf, delta, f, x, cstrv, constr)
 
@@ -330,7 +330,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
             # Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM[:, JDROP_TR] is replaced with D.
             # UPDATEXFC does nothing if JDROP_TR is None, as the algorithm decides to discard X.
             sim, simi, fval, conmat, cval, subinfo = updatexfc(jdrop_tr, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi)
-            # Check whether to break due to dmaging rounding in UPDATEXFC
+            # Check whether to break due to damaging rounding in UPDATEXFC
             if subinfo == DAMAGING_ROUNDING:
                 info = subinfo
                 break  # Better action to take? Geometry step, or a RESCUE as in BOBYQA?
@@ -475,7 +475,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
                                                                x, nfilt, cfilt, ffilt,
                                                                xfilt, constr, confilt)
 
-            # Print a message about the function/constraint evaluation accoring to iprint
+            # Print a message about the function/constraint evaluation according to iprint
             fmsg(solver, 'Geometry', iprint, nf, delta, f, x, cstrv, constr)
             # Update SIM, SIMI, FVAL, CONMAT, and CVAL so that SIM(:, JDROP_GEO) is replaced with D.
             sim, simi, fval, conmat, cval, subinfo = updatexfc(jdrop_geo, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi)
@@ -589,7 +589,7 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
     # Initialize INFO which is needed in the postconditions
     info = INFO_DEFAULT
 
-    # Increase CPEN if neccessary to ensure PREREM > 0. Branch back for the next loop
+    # Increase CPEN if necessary to ensure PREREM > 0. Branch back for the next loop
     # if this change alters the optimal vertex of the current simplex.
     # Note the following:
     # 1. In each loop, CPEN is changed only if PREREC > 0 > PREREF, in which case
@@ -632,7 +632,7 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
 
         # Powell's code defines BARMU = -PREREF / PREREC, and CPEN is increased to
         # 2*BARMU if and only if it is currently less than 1.5*BARMU, a very
-        # "Powellful" scheme. In our implementation, however, we seet CPEN directly to
+        # "Powellful" scheme. In our implementation, however, we set CPEN directly to
         # the maximum between its current value and 2*BARMU while handling possible
         # overflow. The simplifies the scheme without worsening the performance of
         # COBYLA.
@@ -656,7 +656,7 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
 
 def fcratio(conmat, fval):
     '''
-    This function calculates the ratio between the "typical changre" of F and that of CONSTR.
+    This function calculates the ratio between the "typical change" of F and that of CONSTR.
     See equations (12)-(13) in Section 3 of the COBYLA paper for the definition of the ratio.
     '''
 

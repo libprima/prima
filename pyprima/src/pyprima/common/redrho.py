@@ -4,7 +4,7 @@ import numpy as np
 def redrho(rho_in, rhoend):
     '''
     This function calculates RHO when it needs to be reduced.
-    The sceme is shared by UOBYQA, NEWUOA, BOBYQA, LINCOA. For COBYLA, Powell's code reduces RHO by
+    The scheme is shared by UOBYQA, NEWUOA, BOBYQA, LINCOA. For COBYLA, Powell's code reduces RHO by
     'RHO *= 0.5; if RHO <= 1.5 * RHOEND: RHO = RHOEND' as specified in (11) of the COBYLA
     paper. However, this scheme seems to work better, especially after we introduce DELTA.
     '''

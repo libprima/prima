@@ -117,7 +117,7 @@ def setdrop_tr(ximproved, d, delta, rho, sim, simi):
     simid = simi@d
     score = weight * abs(np.array([*simid, 1 - np.sum(simid)]))
 
-    # If XIMPORVED = False (D does not render a better X), set SCORE[NUM_VARS] = -1 to avoid JDROP = NUM_VARS.
+    # If XIMPROVED = False (D does not render a better X), set SCORE[NUM_VARS] = -1 to avoid JDROP = NUM_VARS.
     if not ximproved:
         score[num_vars] = -1
 

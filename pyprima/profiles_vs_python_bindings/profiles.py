@@ -16,7 +16,7 @@ nondefault_options = lambda n, f0: {
 }
 
 def get_pyprima_options(n, f0):
-    if os.environ.get('NONDEFAULT_PRIMAPY') == 'True':
+    if os.environ.get('NONDEFAULT_PYPRIMA') == 'True':
         options = nondefault_options(n, f0)
         # Change the option name
         options['maxfun'] = options.pop('maxfev')
@@ -84,9 +84,9 @@ if __name__ == '__main__':
     sys.path.insert(0, os.getcwd())
     os.environ['PYCUTEST_CACHE'] = os.getcwd()
     
-    parser = argparse.ArgumentParser(description='Generate performance profiles comparing PrimaPy to PRIMA Python (bindings).')
+    parser = argparse.ArgumentParser(description='Generate performance profiles comparing PyPRIMA to PRIMA Python (bindings).')
     parser.add_argument('-j', '--n_jobs', type=int, default=None, help='Number of jobs to run in parallel')
-    parser.add_argument('--default_only', action='store_true', help='Run only the default options for both PrimaPy and PRIMA')
+    parser.add_argument('--default_only', action='store_true', help='Run only the default options for both PyPRIMA and PRIMA')
     args = parser.parse_args()
     
 
@@ -102,14 +102,14 @@ if __name__ == '__main__':
         algorithm = algorithm.lower()
         ALGORITHM = algorithm.upper()
         project_x0 = algorithm == 'lincoa'
-        os.environ['NONDEFAULT_PRIMAPY'] = "False"
+        os.environ['NONDEFAULT_PYPRIMA'] = "False"
         os.environ['NONDEFAULT_PYTHON'] = "False"
         run_benchmark([pyprima_fun, python_fun], [f'PyPRIMA-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_default_options', n_jobs=n_jobs, project_x0=project_x0)
         if not default_only:
-            os.environ['NONDEFAULT_PRIMAPY'] = "True"
+            os.environ['NONDEFAULT_PYPRIMA'] = "True"
             os.environ['NONDEFAULT_PYTHON'] = "True"
             run_benchmark([pyprima_fun, python_fun], [f'PyPRIMA-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_nondefault_options', n_jobs=n_jobs, project_x0=project_x0)
-            os.environ['NONDEFAULT_PRIMAPY'] = "True"
+            os.environ['NONDEFAULT_PYPRIMA'] = "True"
             os.environ['NONDEFAULT_PYTHON'] = "False"
             run_benchmark([pyprima_fun, python_fun], [f'PyPRIMA-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_different_options', n_jobs=n_jobs, project_x0=project_x0)
 

@@ -238,7 +238,7 @@ def updatepole(cpen, conmat, cval, fval, sim, simi):
             erri = erri_test
 
 
-    # If SIMI is satisfactory, then update FVAL, CONMAT, and CVAL. Otherwiae restore SIM and SIMI, and
+    # If SIMI is satisfactory, then update FVAL, CONMAT, and CVAL. Otherwise restore SIM and SIMI, and
     # return with INFO = DAMAGING_ROUNDING.
     if erri <= itol:
         if 0 <= jopt < num_vars:

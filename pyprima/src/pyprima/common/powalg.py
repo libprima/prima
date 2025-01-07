@@ -17,7 +17,7 @@ def qradd_Rdiag(c, Q, Rdiag, n):
     2. The function changes only Q[:, nsave:m] (nsave is the original value of n) and
     R[:, n-1] (n takes the updated value)
     3. Indeed, when C is in range(A), Powell wrote in comments that "set iOUT to the index of the
-    constraint (here, coloumn of A --- Zaikun) to be deleted, but branch if no suitable index can be
+    constraint (here, column of A --- Zaikun) to be deleted, but branch if no suitable index can be
     found". The idea is to replace a column of A by C so that the new matrix still has full rank
     (such a column must exist unless C = 0). But his code essentially sets iout=n always. Maybe he
     found this worked well enough in practice. Meanwhile, Powell's code includes a snippet that can
@@ -51,7 +51,7 @@ def qradd_Rdiag(c, Q, Rdiag, n):
         if abs(cq[n]) > EPS**2 and not isminor(cq[n], cqa[n]):
             n += 1
 
-    # Update Rdiag so that Rdiag[n] = cq[n] = npdot(c, q[:, n]). Note that N may be been augmented.
+    # Update Rdiag so that Rdiag[n] = cq[n] = np.dot(c, q[:, n]). Note that N may be been augmented.
     if n - 1 >= 0 and n - 1 < m:  # n >= m should not happen unless the input is wrong
         Rdiag[n - 1] = cq[n - 1]
 
