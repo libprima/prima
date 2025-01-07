@@ -1,3 +1,6 @@
+import pytest
+pytest.importorskip("pycutest")
+
 from optiprofiler.problems import load_cutest_problem
 from pyprima import minimize, Bounds, LinearConstraint, NonlinearConstraint
 import numpy as np
