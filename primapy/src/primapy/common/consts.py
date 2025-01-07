@@ -1,13 +1,11 @@
 import numpy as np
 import os
 
-# TODO: Reset this to False when making PR
-DEBUGGING = True or bool(os.getenv('PRIMA_DEBUGGING'))
-
+DEBUGGING = bool(os.getenv('PRIMA_DEBUGGING'))
 
 REALMIN = np.finfo(float).tiny
 REALMAX = np.finfo(float).max
-FUNCMAX = 2.0**100
+FUNCMAX = 10.0**30
 CONSTRMAX = FUNCMAX
 EPS = np.finfo(float).eps
 

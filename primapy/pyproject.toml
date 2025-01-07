@@ -13,3 +13,7 @@ exclude = ["primapy.examples*"]  # empty by default
 line-length=88
 select= ["D"]
 
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]

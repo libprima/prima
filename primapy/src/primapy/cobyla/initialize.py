@@ -51,6 +51,9 @@ def initxfc(calcfc, iprint, maxfun, constr0, amat, bvec, ctol, f0, ftarget, rhob
     sim = np.eye(num_vars, num_vars+1) * rhobeg
     sim[:, num_vars] = x0
 
+    # Initialize the matrix simi. In most cases simi is overwritten, but not always.
+    simi = np.eye(num_vars) / rhobeg
+
     # evaluated[j] = True iff the function/constraint of SIM[:, j] has been evaluated.
     evaluated = np.zeros(num_vars+1, dtype=bool)
 

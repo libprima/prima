@@ -96,9 +96,6 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
     nfilt = initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, cfilt, confilt,
                      ffilt, xfilt)
 
-    # TODO: Initfilt and savefilt appear to be working. It did not get tested with a rising edge in the
-    # keep array (i.e. a False followed by a True), but it looks like that shouldn't be a problem.
-
     # Check whether to return due to abnormal cases that may occur during the initialization.
     if subinfo != INFO_DEFAULT:
         info = subinfo
@@ -109,9 +106,6 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         f = ffilt[kopt]
         constr = confilt[:, kopt]
         cstrv = cfilt[kopt]
-        # Arrange chist, conhist, fhist, and xhist so that they are in chronological order.
-        # TODO: Implement me
-        # rangehist(nf, xhist, fhist, chist, conhist)
         # print a return message according to IPRINT.
         retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
         # Postconditions
@@ -130,30 +124,21 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
             # assert not any(chist(1:min(nf, maxchist)) < 0 or np.isnan(chist(1:min(nf, maxchist))) or np.isposinf(chist(1:min(nf, maxchist))))
             # nhist = minval([nf, maxfhist, maxchist])
             # assert not any(isbetter(fhist(1:nhist), chist(1:nhist), f, cstrv, ctol))
+        return x, f, constr, cstrv, nf, xhist, fhist, chist, conhist, info
 
 
     # Set some more initial values.
-    # We must initialize ACTREM and PREREM. Otherwise, when SHORTD = TRUE, compilers
-    # may raise a run-time error that they are undefined. But their values will not be
-    # used: when SHORTD = FALSE, they will be overwritten; when SHORTD = TRUE, the
-    # values are used only in BAD_TRSTEP, which is TRUE regardless of ACTREM or PREREM.
-    # Similar for PREREC, PREREF, PREREM, RATIO, and JDROP_TR. No need to initialize
-    # SHORTD unless MAXTR < 1, but some compilers may complain if we do not do it.
+    # We must initialize shortd, ratio, and jdrop_tr because these get defined on
+    # branches that are not guaranteed to be executed, but their values are used later.
     # Our initialization of CPEN differs from Powell's in two ways. First, we use the
     # ratio defined in (13) of Powell's COBYLA paper to initialize CPEN. Second, we
     # impose CPEN >= CPENMIN > 0. Powell's code simply initializes CPEN to 0.
     rho = rhobeg
     delta = rhobeg
     cpen = np.maximum(cpenmin, np.minimum(1.0E3, fcratio(conmat, fval)))  # Powell's code: CPEN = ZERO
-    prerec = -REALMAX
-    preref = -REALMAX
-    prerem = -REALMAX
-    actrem = -REALMAX  # TODO: Is it necessary to define this and prerem here, per the above comment?
     shortd = False
-    trfail = False
     ratio = -1
     jdrop_tr = 0
-    jdrop_geo = 0
 
     # If DELTA <= GAMMA3*RHO after an update, we set DELTA to RHO. GAMMA3 must be less
     # than GAMMA2. The reason is as follows. Imagine a very successful step with
@@ -558,10 +543,6 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
     constr = confilt[:, kopt]
     cstrv = cfilt[kopt]
 
-    # Arrange CHIST, CONHIST, FHIST, and XHIST so that they are in the chronological order.
-    # TODO: Implement me
-    # call rangehist(nf, xhist, fhist, chist, conhist)
-
     # Print a return message according to IPRINT.
     retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
     return x, f, constr, cstrv, nf, xhist, fhist, chist, conhist, info
@@ -605,10 +586,8 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
     # Calculation starts #
     #====================#
 
-    # Initialize INFO, PREREF, and PREREC, which are needed in the postconditions
+    # Initialize INFO which is needed in the postconditions
     info = INFO_DEFAULT
-    preref = 0
-    prerec = 0
 
     # Increase CPEN if neccessary to ensure PREREM > 0. Branch back for the next loop
     # if this change alters the optimal vertex of the current simplex.

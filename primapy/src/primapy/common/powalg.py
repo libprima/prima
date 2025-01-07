@@ -1,6 +1,6 @@
 import numpy as np
 from primapy.common.linalg import isminor, planerot
-from primapy.common.consts import EPS
+from primapy.common.consts import DEBUGGING, EPS
 
 
 def qradd_Rdiag(c, Q, Rdiag, n):
@@ -46,16 +46,20 @@ def qradd_Rdiag(c, Q, Rdiag, n):
             cq[k] = np.linalg.norm(cq[k:k+2])
 
     # Augment n by 1 if C is not in range(A)
-    # The two ifs cannot be merged as Fortran may evaluate cq[n+1] even if n>=m, leading to a segfault.
-    # TODO: Reword the above as appropriate for Python. RangeError as opposed to segafult perhaps
     if n < m:
         # Powell's condition for the following if: cq[n+1] != 0
-        if abs(cq[n]) > EPS*2 and not isminor(cq[n], cqa[n]):
+        if abs(cq[n]) > EPS**2 and not isminor(cq[n], cqa[n]):
             n += 1
 
     # Update Rdiag so that Rdiag[n] = cq[n] = npdot(c, q[:, n]). Note that N may be been augmented.
     if n - 1 >= 0 and n - 1 < m:  # n >= m should not happen unless the input is wrong
         Rdiag[n - 1] = cq[n - 1]
+
+    if DEBUGGING:
+        assert nsave <= n <= min(nsave + 1, m)
+        assert n <= len(Rdiag) <= m
+        assert Q.shape == (m, m)
+
     return Q, Rdiag, n
 
 

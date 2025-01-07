@@ -15,3 +15,13 @@ def savehist(maxhist, x, xhist, f, fhist, cstrv, chist, constr, conhist):
         fhist.append(f)
         chist.append(cstrv)
         conhist.append(constr)
+    else:
+        # This effectively accomplishes what rangehist does in the Fortran implementation
+        xhist.pop(0)
+        fhist.pop(0)
+        chist.pop(0)
+        conhist.pop(0)
+        xhist.append(x)
+        fhist.append(f)
+        chist.append(cstrv)
+        conhist.append(constr)

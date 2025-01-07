@@ -37,7 +37,7 @@ def isbetter(f1: float, c1: float, f2: float, c2: float, ctol: float) -> bool:
     is_better = False
     # Even though NaN/+Inf should not occur in FC1 or FC2 due to the moderated extreme barrier, for
     # security and robustness, the code below does not make this assumption.
-    is_better = is_better or (any(np.isnan([f1, c1])) and not any(np.isnan([f2, c2])))
+    is_better = is_better or (any(np.isnan([f1, c1]) | np.isposinf([f1, c1])) and not any(np.isnan([f2, c2]) | np.isposinf([f2, c2])))
 
     is_better = is_better or (f1 < f2 and c1 <= c2)
     is_better = is_better or (f1 <= f2 and c1 < c2)
@@ -120,8 +120,9 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
     # Calculation starts #
     #====================#
 
-    # Return immeditely if any column of XFILT is better than X. TODO: Lazy evaluation
-    if any([isbetter(ffilt_i, cfilt_i, f, cstrv, ctol) for ffilt_i, cfilt_i in zip(ffilt[:nfilt], cfilt[:nfilt])]):
+    # Return immeditely if any column of XFILT is better than X.
+    if any((isbetter(ffilt_i, cfilt_i, f, cstrv, ctol) for ffilt_i, cfilt_i in zip(ffilt[:nfilt], cfilt[:nfilt]))) or \
+        any(np.logical_and(ffilt[:nfilt] <= f, cfilt[:nfilt] <= cstrv)):
         return nfilt, cfilt, ffilt, xfilt, confilt
     
     # Decide which columns of XFILT to keep.
@@ -130,7 +131,6 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
     # If NFILT == MAXFILT and X is not better than any column of XFILT, then we remove the worst column
     # of XFILT according to the merit function PHI = FFILT + CWEIGHT * MAX(CFILT - CTOL, ZERO).
     if sum(keep) == maxfilt:  # In this case, NFILT = SIZE(KEEP) = COUNT(KEEP) = MAXFILT > 0.
-        # TODO: This code path has not been vetted
         cfilt_shifted = np.maximum(cfilt - ctol, 0)
         if cweight <= 0:
             phi = ffilt
@@ -279,7 +279,7 @@ def selectx(fhist: npt.NDArray, chist: npt.NDArray, cweight: float, ctol: float)
         phimin = np.min(phi[np.logical_and(fhist < fref, chist_shifted <= cref)])
         cref = np.min(chist_shifted[np.logical_and(fhist < fref, phi <= phimin)])
         fref = np.min(fhist[chist_shifted <= cref])
-        kopt = np.where(chist == np.min(chist[fhist <= fref]))[0][0]
+        kopt = np.argmin(chist[fhist <= fref])
 
     #==================#
     # Calculation ends #

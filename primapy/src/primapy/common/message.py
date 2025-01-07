@@ -1,7 +1,7 @@
 from primapy.common.consts import DEBUGGING
 from primapy.common.infos import FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, \
     SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_INF_MODEL, DAMAGING_ROUNDING, \
-    NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT
+    NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT, CALLBACK_TERMINATE
 from primapy.common.present import present
 import numpy as np
 
@@ -24,7 +24,7 @@ def retmsg(solver, info, iprint, nf, f, x, cstrv=None, constr=None):
     # Local variables
     valid_exit_codes = [FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED,
         SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_INF_MODEL, DAMAGING_ROUNDING,
-        NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT]
+        NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT, CALLBACK_TERMINATE]
     
     # Preconditions
     if DEBUGGING:

@@ -46,7 +46,7 @@ def planerot(x):
     elif (abs(x[0]) <= EPS * abs(x[1])):
         # N.B.: SIGN(A, X) = ABS(A) * sign of X /= A * sign of X # Therefore, it is WRONG to define G
         # as SIGN(RESHAPE([ZERO, -ONE, ONE, ZERO], [2, 2]), X(2)). This mistake was committed on
-        # 20211206 and took a whole day to debug# NEVER use SIGN on arrays unless you are really sure.
+        # 20211206 and took a whole day to debug! NEVER use SIGN on arrays unless you are really sure.
         c = 0
         s = np.sign(x[1])
     else:

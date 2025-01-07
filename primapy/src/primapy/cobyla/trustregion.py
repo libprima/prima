@@ -247,7 +247,6 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
                     break
                 # vmultd[NACT+1:mcon] is not used, but we have to initialize it in Fortran, or compilers
                 # complain about the where construct below (another solution: restrict where to 1:NACT).
-                # TODO: How does this apply to Python?
                 vmultd[nact:mcon] = -1  # len(vmultd) == mcon
 
                 # Revise the Lagrange multipliers. The revision is not applicable to vmultc[nact:num_constraints].
@@ -256,24 +255,10 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
                 frac = min(fracmult[:nact])  # fracmult[nact:mcon] may contain garbage
                 vmultc[:nact] = np.maximum(np.zeros(len(vmultc[:nact])), vmultc[:nact] - frac*vmultd[:nact])
 
-                # Zaikun 20210811: Powell's code includes the following, which is IMPOSSIBLE TO REACH
-                # !if (icon < nact) then
-                # !    do k = icon, nact-1
-                # !        hypt = sqrt(zdota(k+1)**2+inprod(z(:, k), A(:, iact(k+1)))**2)
-                # !        grot = planerot([zdota(k+1), inprod(z(:, k), A(:, iact(k+1)))])
-                # !        z(:, [k, k+1]) = matprod(z(:, [k+1, k]), transpose(grot))
-                # !        zdota([k, k+1]) = [hypt, (zdota(k+1) / hypt) * zdota(k)]
-                # !    end do
-                # !    iact(icon:nact) = [iact(icon+1:nact), iact(icon)]
-                # !    vmultc(icon:nact) = [vmultc(icon+1:nact), vmultc(icon)]
-                # !end if
-
                 # Reorder the active constraints so that the one to be replaced is at the end of the list.
                 # Exit if the new value of zdota[nact] is not acceptable. Powell's condition for the
-                # following If: non abs(zdota[nact]) > 0. Note that it is different from
-                # 'abs(zdota[nact]) <=0)' as zdota[nact] can be NaN. TODO: Does that make sense with Python?
-                # It seems Python returns false in both cases, whereas Fortran returns true for abs(NaN) > 0
-                # and false for the other one.
+                # following If: not abs(zdota[nact]) > 0. Note that it is different from
+                # 'abs(zdota[nact]) <=0)' as zdota[nact] can be NaN.
                 # N.B.: We cannot arrive here with nact == 0, which should have triggered a break above
                 if np.isnan(zdota[nact - 1]) or abs(zdota[nact - 1]) <= EPS**2:
                     break
