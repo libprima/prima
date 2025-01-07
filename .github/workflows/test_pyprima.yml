@@ -39,9 +39,9 @@ jobs:
         shell: bash
         run: |
             cd pyprima
-            python -m pip install .
+            python -m pip install --editable .
             pytest --cov=src --cov-report=html tests/
-            PRIMA_DEBUGGING=1 pytest --cov=src --cov-append tests/test_end_to_end.py
+            PRIMA_DEBUGGING=1 pytest --cov=src --cov-report=html --cov-append tests/test_end_to_end.py
 
 
       - name: Store artifacts
@@ -50,6 +50,3 @@ jobs:
         with:
           name: coverage-html
           path: pyprima/htmlcov/*
-
-      - name: Output artifact ID
-        run:  echo 'Artifact ID is ${{ steps.artifact-coverage.outputs.artifact-id }}'
