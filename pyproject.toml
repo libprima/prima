@@ -46,8 +46,8 @@ skip = [
   # Disable building PyPy wheels on all platforms. If there is interest in supporting PyPy
   # we can look into it.
   "pp*",
-  # Disable musllinux for the moment. It successfully built but there was an error when testing
-  "*musllinux*",
+  # Scipy does not provide binaries for musllinux below 3.9 or for 32-bit
+  "cp38-musllinux*", "*musllinux_i686",
   # SciPy does not provide binaries for 32-bit Python on Linux starting from 3.10.
   # As such we can compile but we cannot test, so we skip those.
   "cp31*-manylinux_i686",

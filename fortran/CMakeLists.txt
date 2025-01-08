@@ -69,11 +69,6 @@ target_include_directories (primaf PUBLIC
   $<INSTALL_INTERFACE:include/prima/mod>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/mod>)
 
-# because of calcfc_internal nested subroutine in cobylb.f90
-if (HAVE_WARN_EXECSTACK)
-  target_link_options (primaf PUBLIC "-Wl,--no-warn-execstack")
-endif ()
-
 # On Windows, when building shared libs, visible functions must be explicitly listed.
 # Unlike C there are no standard keywords to do this in Fortran but only compiler-specific pragmas:
 # !GCC$ attributes dllexport :: bobyqa_c

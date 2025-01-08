@@ -1,0 +1,52 @@
+name: Test PyPRIMA
+
+on:
+  # Trigger the workflow on push or pull request
+  #push:
+  pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
+  schedule:
+    - cron: '0 16 4-31/4 * *'
+  # Trigger the workflow manually
+  workflow_dispatch:
+
+
+jobs:
+
+  test:
+    name: Run PyPRIMA tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.5.3
+
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy pytest scipy pytest-cov
+
+      - name: Conduct the test
+        shell: bash
+        run: |
+            cd pyprima
+            python -m pip install --editable .
+            pytest --cov=src --cov-report=html tests/
+            PRIMA_DEBUGGING=1 pytest --cov=src --cov-report=html --cov-append tests/test_end_to_end.py
+
+
+      - name: Store artifacts
+        uses: actions/upload-artifact@v3.1.2
+        id: artifact-coverage
+        with:
+          name: coverage-html
+          path: pyprima/htmlcov/*

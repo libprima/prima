@@ -42,7 +42,8 @@ jobs:
         toolchain:
           - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
           - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
-          - {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
+          # As of 20240616 gcc13 has issues importing math.h on macOS.
+          # - {compiler: gcc, version: 13, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
           - {compiler: intel-classic, version: '2021.8', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
           - {compiler: intel-classic, version: '2021.9', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
           - {compiler: intel-classic, version: '2021.10', cflags: '-diag-disable=10441 -Wall -w3 -Werror-all', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}

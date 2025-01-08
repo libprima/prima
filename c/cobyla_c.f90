@@ -4,10 +4,16 @@ module cobyla_c_mod
 !
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !--------------------------------------------------------------------------------------------------!
+
+use, intrinsic :: iso_c_binding, only : C_PTR
+use, non_intrinsic :: cintrf_mod, only : COBJCON, CCALLBACK
 implicit none
 private
 public :: cobyla_c
 
+procedure(COBJCON), pointer :: cglobal_obj_ptr
+procedure(CCALLBACK), pointer :: cglobal_callback_ptr
+type(C_PTR) :: cglobal_data_ptr
 
 contains
 
@@ -15,7 +21,6 @@ contains
 subroutine cobyla_c(m_nlcon, cobjcon_ptr, data_ptr, n, x, f, cstrv, nlconstr, m_ineq, Aineq, bineq, m_eq, Aeq, beq, &
     & xl, xu, f0, nlconstr0, nf, rhobeg, rhoend, ftarget, maxfun, iprint, ctol, callback_ptr, info) bind(C)
 use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER, C_F_POINTER
-use, non_intrinsic :: cintrf_mod, only : COBJCON, CCALLBACK
 use, non_intrinsic :: cobyla_mod, only : cobyla
 use, non_intrinsic :: consts_mod, only : RP, IK
 use, non_intrinsic :: infnan_mod, only : is_nan
@@ -57,12 +62,6 @@ integer(IK) :: iprint_loc
 integer(IK) :: m_nlcon_loc
 integer(IK) :: nf_loc
 integer(IK), allocatable :: maxfun_loc
-! The initialization below to null is necessary to avoid a bug with the newer Intel compiler ifx.
-! See https://fortran-lang.discourse.group/t/strange-issue-with-ifx-compiler-and-assume-recursion/7013
-! The bug was observed in all versions of ifx up to 2024.0.1. Once this bug is fixed we should 
-! remove the initialization to null because it implies the 'save' attribute, which is undesirable.
-procedure(CCALLBACK), pointer :: cb_ptr => null()
-procedure(COBJCON), pointer :: objcon_ptr => null()
 real(C_DOUBLE), pointer :: nlconstr0_loc_interm(:)
 real(C_DOUBLE), pointer :: xl_loc_interm(:)
 real(C_DOUBLE), pointer :: xu_loc_interm(:)
@@ -90,7 +89,8 @@ real(RP), allocatable :: xu_loc(:)
 ! The following inputs correspond to compulsory arguments in the Fortran code.
 x_loc = real(x, kind(x_loc))
 m_nlcon_loc = int(m_nlcon, kind(m_nlcon_loc))
-call c_f_procpointer(cobjcon_ptr, objcon_ptr)
+call c_f_procpointer(cobjcon_ptr, cglobal_obj_ptr)
+cglobal_data_ptr = data_ptr
 
 ! The following inputs correspond to optional arguments in the Fortran code.
 ! Since C does not support optional arguments, we use NaN to represent an absent real scalar, 0 to
@@ -136,9 +136,8 @@ ctol_loc = real(ctol, kind(ctol_loc))
 ! Call the Fortran code
 if (c_associated(callback_ptr)) then
     ! If a C callback function is provided, we convert it to a Fortran procedure pointer and capture
-    ! that pointer in the closure below.
-    call c_f_procpointer(callback_ptr, cb_ptr)
-    ! We then provide the closure to the algorithm.
+    ! that pointer in the module level variable cglobal_callback_ptr.
+    call c_f_procpointer(callback_ptr, cglobal_callback_ptr)
     call cobyla(calcfc, m_nlcon_loc, x_loc, f_loc, cstrv=cstrv_loc, nlconstr=nlconstr_loc, Aineq=Aineq_loc, &
         & bineq=bineq_loc, Aeq=Aeq_loc, beq=beq_loc, xl=xl_loc, xu=xu_loc, f0=f0_loc, nlconstr0=nlconstr0_loc, &
         & nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, ftarget=ftarget_loc, ctol=ctol_loc, maxfun=maxfun_loc, &
@@ -165,12 +164,13 @@ if (allocated(rhobeg_loc)) deallocate (rhobeg_loc)
 if (allocated(xu_loc)) deallocate (xu_loc)
 if (allocated(xu_loc)) deallocate (xl_loc)
 
-contains
+end subroutine cobyla_c
 
 !--------------------------------------------------------------------------------------------------!
-! This subroutine defines `calcfc` using the C function pointer with an internal subroutine.
-! This allows to avoid passing the C function pointer by a module variable, which is thread-unsafe.
-! A possible security downside is that the compiler must allow for an executable stack.
+! This subroutine defines `calfun` using a module level variable for the C function pointer.
+! This is not thread safe. We previously used a nested subroutine, which was thread-safe, but in
+! efforts to support SciPy we discovered that this does not work with musl. See the commit/MR for
+! details.
 ! This subroutine is identical across 4 out of 5 algorithms; COBYLA requires a slightly different
 ! signature.
 !--------------------------------------------------------------------------------------------------!
@@ -191,7 +191,7 @@ real(C_DOUBLE) :: constr_sub_loc(size(constr_sub))
 x_sub_loc = real(x_sub, kind(x_sub_loc))
 
 ! Call the C objective function
-call objcon_ptr(x_sub_loc, f_sub_loc, constr_sub_loc, data_ptr)
+call cglobal_obj_ptr(x_sub_loc, f_sub_loc, constr_sub_loc, cglobal_data_ptr)
 
 ! Write the output
 f_sub = real(f_sub_loc, kind(f_sub))
@@ -201,9 +201,10 @@ end subroutine calcfc
 
 
 !--------------------------------------------------------------------------------------------------!
-! This subroutine defines `callback_fcn` using the C function pointer with an internal subroutine.
-! This allows to avoid passing the C function pointer by a module variable, which is thread-unsafe.
-! A possible security downside is that the compiler must allow for an executable stack.
+! This subroutine defines `callback_fcn` using a module level variable for the C function pointer.
+! This is not thread safe. We previously used a nested subroutine, which was thread-safe, but in
+! efforts to support SciPy we discovered that this does not work with musl. See the commit/MR for
+! details.
 ! This subroutine is identical across all 5 algorithms.
 !--------------------------------------------------------------------------------------------------!
 subroutine callback_fcn(x_sub, f_sub, nf_sub, tr, cstrv_sub, nlconstr_sub, terminate)
@@ -259,7 +260,8 @@ else
 end if
 
 ! Call the C callback function
-call cb_ptr(n_sub_loc, x_sub_loc, f_sub_loc, nf_sub_loc, tr_loc, cstrv_sub_loc, m_nlconstr, nlconstr_sub_loc, terminate_loc)
+call cglobal_callback_ptr(n_sub_loc, x_sub_loc, f_sub_loc, nf_sub_loc, tr_loc, cstrv_sub_loc, m_nlconstr, &
+    & nlconstr_sub_loc, terminate_loc)
 
 ! Write the output
 if (present(terminate)) then
@@ -270,9 +272,5 @@ end if
 if (allocated(nlconstr_sub_loc)) deallocate (nlconstr_sub_loc)
 
 end subroutine callback_fcn
-
-
-end subroutine cobyla_c
-
 
 end module cobyla_c_mod

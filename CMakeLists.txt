@@ -8,12 +8,6 @@ option (BUILD_SHARED_LIBS "shared/static" ON)
 
 include (GNUInstallDirs)
 
-# the compiler enables an executable stack because of nested functions and this is fine
-if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.18)
-  include (CheckLinkerFlag)
-  check_linker_flag (Fortran "-Wl,--no-warn-execstack" HAVE_WARN_EXECSTACK)
-endif ()
-
 # Set additional Fortran compiler flags
 # 0. See https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html for compiler IDs.
 # 1. We require the compilers to allocate arrays on the heap instead of the stack, which is

@@ -21,7 +21,10 @@ if (NOT _IMPORT_NUMPY EQUAL 0)
 endif ()
 
 
-pybind11_add_module(_prima _prima.cpp)
+# We add NO_EXTRAS to disable link time optimization. This is a workaround for musl
+# due to some issue about 'inlining failed in call to always_inline vsnprintf'.
+# https://gitlab.alpinelinux.org/alpine/aports/-/issues/8626
+pybind11_add_module(_prima NO_EXTRAS _prima.cpp)
 target_include_directories(_prima PRIVATE ${CMAKE_SOURCE_DIR}/c/include)
 target_link_libraries(_prima PRIVATE primac primaf)
 target_compile_definitions(_prima PRIVATE VERSION_INFO=${PRIMA_VERSION})
