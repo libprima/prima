@@ -1,8 +1,8 @@
-from pyprima.common.consts import DEBUGGING, EPS, IPRINT_DEFAULT, FTARGET_DEFAULT, \
+from .consts import DEBUGGING, EPS, IPRINT_DEFAULT, FTARGET_DEFAULT, \
     MIN_MAXFILT, MAXFILT_DEFAULT, MAXHISTMEM, ETA1_DEFAULT, ETA2_DEFAULT, \
     GAMMA1_DEFAULT, GAMMA2_DEFAULT, RHOBEG_DEFAULT, RHOEND_DEFAULT, \
     CTOL_DEFAULT, CWEIGHT_DEFAULT
-from pyprima.common.present import present
+from .present import present
 from warnings import warn
 import numpy as np
 

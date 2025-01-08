@@ -1,5 +1,5 @@
 import numpy as np
-from pyprima.common.consts import FUNCMAX, CONSTRMAX, REALMAX, DEBUGGING
+from .consts import FUNCMAX, CONSTRMAX, REALMAX, DEBUGGING
 
 # This is a module evaluating the objective/constraint function with Nan/Inf handling.
 

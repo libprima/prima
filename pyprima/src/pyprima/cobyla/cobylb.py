@@ -1,19 +1,19 @@
 import numpy as np
-from pyprima.common.checkbreak import checkbreak_con
-from pyprima.common.consts import REALMAX, EPS, DEBUGGING, MIN_MAXFILT
-from pyprima.common.infos import INFO_DEFAULT, MAXTR_REACHED, DAMAGING_ROUNDING, \
+from ..common.checkbreak import checkbreak_con
+from ..common.consts import REALMAX, EPS, DEBUGGING, MIN_MAXFILT
+from ..common.infos import INFO_DEFAULT, MAXTR_REACHED, DAMAGING_ROUNDING, \
                     SMALL_TR_RADIUS, CALLBACK_TERMINATE
-from pyprima.common.evaluate import evaluate
-from pyprima.common.history import savehist
-from pyprima.common.linalg import isinv
-from pyprima.common.message import fmsg, retmsg, rhomsg
-from pyprima.common.ratio import redrat
-from pyprima.common.redrho import redrho
-from pyprima.common.selectx import savefilt, selectx
-from pyprima.cobyla.update import updatepole, findpole, updatexfc
-from pyprima.cobyla.geometry import setdrop_tr, geostep
-from pyprima.cobyla.trustregion import trstlp, trrad
-from pyprima.cobyla.initialize import initxfc, initfilt
+from ..common.evaluate import evaluate
+from ..common.history import savehist
+from ..common.linalg import isinv
+from ..common.message import fmsg, retmsg, rhomsg
+from ..common.ratio import redrat
+from ..common.redrho import redrho
+from ..common.selectx import savefilt, selectx
+from .update import updatepole, findpole, updatexfc
+from .geometry import setdrop_tr, geostep
+from .trustregion import trstlp, trrad
+from .initialize import initxfc, initfilt
 
 
 def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta2,

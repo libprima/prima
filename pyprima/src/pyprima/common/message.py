@@ -1,8 +1,8 @@
-from pyprima.common.consts import DEBUGGING
-from pyprima.common.infos import FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, \
+from .consts import DEBUGGING
+from .infos import FTARGET_ACHIEVED, MAXFUN_REACHED, MAXTR_REACHED, \
     SMALL_TR_RADIUS, TRSUBP_FAILED, NAN_INF_F, NAN_INF_X, NAN_INF_MODEL, DAMAGING_ROUNDING, \
     NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT, CALLBACK_TERMINATE
-from pyprima.common.present import present
+from .present import present
 import numpy as np
 
 '''

@@ -1,4 +1,4 @@
-from pyprima.common.consts import DEBUGGING
+from .consts import DEBUGGING
 import numpy as np
 
 def redrho(rho_in, rhoend):

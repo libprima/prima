@@ -1,6 +1,6 @@
-from pyprima.common.consts import DEBUGGING
-from pyprima.common.infos import DAMAGING_ROUNDING, INFO_DEFAULT
-from pyprima.common.linalg import isinv
+from ..common.consts import DEBUGGING
+from ..common.infos import DAMAGING_ROUNDING, INFO_DEFAULT
+from ..common.linalg import isinv
 import numpy as np
 
 

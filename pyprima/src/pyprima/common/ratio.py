@@ -1,4 +1,4 @@
-from pyprima.common.consts import DEBUGGING, REALMAX
+from .consts import DEBUGGING, REALMAX
 import numpy as np
 
 def redrat(ared, pred, rshrink):

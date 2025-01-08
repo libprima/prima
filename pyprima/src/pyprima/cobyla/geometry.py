@@ -1,5 +1,5 @@
-from pyprima.common.consts import DEBUGGING
-from pyprima.common.linalg import isinv
+from ..common.consts import DEBUGGING
+from ..common.linalg import isinv
 import numpy as np
 
 

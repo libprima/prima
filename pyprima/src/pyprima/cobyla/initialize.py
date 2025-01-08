@@ -1,10 +1,10 @@
-from pyprima.common.checkbreak import checkbreak_con
-from pyprima.common.consts import DEBUGGING, REALMAX
-from pyprima.common.infos import INFO_DEFAULT
-from pyprima.common.evaluate import evaluate
-from pyprima.common.history import savehist
-from pyprima.common.message import fmsg
-from pyprima.common.selectx import savefilt
+from ..common.checkbreak import checkbreak_con
+from ..common.consts import DEBUGGING, REALMAX
+from ..common.infos import INFO_DEFAULT
+from ..common.evaluate import evaluate
+from ..common.history import savehist
+from ..common.message import fmsg
+from ..common.selectx import savefilt
 
 import numpy as np
 

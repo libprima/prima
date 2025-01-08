@@ -10,8 +10,8 @@ Python implementation by Nickolai Belakovski
 
 import numpy as np
 import numpy.typing as npt
-from pyprima.common.consts import DEBUGGING, EPS, CONSTRMAX, REALMAX, FUNCMAX
-from pyprima.common.present import present
+from .consts import DEBUGGING, EPS, CONSTRMAX, REALMAX, FUNCMAX
+from .present import present
 
 def isbetter(f1: float, c1: float, f2: float, c2: float, ctol: float) -> bool:
     '''

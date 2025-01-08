@@ -1,14 +1,14 @@
 # Bounds may appear unused in this file but we need to import it to make it available to the user
 from scipy.optimize import NonlinearConstraint, LinearConstraint, Bounds
-from pyprima.common._nonlinear_constraints import process_nl_constraints
-from pyprima.common._linear_constraints import (
+from .common._nonlinear_constraints import process_nl_constraints
+from .common._linear_constraints import (
     combine_multiple_linear_constraints,
     separate_LC_into_eq_and_ineq,
 )
-from pyprima.common._bounds import process_bounds
+from .common._bounds import process_bounds
 from enum import Enum
-from pyprima.common._project import _project
-from pyprima.cobyla.cobyla import cobyla
+from .common._project import _project
+from .cobyla.cobyla import cobyla
 import numpy as np
 
 

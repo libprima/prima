@@ -1,6 +1,6 @@
 import numpy as np
-from pyprima.common.consts import DEBUGGING, EPS, REALMAX, REALMIN
-from pyprima.common.present import present
+from .consts import DEBUGGING, EPS, REALMAX, REALMIN
+from .present import present
 
 def planerot(x):
     '''

@@ -1,12 +1,12 @@
-from pyprima.common.evaluate import evaluate, moderatex, moderatef, moderatec
-from pyprima.common.consts import (EPS, RHOBEG_DEFAULT, RHOEND_DEFAULT, CTOL_DEFAULT,
+from ..common.evaluate import evaluate, moderatex, moderatef, moderatec
+from ..common.consts import (EPS, RHOBEG_DEFAULT, RHOEND_DEFAULT, CTOL_DEFAULT,
                                    CWEIGHT_DEFAULT, FTARGET_DEFAULT, IPRINT_DEFAULT,
                                    MAXFUN_DIM_DEFAULT, DEBUGGING, BOUNDMAX,
                                    ETA1_DEFAULT, ETA2_DEFAULT, GAMMA1_DEFAULT,
                                    GAMMA2_DEFAULT)
-from pyprima.common.preproc import preproc
-from pyprima.common.present import present
-from pyprima.cobyla.cobylb import cobylb
+from ..common.preproc import preproc
+from ..common.present import present
+from .cobylb import cobylb
 import numpy as np
 from dataclasses import dataclass
 
