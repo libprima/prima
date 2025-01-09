@@ -153,7 +153,7 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
         phimax = max(phi)
         cref = max(cfilt_shifted[phi >= phimax])
         fref = max(ffilt[cfilt_shifted >= cref])
-        kworst = np.where(cfilt == max(cfilt[ffilt <= fref]))[0][0]
+        kworst = np.ma.array(cfilt, mask=(ffilt > fref)).argmax()
         if kworst < 0 or kworst >= len(keep):  #  For security. Should not happen.
             kworst = 0
         keep[kworst] = False
@@ -279,7 +279,8 @@ def selectx(fhist: npt.NDArray, chist: npt.NDArray, cweight: float, ctol: float)
         phimin = np.min(phi[np.logical_and(fhist < fref, chist_shifted <= cref)])
         cref = np.min(chist_shifted[np.logical_and(fhist < fref, phi <= phimin)])
         fref = np.min(fhist[chist_shifted <= cref])
-        kopt = np.argmin(chist[fhist <= fref])
+        # Can't use argmin here because using it with a mask throws off the index
+        kopt = np.ma.array(chist, mask=(fhist > fref)).argmin()
 
     #==================#
     # Calculation ends #

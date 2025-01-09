@@ -117,6 +117,5 @@ def qrexc_Rdiag(A, Q, Rdiag, i):  # Used in COBYLA
     # Calculate Rdiag(i:n) from scratch
     Rdiag[i:n-1] = [np.dot(Q[:, k], A[:, k+1]) for k in range(i, n-1)]
     Rdiag[n-1] = np.dot(Q[:, n-1], A[:, i])
-    # Rdiag = np.array(Rdiag)
 
     return Q, Rdiag

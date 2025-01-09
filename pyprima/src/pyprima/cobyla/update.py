@@ -124,14 +124,14 @@ def findpole(cpen, cval, fval):
     # Identify the optimal vertex of the current simplex
     jopt = np.size(fval) - 1
     phi = fval + cpen * cval
-    phimin = np.min(phi)
-    joptcandidate = np.argmin(phi)
-    if phi[joptcandidate] < phi[jopt]:
-        jopt = joptcandidate
-    if cpen <= 0 and any(cval < cval[jopt] & phi <= phimin):
-        # jopt is the index of the minimum value of cval
-        # on the set of cval values where phi <= phimin
-        jopt = np.where(cval == np.min(cval[phi <= phimin]))[0][0]
+    phimin = min(phi)
+    # Essentially jpt = np.argmin(phi). However, we keep jopt = num_vars unless there
+    # is a strictly better choice. When there are multiple choices, we choose the jopt
+    # with the smallest value of cval.
+    if phimin < phi[jopt] or any((cval < cval[jopt]) & (phi <= phi[jopt])):
+        # While we could use argmin(phi), there may be two places where phi achieves
+        # phimin, and in that case we should choose the one with the smallest cval.
+        jopt = np.ma.array(cval, mask=(phi > phimin)).argmin()
 
     #==================#
     # Calculation ends #
