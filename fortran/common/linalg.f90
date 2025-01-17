@@ -751,6 +751,7 @@ else
     ! This is NOT the best algorithm for the inverse, but since the QR subroutine is available ...
     call qr(A, Q, R, P)
     R = transpose(R) ! Take transpose to work on columns.
+    B = ZERO
     do i = n, 1, -1
         B(:, i) = (Q(:, i) - matprod(B(:, i + 1:n), R(i + 1:n, i))) / R(i, i)
     end do
