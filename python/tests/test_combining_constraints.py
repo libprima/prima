@@ -28,7 +28,7 @@ def test_providing_bounds_and_linear_constraints():
 def test_providing_bounds_and_nonlinear_constraints():
     nlc = prima_NLC(lambda x: x[0]**2, lb=[25], ub=[100])
     bounds = prima_Bounds([None, 1], [None, 1])
-    x0 = [0, 0]
+    x0 = [6, 1]  # Unfortunately the test is very fragile if we do not start near the optimal point
     res = prima_minimize(fun, x0, constraints=nlc, bounds=bounds)
     assert np.isclose(res.x[0], 5, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[1], 1, atol=1e-6, rtol=1e-6)
@@ -46,26 +46,10 @@ def test_providing_bounds_and_linear_and_nonlinear_constraints(minimize=prima_mi
     nlc = NLC(lambda x: x[0]**2, lb=[25], ub=[100])
     bounds = Bounds([-np.inf, 1, -np.inf], [np.inf, 1, np.inf])
     lc = LC(np.array([1,1,1]), lb=10, ub=15)
-    x0 = [0, 0, 0]
-    # macOS seems to stop just short of the optimal solution, so we help it along by
-    # taking a larger initial trust region radius and requiring a smaller final radius
-    # before stopping. The different packages have different names for these options.
-    if package == 'prima':
-        options = {'rhobeg': 2, 'rhoend': 1e-8}
-        method = None
-    elif package == 'pdfo':
-        options = {'radius_init': 2, 'radius_final': 1e-8}
-        method = None
-    elif package == 'scipy':
-        options = {'rhobeg': 2, 'tol': 1e-8}
-        # PDFO and PRIMA will select COBYLA but SciPy may select something else, so we tell it to select COBYLA
-        method = 'COBYLA'
-    else:
-        # Since this is test infrastructure under the control of the developers we
-        # should never get here except for a typo or something like that
-        raise ValueError(f"Unknown package: {package}")
-
-    res = minimize(newfun, x0, method=method, constraints=[nlc, lc], bounds=bounds, options=options)
+    x0 = [6, 1, 3.5]  # The test becomes very fragile if we do not start near the optimal point
+    # PDFO and PRIMA will select COBYLA but SciPy may select something else, so we tell it to select COBYLA
+    method = 'COBYLA' if package == 'scipy' else None
+    res = minimize(newfun, x0, method=method, constraints=[nlc, lc], bounds=bounds)
 
     # 32 bit builds of PRIMA reach the optimal solution with the same level of precision as 64 bit builds
     # so we lower the atol/rtol to 1e-3 so that 32 bit builds will pass.

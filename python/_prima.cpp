@@ -52,7 +52,7 @@ struct PRIMAResult {
         "nfev=" + std::to_string(nfev) + ", " +
         "maxcv=" + std::to_string(maxcv) + ", " +
         "nlconstr=" + std::string(pybind11::repr(nlconstr)) + ", " +
-        "method=" + "\'" + method + "\'" + ")";
+        "method=" + "\'" + method + "\'" +
         ")";
       return repr;
     }
@@ -325,9 +325,14 @@ PYBIND11_MODULE(_prima, m) {
       // Initialize the result, call the function, convert the return type, and return it.
       prima_result_t result;
       const prima_rc_t rc = prima_minimize(algorithm, problem, options, &result);
-      PRIMAResult result_copy(result, py_x0.size(), problem.m_nlcon, method.cast<std::string>());
-      prima_free_result(&result);
-      return result_copy;
+      if (rc == PRIMA_RC_DFT) {
+        PRIMAResult result_copy(result, py_x0.size(), problem.m_nlcon, method.cast<std::string>());
+        prima_free_result(&result);
+        return result_copy;
+      } else {
+        prima_free_result(&result);
+        throw std::runtime_error("PRIMA failed with error code " + std::to_string(rc));
+      }
     }, "fun"_a, "x0"_a, "args"_a=py::tuple(), "method"_a=py::none(),
            "lb"_a=py::none(), "ub"_a=py::none(), "A_eq"_a=py::none(), "b_eq"_a=py::none(),
            "A_ineq"_a=py::none(), "b_ineq"_a=py::none(),
