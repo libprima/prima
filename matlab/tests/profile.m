@@ -91,7 +91,7 @@ try
     if isfield(options, 'eval_options') && isstruct(options.eval_options) && ~isempty(fieldnames(options.eval_options))
         test_feature = [test_feature, '.', strjoin(fieldnames(options.eval_options), '_')];
         if isfield(options.eval_options, 'dnoise')
-            if isnumeric(options.eval_options.dnoise) && isscalar(options.eval_options)
+            if isnumeric(options.eval_options.dnoise) && isscalar(options.eval_options.dnoise)
                 dnoise_level = abs(options.eval_options.dnoise);
             elseif isstruct(options.eval_options.dnoise) && isfield(options.eval_options.dnoise, 'level')
                 dnoise_level = abs(options.eval_options.dnoise.level);
@@ -103,7 +103,7 @@ try
             end
         end
         if isfield(options.eval_options, 'noise')
-            if isnumeric(options.eval_options.noise) && isscalar(options.eval_options)
+            if isnumeric(options.eval_options.noise) && isscalar(options.eval_options.noise)
                 noise_level = abs(options.eval_options.noise);
             elseif isstruct(options.eval_options.noise) && isfield(options.eval_options.noise, 'level')
                 noise_level = abs(options.eval_options.noise.level);

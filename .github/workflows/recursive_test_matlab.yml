@@ -36,7 +36,7 @@ jobs:
 
       # The matrix is the same as that of stress_test_matlab.yml.
       matrix:
-        os: [ubuntu-20.04, ubuntu-latest, windows-2019, windows-latest, macos-11, macos-12, macos-13]
+        os: [ubuntu-20.04, ubuntu-latest, windows-2019, windows-latest, macos-12, macos-13]
         matlab: [R2020b, R2021a, R2022a, R2023a, latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
 
@@ -72,14 +72,6 @@ jobs:
           - os: macos-12
             matlab: R2021a
           - os: macos-12
-            matlab: R2023a
-
-          # macos-11: test R2022a and latest
-          - os: macos-11
-            matlab: R2020b
-          - os: macos-11
-            matlab: R2021a
-          - os: macos-11
             matlab: R2023a
 
           # windows-latest: test R2023a and latest

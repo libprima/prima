@@ -20,24 +20,25 @@ fi
 TEST_ALL="N"
 CLEAN="N"
 
-# af95 does not support internal subroutine as an actual argument. So it is not included
-# sunf95 is case sensitive. Put it as the first.
+# Decide the list of tests to make.
 # N.B.: () defines an array
-COMPILER_LIST=(sunf95 gfortran nagfor g95 ifort nvfortran flang aflang ifx)
-CLIST=(s g n 9 i v f d x)
+# sunf95 is case sensitive. Put it as the first.
+COMPILER_LIST=(sunf95 gfortran nagfor g95 ifort nvfortran ifx)
+CLIST=(s g n 9 i v x)
 COMP_LIST=""
 for i in "${!COMPILER_LIST[@]}"; do
     if type "${COMPILER_LIST[$i]}" &> /dev/null ; then
-        if [[ "${COMPILER_LIST[$i]}" == "flang" ]] ; then
-            # Do not make ftest if flang is provided by ARM or AMD; rtest and dtest should be made instead.
-            if ! type "${COMPILER_LIST[$i]}" | grep -q '\/opt\/arm\|\/opt\/AMD' ; then
-                COMP_LIST="$COMP_LIST ${CLIST[$i]}"
-            fi
-        else
-            COMP_LIST="$COMP_LIST ${CLIST[$i]}"
-        fi
+        COMP_LIST="$COMP_LIST ${CLIST[$i]}"
     fi
 done
+# Do not make ftest if flang is provided by ARM or AMD; rtest and dtest should be made instead.
+if type flang &> /dev/null && ! type "${COMPILER_LIST[$i]}" | grep -q '\/opt\/arm\|\/opt\/AMD' ; then
+    COMP_LIST="$COMP_LIST f"
+fi
+# Make dtest if AOCC flang is installed.
+if [[ -n "$(find -L /opt/AMD -type f -executable -name flang -print 2>/dev/null)" ]] ; then
+    COMP_LIST="$COMP_LIST d"
+fi
 
 # Parse the arguments
 while [[ -n "$1" ]]; do
