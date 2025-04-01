@@ -169,7 +169,7 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/../../../install/lib ./install/bin/cobyla_
 #### Python
 
 - An [interface](./python) is provided for [using the **modern** Fortran implementation in Python](./python/examples/rosenbrock.py).
-- SciPy 1.16.0 replaces the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla) with the PRIMA version, which is a **faithful** Python translation of the **[modern Fortran implementation](./fortran)**.
+- SciPy 1.16.0 replaces the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla) with the PRIMA version, which is a **faithful** Python translation of the **[modern Fortran implementation](./fortran/cobyla)**.
 
 #### MATLAB
 
@@ -192,6 +192,9 @@ It is registered in the General Registry of Julia as
 - Given the **modern** Fortran version, **native implementations** in other languages
 become **much easier**, because we now have a structured and modularized implementation as a reference.
 My team will implement the methods in other languages in this way.
+For instance, see the [MATLAB version of NEWUOA](https://github.com/libprima/prima/blob/main/matlab/interfaces/%2Bnewuoa_mat)
+and the [Python version of COBYLA](https://github.com/libprima/prima/tree/main/pyprima/src/pyprima/cobyla)
+([included in SciPy](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla) since 1.16.0).
 This is the main motivation for developing the **modern** Fortran version first &mdash;
 to provide a modernized reference implementation for the development in other languages.
 
@@ -434,7 +437,7 @@ Zaikun Zhang](https://www.zhangzk.net).
 
 ### <a href="https://star-history.com/#libprima/prima&Date">Star history</a>
 
-[stardev](https://stardev.io/) ranking: [28 among 30,975](https://stardev.io/top/repos/fortran?developer=libprima&repo=prima) Fortran repos as of Jan. 2024.
+[stardev](https://stardev.io/) ranking: [28 among 37,983](https://stardev.io/top/repos/fortran?developer=libprima&repo=prima) Fortran repos as of April 2025.
 
 <img src="https://api.star-history.com/svg?repos=libprima/prima&type=Date">
 
