@@ -396,8 +396,8 @@ Department of Applied Mathematics and Theoretical Physics, Cambridge
 University, Cambridge, UK, 2009
 
 [6] T. M. Ragonneau and Z. Zhang,
-[PDFO: a cross-platform package for Powell's derivative-free optimization solvers](https://arxiv.org/pdf/2302.13246.pdf),
-arXiv:2302.13246, 2023
+[PDFO: a cross-platform package for Powell's derivative-free optimization solvers](https://link.springer.com/article/10.1007/s12532-024-00257-9),
+Math. Program. Comput., 16:535--559, 2024
 
 
 **Remarks**
@@ -406,8 +406,8 @@ arXiv:2302.13246, 2023
 linear inequality constraints without using derivatives of the objective
 function. Powell did not publish a paper to introduce the algorithm.
 
-- [The paper [6]](https://arxiv.org/pdf/2302.13246.pdf) introduces [the PDFO package](https://www.pdfo.net)
-rather than PRIMA. Nevertheless, it provides a good introduction to Powell's methods.
+- [The paper [6]](https://link.springer.com/article/10.1007/s12532-024-00257-9) introduces [the PDFO package](https://www.pdfo.net)
+rather than PRIMA. Nevertheless, it provides probably the most accessible introduction to Powell's methods.
 
 
 ### Charityware
