@@ -1,3 +1,7 @@
+**Code must be battle-tested before becoming software.**
+The development of PRIMA is driven by [intensive and extensive tests](https://github.com/orgs/libprima/discussions/39)
+automated by [GitHub Actions](https://docs.github.com/en/actions).
+
 Since each GitHub Team account can only run at most 60 GitHub Actions workflows concurrently, I have
 to distribute this large amount of tests to multiple Team accounts as follows.
 

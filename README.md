@@ -113,7 +113,8 @@ periodically to verify that the solvers work correctly without running into erro
 **excessively large problems**.
 
 [The tests](./tests.md) are **automated** by
-[GitHub Actions](https://docs.github.com/en/actions). As of August 2023, more than
+[GitHub Actions](https://docs.github.com/en/actions).
+As of August 2023, more than
 45,000 "workflows" have been successfully run by GitHub Actions. Normally, each workflow consists of \~ 5
 ([sometimes more than 200](https://github.com/primalib/prima/actions/runs/5763631681))
 **randomized** tests,
@@ -329,20 +330,18 @@ I did this for three years and I do not want anyone else to do it again.
 PRIMA is dedicated to the memory of the late [Professor Powell](https://www.zhangzk.net/powell.html) with gratitude for his inspiration and
 for the wealth he left to us.
 
-I am grateful to [Professor Ya-xiang Yuan](http://lsec.cc.ac.cn/~yyx) for his everlasting encouragement and support.
+I am profoundly grateful to [Professor Ya-xiang Yuan](http://lsec.cc.ac.cn/~yyx) for his everlasting encouragement and support.
 
 During the years working on PRIMA, due to the gap in my publication record, I needed a lot of
 support from the optimization community and beyond.
 **Thank you for help, known or unknown to me, explicit or implicit, without which I would not have survived.**
 
 The development of PRIMA would have been a mission impossible without the groundwork laid by the [PDFO](https://www.pdfo.net)
-package of [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang. PDFO is Chapter 3 of
-Ragonneau's [thesis](https://tomragonneau.com/documents/thesis.pdf) co-supervised by Zaikun Zhang and Professor [Xiaojun Chen](https://www.polyu.edu.hk/ama/staff/xjchen/ChenXJ.htm), with financial support from
-the [Hong Kong Ph.D. Fellowship Scheme](https://cerg1.ugc.edu.hk/hkpfs/index.html) (ref. PF18-24698).
+package of [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang.
 
 PRIMA is a long-term project, which would not have been sustainable without the continued funds from the
 [National Natural Science Foundation of China](https://www.nsfc.gov.cn/english/site_1/index.html) (NSFC),
-[Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) (RGC,
+[Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) (RGC;
 ref. PolyU 253012/17P, PolyU 153054/20P, PolyU 153066/21P, and PolyU 153086/23P)
 [Sun Yat-sen University](https://en.wikipedia.org/wiki/Sun_Yat-sen_University)
 (particularly the [School of Mathematics](https://math.sysu.edu.cn/page/25)), and
@@ -356,7 +355,7 @@ from the open-source community.
 
 PRIMA has taken me significant energy and time. I will be delighted if it is useful to you. All I need is a citation / acknowledgment,
 **which is crucial for the sustainability of the project, as software development is not well recognized in academia despite
-its importance and the significant efforts it requires**.
+[its importance](https://xkcd.com/2347/) and the significant efforts it requires**.
 
 Note that PRIMA contains [bug fixes](#bug-fixes) and [improvements](#improvements) that do not exist in Powell's Fortran 77
 implementation of the solvers. Results produced by PRIMA are surely different from Powell's original solvers. Therefore,
@@ -365,7 +364,8 @@ It is wrong to pretend that PRIMA is just Powell's original solvers.
 
 If you use PRIMA, please cite it as follows. The citation will be pointed to my paper on PRIMA when I finish it.
 
-[1] Z. Zhang, PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration, available at http://www.libprima.net, [DOI: 10.5281/zenodo.8052654](https://doi.org/10.5281/zenodo.8052654), 2023
+[1] Z. Zhang, PRIMA: Reference Implementation for Powell's Methods with Modernization and Amelioration,
+available at https://www.libprima.net, [DOI: 10.5281/zenodo.8052654](https://doi.org/10.5281/zenodo.8052654), 2023
 
 ```bibtex
 @misc{Zhang_2023,
@@ -397,7 +397,7 @@ University, Cambridge, UK, 2009
 
 [6] T. M. Ragonneau and Z. Zhang,
 [PDFO: a cross-platform package for Powell's derivative-free optimization solvers](https://link.springer.com/article/10.1007/s12532-024-00257-9),
-Math. Program. Comput., 16:535--559, 2024
+*Math. Program. Comput.*, 16:535--559, 2024
 
 
 **Remarks**
