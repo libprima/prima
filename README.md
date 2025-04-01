@@ -379,8 +379,8 @@ available at https://www.libprima.net, [DOI: 10.5281/zenodo.8052654](https://doi
 In addition, Powell’s methods can be cited as follows.
 
 [2] M. J. D. Powell, A direct search optimization method that models the
-objective and constraint functions by linear interpolation, In Advances
-in *Optimization and Numerical Analysis*, *eds.* S. Gomez and J. P. Hennart,
+objective and constraint functions by linear interpolation,
+In *Advances in Optimization and Numerical Analysis*, *eds.* S. Gomez and J. P. Hennart,
 pages 51--67, Springer Verlag, Dordrecht, Netherlands, 1994
 
 [3] M. J. D. Powell, UOBYQA: unconstrained optimization by quadratic
