@@ -355,12 +355,13 @@ from the open-source community.
 ### Citing PRIMA
 
 PRIMA has taken me significant energy and time. I will be delighted if it is useful to you. All I need is a citation / acknowledgment,
-which is crucial for the sustainability of the project, as software development is not well recognized in academia despite
-its importance and the efforts it requires.
+**which is crucial for the sustainability of the project, as software development is not well recognized in academia despite
+its importance and the significant efforts it requires**.
 
-Note that PRIMA contains [bug fixes](#bug-fixes) and [improvements](#improvements) that do not exist in Powell's original
+Note that PRIMA contains [bug fixes](#bug-fixes) and [improvements](#improvements) that do not exist in Powell's Fortran 77
 implementation of the solvers. Results produced by PRIMA are surely different from Powell's original solvers. Therefore,
-it is important to point out that you are using PRIMA rather than the original solvers if you want your results to be reproducible.
+**it is important to point out that you are using PRIMA rather than the original solvers if you want your results to be reproducible**.
+It is wrong to pretend that PRIMA is just Powell's original solvers.
 
 If you use PRIMA, please cite it as follows. The citation will be pointed to my paper on PRIMA when I finish it.
 
