@@ -33,10 +33,6 @@ It provides the reference implementation for Powell's renowned derivative-free o
 The "P" in the name stands for [**P**owell](https://www.zhangzk.net/powell.html),
 and "RIMA" is an acronym for "**R**eference **I**mplementation with **M**odernization and **A**melioration".
 
-PRIMA is part of a research project funded by the
-[Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) and
-the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA) at the
-[Hong Kong Polytechnic University](https://www.polyu.edu.hk) (PolyU).
 The current version is ready to be used [in Fortran](#modern-fortran), [in C](#c),
 [in Python](https://github.com/libprima/prima#python),
 [in MATLAB](https://github.com/libprima/prima/blob/main/README_mat.md),
@@ -116,7 +112,7 @@ evaluations](https://github.com/libprima/prima/blob/main/matlab/tests/private/to
 periodically to verify that the solvers work correctly without running into errors when applied to
 **excessively large problems**.
 
-The tests are **automated** by
+[The tests](./tests.md) are **automated** by
 [GitHub Actions](https://docs.github.com/en/actions). As of August 2023, more than
 45,000 "workflows" have been successfully run by GitHub Actions. Normally, each workflow consists of \~ 5
 ([sometimes more than 200](https://github.com/primalib/prima/actions/runs/5763631681))
@@ -125,103 +121,6 @@ each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the test will be canceled automatically). In other words,
 PRIMA has been verified by more than 200,000 hours (or **more than 20 years**) of randomized tests.
 **Code must be battle-tested before becoming software.**
-
-Since each GitHub Team account can only run at most 60 GitHub Actions workflows concurrently, I have
-to distribute this large amount of tests to multiple Team accounts as follows.
-
-- [Tests](https://github.com/libprima/prima/actions) at [libprima/prima](https://github.com/libprima/prima)
-
-    - [![CMake build](https://github.com/libprima/prima/actions/workflows/cmake.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake.yml)
-    - [![CMake build, nagfor](https://github.com/libprima/prima/actions/workflows/cmake_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake_nagfor.yml)
-    - [![CMake build, macOS ARM64](https://github.com/libprima/prima/actions/workflows/cmake_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake_mac.yml)
-    - [![CMake build, macOS ARM64, nagfor](https://github.com/libprima/prima/actions/workflows/cmake_mac_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake_mac_nagfor.yml)
-    - [![Test nagfor, macOS ARM64](https://github.com/libprima/prima/actions/workflows/test_nagfor_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor_mac.yml)
-    - [![Test matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_matlab_mac.yml)
-    - [![Stress test, matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/stress_test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/stress_test_matlab_mac.yml)
-    - [![Parallel test, matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/parallel_test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/parallel_test_matlab_mac.yml)
-    - [![Recursive test, matlab, macOS ARM64](https://github.com/libprima/prima/actions/workflows/recursive_test_matlab_mac.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/recursive_test_matlab_mac.yml)
-    - [![Test nagfor](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/test_nagfor.yml)
-    - [![Build Python wheels](https://github.com/libprima/prima/actions/workflows/build_python.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/build_python.yml)
-    - [![Compile MEX](https://github.com/libprima/prima/actions/workflows/compile_mex.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/compile_mex.yml)
-    - [![Lint the Fortran code and the MEX gateways with nagfor](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/lint_nagfor.yml)
-
-- <a name="verification"></a> [Tests](https://github.com/libsprima/prima/actions) at [libsprima/prima](https://github.com/libsprima/prima)
-    - [![Verification, small](https://github.com/libsprima/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_small.yml)
-    - [![Verification, big](https://github.com/libsprima/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_big.yml)
-    - [![Verification, large](https://github.com/libsprima/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_large.yml)
-    - [![Plot performance profiles for lincoa](https://github.com/libsprima/prima/actions/workflows/profile_lincoa_small.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/profile_lincoa_small.yml)
-
-- <a name="profiling"></a> [Tests](https://github.com/primapack/prima/actions) at [primapack/prima](https://github.com/primapack/prima)
-
-    - [![Plot performance profiles for cobyla, small](https://github.com/primapack/prima/actions/workflows/profile_cobyla_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_cobyla_small.yml)
-    - [![Plot performance profiles for uobyqa, small](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml)
-    - [![Plot performance profiles for newuoa, small](https://github.com/primapack/prima/actions/workflows/profile_newuoa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_newuoa_small.yml)
-    - [![Plot performance profiles for bobyqa, small](https://github.com/primapack/prima/actions/workflows/profile_bobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_bobyqa_small.yml)
-    - [![Plot performance profiles for PRIMA, small](https://github.com/primapack/prima/actions/workflows/profile_prima_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_prima_small.yml)
-
-- [Tests](https://github.com/fortlab/prima/actions) at [fortlab/prima](https://github.com/fortlab/prima)
-
-    - [![Plot performance profiles for all problems, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_all_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_all_sq.yml)
-    - [![Plot performance profiles for cobyla, small, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_cobyla_small_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_cobyla_small_sq.yml)
-    - [![Plot performance profiles for uobyqa, small, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_uobyqa_small_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_uobyqa_small_sq.yml)
-    - [![Plot performance profiles for newuoa, small, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_newuoa_small_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_newuoa_small_sq.yml)
-    - [![Plot performance profiles for bobyqa, small, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_bobyqa_small_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_bobyqa_small_sq.yml)
-    - [![Plot performance profiles for lincoa, small, single and quadruple](https://github.com/fortlab/prima/actions/workflows/profile_lincoa_small_sq.yml/badge.svg)](https://github.com/fortlab/prima/actions/workflows/profile_lincoa_small_sq.yml)
-
-- [Tests](https://github.com/primalib/prima/actions) at [primalib/prima](https://github.com/primalib/prima)
-
-    - [![Verification, archiva](https://github.com/primalib/prima/actions/workflows/verify_archiva.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/verify_archiva.yml)
-    - [![Plot performance profiles for all problems](https://github.com/primalib/prima/actions/workflows/profile_all.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_all.yml)
-    - [![Plot performance profiles, single](https://github.com/primalib/prima/actions/workflows/profile_single.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_single.yml)
-    - [![Plot performance profiles, quadruple](https://github.com/primalib/prima/actions/workflows/profile_quadruple.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_quadruple.yml)
-    - [![Plot performance profiles, int16 and int64](https://github.com/primalib/prima/actions/workflows/profile_integer_kind.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_integer_kind.yml)
-    - [![Plot performance profiles, infnan](https://github.com/primalib/prima/actions/workflows/profile_infnan.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_infnan.yml)
-    - [![Plot performance profiles, various compiler options](https://github.com/primalib/prima/actions/workflows/profile_compiler_options.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_compiler_options.yml)
-    - [![Plot performance profiles, various npt](https://github.com/primalib/prima/actions/workflows/profile_npt.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_npt.yml)
-
-- [Tests](https://github.com/opt4ai/prima/actions) at [opt4ai/prima](https://github.com/opt4ai/prima)
-
-    - [![Test MATLAB](https://github.com/opt4ai/prima/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab.yml)
-    - [![Test MATLAB, Linux](https://github.com/opt4ai/prima/actions/workflows/test_matlab_linux.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab_linux.yml)
-
-- [Tests](https://github.com/opt2ai/prima/actions) at [opt2ai/prima](https://github.com/opt2ai/prima)
-
-    - [![Test MATLAB, macOS Intel](https://github.com/opt2ai/prima/actions/workflows/test_matlab_mac_intel.yml/badge.svg)](https://github.com/opt2ai/prima/actions/workflows/test_matlab_mac_intel.yml)
-    - [![Test MATLAB, Windows](https://github.com/opt2ai/prima/actions/workflows/test_matlab_windows.yml/badge.svg)](https://github.com/opt2ai/prima/actions/workflows/test_matlab_windows.yml)
-
-- [Tests](https://github.com/sprimalib/prima/actions) at [sprimalib/prima](https://github.com/sprimalib/prima)<a name="stress-tests"></a>
-
-    - <a name="stress"></a>[![Stress test on large problems, MATLAB](https://github.com/sprimalib/prima/actions/workflows/stress_test_matlab.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/stress_test_matlab.yml)
-    - [![Stress test on large problems, Fortran](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml)
-
-- [Tests](https://github.com/zequipe/prima/actions) at [zequipe/prima](https://github.com/zequipe/prima)
-    - [![Parallel test, MATLAB](https://github.com/zequipe/prima/actions/workflows/parallel_test_matlab.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/parallel_test_matlab.yml)
-    - [![Recursive test, MATLAB](https://github.com/zequipe/prima/actions/workflows/recursive_test_matlab.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/recursive_test_matlab.yml)
-    - [![Test Flang](https://github.com/zequipe/prima/actions/workflows/test_flang.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_flang.yml)
-    - [![Test Flang in AMD AOCC](https://github.com/zequipe/prima/actions/workflows/test_aflang.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_aflang.yml)
-    - [![Test nvfortran](https://github.com/zequipe/prima/actions/workflows/test_nvfortran.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_nvfortran.yml)
-    - [![Test Oracle sunf95](https://github.com/zequipe/prima/actions/workflows/test_sunf95.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_sunf95.yml)
-    - [![Test g95](https://github.com/zequipe/prima/actions/workflows/test_g95.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_g95.yml)
-    - [![Test RESCUE and IDZ, classical](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_classical.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_classical.yml)
-    - [![Test RESCUE and IDZ, modernized](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_modernized.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_modernized.yml)
-
-- [Tests](https://github.com/equipez/prima/actions) at [equipez/prima](https://github.com/equipez/prima)
-    - [![Test gfortran on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_kunpeng.yml)
-    - [![Test Flang on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_flang_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_flang_kunpeng.yml)
-    - [![Test nvfortran on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_nvfortran_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_nvfortran_kunpeng.yml)
-    - [![Test armflang on Kunpeng](https://github.com/equipez/prima/actions/workflows/test_armflang_kunpeng.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_armflang_kunpeng.yml)
-    - [![CMake build on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/cmake_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/cmake_pi.yml)
-    - [![Test gfortran on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64.yml)
-    - [![Test Flang on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_flang_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_flang_pi.yml)
-    - [![Test armflang on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_armflang_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_armflang_pi.yml)
-    - [![Test nvfortran on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_nvfortran_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_nvfortran_pi.yml)
-
-- [Tests](https://github.com/s-prima/prima/actions) at [s-prima/prima](https://github.com/s-prima/prima)
-
-    - [![Lint the Fortran code and the MEX gateways on GitHub hosted runners](https://github.com/s-prima/prima/actions/workflows/lint_hosted.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/lint_hosted.yml)
-    - [![Test gfortran](https://github.com/s-prima/prima/actions/workflows/test_gfortran.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_gfortran.yml)
-    - [![Test ifort](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifort.yml)
-    - [![Test ifx](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml/badge.svg)](https://github.com/s-prima/prima/actions/workflows/test_ifx.yml)
 
 
 ### Current status
@@ -270,8 +169,7 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/../../../install/lib ./install/bin/cobyla_
 #### Python
 
 - An [interface](./python) is provided for [using the **modern** Fortran implementation in Python](./python/examples/rosenbrock.py).
-- The inclusion of PRIMA into SciPy is [under discussion](https://github.com/scipy/scipy/issues/18118). It will replace the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla), and make the other four solvers available to all SciPy users.
-- A [native Python implementation of PRIMA](https://github.com/libprima/prima/pull/37) is under development.
+- SciPy 1.16.0 replaces the [buggy](#bug-fixes) and unmaintained Fortran 77 version of [COBYLA underlying `scipy.optimize.minimize`](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html#optimize-minimize-cobyla) with the PRIMA version, which is a **faithful** Python translation of the **[modern Fortran implementation](./fortran)**.
 
 #### MATLAB
 
@@ -282,6 +180,7 @@ LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/../../../install/lib ./install/bin/cobyla_
   implemented in MATLAB similarly.
 
 #### Julia
+
 - A [Julia interface](https://juliahub.com/ui/Packages/General/PRIMA) is provided
 by [`PRIMA.jl`](https://github.com/libprima/prima.jl).
 It is registered in the General Registry of Julia as
@@ -429,22 +328,36 @@ for the wealth he left to us.
 
 I am grateful to [Professor Ya-xiang Yuan](http://lsec.cc.ac.cn/~yyx) for his everlasting encouragement and support.
 
+During the years working on PRIMA, due to the gap in my publication record, I needed a lot of
+support from the optimization community and beyond.
+**Thank you for help, known or unknown to me, explicit or implicit, without which I would not have survived.**
+
 The development of PRIMA would have been a mission impossible without the groundwork laid by the [PDFO](https://www.pdfo.net)
 package of [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang. PDFO is Chapter 3 of
 Ragonneau's [thesis](https://tomragonneau.com/documents/thesis.pdf) co-supervised by Zaikun Zhang and Professor [Xiaojun Chen](https://www.polyu.edu.hk/ama/staff/xjchen/ChenXJ.htm), with financial support from
 the [Hong Kong Ph.D. Fellowship Scheme](https://cerg1.ugc.edu.hk/hkpfs/index.html) (ref. PF18-24698).
 
 PRIMA is a long-term project, which would not have been sustainable without the continued funds from the
-[Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc/) (ref. PolyU 253012/17P, PolyU 153054/20P,
-PolyU 153066/21P, and PolyU 153086/23P) and [The Hong Kong Polytechnic University](https://www.polyu.edu.hk/) (PolyU),
-in particular the [Department of Applied Mathematics](https://www.polyu.edu.hk/ama) (AMA).
+[National Natural Science Foundation of China](https://www.nsfc.gov.cn/english/site_1/index.html) (NSFC),
+[Hong Kong Research Grants Council](https://www.ugc.edu.hk/eng/rgc) (RGC,
+ref. PolyU 253012/17P, PolyU 153054/20P, PolyU 153066/21P, and PolyU 153086/23P)
+[Sun Yat-sen University](https://en.wikipedia.org/wiki/Sun_Yat-sen_University)
+(particularly the [School of Mathematics](https://math.sysu.edu.cn/page/25)), and
+[The Hong Kong Polytechnic University](https://www.polyu.edu.hk) (particularly the
+[Department of Applied Mathematics](https://www.polyu.edu.hk/ama)).
 
+Last but not least, I am deeply grateful to the [contributors](https://github.com/libprima/prima/graphs/contributors)
+from the open-source community.
 
 ### Citing PRIMA
 
-PRIMA has taken me significant energy and time. I will be delighted if it is useful to you. All I need is a citation / acknowledgment.
+PRIMA has taken me significant energy and time. I will be delighted if it is useful to you. All I need is a citation / acknowledgment,
+which is crucial for the sustainability of the project, as software development is not well recognized in academia despite
+its importance and the efforts it requires.
+
 Note that PRIMA contains [bug fixes](#bug-fixes) and [improvements](#improvements) that do not exist in Powell's original
-implementation of the solvers. Results produced by PRIMA may not be reproducible using the original solvers.
+implementation of the solvers. Results produced by PRIMA are surely different from Powell's original solvers. Therefore,
+it is important to point out that you are using PRIMA rather than the original solvers if you want your results to be reproducible.
 
 If you use PRIMA, please cite it as follows. The citation will be pointed to my paper on PRIMA when I finish it.
 
