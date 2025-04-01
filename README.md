@@ -39,7 +39,7 @@ The current version is ready to be used [in Fortran](#modern-fortran), [in C](#c
 and [in Julia](https://juliahub.com/ui/Packages/General/PRIMA).
 
 PRIMA was initiated by [Zaikun Zhang](https://www.zhangzk.net) in July 2020, based on
-the [PDFO](https://www.pdfo.net) package by [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang.
+the [PDFO](https://www.pdfo.net) package.
 
 See [Zaikun Zhang's talk](https://raw.githubusercontent.com/ztalks/20230825-iciam23/main/20230825-iciam.pdf)
 on PRIMA at [The 10th International Congress on Industrial and Applied Mathematics](https://iciam2023.org/) for more information.
