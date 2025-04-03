@@ -248,9 +248,9 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
             if (is_constrained):
                 warn(f'{solver}: Invalid CWEIGHT; it should be a nonnegative number; it is set to {cweight}')
 
-    #====================!
-    #  Calculation ends  !
-    #====================!
+    #====================#
+    #  Calculation ends  #
+    #====================#
 
     # Postconditions
     if DEBUGGING:

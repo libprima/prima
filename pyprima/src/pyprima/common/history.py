@@ -1,6 +1,6 @@
 '''
 This module provides subroutines that handle the X/F/C histories of the solver, taking into
-! account that MAXHIST may be smaller than NF.
+account that MAXHIST may be smaller than NF.
 
 Translated from the modern-Fortran reference implementation in PRIMA by Zaikun ZHANG (www.zhangzk.net).
 

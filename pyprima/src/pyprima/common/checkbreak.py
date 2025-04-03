@@ -8,15 +8,6 @@ Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 Python implementation by Nickolai Belakovski
 '''
 
-from ..common.evaluate import evaluate, moderatex, moderatef, moderatec
-from ..common.consts import (EPS, RHOBEG_DEFAULT, RHOEND_DEFAULT, CTOL_DEFAULT,
-                                   CWEIGHT_DEFAULT, FTARGET_DEFAULT, IPRINT_DEFAULT,
-                                   MAXFUN_DIM_DEFAULT, DEBUGGING, BOUNDMAX,
-                                   ETA1_DEFAULT, ETA2_DEFAULT, GAMMA1_DEFAULT,
-                                   GAMMA2_DEFAULT)
-from ..common.preproc import preproc
-from ..common.present import present
-from ..common.linalg import matprod
 from .infos import INFO_DEFAULT, NAN_INF_X, NAN_INF_F, FTARGET_ACHIEVED, MAXFUN_REACHED
 
 import numpy as np
