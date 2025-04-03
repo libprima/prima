@@ -6,15 +6,15 @@ module evaluate_mod
 !
 ! Started: August 2021
 !
-! Last Modified: Monday, September 25, 2023 PM08:52:04
+! Last Modified: Thu 03 Apr 2025 05:48:45 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
 private
-public :: moderatex
-public :: moderatef
-public :: moderatec
-public :: evaluate
+public:: moderatex
+public:: moderatef
+public:: moderatec
+public:: evaluate
 
 interface evaluate
     module procedure evaluatef, evaluatefc
@@ -28,15 +28,15 @@ function moderatex(x) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function moderates a decision variable. It replaces NaN by 0 and Inf/-Inf by REALMAX/-REALMAX.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ZERO, REALMAX
-use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: linalg_mod, only : trueloc
+use, non_intrinsic:: consts_mod, only : RP, ZERO, REALMAX
+use, non_intrinsic:: infnan_mod, only : is_nan
+use, non_intrinsic:: linalg_mod, only : trueloc
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: x(:)
+real(RP), intent(in):: x(:)
 ! Outputs
-real(RP) :: y(size(x))
+real(RP):: y(size(x))
 
 y = x
 y(trueloc(is_nan(x))) = ZERO
@@ -49,14 +49,14 @@ pure elemental function moderatef(f) result(y)
 ! This function moderates the function value of a MINIMIZATION problem. It replaces NaN and any
 ! value above FUNCMAX by FUNCMAX.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, REALMAX, FUNCMAX
-use, non_intrinsic :: infnan_mod, only : is_nan
+use, non_intrinsic:: consts_mod, only : RP, REALMAX, FUNCMAX
+use, non_intrinsic:: infnan_mod, only : is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: f
+real(RP), intent(in):: f
 ! Outputs
-real(RP) :: y
+real(RP):: y
 
 y = f
 if (is_nan(y)) then
@@ -71,18 +71,18 @@ end function moderatef
 function moderatec(c) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function moderates the constraint value, the constraint demanding this value to be NONNEGATIVE.
-! It replaces any value below -CONSTRMAX by -CONSTRMAX, and any NaN or value above CONSTRMAX by
+! It replaces any value below-CONSTRMAX by-CONSTRMAX, and any NaN or value above CONSTRMAX by
 ! CONSTRMAX.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, CONSTRMAX
-use, non_intrinsic :: infnan_mod, only : is_nan
-use, non_intrinsic :: linalg_mod, only : trueloc
+use, non_intrinsic:: consts_mod, only : RP, CONSTRMAX
+use, non_intrinsic:: infnan_mod, only : is_nan
+use, non_intrinsic:: linalg_mod, only : trueloc
 implicit none
 
 ! Inputs
-real(RP), intent(in) :: c(:)
+real(RP), intent(in):: c(:)
 ! Outputs
-real(RP) :: y(size(c))
+real(RP):: y(size(c))
 
 y = c
 y(trueloc(is_nan(c))) = CONSTRMAX
@@ -96,21 +96,21 @@ subroutine evaluatef(calfun, x, f)
 ! handled by a moderated extreme barrier.
 !--------------------------------------------------------------------------------------------------!
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: pintrf_mod, only : OBJ
+use, non_intrinsic:: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic:: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic:: pintrf_mod, only : OBJ
 implicit none
 
 ! Inputs
-procedure(OBJ) :: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
-real(RP), intent(in) :: x(:)
+procedure(OBJ):: calfun  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
+real(RP), intent(in):: x(:)
 
 ! Output
-real(RP), intent(out) :: f
+real(RP), intent(out):: f
 
 ! Local variables
-character(len=*), parameter :: srname = 'EVALUATEF'
+character(len=*), parameter:: srname = 'EVALUATEF'
 
 ! Preconditions
 if (DEBUGGING) then
@@ -154,22 +154,22 @@ subroutine evaluatefc(calcfc, x, f, constr)
 ! constraint value. Nan/Inf are handled by a moderated extreme barrier.
 !--------------------------------------------------------------------------------------------------!
 ! Common modules
-use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf
-use, non_intrinsic :: pintrf_mod, only : OBJCON
+use, non_intrinsic:: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic:: infnan_mod, only : is_nan, is_posinf
+use, non_intrinsic:: pintrf_mod, only : OBJCON
 implicit none
 
 ! Inputs
-procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
-real(RP), intent(in) :: x(:)
+procedure(OBJCON):: calcfc  ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
+real(RP), intent(in):: x(:)
 
 ! Outputs
-real(RP), intent(out) :: f
-real(RP), intent(out) :: constr(:)
+real(RP), intent(out):: f
+real(RP), intent(out):: constr(:)
 
 ! Local variables
-character(len=*), parameter :: srname = 'EVALUATEFC'
+character(len=*), parameter:: srname = 'EVALUATEFC'
 
 ! Preconditions
 if (DEBUGGING) then

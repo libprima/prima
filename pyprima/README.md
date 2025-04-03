@@ -8,7 +8,7 @@ If you notice a difference, [raise an issue](https://github.com/libprima/prima/i
 
 Due to [bug-fixes](https://github.com/libprima/prima#bug-fixes) and [improvements](https://github.com/libprima/prima#improvements),
 the modern-Fortran reference implementation by [Zaikun Zhang](https://www.zhangzk.net)
-behaves differently from the original Fortran 77 implementation by [M.J.D. Powell](https://www.zhangzk.net/powell.html),
+behaves differently from the original Fortran 77 implementation by [M. J. D. Powell](https://www.zhangzk.net/powell.html),
 even though the algorithms are essentially the same. Therefore, it is important to point out that you are using
 PRIMA rather than the original solvers if you want your results to be reproducible.
 
