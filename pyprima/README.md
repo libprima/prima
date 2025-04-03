@@ -2,8 +2,8 @@
 
 This is a Python translation of the [modern-Fortran reference implementation](https://github.com/libprima/prima/tree/main/fortran)
 for Powell's derivative-free optimization solvers, which is available at `fortran/` under the root directory.
-It is supposed to be a faithful translation, [producing bit-for-bit identical results as the Fortran
-reference implementation](https://github.com/scipy/scipy/pull/22350#issue-2795978526).
+It is supposed to be a faithful translation, [producing bit-for-bit identical results](https://github.com/scipy/scipy/pull/22350#issue-2795978526).
+as the Fortran reference implementation
 If you notice a difference, [raise an issue](https://github.com/libprima/prima/issues/new).
 
 Due to [bug-fixes](https://github.com/libprima/prima#bug-fixes) and [improvements](https://github.com/libprima/prima#improvements),
@@ -13,13 +13,14 @@ even though the algorithms are essentially the same. Therefore, it is important 
 PRIMA rather than the original solvers if you want your results to be reproducible.
 
 Compared to Powell's Fortran 77 implementation, the modern-Fortran implementation and hence this Python
-translation [produce better results with less function evaluations](https://github.com/libprima/prima#improvements)
-on average, making them preferable for [applications with expensive function evaluations](https://github.com/orgs/libprima/discussions/145).
+translation generally [produce better solutions with less function evaluations](https://github.com/libprima/prima#improvements),
+making them preferable for [applications with expensive function evaluations](https://github.com/orgs/libprima/discussions/145).
 However, if function evaluations are not the dominant cost in your application, the Fortran 77
 implementation are likely to be faster, as it is more efficient in terms of memory usage and flops
 thanks to the careful and unique (but unmaintained) implementation by Powell.
 
-As of April 2025, only the COBYLA solver is available in this Python translation, and SciPy 1.16.0
+As of April 2025, only the COBYLA solver is available in this Python translation
+(many thanks to [Nickolai Belakovski](http://www.nickolai.me/)), and SciPy 1.16.0
 integrates it to replace the original Fortran 77 implementation of [COBYLA underlying the
 `scipy.optimize.minimize` function](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html).
 The other solvers will be translated from the Fortran reference implementation in the future.
