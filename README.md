@@ -266,11 +266,12 @@ large constraint violation even though the starting point is feasible.
 ### Improvements
 
 Thanks to the improvements introduced into the new implementation, PRIMA
-generally produces better solutions with less function evaluations compared with Powell's Fortran 77 implementation. This makes PRIMA preferable for if function evaluations are expensive,
+generally produces better solutions with less function evaluations compared with Powell's Fortran 77 implementation.
+This makes PRIMA preferable **if function evaluations are expensive**,
 which is typically the case for [derivative-free optimization problems](https://github.com/orgs/libprima/discussions/145).
 However, if function evaluations are not the dominant cost in your application,
 The Fortran 77
-solvers are likely to be faster, as it is more efficient in terms of memory usage and flops
+solvers are likely to be faster, as they are more efficient in terms of memory usage and flops
 thanks to the careful and unique (but unmaintained) implementation by Powell.
 
 Below are the [performance profiles](https://arxiv.org/pdf/cs/0102001.pdf)

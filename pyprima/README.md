@@ -16,7 +16,7 @@ Compared to Powell's Fortran 77 implementation, the modern-Fortran implementatio
 translation generally [produce better solutions with less function evaluations](https://github.com/libprima/prima#improvements),
 making them preferable for [applications with expensive function evaluations](https://github.com/orgs/libprima/discussions/145).
 However, if function evaluations are not the dominant cost in your application, the Fortran 77
-solvers are likely to be faster, as it is more efficient in terms of memory usage and flops
+solvers are likely to be faster, as they are more efficient in terms of memory usage and flops
 thanks to the careful and unique (but unmaintained) implementation by Powell.
 
 As of April 2025, only the COBYLA solver is available in this Python translation
