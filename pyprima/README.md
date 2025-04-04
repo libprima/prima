@@ -12,12 +12,12 @@ behaves differently from the original Fortran 77 implementation by [M. J. D. Pow
 even though the algorithms are essentially the same. Therefore, it is important to point out that you are using
 PRIMA rather than the original solvers if you want your results to be reproducible.
 
-Compared to Powell's Fortran 77 implementation, the modern-Fortran implementation and hence this Python
-translation generally [produce better solutions with less function evaluations](https://github.com/libprima/prima#improvements),
+Compared to Powell's Fortran 77 implementation, the modern-Fortran implementation and hence any faithful
+translation like this one generally [produce better solutions with less function evaluations](https://github.com/libprima/prima#improvements),
 making them preferable for [applications with expensive function evaluations](https://github.com/orgs/libprima/discussions/145).
 However, if function evaluations are not the dominant cost in your application, the Fortran 77
 solvers are likely to be faster, as they are more efficient in terms of memory usage and flops
-thanks to the careful and unique (but unmaintained) implementation by Powell.
+thanks to the careful and ingenious (but unmaintained and unmaintainable) implementation by Powell.
 
 As of April 2025, only the COBYLA solver is available in this Python translation
 (many thanks to [Nickolai Belakovski](http://www.nickolai.me/)), and SciPy 1.16.0

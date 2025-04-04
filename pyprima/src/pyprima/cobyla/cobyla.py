@@ -6,6 +6,22 @@ Translated from the modern-Fortran reference implementation in PRIMA by Zaikun Z
 Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
 Python implementation by Nickolai Belakovski
+
+N.B.:
+
+1. The modern-Fortran reference implementation in PRIMA contains bug fixes and improvements over the
+original Fortran 77 implementation by Powell. Consequently, the PRIMA implementation behaves differently
+from the original Fortran 77 implementation by Powell. Therefore, it is important to point out that
+you are using PRIMA rather than the original solvers if you want your results to be reproducible.
+
+2. Compared to Powell's Fortran 77 implementation, the modern-Fortran implementation and hence any
+faithful translation like this one generally produce better solutions with less function evaluations,
+making them preferable for applications with expensive function evaluations. However, if function
+evaluations are not the dominant cost in your application, the Fortran 77 solvers are likely to be
+faster, as they are more efficient in terms of memory usage and flops thanks to the careful and
+ingenious (but unmaintained and unmaintainable) implementation by Powell.
+
+See the PRIMA documentation (www.libprima.net) for more information.
 '''
 
 from ..common.evaluate import evaluate, moderatex, moderatef, moderatec
