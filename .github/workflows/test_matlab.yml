@@ -72,14 +72,14 @@ jobs:
         run: git config --global http.postBuffer 1048576000 && git config --global core.compression 0
 
       - name: Clone Repository (Latest)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         if: github.event.inputs.git-ref == ''
         with:
           submodules: recursive
         #   ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
         # As of 231227, checkout with ssh fails frequently on Windows runners.
       - name: Clone Repository (Custom Ref)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         if: github.event.inputs.git-ref != ''
         with:
           ref: ${{ github.event.inputs.git-ref }}
