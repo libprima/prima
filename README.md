@@ -344,7 +344,12 @@ support from the optimization community and beyond.
 **Thank you for help, known or unknown to me, explicit or implicit, without which I would not have survived.**
 
 The development of PRIMA would have been a mission impossible without the groundwork laid by the [PDFO](https://www.pdfo.net)
-package of [Tom M. Ragonneau](https://tomragonneau.com/) and Zaikun Zhang.
+package of [Tom M. Ragonneau](https://ragonneau.github.io) and Zaikun Zhang.
+PDFO is Chapter 3 of Ragonneau's [thesis](https://theses.lib.polyu.edu.hk/handle/200/12294) co-supervised by Zaikun Zhang 
+and Professor [Xiaojun Chen](https://www.polyu.edu.hk/ama/staff/xjchen/ChenXJ.htm),
+with financial support from the [Hong Kong Ph.D. Fellowship Scheme](https://cerg1.ugc.edu.hk/hkpfs/index.html) (ref. PF18-24698).
+
+
 
 PRIMA is a long-term project, which would not have been sustainable without the continued funds from the
 [National Natural Science Foundation of China](https://www.nsfc.gov.cn/english/site_1/index.html) (NSFC),
