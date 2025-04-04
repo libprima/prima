@@ -42,14 +42,14 @@ jobs:
         run:  echo "SOLNAME=$(echo ${{ matrix.solver }} | cut -c1-6)" >> $GITHUB_ENV
 
       - name: Clone Repository (Latest)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         if: github.event.inputs.git-ref == ''
         with:
           fetch-depth: 2  # checkout fetches only one commit by default. Set it to two for the `norma` test
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
       - name: Clone Repository (Custom Ref)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         if: github.event.inputs.git-ref != ''
         with:
           fetch-depth: 2  # checkout fetches only one commit by default. Set it to two for the `norma` test
@@ -64,7 +64,7 @@ jobs:
         run: bash .github/scripts/misc_setup
 
       - name: Clone MatCUTEst
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           repository: matcutest/matcutest_compiled
