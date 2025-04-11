@@ -96,7 +96,7 @@ jobs:
 
       - name: Set up MATLAB with optimization toolbox
         if: ${{ steps.check_matlab.outputs.has_matlab != 'true'}}
-        uses: matlab-actions/setup-matlab@v2.4.0
+        uses: matlab-actions/setup-matlab@v2.5.0
         with:
           release: ${{ matrix.matlab }}
           cache: true
