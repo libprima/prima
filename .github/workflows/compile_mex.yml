@@ -128,7 +128,7 @@ jobs:
           cache: true
 
       - name: Compile the MEX functions
-        uses: matlab-actions/run-command@v2.1.1
+        uses: matlab-actions/run-command@v2.2.1
         with:
           startup-options: -nojvm -noopengl -logfile matlab/interfaces/private/build.log
           command: |
@@ -186,7 +186,7 @@ jobs:
   #         which matlab
 
   #     - name: Conduct the test
-  #       uses: matlab-actions/run-command@v2.1.1
+  #       uses: matlab-actions/run-command@v2.2.1
   #       with:
   #         startup-options: -nojvm -noopengl -logfile matlab/interfaces/private/build.log
   #         command: |
