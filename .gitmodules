@@ -1,12 +1,9 @@
 [submodule ".github/scripts"]
 	path = .github/scripts
-	url = git@github.com:equipez/github_actions_scripts.git
-[submodule "prima_development"]
-	path = prima_development
-	url = git@github.com:libprima/prima_development.git
+    url = https://github.com/equipez/github_actions_scripts
 [submodule ".development"]
 	path = .development
-	url = git@github.com:libprima/prima_development.git
+    url = https://github.com/libprima/prima_development
 [submodule "python/pybind11"]
 	path = python/pybind11
 	url = https://github.com/pybind/pybind11
