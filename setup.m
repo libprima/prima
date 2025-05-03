@@ -260,7 +260,7 @@ end
 addpath(path_string);
 
 % Try saving the path in the system path-defining file at sys_pathdef. If the user does not have
-% writing permission for this file, then the path will not saved.
+% writing permission for this file, then the path will not be saved.
 % N.B. Do not save the path to the pathdef.m file under userpath. This file is not loaded by default
 % at startup. See
 % https://www.mathworks.com/matlabcentral/answers/269482-is-userdata-pathdef-m-for-local-path-additions-supported-on-linux
