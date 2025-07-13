@@ -111,10 +111,12 @@ if (c_associated(callback_ptr)) then
     call c_f_procpointer(callback_ptr, cb_ptr)
     ! We then provide the closure to the algorithm.
     call bobyqa(calfun, x_loc, f_loc, xl=xl_loc, xu=xu_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
-        & ftarget=ftarget_loc,  maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc,  honour_x0=honour_x0_loc, callback_fcn=callback_fcn, info=info_loc)
+        & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, &
+        & honour_x0=honour_x0_loc, callback_fcn=callback_fcn, info=info_loc)
 else
     call bobyqa(calfun, x_loc, f_loc, xl=xl_loc, xu=xu_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
-        & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc,  honour_x0=honour_x0_loc, info=info_loc)
+        & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, & 
+        & honour_x0=honour_x0_loc, info=info_loc)
 end if
 
 ! Write the outputs
