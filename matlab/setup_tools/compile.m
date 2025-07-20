@@ -75,7 +75,9 @@ compiler_configurations = mex.getCompilerConfigurations('fortran', 'selected');
 extra_compiler_options = '';
 compiler_manufacturer = lower(compiler_configurations.Manufacturer);
 if contains(compiler_manufacturer, 'gnu')  % gfortran
-    extra_compiler_options = '-g -fno-stack-arrays -frecursive';
+    % -Wno-missing-include-dirs is needed to suppress the warning about missing include directories
+    % when simulink is not installed.
+    extra_compiler_options = '-g -Wno-missing-include-dirs -fno-stack-arrays -frecursive';
 elseif contains(compiler_manufacturer, 'intel')  % Intel compiler
     if ispc
         extra_compiler_options = '/Z7 /heap-arrays /assume:recursion';

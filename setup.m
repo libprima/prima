@@ -123,6 +123,8 @@ end
 % Add the path and return if requested.
 if strcmp(action, 'path')
     add_save_path(interfaces, package_name);
+    % Add the tests directory to the path, so that the user can run `testprima`.
+    addpath(tests);
     % Create `all_precisions.m` and `all_variants.m` under `tools` according to the content of
     % `mexdir`. They reflect the precisions ('half', 'single', 'double', 'quadruple') and variants
     % ('modern', 'classical') of the solvers available under `mexdir`.
