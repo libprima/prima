@@ -1,7 +1,7 @@
 function cmpaths = locate_matcutest(directory)
 %This function finds where MatCUTEst (https://github.com/matcutest/matcutest) is installed, adds the
 % paths needed for using MatCUTEst, and returns these paths in a cell array.
-% We search at most 3 levels below the given directory, whose default value is the home directory.
+% We search at most 10 levels below the given directory, whose default value is the home directory.
 % N.B.: As of 20230512, MatCUTEst supports only Linux.
 
 % We use the following path as the signature to identify MatCUTEst.
@@ -23,7 +23,7 @@ end
 if isempty(cmtools)
     % In the following line, the "*/" before signature_path cannot be removed.
     name_str = ['"*/', signature_path, '"'];
-    [~, cmtools] = system(['find ', directory, ' -maxdepth 6 -wholename ', name_str, ' -type d -print -quit']);
+    [~, cmtools] = system(['find ', directory, ' -maxdepth 13 -wholename ', name_str, ' -type d -print -quit']);
 
     if isempty(cmtools)
         error('locate_matcutest:MatCUTEstNotFound', 'MatCUTEst is not found under %s.', directory);
