@@ -27,40 +27,27 @@ jobs:
 
       # The matrix is essentially the same as that of compile_mex.yml
       matrix:
-        os: [ubuntu-20.04, ubuntu-latest, macos-12, macos-13]
-        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, latest]
+        os: [ubuntu-22.04, ubuntu-latest, macos-13, windows-latest, windows-2025]
+        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, R2024b, R2025a, latest]
 
         exclude:
-
-          # Below R2022a, MEX is extremely slow on macOS 12
-          - os: macos-12
-            matlab: R2020b
-          - os: macos-12
-            matlab: R2021a
-          - os: macos-12
-            matlab: R2021b
-
-        include:
-
-          # Only R2021a/b and R2022a are available on Windows 2019.
-          - os: windows-2019
-            matlab: R2021a
-          - os: windows-2019
-            matlab: R2021b
-          - os: windows-2019
-            matlab: R2022a
 
           # Below R2022a, MEX does not work on windows-latest due to the version of MS Visual Studio;
           # R2022a/b should work according to the documentation of MathWorks and GitHub Actions, but
           # they do not as of April 2024
-          - os: windows-2022
-            matlab: R2023a
-          - os: windows-2022
-            matlab: R2023b
-          - os: windows-2022
-            matlab: R2024a
-          - os: windows-2022
-            matlab: latest
+          - os: windows-latest
+            matlab: R2020b
+          - os: windows-latest
+            matlab: R2021a
+          - os: windows-latest
+            matlab: R2021b
+
+          - os: windows-2025
+            matlab: R2020b
+          - os: windows-2025
+            matlab: R2021a
+          - os: windows-2025
+            matlab: R2021b
 
 
     steps:
