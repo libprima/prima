@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------------------------------!
 ! The MEX gateway for NEWUOA
-! This is a temporary MEX gateway to circumvent the MATLAB R2025a bug that it segfaults on Linux
+! This is an adapted MEX gateway to circumvent the MATLAB R2025a bug that it segfaults on Linux
 ! if the Fortran MEX function contains an internal procedure that is passed as an actual argument.
 ! This MEX uses a module variable FUN_PTR to store the function handle, which is essentially a
 ! global variable and is not thread-safe or recursion-safe.

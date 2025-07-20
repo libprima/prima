@@ -1,4 +1,4 @@
- This directory contains temporary MEX gateway to circumvent the MATLAB R2025a bug that it segfaults
+ This directory contains adapted MEX gateways to circumvent the MATLAB R2025a bug that it segfaults
  on Linux if the Fortran MEX function contains an internal procedure that is passed as an actual argument.
 
  The MEX files use a module variable to store the function handle, which is essentially a

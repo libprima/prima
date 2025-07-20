@@ -65,8 +65,10 @@ end
 % Zaikun 20250720:
 % The following code is to circumvent a bug in MATLAB R2025a, which segfaults on Linux when the
 % Fortran files contain internal procedures that are passed as actual arguments to other procedures.
-% To avoid this bug, we replace gateways/*_mex.F90 with gateways/R2025a/*_mex.F90, and
-% fortran/cobylb.f90 with gateways/R2025a/cobylb.f90, which use module variables instead of
+% To avoid this bug, we replace gateways/*_mex.F90 with gateways/R2025a/*_mex.F90
+% fortran/cobylb.f90 with gateways/R2025a/cobylb.f90, and
+% fortran/classical/cobyla.f90 with gateways/R2025a/classical_cobyla.f90,
+% the latter of which use module variables instead of
 % internal procedures. The price is that PRIMA becomes thread-unsafe and recursion-unsafe.
 % See MathWorks Technical Support Case 07931486 and
 % https://www.mathworks.com/matlabcentral/answers/2178414-bug-matlab-2025a-segfaults-on-ubuntu-when-handling-fortran-mex-files-with-internal-subroutines
@@ -86,8 +88,9 @@ if isunix && ~ismac && verLessThan('matlab', '25.2')  && ~verLessThan('matlab', 
         solver = solvers{isol};
         copyfile(fullfile(replacement_dir, [solver, '_mex.F']), fullfile(gateways, [solver, '_mex.F']));
         if strcmp(solver, 'cobyla')
-            % For COBYLA, we also need to replace the Fortran source file cobylb.f.
+            % For COBYLA, we also need to replace the Fortran source file cobylb.f and the classical cobyla.f.
             copyfile(fullfile(replacement_dir, 'cobylb.f'), fullfile(fortd, 'cobyla', 'cobylb.f'));
+            copyfile(fullfile(replacement_dir, 'classical_cobyla.f'), fullfile(fortd, 'classical', 'cobyla', 'cobyla.f'));
         end
     end
 end

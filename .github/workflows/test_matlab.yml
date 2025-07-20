@@ -41,6 +41,10 @@ jobs:
             matlab: R2021a
           - os: windows-latest
             matlab: R2021b
+          - os: windows-latest
+            matlab: R2022a
+          - os: windows-latest
+            matlab: R2022b
 
           - os: windows-2025
             matlab: R2020b
@@ -48,6 +52,10 @@ jobs:
             matlab: R2021a
           - os: windows-2025
             matlab: R2021b
+          - os: windows-2025
+            matlab: R2022a
+          - os: windows-2025
+            matlab: R2022b
 
 
     steps:

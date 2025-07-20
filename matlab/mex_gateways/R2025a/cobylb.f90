@@ -1,4 +1,4 @@
-! This is a temporary version of cobylb.f90 to circumvent the MATLAB R2025a bug that it segfaults on
+! This is an adapted version of cobylb.f90 to circumvent the MATLAB R2025a bug that it segfaults on
 ! Linux if the Fortran MEX function contains an internal procedure that is passed as an actual argument.
 ! This MEX uses a module variable FUN_PTR to store the function handle, which is essentially a
 ! global variable and is not thread-safe or recursion-safe.
@@ -7,7 +7,7 @@
 ! https://stackoverflow.com/questions/79699706/matlab-2025a-vs-fortran-mex-files-with-internal-subroutines
 ! https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines
 ! https://stackoverflow.com/questions/79705107/fortran-implementating-a-parametrized-objective-function-without-using-module-v
-!
+
 
 ! TODO: Implement GETMODEL to get the model of the objective function and constraints, i.e., g and A.
 
@@ -55,7 +55,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sun 20 Jul 2025 08:31:19 AM PDT
+! Last Modified: Sun 20 Jul 2025 01:40:07 PM PDT
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
