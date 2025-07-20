@@ -76,7 +76,7 @@ extra_compiler_options = '';
 compiler_manufacturer = lower(compiler_configurations.Manufacturer);
 if contains(compiler_manufacturer, 'gnu')  % gfortran
     % -Wno-missing-include-dirs is needed to suppress the warning about missing include directories
-    % when simulink is not installed.
+    % when Simulink is not installed.
     extra_compiler_options = '-g -Wno-missing-include-dirs -fno-stack-arrays -frecursive';
 elseif contains(compiler_manufacturer, 'intel')  % Intel compiler
     if ispc
