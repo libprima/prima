@@ -27,6 +27,7 @@ function compile(solvers, mexdir, fortd, gateways, options)
 % Bizarrely, if we write a short Fortran program to evaluate only COS(0.59843577329095299_DP),
 % then the result is always 0.82621783366991364, regardless of -O or -g. No idea why.
 
+
 % COMPILE starts
 
 % Directories
@@ -58,6 +59,36 @@ if verbose
 else
     verbose_option = '-silent';
 end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Zaikun 20250720:
+% The following code is to circumvent a bug in MATLAB R2025a, which segfaults when the Fortran
+% files contain internal procedures that are passed as actual arguments to other procedures.
+% To avoid this bug, we replace gateways/*_mex.F90 with gateways/R2025a/*_mex.F90, and
+% fortran/cobylb.f90 with gateways/R2025a/cobylb.f90, which uses module variables instead of
+% internal procedures. The price is that PRIMA becomes thread-unsafe and recursion-unsafe.
+% See MathWorks Technical Support Case 07931486 and
+% https://www.mathworks.com/matlabcentral/answers/2178414-bug-matlab-2025a-segfaults-on-ubuntu-when-handling-fortran-mex-files-with-internal-subroutines
+% https://stackoverflow.com/questions/79699706/matlab-2025a-vs-fortran-mex-files-with-internal-subroutines
+% https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines
+% https://stackoverflow.com/questions/79705107/fortran-implementating-a-parametrized-objective-function-without-using-module-v
+
+if verLessThan('matlab', '25.2')  && ~verLessThan('matlab', '25.1')  % The version number of R2025a is 25.1.
+    if verbose
+        warning('prima:ThreadRecursionUnsafe', ...
+            ['MATLAB R2025a has a bug that causes segmentation faults when handling Fortran MEX files with internal procedures.\n', ...
+            '         PRIMA is adapted to circumvent this bug but it becomes thread-unsafe and recursion-unsafe.']);
+    end
+    % Replace the files. N.B.: The .*f90 files have become .* files after the refactorization in setup.m.
+    for isol = 1 : length(solvers)
+        solver = solvers{isol};
+        copyfile(fullfile(gateways, 'R2025a', [solver, '_mex.F']), fullfile(gateways, [solver, '_mex.F']));
+    end
+    copyfile(fullfile(gateways, 'R2025a', 'cobylb.f'), fullfile(fortd, 'cobyla', 'cobylb.f'));
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 % Modify the compiler options by revising FFLAGS or COMPFLAGS.
 % See https://www.mathworks.com/help/matlab/ref/mex.html
