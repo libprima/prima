@@ -1,5 +1,5 @@
-! This is a temporary version of cobylb.f90 to circumvent the MATLAB R2025a bug that it segfaults when
-! the Fortran MEX function contains an internal procedure that is passed as an actual argument.
+! This is a temporary version of cobylb.f90 to circumvent the MATLAB R2025a bug that it segfaults on
+! Linux if the Fortran MEX function contains an internal procedure that is passed as an actual argument.
 ! This MEX uses a module variable FUN_PTR to store the function handle, which is essentially a
 ! global variable and is not thread-safe or recursion-safe.
 ! See MathWorks Technical Support Case 07931486 and
@@ -61,7 +61,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sun 20 Jul 2025 01:14:30 AM PDT
+! Last Modified: Sun 20 Jul 2025 08:31:19 AM PDT
 !--------------------------------------------------------------------------------------------------!
 
 implicit none

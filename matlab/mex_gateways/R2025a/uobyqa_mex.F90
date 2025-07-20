@@ -1,7 +1,7 @@
 !--------------------------------------------------------------------------------------------------!
 ! The MEX gateway for UOBYQA
-! This is a temporary MEX gateway to circumvent the MATLAB R2025a bug that it segfaults when
-! the Fortran MEX function contains an internal procedure that is passed as an actual argument.
+! This is a temporary MEX gateway to circumvent the MATLAB R2025a bug that it segfaults on Linux
+! if the Fortran MEX function contains an internal procedure that is passed as an actual argument.
 ! This MEX uses a module variable FUN_PTR to store the function handle, which is essentially a
 ! global variable and is not thread-safe or recursion-safe.
 ! See MathWorks Technical Support Case 07931486 and
@@ -20,7 +20,7 @@
 !
 ! Started in July 2020
 !
-! Last Modified: Sat 19 Jul 2025 11:34:10 PM PDT
+! Last Modified: Sun 20 Jul 2025 08:32:14 AM PDT
 !--------------------------------------------------------------------------------------------------!
 
 #include "fintrf.h"

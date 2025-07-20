@@ -63,8 +63,8 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Zaikun 20250720:
-% The following code is to circumvent a bug in MATLAB R2025a, which segfaults when the Fortran
-% files contain internal procedures that are passed as actual arguments to other procedures.
+% The following code is to circumvent a bug in MATLAB R2025a, which segfaults on Linux when the
+% Fortran files contain internal procedures that are passed as actual arguments to other procedures.
 % To avoid this bug, we replace gateways/*_mex.F90 with gateways/R2025a/*_mex.F90, and
 % fortran/cobylb.f90 with gateways/R2025a/cobylb.f90, which uses module variables instead of
 % internal procedures. The price is that PRIMA becomes thread-unsafe and recursion-unsafe.
@@ -74,7 +74,7 @@ end
 % https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines
 % https://stackoverflow.com/questions/79705107/fortran-implementating-a-parametrized-objective-function-without-using-module-v
 
-if verLessThan('matlab', '25.2')  && ~verLessThan('matlab', '25.1')  % The version number of R2025a is 25.1.
+if isunix && ~ismac && verLessThan('matlab', '25.2')  && ~verLessThan('matlab', '25.1')  % The version number of R2025a is 25.1.
     if verbose
         warning('prima:ThreadRecursionUnsafe', ...
             ['MATLAB R2025a has a bug that causes segmentation faults when handling Fortran MEX files with internal procedures.\n', ...
