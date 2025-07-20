@@ -66,7 +66,7 @@ end
 % The following code is to circumvent a bug in MATLAB R2025a, which segfaults on Linux when the
 % Fortran files contain internal procedures that are passed as actual arguments to other procedures.
 % To avoid this bug, we replace gateways/*_mex.F90 with gateways/R2025a/*_mex.F90, and
-% fortran/cobylb.f90 with gateways/R2025a/cobylb.f90, which uses module variables instead of
+% fortran/cobylb.f90 with gateways/R2025a/cobylb.f90, which use module variables instead of
 % internal procedures. The price is that PRIMA becomes thread-unsafe and recursion-unsafe.
 % See MathWorks Technical Support Case 07931486 and
 % https://www.mathworks.com/matlabcentral/answers/2178414-bug-matlab-2025a-segfaults-on-ubuntu-when-handling-fortran-mex-files-with-internal-subroutines
@@ -80,12 +80,16 @@ if isunix && ~ismac && verLessThan('matlab', '25.2')  && ~verLessThan('matlab', 
             ['MATLAB R2025a has a bug that causes segmentation faults when handling Fortran MEX files with internal procedures.\n', ...
             '         PRIMA is adapted to circumvent this bug but it becomes thread-unsafe and recursion-unsafe.']);
     end
-    % Replace the files. N.B.: The .*f90 files have become .* files after the refactorization in setup.m.
+    % Replace the files. N.B.: The .*90 files have become .* after the code refactoring in setup.m.
+    replacement_dir = fullfile(gateways, 'R2025a');
     for isol = 1 : length(solvers)
         solver = solvers{isol};
-        copyfile(fullfile(gateways, 'R2025a', [solver, '_mex.F']), fullfile(gateways, [solver, '_mex.F']));
+        copyfile(fullfile(replacement_dir, [solver, '_mex.F']), fullfile(gateways, [solver, '_mex.F']));
+        if strcmp(solver, 'cobyla')
+            % For COBYLA, we also need to replace the Fortran source file cobylb.f.
+            copyfile(fullfile(replacement_dir, 'cobylb.f'), fullfile(fortd, 'cobyla', 'cobylb.f'));
+        end
     end
-    copyfile(fullfile(gateways, 'R2025a', 'cobylb.f'), fullfile(fortd, 'cobyla', 'cobylb.f'));
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

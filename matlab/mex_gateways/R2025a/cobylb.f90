@@ -25,23 +25,17 @@ procedure(OBJCON), pointer :: calcfc_ptr
 contains
 
 subroutine calcfc_internal(x_internal, f_internal, constr_internal)
-!--------------------------------------------------------------------------------------------------!
-! This internal subroutine evaluates the objective function and ALL the constraints.
-! In MATLAB/Python/R/Julia, this can be implemented as a lambda function/anonymous function.
-!--------------------------------------------------------------------------------------------------!b
 use, non_intrinsic :: linalg_mod, only : matprod
 implicit none
-! Inputs
 real(RP), intent(in) :: x_internal(:)
-! Outputs
 real(RP), intent(out) :: f_internal
 real(RP), intent(out) :: constr_internal(:)
 constr_internal(1:m_lcon_internal) = matprod(x_internal, amat_ptr) - bvec_ptr
 call calcfc_ptr(x_internal, f_internal, constr_internal(m_lcon_internal+1:m_internal))
 end subroutine calcfc_internal
 
-
 end module calcfc_internal_mod
+
 
 module cobylb_mod
 !--------------------------------------------------------------------------------------------------!

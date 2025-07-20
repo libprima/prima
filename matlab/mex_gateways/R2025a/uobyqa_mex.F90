@@ -36,8 +36,8 @@ mwPointer :: fun_ptr  ! Pointer to the objective function handle
 contains
 
 subroutine calfun(x, f)
-use, non_intrinsic :: consts_mod, only : RP
 use, non_intrinsic :: cbfun_mod, only : evalcb
+use, non_intrinsic :: consts_mod, only : RP
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f

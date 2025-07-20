@@ -31,13 +31,13 @@ implicit none
 private
 public :: funcon_ptr, calcfc
 
-mwPointer :: funcon_ptr  ! Pointer to the objective function handle
+mwPointer :: funcon_ptr  ! Pointer to the objective/constraint function handle
 
 contains
 
 subroutine calcfc(x, f, nlconstr)
-use, non_intrinsic :: consts_mod, only : RP
 use, non_intrinsic :: cbfun_mod, only : evalcb
+use, non_intrinsic :: consts_mod, only : RP
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
