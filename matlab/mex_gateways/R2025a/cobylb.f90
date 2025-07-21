@@ -210,7 +210,7 @@ maxhist = int(max(maxxhist, maxfhist, maxconhist, maxchist), kind(maxhist))
 
 ! Preconditions
 if (DEBUGGING) then
-    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or-3', srname)
+    call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
     call assert(m >= m_lcon .and. m_lcon >= 0, 'M >= M_LCON >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(maxfun >= n+2, 'MAXFUN >= N+2', srname)
