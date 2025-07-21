@@ -31,7 +31,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        matlab: [latest]
+        # Do NOT use MATLAB R2025a due to its bug.
+        # See https://www.mathworks.com/matlabcentral/answers/2178414-bug-matlab-2025a-segfaults-on-ubuntu-when-handling-fortran-mex-files-with-internal-subroutines
+        matlab: [R2024b]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         dim: [small, big, large]
         version: [220208, 220227, 220513, 220531,220601,220616,220819,220926,221105,221128,230108,230305,230430,230509,230614,230804]
