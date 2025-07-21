@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
 
-      # The matrix is essentially the same as that of compile_mex.yml
+      # The matrix is the same as that of compile_mex.yml
       matrix:
         os: [ubuntu-22.04, ubuntu-latest, macos-13, windows-latest, windows-2025]
         matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, R2024b, R2025a, latest]
@@ -34,7 +34,7 @@ jobs:
 
           # Below R2022a, MEX does not work on windows-latest due to the version of MS Visual Studio;
           # R2022a/b should work according to the documentation of MathWorks and GitHub Actions, but
-          # they do not as of April 2024
+          # they do not as of July 2025
           - os: windows-latest
             matlab: R2020b
           - os: windows-latest
