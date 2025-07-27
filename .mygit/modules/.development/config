@@ -8,7 +8,6 @@
 	url = git@github.com:libprima/prima_development.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 	pushurl = git@github.com:libprima/prima_development.git
-	pushurl = git@gitlab.com:libprima/prima_development.git
     pushurl = git@gitee.com:libprima/prima_development.git
 [branch "main"]
 	remote = origin

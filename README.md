@@ -22,7 +22,6 @@
 - [Mirrors](#mirrors)
     - [Gitee](https://gitee.com/libprima/prima)
     - [GitHub](https://github.com/libprima/prima)
-    - [GitLab](https://gitlab.com/libprima/prima)
 - [Star history](#star-history)
 
 
@@ -445,8 +444,6 @@ Zaikun Zhang](https://www.zhangzk.net).
 - Gitee: [https://gitee.com/libprima/prima](https://gitee.com/libprima/prima)
 
 - GitHub: [https://github.com/libprima/prima](https://github.com/libprima/prima)
-
-- GitLab: [https://gitlab.com/libprima/prima](https://gitlab.com/libprima/prima)
 
 
 ### <a href="https://star-history.com/#libprima/prima&Date">Star history</a>
