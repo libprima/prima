@@ -263,7 +263,7 @@ end
 % have to be revised accordingly. We will raise a warning when revising
 % an option that is in user_options_fields. No warning is needed if we
 % are dealing with an option that is not in user_options_fields.
-[options, probinfo.user_options_fields, warnings] = pre_options(invoker, options, lenx0, lb, ub, warnings);
+[options, probinfo.user_options_fields, warnings] = pre_options(invoker, options, lenx0, lb, ub, fixedx, warnings);
 
 % Revise x0 for bound and linearly constrained problems.
 % This is necessary for LINCOA, which accepts only feasible x0.
@@ -865,7 +865,7 @@ x(fixedx) = fixedx_value;
 return
 
 %%%%%%%%%%%%%%%%% Function for option preprocessing %%%%%%%%%%
-function [options, user_options_fields, warnings] = pre_options(invoker, options, lenx0, lb, ub, warnings)
+function [options, user_options_fields, warnings] = pre_options(invoker, options, lenx0, lb, ub, fixedx, warnings)
 
 % NOTE: We treat field names case-sensitively.
 
@@ -1115,8 +1115,13 @@ if isfield(options, 'npt')
     elseif any(strcmpi(solver, {'newuoa', 'bobyqa', 'lincoa'})) && (~isintegerscalar(options.npt) || isnan(options.npt) || options.npt < lenx0+2 || options.npt > (lenx0+1)*(lenx0+2)/2)
         % newuoa, bobyqa and lincoa requires n+2 <= npt <= (n+1)*)(n+2)/2;
         % uobyqa and cobyla do not use npt.
+        lenx0_orig = length(fixedx);
+        if any(fixedx) && isintegerscalar(options.npt) && options.npt <= (lenx0_orig+1)*(lenx0_orig+2)/2 && options.npt > (lenx0+1)*(lenx0+2)/2
+            wmsg = sprintf('%s: npt becomes invalid because some variables are fixed by bounds; %s requires it to be an integer and n+2 <= npt <= (n+1)*(n+2)/2; it is set to 2n+1.', invoker, solver);
+        else
+            wmsg = sprintf('%s: invalid npt; %s requires it to be an integer and n+2 <= npt <= (n+1)*(n+2)/2; it is set to 2n+1.', invoker, solver);
+        end
         wid = sprintf('%s:InvalidNpt', invoker);
-        wmsg = sprintf('%s: invalid npt; %s requires it to be an integer and n+2 <= npt <= (n+1)*(n+2)/2; it is set to 2n+1.', invoker, solver);
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     else
