@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-13]
-        matlab: [R2020a, latest]  # The earliest and latest supported versions of MATLAB
+        matlab: [R2020b, latest]  # The earliest and latest supported versions of MATLAB
 
     steps:
 
