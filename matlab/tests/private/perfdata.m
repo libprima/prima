@@ -98,6 +98,9 @@ for iprec = 1 : 2*nprec
     prof_output{iprec} = perfprof(frec, fmin, prof_options);
     %dataprof(frec, fmin, pdim, prof_options);
 end
+% Clear the variables to save memory. Otherwise, on GitHub Actions, the memory may be exhausted and
+% cause the runners to shut down.
+clear('frec', 'fmin', 'pdim', 'plist');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Appearance of the plots.
