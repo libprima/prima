@@ -57,8 +57,8 @@ if strcmpi(language, 'fortran') && (ismac || ispc) && (~isempty(exception) || me
     % cannot locate the compiler due to the change of the directory structure, even if ONEAPI_ROOT
     % is set correctly.
     % 3. Starting from oneAPI 2025, ifort is removed and replaced by ifx. MATLAB R2024a/b looks for
-    % ifort during mex setup and hence would fail with oneAPI 2025, even though it actually uses 
-    % ifx to compile Fortran code.
+    % ifort during mex setup and hence would fail with oneAPI 2025, even though it actually uses
+    % ifx to compile Fortran code when the oneAPI version is 2024.
     compiler_dir = fullfile(oneapi_root, 'compiler', 'latest', system_string);
     if ~exist(compiler_dir, 'dir')
         compiler_dir = fullfile(oneapi_root, 'compiler', 'latest');
