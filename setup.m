@@ -107,7 +107,7 @@ end
 
 % Remove the compiled MEX files (and the files generated along side) if requested.
 if strcmp(action, 'clean')
-    clean_mex(mexdir, 'verbose');
+    clean_mex(mexdir, true);  % verbose = true
     clean_generated_files(fortd_interform, gateways_interform, tools, mexdir);
     rmpath(tools);
     return
@@ -159,6 +159,7 @@ copy_shared_tools(tools, mexdir);
 % Check whether MEX is properly configured.
 fprintf('\nVerifying the setup of MEX ... \n');
 language = 'Fortran'; % Language to compile
+verbose = (isfield(options, 'verbose') && islogicalscalar(options.verbose) && options.verbose);
 mex_well_conf = try_mex_setup(language, verbose);
 if mex_well_conf == 0
     fprintf('\nMATLAB needs you to set MEX up for Fortran.');

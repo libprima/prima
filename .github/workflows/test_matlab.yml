@@ -126,8 +126,8 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           GFVER=${{ env.GFORTRAN_VERSION }}
-          if [[ "${{ matrix.os }}" = "ubuntu-20.04" ]] ; then
-              GFVER=11
+          if [[ "${{ matrix.os }}" = "ubuntu-22.04" ]] ; then
+              GFVER=13
           fi
           if [[ "${{ matrix.matlab }}" = "R2020b" || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" = "R2021b" ]] ; then
               GFVER=9
@@ -146,10 +146,13 @@ jobs:
       - name: Decide the version of oneAPI to use
         shell: bash
         run: |
+          # Initialize the variable ONEAPI_VERSION to an empty string, which means the default version
           ONEAPI_VERSION=
           if [[ "${{ matrix.os }}" = "windows-"* ]] ; then
               if [[ "${{ matrix.matlab }}" = "R2020"* || "${{ matrix.matlab }}" = "R2021"* || "${{ matrix.matlab }}" = "R2022"* || "${{ matrix.matlab }}" = "R2023"* ]] ; then
                   ONEAPI_VERSION=2023
+              else if [[ "${{ matrix.matlab }}" = "R2024"* ]] ; then
+                  ONEAPI_VERSION=2024
               fi
           fi
           echo "ONEAPI_VERSION=$ONEAPI_VERSION" >> $GITHUB_ENV
