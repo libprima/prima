@@ -9,7 +9,7 @@ function success = try_mex_setup(language, verbose)
 
 verbose = (nargin >=2 && verbose);
 
-% Return if MEX is already well configured. This is important, because MEX is usable if it was set
+% Return silently if MEX is already well configured. This is important, because MEX is usable if it was set
 % up before, and because MEX setup may fail even if it succeeded before due to change of environment.
 success = mex_well_configured(language);  % verbose = false
 if success == 1
@@ -50,14 +50,15 @@ if strcmpi(language, 'fortran') && (ismac || ispc) && (~isempty(exception) || me
         system_string = 'windows';
     end
     % Intel oneAPI does not support macOS any more starting from oneAPI 2024.
-    % For oneAPI 2024 on Windows, the compiler directory is "compiler/latest", and ifort is located
-    % in "compiler/latest/bin/"; In previous versions, the paths were
+    % For oneAPI 2024 on Windows, the compiler directory is "compiler/latest", and the compiler
+    % (ifort or ifx) is located in "compiler/latest/bin/"; In previous versions, the paths were
     % "compiler/latest/<system_string>" and "compiler/latest/<system_string>/bin/intel64".
-    % As of Dec 2023, oneAPI 2024 is not supported on Windows, because MATLAB cannot locate ifort
-    % due to the change of the directory structure, even if ONEAPI_ROOT is set correctly.
-    compiler_dir = fullfile(oneapi_root, 'compiler', 'latest', system_string);
+    % The first version of MATLAB that supports oneAPI 2024 on Windows is R2024a. Earlier versions
+    % cannot locate the compiler due to the change of the directory structure, even if ONEAPI_ROOT
+    % is set correctly.
+    compiler_dir = fullfile(oneapi_root, 'compiler', 'latest');
     if ~exist(compiler_dir, 'dir')
-        compiler_dir = fullfile(oneapi_root, 'compiler', 'latest');
+        compiler_dir = fullfile(oneapi_root, 'compiler', 'latest', system_string);
     end
 
     % Set PATH.

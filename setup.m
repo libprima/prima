@@ -159,7 +159,7 @@ copy_shared_tools(tools, mexdir);
 % Check whether MEX is properly configured.
 fprintf('\nVerifying the setup of MEX ... \n');
 language = 'Fortran'; % Language to compile
-mex_well_conf = try_mex_setup(language);
+mex_well_conf = try_mex_setup(language, verbose);
 if mex_well_conf == 0
     fprintf('\nMATLAB needs you to set MEX up for Fortran.');
     fprintf('\nTry ''help mex'' or ask a MATLAB expert about MEX setup.');
