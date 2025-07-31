@@ -20,8 +20,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-13]
-        matlab: [latest]
+        os: [macos-13]
+        matlab: [R2020a, latest]  # The earliest and latest supported versions of MATLAB
 
     steps:
 

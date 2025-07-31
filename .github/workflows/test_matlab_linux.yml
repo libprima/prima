@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, R2024b, R2025a, latest]
+        matlab: [R2020a, latest]  # The earliest and latest supported versions of MATLAB
 
     steps:
 
@@ -31,6 +31,25 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         run: git config --global http.postBuffer 1048576000 && git config --global core.compression 0
 
+      - name: Run `sudo apt update`
+        if: startsWith(matrix.os, 'ubuntu')
+        run: sudo apt update  # Otherwise, free-disk-space or other actions relying on `apt` may fail
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        if: startsWith(matrix.os, 'ubuntu')
+        with:
+          # all of these default to true, but feel free to set to "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false  # Important, or the runner may be shut down due to memory starvation.
+
+      - name: Clone Repository (Latest)
+        uses: actions/checkout@v4.2.2
+        if: github.event.inputs.git-ref == ''
       - name: Clone Repository (Latest)
         uses: actions/checkout@v4.2.2
         if: github.event.inputs.git-ref == ''

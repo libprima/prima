@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest]
-        matlab: [latest]
+        matlab: [R2023a, latest]  # The earliest and latest supported versions of MATLAB
 
     steps:
 

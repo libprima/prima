@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
 
-      # The matrix is the same as that of compile_mex.yml
+      # The matrix is the same as that of compile_mex.yml. We intend to test all supported combinations.
       matrix:
         os: [ubuntu-22.04, ubuntu-latest, macos-13, windows-latest, windows-2025]
         matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, R2024b, R2025a, latest]
