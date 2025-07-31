@@ -56,10 +56,13 @@ if strcmpi(language, 'fortran') && (ismac || ispc) && (~isempty(exception) || me
     % The first version of MATLAB that supports oneAPI 2024 on Windows is R2024a. Earlier versions
     % cannot locate the compiler due to the change of the directory structure, even if ONEAPI_ROOT
     % is set correctly.
-    compiler_dir = fullfile(oneapi_root, 'compiler', 'latest');
+    compiler_dir = fullfile(oneapi_root, 'compiler', 'latest', system_string);
     if ~exist(compiler_dir, 'dir')
-        compiler_dir = fullfile(oneapi_root, 'compiler', 'latest', system_string);
+        compiler_dir = fullfile(oneapi_root, 'compiler', 'latest');
     end
+    % Zaikun 20250731: Note that the above two definitions of compiler_dir cannot be exchanged, as
+    % fullfile(oneapi_root, 'compiler', 'latest') is always a valid directory regardless of the
+    % version of Intel oneAPI.
 
     % Set PATH.
     compiler_bin = fullfile(compiler_dir, 'bin');

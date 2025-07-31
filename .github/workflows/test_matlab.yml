@@ -152,7 +152,7 @@ jobs:
               if [[ "${{ matrix.matlab }}" = "R2020"* || "${{ matrix.matlab }}" = "R2021"* || "${{ matrix.matlab }}" = "R2022"* || "${{ matrix.matlab }}" = "R2023"* ]] ; then
                   ONEAPI_VERSION=2023
               elif [[ "${{ matrix.matlab }}" = "R2024"* ]] ; then
-                  ONEAPI_VERSION=2025
+                  ONEAPI_VERSION=2024
               fi
           fi
           echo "ONEAPI_VERSION=$ONEAPI_VERSION" >> $GITHUB_ENV
