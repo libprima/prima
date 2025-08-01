@@ -19,6 +19,7 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}
 
 
 jobs:
+
   test:
     name: Profile PRIMA.
     runs-on: ${{ matrix.os }}
@@ -32,6 +33,18 @@ jobs:
         competitor: [classical, archiva, norma]
 
     steps:
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        if: startsWith(matrix.os, 'ubuntu')
+        with:
+          # all of these default to true, but feel free to set to "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false  # Important, or the runner may be shut down due to memory starvation.
 
       - name: Clone Repository (Latest)
         uses: actions/checkout@v4.2.2
@@ -96,6 +109,7 @@ jobs:
             root_dir = pwd();
 
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
+
             cd(fullfile(root_dir, 'matlab/tests'));
 
             prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}');
@@ -148,4 +162,4 @@ jobs:
         uses: actions/upload-artifact/merge@v4
         with:
           name: 00-merged-artifacts
-          pattern: artifact-*-*
+          pattern: artifact-*
