@@ -35,7 +35,7 @@ jobs:
         #ctol_indicator: [0, 1, 2]
         precision: [single]
         competitor: [classical]
-        ctol_indicator: [0]
+        ctol_indicator: [0, 1, 2]
 
     steps:
 
