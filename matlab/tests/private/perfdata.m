@@ -1,9 +1,5 @@
 function summary_file = perfdata(solvers, options)
 
-% Close all figures. Closing figures can release memory associated with them, which is important
-% when we run the tests on GitHub Actions, where the memory is limited.
-close all;
-
 data_dir = options.data_dir;
 test_feature = options.test_feature;
 feature_and_time = [test_feature, '.', options.time];
@@ -158,6 +154,11 @@ figname = strcat(stamp, '.', 'summary', '.', feature_and_time);
 epsname = fullfile(outdir, strcat(figname,'.eps'));
 set(gcf,'position',[0, 0, 4600, 920]);
 saveas(hfig, epsname, 'epsc2');
+
+% Close all figures. Closing figures can release memory associated with them, which is important
+% when we run the tests on GitHub Actions with GitHub-hosted runners Without doing this, the hosted
+% runners may shut down due to memory exhaustion, as it happened on 20250731 with MATLAB R2025a.
+close all;
 
 % Try converting the eps to pdf.
 try
