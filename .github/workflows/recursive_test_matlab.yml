@@ -49,7 +49,19 @@ jobs:
         include:
           - os: ubuntu-latest
             matlab: R2024b
-            solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
+            solver: uobyqa
+          - os: ubuntu-latest
+            matlab: R2024b
+            solver: newuoa
+          - os: ubuntu-latest
+            matlab: R2024b
+            solver: bobyqa
+          - os: ubuntu-latest
+            matlab: R2024b
+            solver: lincoa
+          - os: ubuntu-latest
+            matlab: R2024b
+            solver: cobyla
         ########################################################################################
 
     steps:
