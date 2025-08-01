@@ -34,62 +34,23 @@ jobs:
     strategy:
       fail-fast: false
 
-      # The matrix is the same as that of stress_test_matlab.yml.
+      # The matrix is essentially the same as that of recurisive_test_matlab.yml, except for test
       matrix:
-        os: [ubuntu-20.04, ubuntu-latest, windows-2019, windows-latest, macos-12, macos-13]
-        matlab: [R2020b, R2021a, R2022a, R2023a, latest]
+        os: [ubuntu-latest, macos-13, windows-latest]
+        matlab: [R2023a, latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
 
-        # Exclude some versions of OS and MATLAB. We test ONLY the earliest and latest versions of MATLAB on each OS.
+        ########################################################################################
+        # PRIMA is not recursion-safe on Ubuntu with MATLAB R2025a due to a bug of MATLAB.
+        # Review and update this part when new releases of MATLAB becomes the latest.
         exclude:
-          # ubuntu-latest: test R2020b and latest
-          - os: ubuntu-latest
-            matlab: R2021a
-          - os: ubuntu-latest
-            matlab: R2022a
-          - os: ubuntu-latest
-            matlab: R2023a
-
-          # ubuntu-20.04: test R2020b and latest
-          - os: ubuntu-20.04
-            matlab: R2021a
-          - os: ubuntu-20.04
-            matlab: R2022a
-          - os: ubuntu-20.04
-            matlab: R2023a
-
-          # macos-13: test R2020b and latest
-          - os: macos-13
-            matlab: R2021a
-          - os: macos-13
-            matlab: R2022a
-          - os: macos-13
-            matlab: R2023a
-
-          # macos-12: test R2022a and latest
-          - os: macos-12
-            matlab: R2020b
-          - os: macos-12
-            matlab: R2021a
-          - os: macos-12
-            matlab: R2023a
-
-          # windows-latest: test R2023a and latest
-          - os: windows-latest
-            matlab: R2020b
-          - os: windows-latest
-            matlab: R2021a
-          - os: windows-latest
-            matlab: R2022a
-
-          # windows-2019: test R2021a and R2022a
-          - os: windows-2019
-            matlab: R2020b
-          - os: windows-2019
-            matlab: R2023a
-          - os: windows-2019
-            matlab: latest
-
+          -os: ubuntu-latest
+           matlab: latest
+        include:
+          -os: ubuntu-latest
+           matlab: R2024b
+           solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
+        ########################################################################################
 
     steps:
 
