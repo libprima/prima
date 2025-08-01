@@ -121,8 +121,6 @@ jobs:
         with:
           command: |
             ver;
-            feature('numCores')  % Check the number of available cores
-            parpool(feature('numCores'));  % Start a parallel pool with the number of available cores
             root_dir = pwd();
 
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
