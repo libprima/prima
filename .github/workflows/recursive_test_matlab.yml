@@ -44,12 +44,12 @@ jobs:
         # PRIMA is not recursion-safe on Ubuntu with MATLAB R2025a due to a bug of MATLAB.
         # Review and update this part when new releases of MATLAB becomes the latest.
         exclude:
-          -os: ubuntu-latest
-           matlab: latest
+          - os: ubuntu-latest
+            matlab: latest
         include:
-          -os: ubuntu-latest
-           matlab: R2024b
-           solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
+          - os: ubuntu-latest
+            matlab: R2024b
+            solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
         ########################################################################################
 
     steps:
