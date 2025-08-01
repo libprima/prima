@@ -30,11 +30,8 @@ jobs:
         matlab: [latest]
         dim: [small]
         solver: [lincoa]
-        #precision: [single, quadruple]
-        #competitor: [classical, archiva, norma]
-        #ctol_indicator: [0, 1, 2]
-        precision: [single]
-        competitor: [classical]
+        precision: [single, quadruple]
+        competitor: [classical, archiva, norma]
         ctol_indicator: [0, 1, 2]
 
     steps:
@@ -121,7 +118,6 @@ jobs:
             options = struct();
             options.blacklist = {'AGG', 'ARGLALE', 'AVION2', 'CVXQP1', 'DALLASS', 'DUAL1', 'DUAL3', 'DUAL4', 'GMNCASE1', 'GMNCASE2', 'GMNCASE3', 'HIMMELBI', 'SMBANK', 'SSEBLIN', 'ZECEVIC2'};
             options.blacklist = [options.blacklist, {'EQC'}];  % Classical LINCOA segfaults when the precision is single
-            %options.blacklist = [options.blacklist, {'EQC', 'PT', 'HS54', 'PORTSNQP'}];  % Classical LINCOA segfaults when the precision is single
             options.nr = 1;
             options.precision = '${{ matrix.precision }}';
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
