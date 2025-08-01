@@ -30,7 +30,7 @@ jobs:
         matlab: [latest]
         dim: [small]
         solver: [uobyqa]
-        precision: [single, quadruple, double]
+        precision: [single, quadruple]
         competitor: [classical, archiva, norma]
         exclude:
           - precision: single

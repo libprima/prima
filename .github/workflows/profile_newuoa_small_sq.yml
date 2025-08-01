@@ -31,7 +31,7 @@ jobs:
         matlab: [latest]
         dim: [small]
         solver: [newuoa]
-        precision: [single, quadruple, double]
+        precision: [single, quadruple]
         competitor: [classical, archiva, norma]
 
     steps:

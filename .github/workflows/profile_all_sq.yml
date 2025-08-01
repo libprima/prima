@@ -31,7 +31,7 @@ jobs:
         dim: [all]
         #solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]  # prima is too expensive
         #competitor: [classical, archiva, norma]
-        #precision: [single, quadruple, double]
+        #precision: [single, quadruple]
         #ctol_indicator: [0, 1, 2]
         solver: [lincoa]  # prima is too expensive
         competitor: [classical]

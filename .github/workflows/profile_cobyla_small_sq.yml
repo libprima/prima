@@ -30,7 +30,7 @@ jobs:
         matlab: [latest]
         dim: [small]
         solver: [cobylal, cobylan]
-        precision: [single, quadruple, double]
+        precision: [single, quadruple]
         competitor: [classical, archiva, norma]
         ctol_indicator: [0, 1, 2]
 
