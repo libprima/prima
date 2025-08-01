@@ -136,8 +136,8 @@ jobs:
             blacklist = [blacklist, {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1SPLS', 'CHNRSNBM', 'CHNROSNB', 'CHWIRUT1LS', 'ERRINROS', 'LSC1LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN16LS', 'METHANB8LS', 'QING', 'SPIN2LS', 'TOINTPSP', 'TRIGON2'}];  % newuoa
             blacklist = [blacklist, {'CHEBYQAD', 'DECONVU', 'HOLMES'}];  % bobyqa
             blacklist = [blacklist, {'AGG', 'ARGLALE', 'AVION2', 'CVXQP1', 'DALLASS', 'DUALC1', 'DUAL1', 'DUAL3', 'DUAL4', 'GMNCASE1', 'GMNCASE2', 'GMNCASE3', 'HIMMELBI', 'HYDROELS', 'KSIP', 'QPNBLEND', 'SMBANK', 'SSEBLIN', 'ZECEVIC2'}];  % lincoa
-            options.blacklist = [options.blacklist, {'EQC'}];  % Classical LINCOA segfaults when the precision is single
-            %options.blacklist = [options.blacklist, {'EQC', 'HS9', 'LINSPANH', 'HUBFIT'}];  % Classical LINCOA segfaults when the precision is single
+            blacklist = [options.blacklist, {'EQC'}];  % Classical LINCOA segfaults when the precision is single
+            %blacklist = [options.blacklist, {'EQC', 'HS9', 'LINSPANH', 'HUBFIT'}];  % Classical LINCOA segfaults when the precision is single
             blacklist = [blacklist, {'ACOPP14', 'ACOPR14', 'ANTWERP', 'CANTILVR', 'DEGENLPA', 'DEGENLPB', 'DNIEPER', 'ERRINROSNE', 'FCCU', 'GBRAIN', 'GOULDQP1', 'GROUPING', 'HIMMELBK', 'HS33', 'HS102', 'HS103', 'HS105', 'LOTSCHD', 'LAUNCH', 'LIN', 'LOADBAL', 'LSNNODOC', 'MARATOS', 'MEYER3NE', 'NET1', 'NYSTROM5', 'HALDMADS', 'OET2', 'OPTCNTRL', 'OPTPRLOC', 'OSCIPANE', 'PALMER4ANE', 'POLAK2', 'PRODPL0', 'PRODPL1', 'QCNEW', 'QPNBLEND', 'RAT42', 'RK23', 'TFI2', 'TWOBARS', 'TRIGON1NE', 'TRO6X2', 'TRO3X3', 'TRUSPYR1', 'WACHBIEG', 'WATER', 'WATSONNE', 'WAYSEA1NE', 'ZANGWIL3', 'ZECEVIC2', 'ZECEVIC4', 'ZY2'}];  % cobyla
 
             ver;
