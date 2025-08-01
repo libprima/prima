@@ -29,7 +29,8 @@ jobs:
         matlab: [latest]
         dim: [small]
         solver: [cobylal, cobylan]
-        competitor: [classical, archiva, norma]
+        #competitor: [classical, archiva, norma]
+        competitor: [norma]
         with_optim_toolbox: [yes, no]
         ctol_indicator: [0, 1, 2]
         exclude:
@@ -130,10 +131,18 @@ jobs:
             options.nr = 3;
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
 
+            try
             if strcmp('${{ matrix.solver }}', 'cobylal')
-                prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
+                prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', 'seq', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
-                prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', options);
+                prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', 'seq', options);
+            end
+            catch exception
+              % If an exception occurs, we will copy the crash dump files to root_dir.
+              % This is useful for debugging the test failures.
+              copy_crash_dump_files(root_dir)
+              dir(root_dir)
+              rethrow(exception);
             end
 
 
