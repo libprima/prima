@@ -30,9 +30,12 @@ jobs:
         matlab: [latest]
         dim: [small]
         solver: [lincoa]
-        precision: [single, quadruple]
-        competitor: [classical, archiva, norma]
-        ctol_indicator: [0, 1, 2]
+        #precision: [single, quadruple]
+        #competitor: [classical, archiva, norma]
+        #ctol_indicator: [0, 1, 2]
+        precision: [single]
+        competitor: [classical]
+        ctol_indicator: [0]
 
     steps:
 
@@ -121,7 +124,14 @@ jobs:
             options.precision = '${{ matrix.precision }}';
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
 
-            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', 'l', options);
+            try
+              prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', 'l', options);
+            catch exception
+              % Copy the crash dump files to root_dir if exceptions occur.
+              copy_crash_dump_files(root_dir)
+              dir(root_dir)
+              rethrow(exception);
+            end
 
 
             % Move the files to prepare for uploading artifacts
@@ -164,6 +174,7 @@ jobs:
         with:
           name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.precision }}-${{ matrix.ctol_indicator }}
           path: |
+            matlab_crash_dump*
             /tmp/${{ matrix.solver }}_profile_prima/*summary*.pdf
             /tmp/${{ matrix.solver }}_profile_prima/*.txt
             /tmp/${{ matrix.solver }}_profile_prima/*start*
