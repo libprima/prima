@@ -65,9 +65,9 @@ end
 % Zaikun 20250720:
 % The following code is to circumvent a bug in MATLAB R2025a, which segfaults on Linux when the
 % Fortran files contain internal procedures that are passed as actual arguments to other procedures.
-% To avoid this bug, we replace gateways/*_mex.F90 with gateways/R2025a/*_mex.F90
-% fortran/cobylb.f90 with gateways/R2025a/cobylb.f90, and
-% fortran/classical/cobyla.f90 with gateways/R2025a/classical_cobyla.f90,
+% To avoid this bug, we replace gateways/*_mex.F90 with gateways/R2025a/*_mex.F90,
+% fortd/cobyla/cobylb.f90 with gateways/R2025a/cobylb.f90, and
+% fortd/classical/cobyla/cobyla.f90 with gateways/R2025a/classical_cobyla.f90,
 % the latter of which use module variables instead of
 % internal procedures. The price is that PRIMA becomes thread-unsafe and recursion-unsafe.
 % See MathWorks Technical Support Case 07931486 and
