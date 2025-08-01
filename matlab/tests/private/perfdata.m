@@ -1,5 +1,9 @@
 function summary_file = perfdata(solvers, options)
 
+% Close all figures. Closing figures can release memory associated with them, which is important
+% when we run the tests on GitHub Actions, where the memory is limited.
+close all;
+
 data_dir = options.data_dir;
 test_feature = options.test_feature;
 feature_and_time = [test_feature, '.', options.time];

@@ -436,7 +436,7 @@ return
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [fval_history, cv_history, output] = testsolv(solver, prob, options, ir)
+function [fval_history, cv_history] = testsolv(solver, prob, options, ir)
 
 prob.options = setsolvopt(solver, length(prob.x0), options); % Set the options for the solver
 
