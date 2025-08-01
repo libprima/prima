@@ -164,7 +164,6 @@ jobs:
             options
 
             % Conduct the test multiple times, in case some errors occur not during the first time but later.
-            exception = [];
             try
                 recursive('${{ matrix.solver }}', options);
                 options.compile = false;
@@ -173,10 +172,7 @@ jobs:
                     recursive('${{ matrix.solver }}', options);
                 end
             catch exception
-            end
-
-            % Copy the crash dump files to root_dir if exceptions occur.
-            if ~isempty(exception)
+              % Copy the crash dump files to root_dir if exceptions occur.
               copy_crash_dump_files(root_dir)
               dir(root_dir)
               rethrow(exception);

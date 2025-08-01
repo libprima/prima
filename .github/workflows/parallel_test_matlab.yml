@@ -141,17 +141,13 @@ jobs:
             options
 
             % Conduct the test multiple times. Some errors may not occur during the first test.
-            exception = [];
             try
               parallel('${{ matrix.solver }}', options);
               options.compile = false;
               parallel('${{ matrix.solver }}', options);
               parallel('${{ matrix.solver }}', options);
             catch exception
-            end
-
-            % Copy the crash dump files to root_dir if exceptions occur.
-            if ~isempty(exception)
+              % Copy the crash dump files to root_dir if exceptions occur.
               copy_crash_dump_files(root_dir)
               dir(root_dir)
               rethrow(exception);
