@@ -144,7 +144,7 @@ jobs:
         run: |
           # The following modification is to show x, fx, funx, etc when the error InvalidFX occurs.
           cd matlab/interfaces/private
-          sed -i "s|error(sprintf('%s:InvalidFx', invoker)|x, fx, funx, bobyqa_prec, cobyla_prec\nerror(sprintf('%s:InvalidFx', invoker)|" postprima.m
+          sed -i "s|error(sprintf('%s:InvalidFx', invoker)|format long; x, fx, funx, bobyqa_prec, cobyla_prec\nerror(sprintf('%s:InvalidFx', invoker)|" postprima.m
           cat postprima.m
 
       - name: Conduct the test
