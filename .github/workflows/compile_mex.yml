@@ -128,10 +128,12 @@ jobs:
         shell: bash
         if: ${{ startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'windows') }}
         run: |
+          # Initialize the variable ONEAPI_VERSION to an empty string, which means the default version
           ONEAPI_VERSION=
           if [[ "${{ matrix.os }}" = "windows-"* ]] ; then
-              if [[ "${{ matrix.matlab }}" = "R2020"* || "${{ matrix.matlab }}" = "R2021"* || "${{ matrix.matlab }}" = "R2022"* || "${{ matrix.matlab }}" = "R2023"* ]] ; then
-                  ONEAPI_VERSION=2023
+              # The latest oneAPI supported by MATLAB R2023a/b and R2024a/b is 2023 and 2024, respectively
+              if [[ "${{ matrix.matlab }}" = "R2023"* || "${{ matrix.matlab }}" = "R2024"* ]] ; then
+                  ONEAPI_VERSION="$(echo "${{ matrix.matlab }}" | cut -c 2-5)"
               fi
           fi
           echo "ONEAPI_VERSION=$ONEAPI_VERSION" >> $GITHUB_ENV
