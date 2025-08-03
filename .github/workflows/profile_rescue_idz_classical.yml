@@ -183,8 +183,8 @@ jobs:
           path: |
             /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*summary*.pdf
             /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*.txt
-            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*start*
-            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*end*
+            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*prob_start*
+            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*prob_end*
             /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*stuck*
 
       - name: Remove the test data

@@ -175,8 +175,8 @@ jobs:
             matlab_crash_dump*
             /tmp/${{ matrix.solver }}_profile_prima/*summary*.pdf
             /tmp/${{ matrix.solver }}_profile_prima/*.txt
-            /tmp/${{ matrix.solver }}_profile_prima/*start*
-            /tmp/${{ matrix.solver }}_profile_prima/*end*
+            /tmp/${{ matrix.solver }}_profile_prima/*prob_start*
+            /tmp/${{ matrix.solver }}_profile_prima/*prob_end*
             /tmp/${{ matrix.solver }}_profile_prima/*stuck*
             /tmp/${{ matrix.solver }}_profile_prima/fort.*
 
