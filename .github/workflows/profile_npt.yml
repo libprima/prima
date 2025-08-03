@@ -140,7 +140,7 @@ jobs:
       - name: Revise postprima.m
         run: |
           # The following modification is to show x, fx, funx, etc when the error InvalidFX occurs.
-          cd matlab/interfaces/private
+          cd matlab/interfaces/private || exit 42
           sed -i "s|\(^\s*if ~(isnan(fx) && isnan(funx))\)|format long; x, fx, funx, abs(fx-funx)/max(1, abs(fx)), bobyqa_prec, cobyla_prec\n\1|" postprima.m
           cat postprima.m
 

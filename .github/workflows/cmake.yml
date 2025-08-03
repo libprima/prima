@@ -38,7 +38,7 @@ jobs:
         # See https://github.com/fortran-lang/setup-fortran?tab=readme-ov-file#runner-compatibility
         # for the toolchains provided by fortran-lang/setup-fortran. We test the latest three on each OS.
         # First define the toolchains on Linux and macOS.
-        os: [ubuntu-latest, ubuntu-24.04, macos-12, macos-13]
+        os: [ubuntu-22.04, ubuntu-latest, macos-13, macos-latest]
         toolchain:
           - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
           - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
@@ -52,19 +52,19 @@ jobs:
           # intel compiler (ifx) does not support macOS. So they are not included above but below.
           # Zaikun 20240423
           # On ubuntu-latest, we want to use '-Wall -w3 -Werror-all' as what we do for the intel-classic
-          # compiler, but the (new) intel c compiler does not recognize '-W3 -Werror-all', even though the
+          # compiler, but the (new) intel c compiler does not recognize '-w3 -Werror-all', even though the
           # official documentation of the compiler mentions them. Why?
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             toolchain: {compiler: intel, version: '2024.0', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             toolchain: {compiler: intel, version: '2023.2', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             toolchain: {compiler: intel, version: '2024.0', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
 
           # What follows contains the toolchains for Windows, including gcc, intel classic, and intel.
