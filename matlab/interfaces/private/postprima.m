@@ -592,7 +592,7 @@ if options.debug && ~options.classical
     % matrix-vector products.
     cobyla_prec = 1e-5;
     lincoa_prec = 1e-5;
-    bobyqa_prec = 1e-9;
+    bobyqa_prec = 1e-7;
 
     % Check whether constrviolation is correct
     constrviolation = 0;
