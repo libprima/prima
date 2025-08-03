@@ -29,14 +29,10 @@ jobs:
         os: [ubuntu-latest]
         matlab: [latest]
         dim: [all]
-        solver: [cobylan]
-        competitor: [classical]
-        precision: [single]
+        solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]  # prima is too expensive
+        competitor: [classical, archiva, norma]
+        precision: [single, quadruple]
         ctol_indicator: [0, 1, 2]
-        # solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]  # prima is too expensive
-        # competitor: [classical, archiva, norma]
-        # precision: [single, quadruple]
-        # ctol_indicator: [0, 1, 2]
 
         exclude:
           - solver: uobyqa
