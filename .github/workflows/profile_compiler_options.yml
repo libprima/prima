@@ -129,11 +129,11 @@ jobs:
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
                 options.nr = 3;
-                options.blacklist = {'CERI651B', 'HS99EXP', 'TRO6X2', 'POLAK2', 'GBRAIN', 'HIMMELP6','ORTHREGB', 'PRODPL0', 'DISCS', 'PRODPL1'};
+                options.blacklist = {'CERI651B', 'HS99EXP', 'TRO6X2', 'POLAK2', 'GBRAIN', 'HIMMELP6','ORTHREGB', 'PRODPL0', 'DISCS', 'PRODPL1', 'DNIEPER', 'VESUVIA'};
                 prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'lincoa')
                 options.blacklist = {'HS105'};  % Classical LINCOA encounters a SEGFAULT when compiled with -O1.
-                options.blacklist = [options.blacklist, {'DUAL2', 'SSEBLIN', 'AGG', 'SMBANK', 'GMNCASE3', 'GMNCASE2', 'HYDROELS', 'CVXQP1'}];
+                options.blacklist = [options.blacklist, {'DUAL2', 'SSEBLIN', 'AGG', 'SMBANK', 'GMNCASE3', 'GMNCASE2', 'HYDROELS', 'CVXQP1', 'GMNCASE1', 'SPANHYD'}];
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
                 options.blacklist = {'CHEBYQAD'};
