@@ -28,12 +28,9 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         matlab: [latest]
-        #dim: [small, big, large, all]
-        #npt: [n+2, n+6, 2*n, 2*n+2, 3*n, 4*n, n*sqrt(n), 0.25*n*n, 0.5*(n+1)*(n+2)]
-        #solver: [newuoa, bobyqa, lincoa]
-        dim: [small, all]
-        npt: [4*n, 0.5*(n+1)*(n+2)]
-        solver: [bobyqa]
+        dim: [small, big, large, all]
+        npt: [n+2, n+6, 2*n, 2*n+2, 3*n, 4*n, n*sqrt(n), 0.25*n*n, 0.5*(n+1)*(n+2)]
+        solver: [newuoa, bobyqa, lincoa]
         competitor: [classical, default]
         exclude:
           - dim: large
@@ -144,7 +141,7 @@ jobs:
         run: |
           # The following modification is to show x, fx, funx, etc when the error InvalidFX occurs.
           cd matlab/interfaces/private
-          sed -i "s|error(sprintf('%s:InvalidFx', invoker)|format long; x, fx, funx, fx-funx, bobyqa_prec, cobyla_prec\nerror(sprintf('%s:InvalidFx', invoker)|" postprima.m
+          sed -i "s|error(sprintf('%s:InvalidFx', invoker)|format long; x, fx, funx, abs(fx-funx)/max(1, abs(fx)), bobyqa_prec, cobyla_prec\nerror(sprintf('%s:InvalidFx', invoker)|" postprima.m
           cat postprima.m
 
       - name: Conduct the test
