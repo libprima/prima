@@ -107,12 +107,17 @@ jobs:
           shopt -s dotglob  # Without this, the `mv` command below will not move hidden files.
           mv "$RESCUE_IDZ_DIR"/* ./
 
+      - name: Get the number of physical cores
+        id: get_cores
+        run: echo "CORES=$(lscpu -b -p=Core,Socket | grep -v '^#' | sort -u | wc -l)" >> $GITHUB_ENV
+
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.2.1
         with:
           command: |
             ver;
             root_dir = pwd();
+            parpool(${{ env.CORES }});
 
             % Install MatCUTEst.
             cd(fullfile(root_dir, 'matcutest')); install(); which macup
