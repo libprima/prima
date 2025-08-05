@@ -165,8 +165,6 @@ jobs:
         shell: bash
         run: |
           solver=${{ env.SOLNAME }}
-          ls -R /tmp
-          ls -R /tmp/${solver}_profile_prima/
           cd /tmp/${solver}_profile_prima/
           ls -R1 *${solver}*_start > ${solver}_prob_start
           ls -R1 *${solver}*_end > ${solver}_prob_end
