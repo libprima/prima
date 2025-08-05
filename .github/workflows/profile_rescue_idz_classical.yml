@@ -106,6 +106,7 @@ jobs:
           bash benchmark/rescue_idz/make_rescue_idz
           RESCUE_IDZ_DIR="$(cat benchmark/rescue_idz/RESCUE_IDZ_DIR)"
           rm -rf matlab fortran setup.m .development
+          shopt -s dotglob  # Without this, the `mv` command below will not move hidden files.
           mv "$RESCUE_IDZ_DIR"/* ./
 
       - name: Conduct the test
