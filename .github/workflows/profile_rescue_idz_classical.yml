@@ -105,10 +105,8 @@ jobs:
         run: |
           bash benchmark/rescue_idz/make_rescue_idz
           RESCUE_IDZ_DIR="$(cat benchmark/rescue_idz/RESCUE_IDZ_DIR)"
-          cd ../ || exit 42
-          mv prima prima.bak
-          mv prima.bak/benchmark/rescue_idz/"$RESCUE_IDZ_DIR" prima
-          rm -rf prima.bak
+          rm -rf matlab fortran setup.m .development
+          mv benchmark/rescue_idz/"$RESCUE_IDZ_DIR"/* ./
 
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.2.1
