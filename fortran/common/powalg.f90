@@ -21,7 +21,7 @@ module powalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Friday, March 15, 2024 PM10:14:09
+! Last Modified: Wed 06 Aug 2025 06:54:55 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1226,12 +1226,12 @@ hcol(npt + 1:npt + n) = bmat(:, knew)
 ! N.B.: Powell's original comments mention that VLAG is "the vector THETA*WCHECK + e_b of the
 ! updating formula (6.11)", which does not match the published version of the NEWUOA paper.
 vlag = calvlag(kref, bmat, d, xpt, zmat, idz)
-beta = calbeta(kref, bmat, d, xpt, zmat, idz)
+beta = calbeta(kref, bmat, d, xpt, zmat, idz)  ! Nonnegative in precise arithmetic.
 
 ! Calculate the parameters of the updating formula (4.18)--(4.20) in the NEWUOA paper.
-alpha = hcol(knew)
-tau = vlag(knew)
-denom = alpha * beta + tau**2
+alpha = hcol(knew)  ! Nonnegative in precise arithmetic.
+tau = vlag(knew)  ! Nonzero due to the definition of KNEW.
+denom = alpha * beta + tau**2  ! Positive in precise arithmetic.
 
 ! After the following line, VLAG = H*w - e_KNEW in the NEWUOA paper (where t = KNEW).
 vlag(knew) = vlag(knew) - ONE
@@ -1441,6 +1441,12 @@ end subroutine updateh
 ! where the point being replaced is XPT(:, t). See (4.12) for the definition of BETA; VLAG is indeed
 ! H*w without the (NPT+1)the entry; DEN(t) is SIGMA in (4.12). (4.25)--(4.26) formulate the actual
 ! calculating scheme of VLAG and BETA.
+!
+! Zaikun 20250806: In theory, ALPHA and BETA are both nonnegative (see Lemma 2 of Powell 2002, Least
+! Frobenius norm updating of quadratic models that satisfy interpolation conditions), and DEN is
+! positive. Numerically, however, they can be negative due to rounding errors. Powell's code handles
+! such cases carefully. See the UPDATEH subroutine and Section 4 of the NEWUOA paper, especially the
+! discussions around (4.21)--(4.22).
 !
 ! In languages like MATLAB/Python/Julia/R, CALVLAG and CALBETA should be implemented into one single
 ! function, as they share most of the calculation. We separate them in Fortran (at the expense of
