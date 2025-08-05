@@ -17,8 +17,6 @@ on:
 # Show the git ref in the workflow name if it is invoked manually.
 run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
 
-env:
-  BENCHMARK: rescue_idz
 
 jobs:
   test:
@@ -153,10 +151,10 @@ jobs:
                 newfile = fullfile(files(ifile).folder, ['${{ matrix.variant }}_', files(ifile).name])
                 movefile(file, newfile);
             end
-            movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/']);
-            movefile(fullfile(cd(), '*.txt'), ['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/']);
+            movefile(fullfile(cd(), '*summary*.pdf'), ['/tmp/', solver, '_profile_prima/']);
+            movefile(fullfile(cd(), '*.txt'), ['/tmp/', solver, '_profile_prima/']);
 
-            files = [dir(['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/*start*']); dir(['/tmp/', solver, '_profile_${{ env.BENCHMARK }}/*end*'])]
+            files = [dir(['/tmp/', solver, '_profile_prima/*start*']); dir(['/tmp/', solver, '_profile_prima/*end*'])]
             for ifile = 1 : length(files)
                 file = fullfile(files(ifile).folder, files(ifile).name)
                 newfile = fullfile(files(ifile).folder, ['${{ matrix.variant }}_', files(ifile).name])
@@ -170,8 +168,8 @@ jobs:
         run: |
           solver=${{ env.SOLNAME }}
           ls -R /tmp
-          ls -R /tmp/${solver}_profile_${{ env.BENCHMARK }}/
-          cd /tmp/${solver}_profile_${{ env.BENCHMARK }}/
+          ls -R /tmp/${solver}_profile_prima/
+          cd /tmp/${solver}_profile_prima/
           ls -R1 *${solver}*_start > ${solver}_prob_start
           ls -R1 *${solver}*_end > ${solver}_prob_end
           diff ${solver}_prob_start ${solver}_prob_end > ${solver}_stuck || :
@@ -183,17 +181,18 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}
+          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.variant }}
           path: |
-            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*summary*.pdf
-            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*.txt
-            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*prob_start*
-            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*prob_end*
-            /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}/*stuck*
+            /tmp/${{ env.SOLNAME }}_profile_prima/*summary*.pdf
+            /tmp/${{ env.SOLNAME }}_profile_prima/*.txt
+            /tmp/${{ env.SOLNAME }}_profile_prima/*prob_start*
+            /tmp/${{ env.SOLNAME }}_profile_prima/*prob_end*
+            /tmp/${{ env.SOLNAME }}_profile_prima/*stuck*
+            /tmp/${{ env.SOLNAME }}_profile_prima/fort.*
 
       - name: Remove the test data
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
-        run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/${{ env.SOLNAME }}_profile_${{ env.BENCHMARK }}
+        run: rm -rf ./matlab/tests/testdata && rm -rf /tmp/${{ env.SOLNAME }}_profile_prima
 
 
   merge_artifacts:
