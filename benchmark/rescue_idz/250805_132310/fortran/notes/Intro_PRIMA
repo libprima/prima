@@ -1,0 +1,5 @@
+[PRIMA](www.libprima.net) provides the reference implementation for Powell's renowned gradient/derivative-free (zeroth-order) optimization methods, namely COBYLA, UOBYQA, NEWUOA, BOBYQA, and LINCOA.
+PRIMA solves general nonlinear optimization problems without using derivatives. It implements Powell's solvers in modern Fortran, complying with the Fortran 2008 standard. The implementation is faithful, in the sense of being mathematically equivalent to Powell's Fortran 77 implementation, but with a better numerical performance. In contrast to the 7939 lines of Fortran 77 code with 244 GOTOs, the new implementation is structured and modularized.
+
+There is a discussion to include the PRIMA solvers into [SciPy](https://github.com/scipy/scipy/issues/18118), replacing the buggy and unmaintained Fortran 77 version of
+COBYLA underlying `scipy.optimize.minimize`, and making the other four solvers available to all SciPy users.

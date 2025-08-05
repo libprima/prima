@@ -1,0 +1,8 @@
+{
+    "pp_suffixes": [".F90", ".F"],
+    "lowercase_intrinsics": true,
+    "incremental_sync": true,
+    "hover_signature": true,
+    "use_signature_help": true,
+    "pp_defs": { "HAVE_HDF5": "", "MPI_Comm": "integer" }
+}

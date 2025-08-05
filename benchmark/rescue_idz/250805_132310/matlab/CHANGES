@@ -1,0 +1,100 @@
+1. Handle evaluation failures.
+2. New options: fortran, precision, eta1/2, gamma1/2, iprint, maxhist, output_xhist, output_nlchist, maxfilt, ctol, cweight
+   New output: xhist, nlcihist, nlcehist
+   When debug = chckfunval = true, check the consistency between xhist, fhist, chist, nlcihist,
+   nlcehist if they are available.
+3. Compile/call different versions of the solvers according to precision and debug_flag.
+4. New functions: evalobj.m, evalcon.m, cobyla_con, cobyla_funcon, all_solvers, all_precisions,
+   all_variants.
+5. Unify the signatures of the classical and modern version
+6. gethuge, hugefun, and hugecon are renamed to getmax, funcmax, constrmax respectively.
+   Add `boundmax`. Remove `hugenum`, which can be obtained by getmax('real', 'precision').
+   getmax now accepts 'precision' as an input; implement maxint; call getmax only in preprima and
+   maxint; call maxint only in preprima and lincoa, cobyla; record boundmax, funcmax, constrmax in
+   probinfo and use them in postprima.
+   update 20230207: getmax is now implemented in MATLAB; the Fortran version is removed.
+7. No need to check maxint in uobyqa, newuoa, and bobyqa; in lincoa, cobyla, and preprima, only check
+   that the number of variables/constraints do not exceed maxint.
+8. Do not take the value of rhoend into consideration when correcting the incorrect (non-positive,
+   not finite, etc) value of rhobeg for BOBYQA.
+9. Check that chist is nonnegative.
+10. If fhist contain any value blow -hugefun, raise the warning 'HugeNegativeF'.
+11. "returns positive constrviolations" in the error messages should be "returns a positive
+    constrviolation".
+
+12. The warning 'uobyqa:UnivariateProblem' is only emitted for uobyqa when n <= 1 and classical = true,
+    as the modernized version can handle n == 1.
+    The warning message is modified as follows:
+    wmsg = sprintf('%s: a univariate problem received and classical = true; %s may crash; classical is set to false.', funname, funname) "
+    The modern version now can handle univariate problems properly, while the classical version may crash with memory errors.
+
+13. (see line 248--271 of preprima.m, only in the bound/linear-constrained case) x0 is revised only
+    if the preprocessing code find a new starting point with a smaller constraint violation. If x0
+    is still infeasible (up to a tolerance, 10e-10 in the code) after the possible revision, then
+    warn that "INVOKER: preprocessing code did not find a feasible x0; problem is likely infeasible",
+    the warning identifier being "INVOKER:InfeasibleX0".
+
+    At the same time, in lincoa.m (line 385--397), when x0 is infeasible (this x0 has been
+    preprocessed), warn that "lincoa will modify the right-hand side of the constraints to make x0
+    feasible.", the warning identifier being "lincoa:ConstraintModified". Originally, it warns about
+    also the infeasibility of x0 (which has been warned in preprima.m now), with the warning
+    identifier being "lincoa:InfeasibleX0".
+
+14. When classical = true, the warning is modified to
+    sprintf('%s: in classical mode, which may CRASH your computer; it is discouraged except for research purposes; set options.classical to false to disable classical mode.', invoker);
+    The warning identifier remains "INVOKER:Classical", where INVOKER is the name of the invoker.
+    See the function `pre_options` in preprima.m.
+
+15. If lb contains NaN, then we raise a warning "INVOKER:NaNInLB" and regard the constraints as
+    infeasible. The same for UB. See the function `pre_bcon` in preprima.m.
+    This is consistent with the behavior of NaN in the floating point number system.
+
+16. If Aineq or bineq contains NaN, then we raise a warning "INVOKER:NaNInequality" and regard the
+    constraints as infeasible. Similar for Aeq and beq. See the function `pre_lcon` in preprima.m.
+
+17. If Aineq contains infinite values, or bineq = -Inf, then we raise a warning "INVOKER:InfInequality"
+    and regard the constraints as infeasible. Similar for Aeq and beq. See the function `pre_lcon` in preprima.m.
+
+18. We allow x0, bineq, beq to be rows. See the functions `pre_x0`, `pre_lcon`, `pre_fun`,
+    `pre_nonlcon` in preprima.m. No matter whether they are rows or columns, we always require
+    size(Aineq) = [length(bineq), length(x0)] and size(Aeq) = [length(beq), length(x0)]. This is
+    consistent with the behavior of fmincon. We raise warnings "INVOKER:X0IsRow", "INVOKER:BineqIsRow",
+    or "INVOKER:BeqIsRow" if they are rows.
+
+19. `iprint` is fully implemented. The MATLAB version behaves exactly as the Fortran version
+    regarding iprint, except if `classical` is true, in which case the MATLAB version does not
+    support a nonzero iprint.
+
+20. testprima: perturb is changed to eps;
+    the perturbation of x0 is changed to
+    ```
+        x0 = x0 + perturb*max(norm(x0), 1)*r/norm(r);
+
+    ```
+    In addition, the following is added to lines 122-124 to test `iprint`:
+    ````
+        if ~release  % 20230508: Test the newly implemented iprint.
+            problem.options.iprint = round(4*(2*rand() - 1));
+        end
+    ```
+
+21. constr_modified and the warning "%s:ConstraintModified" are removed. The warning is now raised
+    in the Fortran code.
+
+22. The Fortran code of LINCOA now accepts equality constraints and bound constraints. Hence the
+    MATLAB interface does not need to form A_aug and b_aug anymore.
+
+23. The Fortran code of COBYLA now accepts bound and linear constraints and bound constraints.
+    MATLAB interface does not need to wrap the bound/linear constraints into nonlinear constraints.
+    In addition, VERY IMPORTANTLY, the Fortran code now deals with constraints in the form of
+    ```
+    c(x) <= 0
+    ```
+    instead of
+    ```
+    c(x) >= 0
+    ```
+    The MATLAB interface is adapted accordingly. This concerns the definition of `funcon`, `nlcineq`,
+    `nlceq`, `nlcihist`, and `nlcehist`.
+
+Check other changes by comparing the matlab interfaces (vimdiff).

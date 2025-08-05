@@ -1,0 +1,13 @@
+# N.B.: Do not include all_solvers.m, dbgstr.m, and get_mexname.m, which are ignored under
+# matlab/interfaces/private, but not under matlab/setup_tools. Those in the latter will be copied to
+# the former during the setup.
+all_precisions.m
+all_variants.m
+.signature
+
+*.mexa64*
+*.mexmac*
+*.mexw*
+*.mod
+*.o
+*.obj

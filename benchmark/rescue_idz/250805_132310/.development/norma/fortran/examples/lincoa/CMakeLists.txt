@@ -1,0 +1,10 @@
+
+cmake_minimum_required(VERSION 3.13)
+project(lincoa_example Fortran)
+find_package(PRIMA CONFIG REQUIRED)
+add_executable(lincoa_example_1 lincoa_example_1.f90)
+target_link_libraries(lincoa_example_1 prima::primaf)
+install(TARGETS lincoa_example_1 DESTINATION bin)
+add_executable(lincoa_example_2 lincoa_example_2.f90)
+target_link_libraries(lincoa_example_2 prima::primaf)
+install(TARGETS lincoa_example_2 DESTINATION bin)

@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# This script generates a version of PRIMA to test the effect of RESCUE and IDZ in Powell's algorithms.
+
+# The directory where this script is located.
+THIS_DIR=$(dirname "$(readlink -f "$0")")
+
+# The directory where PRIMA is located.
+PRIMA_DIR="$THIS_DIR/../.."
+
+# The modified version of PRIMA will be created in $RESCUE_IDZ_DIR.
+STAMP="$(date +%y%m%d_%H%M%S)"
+RESCUE_IDZ_DIR="$THIS_DIR/$STAMP"
+echo "$RESCUE_IDZ_DIR" > "$THIS_DIR"/RESCUE_IDZ_DIR
+
+# If this script is not run on a GitHub-hosted runner of GitHub Actions, then ask whether to continue.
+if [ -z "$GITHUB_ACTIONS" ]; then
+    echo "This script will make a version of PRIMA to test the effect of RESCUE and IDZ in Powell's algorithms."
+    echo -e "It will create a new directory at\n\n    $RESCUE_IDZ_DIR , \n\nwhich will contain a copy of PRIMA with modifications."
+    read -r -p "Do you want to continue? (y/n) " answer
+    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+        echo "Exiting."
+        exit 0
+    fi
+fi
+
+# Create the directory for the modified version of PRIMA.
+if [ -d "$RESCUE_IDZ_DIR" ]; then
+    echo "Warning: The directory $RESCUE_IDZ_DIR already exists. It will be removed." >&2
+    rm -rf "$RESCUE_IDZ_DIR"
+fi
+mkdir -p "$RESCUE_IDZ_DIR"
+
+# List of files and directories to copy from $PRIMA_DIR to $RESCUE_IDZ_DIR.
+FDLIST=(
+    "setup.m"
+    "fortran"
+    "matlab"
+    ".development/archnorma"
+)
+
+# Copy the files and directories from $PRIMA_DIR to $RESCUE_IDZ_DIR.
+echo -e "\nCopying files and directories from $PRIMA_DIR to $RESCUE_IDZ_DIR ...\n"
+for fd in "${FDLIST[@]}"; do
+    if [ -e "$PRIMA_DIR/$fd" ]; then
+        if [ "$(basename "$fd")" == "archnorma" ] ; then
+            mkdir -p "$RESCUE_IDZ_DIR/$(dirname "$fd")"
+            cp "$PRIMA_DIR/$fd" "$RESCUE_IDZ_DIR/$(dirname "$fd")/"
+        else
+            cp -r "$PRIMA_DIR/$fd" "$RESCUE_IDZ_DIR/"
+        fi
+    else
+        echo "Warning: $PRIMA_DIR/$fd does not exist. Skipping." >&2
+    fi
+done
+
+# Create the $RESCUE_IDZ_DIR/.development/norma directory so that archnorma will not complain.
+mkdir -p "$RESCUE_IDZ_DIR"/.development/norma
+
+# Create a README about the modified version of PRIMA.
+echo -e "\nCreating a README file in $RESCUE_IDZ_DIR ...\n"
+README_FILE="$RESCUE_IDZ_DIR/README.md"
+cat << EOF > "$README_FILE"
+This is a modified version of PRIMA to test the effect of RESCUE and IDZ in Powell's algorithms.
+It was created by the script
+$(realpath "$0")
+on $(date)
+from the version of PRIMA with git commit hash
+$(git -C "$PRIMA_DIR" rev-parse HEAD)
+EOF
+
+# Make a norma version of PRIMA. It will be used as the competitor for benchmarking against the modified version.
+echo -e "\nCreating a norma version of PRIMA in $RESCUE_IDZ_DIR/.development ...\n"
+bash "$RESCUE_IDZ_DIR"/.development/archnorma
+# Remove the archiva directory from the modified version of PRIMA as it is not needed for the tests.
+rm -rf "$RESCUE_IDZ_DIR"/.development/archiva
+
+# Create the modified version of PRIMA.
+echo -e "\nCreating a modified version of PRIMA in $RESCUE_IDZ_DIR ...\n"
+FLIST=(
+    "$RESCUE_IDZ_DIR"/fortran/newuoa/newuob.f90
+    "$RESCUE_IDZ_DIR"/fortran/lincoa/lincob.f90
+    "$RESCUE_IDZ_DIR"/fortran/bobyqa/bobyqb.f90
+    "$RESCUE_IDZ_DIR"/fortran/classical/newuoa/newuob.f
+    "$RESCUE_IDZ_DIR"/fortran/classical/lincoa/lincob.f
+    "$RESCUE_IDZ_DIR"/fortran/classical/lincoa/prelim.f
+    "$RESCUE_IDZ_DIR"/fortran/classical/bobyqa/bobyqb.f
+    "$RESCUE_IDZ_DIR"/matlab/tests/private/testcu.m
+    "$RESCUE_IDZ_DIR"/matlab/tests/private/get_solvers.m
+    "$RESCUE_IDZ_DIR"/matlab/tests/private/perfdata.m
+)
+for f in "${FLIST[@]}"; do
+    if [ -e "$f" ]; then
+        # Display the file being modified if we are on a GitHub-hosted runner.
+        if [ -n "$GITHUB_ACTIONS" ]; then
+            echo "Modifying file: $f"
+        fi
+    else
+        echo "Warning: $f does not exist. Skipping." >&2
+        continue
+    fi
+
+    # Modify the files in FLIST.
+    case "$(basename "$f")" in
+        # Set IDZ to 1 before and after the call to UPDATEH in the modernized NEWUOA and LINCOA.
+        newuob.f90|lincob.f90)
+            sed -i 's|\(^\s*\)\(call updateh(.*idz.*$\)|\1idz=1; \2; idz=1|' "$f"
+            ;;
+        # Avoid calling RESCUE in the modernized BOBYQA.
+        bobyqb.f90)
+            sed -i 's|if (to_rescue) then|if (.false.) then|' "$f"
+            ;;
+        # Set IDZ to 1 before and after the call to UPDATE in the classical NEWUOA and LINCOA.
+        newuob.f|lincob.f|prelim.f)
+            sed -i 's|\(^\s*[0-9]*\s*CALL UPDATE\s*(.*)\s*$\)|      IDZ=1\n\1\n      IDZ=1|' "$f"
+            ;;
+        # Avoid calling RESCUE in the classical BOBYQA.
+        bobyqb.f)
+            sed -i 's|IF (NF > NRESC) GOTO 190|!IF (NF > NRESC) GOTO 190|g' "$f"
+            ;;
+        # Ensure that the classical solvers are compiled if options.classical is set to true.
+        get_solvers.m)
+            sed -i "s/\(^\s*\)\(setup(solver, mexopts{is});\s*$\)/\1mexopts{is}.classical = mexopts{is}.classical || (isfield(options, 'classical') \&\& options.classical); \2/" "$f"
+            ;;
+       # Ensure that the classical solvers are tested if options.classical is set to true.
+        testcu.m)
+            sed -i "s/\(^\s*prob.options.classical = .*\);\s*$/\1 || (isfield(options, 'classical') \&\& options.classical);/g" "$f"
+            ;;
+       # Ensure that the solvers are correctly identified. Here, the norma version is the original
+       # version, and the other is the one without RESCUE or IDZ.
+        perfdata.m)
+            sed -i "s/solvers{is} = regexprep(solvers{is}, '_norma$', ' (norma)');/solvers{is} = regexprep(solvers{is}, '(oa$|qa$)', '\$1 (no rescue|idz)'); solvers{is} = regexprep(solvers{is}, '_norma$', '');/" "$f"
+            ;;
+    esac
+
+    # Display the modified file if we are on a GitHub-hosted runner.
+    if [ -n "$GITHUB_ACTIONS" ]; then
+        cat "$f"
+    fi
+done
+
+echo -e "\nModified version of PRIMA created at $RESCUE_IDZ_DIR.\n"

@@ -125,7 +125,7 @@ jobs:
             cd(fullfile(root_dir, '${{ env.BENCHMARK }}/matlab/tests'));
             options = struct();
             options.classical = false;
-            options.rhoend = 1.0e-8;
+            options.rhoend = 1.0e-10;
             options.maxfun_dim = 500;
             options.strict = 0;
             options.nr = 3;  % 3 random runs for each problem

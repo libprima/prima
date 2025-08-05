@@ -1,0 +1,133 @@
+#!/bin/bash
+# This script archives the current version of the project, creating norma and archiva.
+#
+# norma: a directory containing a version that will be used as the reference version in the
+# development of the new version.
+# archiva: a directory containing a collection of archived versions of the project, each of which
+# is a snapshot of the project together with the corresponding "norma" version.
+
+# The directory where this scrip resides
+THIS_DIR="$(realpath "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )")"
+THIS_DIR_NAME="$(basename "$THIS_DIR")"
+ROOT_DIR="$(dirname "$THIS_DIR")"
+ARCHIVA="$THIS_DIR"/archiva
+NORMA="$THIS_DIR"/norma
+TODAY=$(date +%y%m%d)
+ARCHIVA_TODAY="$ARCHIVA"/"$TODAY"
+
+# Clean up the current version.
+printf "\nCleaning up the current version ...\n"
+find "$ROOT_DIR" -name core -type f -delete
+find "$ROOT_DIR" -name core.* -type f -delete
+find "$ROOT_DIR" -name *.mexa64 -type f -delete
+find "$ROOT_DIR" -name *.mod -type f -delete
+find "$ROOT_DIR" -name ".interform" -type d -exec rm -rf {} \;
+find "$ROOT_DIR" -name "flog" -type d -exec  rm -r {} \;
+find "$ROOT_DIR" -name "mlog" -type d -exec  rm -r {} \;
+ORIGINAL="$ROOT_DIR"/fortran/original
+for SOLVER in cobyla uobyqa newuoa bobyqa lincoa ; do
+    cd "$ORIGINAL"/"$SOLVER" && make clean -s
+done
+printf "Done.\n"
+
+# Copy the current version (together with the current norma version) into $ARCHIVA, so that it
+# becomes a new archived version.
+printf "\nArchiving the current version in %s ...\n" "$ARCHIVA_TODAY"
+# Exclude the following folders/files from archiva.
+# It is important to exclude *lint, which are symbolic links to the corresponding files in the
+# fortran/tests directory. If we do not exclude them, they will be broken, which will cause MATLAB
+# `copyfile` to fail.
+EXCLUDE_LIST=$(mktemp -q)
+cat > "$EXCLUDE_LIST" <<EOF
+matlab/tests/testdata
+matlab/tests/*.mat
+fortran/notes
+fortran/*/*lint
+EOF
+# Copy by rsync.
+mkdir -p "$ARCHIVA_TODAY"
+for SOURCE in fortran matlab setup.m ; do
+    rsync -avuq --exclude-from="$EXCLUDE_LIST" "$ROOT_DIR/"$SOURCE "$ARCHIVA_TODAY"
+done
+printf "Copying %s to %s ...\n" "$NORMA" "$ARCHIVA_TODAY"/"$THIS_DIR_NAME"
+mkdir -p "$ARCHIVA_TODAY"/"$THIS_DIR_NAME"
+mv "$NORMA" "$ARCHIVA_TODAY"/"$THIS_DIR_NAME"
+printf "Done.\n"
+
+# Copy the current version to $NORMA.
+printf "\nCreating the new norma version in %s...\n" "$NORMA"
+# Exclude the following folders/files from norma.
+# It is important to exclude *lint, which are symbolic links to the corresponding files in the
+# fortran/tests directory. If we do not exclude them, they will be broken, which will cause MATLAB
+# `copyfile` to fail.
+cat > "$EXCLUDE_LIST" <<EOF
+matlab/CHANGES
+matlab/examples
+matlab/notes
+matlab/tests
+fortran/original
+fortran/notes
+fortran/tests
+fortran/*/*lint
+EOF
+# Copy by rsync.
+mkdir -p "$NORMA"
+for SOURCE in fortran matlab setup.m ; do
+    rsync -avuq --exclude-from="$EXCLUDE_LIST" "$ROOT_DIR/"$SOURCE "$NORMA"
+done
+printf "Done.\n"
+
+# Modify the code in "$NORMA"/matlab so that it becomes the new norma version.
+printf "\nModifying the code in $NORMA/matlab ...\n"
+MSETUPTOOLS="$NORMA"/matlab/setup_tools
+MINTERFACES="$NORMA"/matlab/interfaces
+rm -f "$MINTERFACES"/private/*mexa64
+for WORD in cobyla uobyqa newuoa bobyqa lincoa prima ; do
+    WORDN="$WORD"_norma
+    mv "$MINTERFACES"/"$WORD".m "$MINTERFACES"/"$WORDN".m
+    for DIR in "$MSETUPTOOLS" "$MINTERFACES" ; do
+        find "$DIR" -type f -exec sed -i -e "s|$WORD|$WORDN|g" {} \;
+    done
+done
+for WORD in preprima postprima ; do
+    WORDN="$WORD"_norma
+    mv "$MINTERFACES"/private/"$WORD".m "$MINTERFACES"/private/"$WORDN".m
+done
+printf "Done.\n"
+
+# Modify the names of the MATLAB version of the solvers in "$NORMA/matlab". This must be done because
+# their invocations have been changed in the last step.
+printf "\nModifying the names of the MATLAB version of the solvers ...\n"
+#for SOLVER in cobyla uobyqa newuoa bobyqa lincoa ; do
+for SOLVER in newuoa ; do  # As of 2023010, only the MATLAB version of NEWUOA is implemented.
+    MATPKG="$MINTERFACES"/+"$SOLVER"_mat
+    MATPKGN="$MINTERFACES"/+"$SOLVER"_norma_mat
+    MATSOLVER="$SOLVER"_mat.m
+    MATSOLVERN="$SOLVER"_norma_mat.m
+    mv "$MATPKG" "$MATPKGN"
+    mv "$MATPKGN"/"$MATSOLVER" "$MATPKGN"/"$MATSOLVERN"
+done
+printf "Done.\n"
+
+# Modify compile.m for the new norma version.
+printf "\nModifying compile.m for the new norma version ...\n"
+COMPILEM="$NORMA"/matlab/setup_tools/compile.m
+OLDSTR="solver = solvers{isol}"
+NEWSTR="solver = regexprep(solvers{isol}, '_norma', '')"
+sed -i "s|$OLDSTR|$NEWSTR|g" "$COMPILEM"
+OLDSTR="get_mexname(solver"
+NEWSTR="get_mexname(solvers{isol}"
+sed -i "s|$OLDSTR|$NEWSTR|g" "$COMPILEM"
+# The following two lines are needed because of the code in compile.m that circumvents the bug of
+# MATLAB R2025a MEX concerning Fortran internal procedures. The code in compile.m should replace
+# fortran/cobyla/cobyla.f90 with matlab/mex_gateways/R2025a/cobyla.f90. However, after the above
+# modifications, compile.m would be replacing fortran/cobyla_norma/cobyla_norma.f90 with
+# matlab/mex_gateways/R2025a/cobyla_norma.f90, the names being incorrect.
+OLDSTR="cobyla_norma"
+NEWSTR="cobyla"
+sed -i "s|$OLDSTR|$NEWSTR|g" "$COMPILEM"
+printf "Done.\n"
+
+printf "\nSuccess.\n\n"
+
+exit 0

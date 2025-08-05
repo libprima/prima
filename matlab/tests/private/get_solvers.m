@@ -52,15 +52,17 @@ for is = 1 : length(solvers)
         % Yes if we are in verification or if options.debug is true.
         mexopts{is}.debug = isverify || (isfield(options, 'debug') && options.debug);
 
-        % Do we compile ONLY the debugging version?
-        % Yes if we are profiling and options.debug is true.
-        %mexopts{is}.debug_only = isprofile && (isfield(options, 'debug') && options.debug);
-
         % Do we compile the classical version?
         % Yes if we are in verification (unless options.no_classical = true) or if the solver name
         % ends with '_classical' or SOLVER_classical is requested.
-        mexopts{is}.classical = (isverify && ~(isfield(options, 'no_classical') && options.no_classical)) ...
-            || endsWith(solvers{is}, '_classical') || ismember([solvers{is}, '_classical'], solvers);
+        mexopts{is}.classical = (isverify && ~(isfield(options, 'no_classical') && options.no_classical)) || ...
+            endsWith(solvers{is}, '_classical') || ismember([solvers{is}, '_classical'], solvers);
+
+        % Do we compile ONLY the debugging version?
+        % Yes if we are profiling and options.debug is true but the classical version is not requested.
+        % Zaikun 20250805: Since the debugging version is not available for the classical solvers,
+        % we must set `mexopts{is}.debug_only` to false if mexopts{is}.classical is true.
+        mexopts{is}.debug_only = isprofile && (isfield(options, 'debug') && options.debug) && ~mexopts{is}.classical;
 
         % Do we compile the half-precision version?
         % Yes if we are in verification or if the solver name ends with '_half' or
@@ -80,7 +82,6 @@ for is = 1 : length(solvers)
         % SOLVER_quadruple is requested or options.precision is 'quadruple'.
         mexopts{is}.quadruple = (isverify || endsWith(solvers{is}, '_quadruple') || ismember([solvers{is}, '_quadruple'], solvers)) || ...
             (isfield(options, 'precision') && (isa(options.precision, 'char') ||  isa(options.precision, 'string')) && strcmpi(options.precision, 'quadruple'));
-
 
         % Should we be verbose?
         mexopts{is}.verbose = (isfield(options, 'verbose') && options.verbose || ...

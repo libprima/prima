@@ -1,0 +1,174 @@
+
+       Output from test problem 1 (Simple quadratic)
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   37   F = 1.809750E-05    MAXCV = 0.000000E+00
+   X =-1.000879E+00   3.220609E-03
+
+     Least squares error in variables =    3.338389E-03
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   65   F = 1.153291E-07    MAXCV = 0.000000E+00
+   X =-9.999341E-01   2.682342E-04
+
+     Least squares error in variables =    2.762020E-04
+  ------------------------------------------------------------------
+
+       Output from test problem 2 (2D unit circle calculation)
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   37   F =-4.999994E-01    MAXCV = 2.026558E-06
+   X = 7.062163E-01  -7.079976E-01
+
+     Least squares error in variables =    1.259601E-03
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   44   F =-5.000000E-01    MAXCV = 5.960464E-08
+   X = 7.071500E-01  -7.070636E-01
+
+     Least squares error in variables =    6.107080E-05
+  ------------------------------------------------------------------
+
+       Output from test problem 3 (3D ellipsoid calculation)
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   52   F =-7.856688E-02    MAXCV = 6.288290E-06
+   X = 5.780203E-01   4.069204E-01  -3.340311E-01
+
+     Least squares error in variables =    1.642899E-03
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   65   F =-7.856742E-02    MAXCV = 8.940697E-08
+   X = 5.773363E-01   4.082997E-01  -3.332995E-01
+
+     Least squares error in variables =    6.312904E-05
+  ------------------------------------------------------------------
+
+       Output from test problem 4 (Weak Rosenbrock)
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =  100   F = 3.125441E-05    MAXCV = 0.000000E+00
+   X =-9.958720E-01   9.879909E-01
+
+     Least squares error in variables =    1.269875E-02
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =  173   F = 6.409362E-07    MAXCV = 0.000000E+00
+   X =-9.994782E-01   9.983495E-01
+
+     Least squares error in variables =    1.730967E-03
+  ------------------------------------------------------------------
+
+       Output from test problem 5 (Intermediate Rosenbrock)
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =  347   F = 4.008353E-03    MAXCV = 0.000000E+00
+   X =-9.366965E-01   8.777190E-01
+
+     Least squares error in variables =    1.376952E-01
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =  698   F = 9.516375E-05    MAXCV = 0.000000E+00
+   X =-9.904447E-01   9.803594E-01
+
+     Least squares error in variables =    2.184159E-02
+  ------------------------------------------------------------------
+
+       Output from test problem 6 (Equation (9.1.15) in Fletcher)
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   30   F =-1.414216E+00    MAXCV = 2.950430E-06
+   X = 7.071948E-01   7.070208E-01
+
+     Least squares error in variables =    1.230355E-04
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   40   F =-1.414214E+00    MAXCV = 0.000000E+00
+   X = 7.071791E-01   7.070344E-01
+
+     Least squares error in variables =    1.023325E-04
+  ------------------------------------------------------------------
+
+       Output from test problem 7 (Equation (14.4.2) in Fletcher)
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   28   F =-2.999881E+00    MAXCV = 0.000000E+00
+   X = 1.362514E-08  -2.999881E+00  -2.999881E+00
+
+     Least squares error in variables =    1.689246E-04
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   32   F =-3.000046E+00    MAXCV = 4.673004E-05
+   X = 1.207445E-08  -3.000000E+00  -3.000046E+00
+
+     Least squares error in variables =    4.649224E-05
+  ------------------------------------------------------------------
+
+       Output from test problem 8 (Rosen-Suzuki)
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   66   F =-4.400000E+01    MAXCV = 3.099442E-06
+   X =-6.020486E-04   9.995968E-01   2.000546E+00  -9.994259E-01
+
+     Least squares error in variables =    1.073541E-03
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =   79   F =-4.400000E+01    MAXCV = 1.251698E-06
+   X =-2.246869E-04   9.996516E-01   2.000260E+00  -9.997578E-01
+
+     Least squares error in variables =    5.460466E-04
+  ------------------------------------------------------------------
+
+       Output from test problem 9 (Hock and Schittkowski 100)
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =  208   F = 6.806301E+02    MAXCV = 4.053116E-06
+   X = 2.330593E+00   1.951539E+00  -4.734516E-01   4.365437E+00  -6.264274E-01
+       1.037488E+00   1.593289E+00
+
+     Least squares error in variables =    4.680154E-03
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =  226   F = 6.806301E+02    MAXCV = 1.430511E-05
+   X = 2.330569E+00   1.951836E+00  -4.744338E-01   4.364466E+00  -6.246935E-01
+       1.035748E+00   1.592556E+00
+
+     Least squares error in variables =    4.469852E-03
+  ------------------------------------------------------------------
+
+       Output from test problem 10 (Hexagon area)
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =  150   F =-8.660254E-01    MAXCV = 1.192093E-06
+   X = 6.605685E-01   7.507660E-01  -3.188329E-01   9.478114E-01   6.614124E-01
+       7.500232E-01  -3.198982E-01   9.474520E-01  -6.671554E-11
+
+     Least squares error in variables =    1.124314E-03
+
+   Normal return from subroutine COBYLA
+
+   NFVALS =  173   F =-8.660254E-01    MAXCV = 3.352761E-07
+   X = 6.606672E-01   7.506790E-01  -3.195507E-01   9.475691E-01   6.608437E-01
+       7.505235E-01  -3.197733E-01   9.474941E-01  -3.822812E-11
+
+     Least squares error in variables =    2.350494E-04
+  ------------------------------------------------------------------

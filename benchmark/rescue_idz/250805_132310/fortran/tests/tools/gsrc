@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# This script pre-processes the Fortran source code for gfortran when it is invoked with -Ofast.
+
+DIR="$(realpath "$1")"
+STRINGF90="string.f90"
+STRING="$DIR/common/$STRINGF90"
+
+if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
+    printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
+    exit 1
+fi
+
+if [[ "$(uname)" == "Darwin" ]]; then
+    SEDI='sed -i ""'
+else
+    SEDI='sed -i'
+fi
+
+# See https://fortran-lang.discourse.group/t/is-this-expected/6486
+if [[ -f "$STRING" ]] ; then
+    $SEDI '/call assert(x >= REALMAX/,+1d' "$STRING"
+    $SEDI '/call assert(x <= -REALMAX/,+1d' "$STRING"
+fi

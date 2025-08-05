@@ -1,0 +1,13 @@
+LINCOA---a LINearly Constrained Optimization Algorithm.
+Copyright (C) 2013 M. J. D. Powell
+
+This package is free software; you can redistribute it and/or
+modify it under the terms of the 3-clause BSD License.
+
+This package is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Michael J. D. Powell <mjdp@cam.ac.uk>
+University of Cambridge
+Cambridge, UK.
