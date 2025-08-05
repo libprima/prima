@@ -122,15 +122,20 @@ jobs:
             options = struct();
             options.classical = strcmp('${{ matrix.variant }}', 'classical');
             options.rhoend = eps;
-            options.maxfun_dim = 800;
+            options.maxfun_dim = 1000;
             options.strict = 0;
             options.nr = 3;  % 3 random runs for each problem
 
             if strcmp('${{ matrix.dim }}', 'small') || strcmp('${{ matrix.solver }}', 'newuoa')
+                if strcmp('${{ matrix.solver }}', 'newuoa')
+                    options.blacklist = {'ARGLINA', 'ARGLINC', 'LUKSAN16LS', 'QING'};
+                end
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'norma', options, 'rev');
             elseif strcmp('${{ matrix.solver }}', 'lincoa')
+                options.blacklist = {'SMBANK', 'DUAL2', 'SSEBLIN'};
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', 'norma', options, 'rev');
             elseif strcmp('${{ matrix.solver }}', 'bobyqa')
+                options.blacklist = {'CHEBYQAD'};
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', 'norma', options, 'rev');
             end
 
