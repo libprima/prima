@@ -1,4 +1,0 @@
-lagmax.f
-trstep.f
-uobyqb.f
-uobyqa.f90

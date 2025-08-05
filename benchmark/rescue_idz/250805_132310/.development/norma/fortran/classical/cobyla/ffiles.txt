@@ -1,3 +1,0 @@
-trstlp.f
-cobylb.f
-cobyla.f90
