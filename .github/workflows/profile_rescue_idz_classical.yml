@@ -121,14 +121,10 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
             options.classical = strcmp('${{ matrix.variant }}', 'classical');
-            options.rhoend = 1;
-            options.maxfun_dim = 10;
+            options.rhoend = eps;
+            options.maxfun_dim = 1000;
             options.strict = 0;
-            options.nr = 1;  % 3 random runs for each problem
-            %options.rhoend = eps;
-            %options.maxfun_dim = 1000;
-            %options.strict = 0;
-            %options.nr = 3;  % 3 random runs for each problem
+            options.nr = 3;  % 3 random runs for each problem
 
             if strcmp('${{ matrix.dim }}', 'small') || strcmp('${{ matrix.solver }}', 'newuoa')
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'norma', options, 'rev');
