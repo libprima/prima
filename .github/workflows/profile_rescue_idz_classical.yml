@@ -106,7 +106,7 @@ jobs:
           bash benchmark/rescue_idz/make_rescue_idz
           RESCUE_IDZ_DIR="$(cat benchmark/rescue_idz/RESCUE_IDZ_DIR)"
           rm -rf matlab fortran setup.m .development
-          mv benchmark/rescue_idz/"$RESCUE_IDZ_DIR"/* ./
+          mv "$RESCUE_IDZ_DIR"/* ./
 
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.2.1
