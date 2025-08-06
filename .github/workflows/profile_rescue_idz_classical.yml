@@ -30,6 +30,7 @@ jobs:
         dim: [small, all]
         solver: [newuoa, bobyqa, lincoa]
         variant: [classical]
+        precision: [single, double, quadruple]
 
     steps:
       - name: Get the solver name
@@ -121,6 +122,7 @@ jobs:
             cd(fullfile(root_dir, 'matlab/tests'));
             options = struct();
             options.classical = strcmp('${{ matrix.variant }}', 'classical');
+            options.precision = '${{ matrix.precision }}';
             options.rhoend = eps;
             options.maxfun_dim = 1000;
             options.strict = 0;
