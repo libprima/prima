@@ -41,7 +41,7 @@ jobs:
           submodules: recursive
 
       - name: Conduct the test  # We do not use matlab-actions/run-command, which is not supported on macOS ARM64 as of 20240119
-        run: ${{ env.MATLAB }} -nojvm -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); parallel('${{ matrix.solver }}'); copy_crash_dump_files(root_dir);"
+        run: ${{ env.MATLAB }} -nojvm -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); parallel('${{ matrix.solver }}'); copy_crash_dump_files(root_dir, true);"
 
       - name: Store artifacts
         uses: actions/upload-artifact@v4.3.1

@@ -163,7 +163,7 @@ jobs:
               end
             catch exception
               % Copy the crash dump files to root_dir if exceptions occur.
-              copy_crash_dump_files(root_dir)
+              copy_crash_dump_files(root_dir, true)
               dir(root_dir)
               rethrow(exception);
             end

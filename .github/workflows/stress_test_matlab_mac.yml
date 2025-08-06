@@ -54,9 +54,9 @@ jobs:
       - name: Conduct the test  # We do not use matlab-actions/run-command, which is not supported on macOS ARM64 as of 20240119
         run: |
             if [[ -n '${{ inputs.precision }}' ]] ; then
-                ${{ env.MATLAB }} -nojvm -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); options.tough = strcmp('${{ matrix.test }}', 'tough'); options.precision = '${{ inputs.precision }}'; stress('${{ matrix.solver }}', options); copy_crash_dump_files(root_dir);"
+                ${{ env.MATLAB }} -nojvm -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); options.tough = strcmp('${{ matrix.test }}', 'tough'); options.precision = '${{ inputs.precision }}'; stress('${{ matrix.solver }}', options); copy_crash_dump_files(root_dir, true);"
             else
-                ${{ env.MATLAB }} -nojvm -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); options.tough = strcmp('${{ matrix.test }}', 'tough'); options.precision = 'date'; stress('${{ matrix.solver }}', options); copy_crash_dump_files(root_dir);"
+                ${{ env.MATLAB }} -nojvm -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); options.tough = strcmp('${{ matrix.test }}', 'tough'); options.precision = 'date'; stress('${{ matrix.solver }}', options); copy_crash_dump_files(root_dir, true);"
             fi
 
       - name: Store artifacts
