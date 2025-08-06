@@ -133,7 +133,7 @@ jobs:
             case 'lincoa'
                 options.blacklist = {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS'};
             case 'bobyqa'
-                options.blacklist = {'CHEBYQAD', 'HOLMES',  'ERRINROS ',TOINTPSP'};
+                options.blacklist = {'CHEBYQAD', 'HOLMES',  'ERRINROS ', 'TOINTPSP'};
             end
 
             try
