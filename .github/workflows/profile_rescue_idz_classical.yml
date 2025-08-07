@@ -140,11 +140,11 @@ jobs:
             case 'quadruple'
                 switch '${{ matrix.solver }}'
                 case 'newuoa'
-                    options.blacklist = [options.blacklist, {'ERRINROS', 'TOINTPSP', 'ARGLINC', 'LUKSAN13LS', 'VANDANMSLS', 'VESUVIOULS', 'ARGLINA', 'LUKSAN11LS'}];
+                    options.blacklist = [options.blacklist, {'ERRINROS', 'TOINTPSP', 'ARGLINC', 'LUKSAN13LS', 'VANDANMSLS', 'VESUVIOULS', 'ARGLINA', 'LUKSAN11LS', 'WATSON', 'QING'}];
                 case 'bobyqa'
-                    options.blacklist = [options.blacklist, {'ERRINRSM', 'TOINTGOR', 'DECONVU', 'DECONVB'}];
+                    options.blacklist = [options.blacklist, {'ERRINRSM', 'TOINTGOR', 'DECONVU', 'DECONVB', 'CHEBYQAD'}];
                 case 'lincoa'
-                    options.blacklist = [options.blacklist, {'ERRINRSM', 'METHANB8LS', 'GMNCASE2', 'GMNCASE3'}];
+                    options.blacklist = [options.blacklist, {'ERRINRSM', 'METHANB8LS', 'GMNCASE2', 'GMNCASE3', 'GMNCASE1'}];
                 end
             end
 

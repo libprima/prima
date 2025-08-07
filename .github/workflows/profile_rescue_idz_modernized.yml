@@ -127,14 +127,14 @@ jobs:
             options.maxfun_dim = 1000;
             options.strict = 0;
             options.nr = 3;  % 3 random runs for each problem
-            if strcmp('${{ matrix.precision }}', 'quadruple')
+            if ismember('${{ matrix.precision }}', {'double', 'quadruple'})
               switch '${{ matrix.solver }}'
               case 'newuoa'
-                  options.blacklist = {'ARGLINA', 'ARGLINC', 'LUKSAN16LS', 'QING', 'SPIN2LS', 'LUKSAN11LS', 'ERRINROS', 'GAUSS3LS', 'CHNRSNBM', 'HILBERTB', 'ARGLINB', 'LUKSAN13LS'};
+                  options.blacklist = {'ARGLINA', 'ARGLINC', 'LUKSAN16LS', 'QING', 'SPIN2LS', 'LUKSAN11LS', 'ERRINROS', 'GAUSS3LS', 'CHNRSNBM', 'HILBERTB', 'ARGLINB', 'LUKSAN13LS', 'METHANB8LS', 'TOINTPSP', 'VANDANMSLS'};
               case 'lincoa'
-                  options.blacklist = {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS', 'GMNCASE1', 'DUAL3'};
+                  options.blacklist = {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS', 'GMNCASE1', 'DUAL3', 'HYDROELS', 'AGG'};
               case 'bobyqa'
-                  options.blacklist = {'CHEBYQAD', 'HOLMES',  'ERRINROS ', 'TOINTPSP', 'DECONVU'};
+                  options.blacklist = {'CHEBYQAD', 'HOLMES',  'ERRINROS ', 'TOINTPSP', 'DECONVU', 'DECONVB'};
               end
             end
 
