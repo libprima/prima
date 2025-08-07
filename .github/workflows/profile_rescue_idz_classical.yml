@@ -135,16 +135,16 @@ jobs:
                 case 'newuoa'
                 case 'bobyqa'
                 case 'lincoa'
-                    options.blacklist = [options.blacklist, {'EQC', 'GMNCASE3', 'PENTAGON'}];
+                    options.blacklist = [options.blacklist, {'EQC', 'GMNCASE3', 'PENTAGON'}];  % Classical LINCOA segfaults
                 end
             case 'quadruple'
                 switch '${{ matrix.solver }}'
                 case 'newuoa'
-                    options.blacklist = [options.blacklist, {'ERRINROS', 'TOINTPSP', 'ARGLINC', 'LUKSAN13LS'}];
+                    options.blacklist = [options.blacklist, {'ERRINROS', 'TOINTPSP', 'ARGLINC', 'LUKSAN13LS', 'VANDANMSLS', 'VESUVIOULS', 'ARGLINA', 'LUKSAN11LS'}];
                 case 'bobyqa'
-                    options.blacklist = [options.blacklist, {'ERRINRSM', 'TOINTGOR', 'DECONVU'}];
+                    options.blacklist = [options.blacklist, {'ERRINRSM', 'TOINTGOR', 'DECONVU', 'DECONVB'}];
                 case 'lincoa'
-                    options.blacklist = [options.blacklist, {'ERRINRSM', 'METHANB8LS', 'GMNCASE2'}];
+                    options.blacklist = [options.blacklist, {'ERRINRSM', 'METHANB8LS', 'GMNCASE2', 'GMNCASE3'}];
                 end
             end
 

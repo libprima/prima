@@ -127,13 +127,15 @@ jobs:
             options.maxfun_dim = 1000;
             options.strict = 0;
             options.nr = 3;  % 3 random runs for each problem
-            switch '${{ matrix.solver }}'
-            case 'newuoa'
-                options.blacklist = {'ARGLINA', 'ARGLINC', 'LUKSAN16LS', 'QING', 'SPIN2LS', 'LUKSAN11LS', 'ERRINROS', 'GAUSS3LS'};
-            case 'lincoa'
-                options.blacklist = {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS'};
-            case 'bobyqa'
-                options.blacklist = {'CHEBYQAD', 'HOLMES',  'ERRINROS ', 'TOINTPSP'};
+            if strcmp('${{ matrix.precision }}', 'quadruple')
+              switch '${{ matrix.solver }}'
+              case 'newuoa'
+                  options.blacklist = {'ARGLINA', 'ARGLINC', 'LUKSAN16LS', 'QING', 'SPIN2LS', 'LUKSAN11LS', 'ERRINROS', 'GAUSS3LS', 'CHNRSNBM', 'HILBERTB', 'ARGLINB', 'LUKSAN13LS'};
+              case 'lincoa'
+                  options.blacklist = {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS', 'GMNCASE1', 'DUAL3'};
+              case 'bobyqa'
+                  options.blacklist = {'CHEBYQAD', 'HOLMES',  'ERRINROS ', 'TOINTPSP', 'DECONVU'};
+              end
             end
 
             try
