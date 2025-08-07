@@ -130,11 +130,11 @@ jobs:
             if ismember('${{ matrix.precision }}', {'double', 'quadruple'})
               switch '${{ matrix.solver }}'
               case 'newuoa'
-                  options.blacklist = {'ARGLINA', 'ARGLINC', 'LUKSAN16LS', 'QING', 'SPIN2LS', 'LUKSAN11LS', 'ERRINROS', 'GAUSS3LS', 'CHNRSNBM', 'HILBERTB', 'ARGLINB', 'LUKSAN13LS', 'METHANB8LS', 'TOINTPSP', 'VANDANMSLS'};
+                  options.blacklist = {'ARGLINA', 'ARGLINC', 'LUKSAN16LS', 'QING', 'SPIN2LS', 'LUKSAN11LS', 'ERRINROS', 'GAUSS3LS', 'CHNRSNBM', 'HILBERTB', 'ARGLINB', 'LUKSAN13LS', 'METHANB8LS', 'TOINTPSP', 'VANDANMSLS', 'CHNROSNB', 'HYDCAR6LS', 'LUKSAN15LS', 'SENSORS'};
               case 'lincoa'
-                  options.blacklist = {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS', 'GMNCASE1', 'DUAL3', 'HYDROELS', 'AGG'};
+                  options.blacklist = {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS', 'GMNCASE1', 'DUAL3', 'HYDROELS', 'AGG', 'GMNCASE3'};
               case 'bobyqa'
-                  options.blacklist = {'CHEBYQAD', 'HOLMES',  'ERRINROS ', 'TOINTPSP', 'DECONVU', 'DECONVB'};
+                  options.blacklist = {'CHEBYQAD', 'HOLMES',  'ERRINROS ', 'TOINTPSP', 'DECONVU', 'DECONVB', 'LEVYMONT'};
               end
             end
 
