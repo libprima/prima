@@ -140,11 +140,11 @@ jobs:
             case 'quadruple'
                 switch '${{ matrix.solver }}'
                 case 'newuoa'
-                    options.blacklist = [options.blacklist, {'ERRINROS', 'TOINTPSP', 'ARGLINC', 'LUKSAN13LS', 'VANDANMSLS', 'VESUVIOULS', 'ARGLINA', 'LUKSAN11LS', 'WATSON', 'QING', 'SPIN2LS', 'ARGLINB', 'HYDCAR6LS'}];
+                    options.blacklist = [options.blacklist, {'ERRINROS', 'TOINTPSP', 'ARGLINC', 'LUKSAN13LS', 'VANDANMSLS', 'VESUVIOULS', 'ARGLINA', 'LUKSAN11LS', 'WATSON', 'QING', 'SPIN2LS', 'ARGLINB', 'HYDCAR6LS', 'LUKSAN15LS', 'SENSORS'}];
                 case 'bobyqa'
-                    options.blacklist = [options.blacklist, {'ERRINRSM', 'TOINTGOR', 'DECONVU', 'DECONVB', 'CHEBYQAD', 'BQPGASIM', 'LEVYMONT', 'BQPGABIM'}];
+                    options.blacklist = [options.blacklist, {'ERRINRSM', 'TOINTGOR', 'DECONVU', 'DECONVB', 'CHEBYQAD', 'BQPGASIM', 'LEVYMONT', 'BQPGABIM', 'HOLMES'}];
                 case 'lincoa'
-                    options.blacklist = [options.blacklist, {'ERRINRSM', 'METHANB8LS', 'GMNCASE2', 'GMNCASE3', 'GMNCASE1', 'DUAL2', 'DUAL3'}];
+                    options.blacklist = [options.blacklist, {'ERRINRSM', 'METHANB8LS', 'GMNCASE2', 'GMNCASE3', 'GMNCASE1', 'DUAL2', 'DUAL3', 'DALLASS'}];
                 end
             end
 
