@@ -132,8 +132,6 @@ jobs:
             switch '${{ matrix.precision }}'
             case 'single'
                 switch '${{ matrix.solver }}'
-                case 'newuoa'
-                case 'bobyqa'
                 case 'lincoa'
                     options.blacklist = [options.blacklist, {'EQC', 'GMNCASE3', 'PENTAGON'}];  % Classical LINCOA segfaults
                 end
