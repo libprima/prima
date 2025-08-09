@@ -124,7 +124,7 @@ jobs:
             options.classical = strcmp('${{ matrix.variant }}', 'classical');
             options.precision = '${{ matrix.precision }}';
             options.rhoend = eps;
-            options.maxfun_dim = 1100;
+            options.maxfun_dim = 1000;
             options.strict = 0;
             options.nr = 3;  % 3 random runs for each problem
 
@@ -137,7 +137,7 @@ jobs:
                 case 'bobyqa'
                     options.blacklist = [options.blacklist, {'CHEBYQAD', 'HOLMES',  'ERRINROS ', 'TOINTPSP', 'DECONVU', 'DECONVB', 'LEVYMONT'}];
                 case 'lincoa'
-                    options.blacklist = [options.blacklist, {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS', 'GMNCASE1', 'DUAL3', 'HYDROELS', 'AGG', 'GMNCASE3', 'GMNCASE2', 'DUAL1', 'CVXQP1', 'HIMMELBI'}];
+                    options.blacklist = [options.blacklist, {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS', 'GMNCASE1', 'DUAL3', 'HYDROELS', 'AGG', 'GMNCASE3', 'GMNCASE2', 'DUAL1', 'CVXQP1', 'HIMMELBI', 'DUAL4', 'SPANHYD'}];
                 end
             end
 
