@@ -2315,3 +2315,11 @@ presult
 speedtest
 tempsum
 simulink
+COOLHANSLS
+DEGENQP
+dotglob
+EQC
+HILBERTB
+ORTHREGB
+VESUVIA
+VESUVIOULS
