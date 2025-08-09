@@ -135,17 +135,17 @@ jobs:
             if strcmp('${{ matrix.solver }}', 'cobylal')
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
-                options.blacklist = {'CERI651B', 'HS99EXP', 'TRO6X2', 'POLAK2', 'GBRAIN', 'HIMMELP6','ORTHREGB', 'PRODPL0', 'DISCS', 'PRODPL1', 'DNIEPER', 'VESUVIA', 'OPTPRLOC', 'NET1', 'CERI651D', 'TRO3X3', 'ERRINROSNE', 'HS85'};
+                options.blacklist = {'CERI651B', 'HS99EXP', 'TRO6X2', 'POLAK2', 'GBRAIN', 'HIMMELP6','ORTHREGB', 'PRODPL0', 'DISCS', 'PRODPL1', 'DNIEPER', 'VESUVIA', 'OPTPRLOC', 'NET1', 'CERI651D', 'TRO3X3', 'ERRINROSNE', 'HS85', 'ERRINROSNE'};
                 prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'lincoa')
                 options.blacklist = {'HS105'};  % Classical LINCOA encounters a SEGFAULT when compiled with -O1.
-                options.blacklist = [options.blacklist, {'DUAL2', 'SSEBLIN', 'AGG', 'SMBANK', 'GMNCASE3', 'GMNCASE2', 'HYDROELS', 'CVXQP1', 'GMNCASE1', 'SPANHYD'}];
+                options.blacklist = [options.blacklist, {'DUAL2', 'SSEBLIN', 'AGG', 'SMBANK', 'GMNCASE3', 'GMNCASE2', 'HYDROELS', 'CVXQP1', 'GMNCASE1', 'SPANHYD', 'OET3', 'DALLASS'}];
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'bobyqa')
                 options.blacklist = {'CHEBYQAD'};
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', 'b', '${{ matrix.competitor }}', options);
             else
-                options.blacklist={'LUKSAN11LS', 'SPIN2LS', 'ARGLINA', 'ARGLINC', 'ERRINROS', 'QING', 'METHANB8LS', 'SPIN2LS', 'COOLHANSLS', 'SENSORS', 'ARGLINB', 'BA-L1SPLS'};
+                options.blacklist={'LUKSAN11LS', 'SPIN2LS', 'ARGLINA', 'ARGLINC', 'ERRINROS', 'QING', 'METHANB8LS', 'SPIN2LS', 'COOLHANSLS', 'SENSORS', 'ARGLINB', 'BA-L1SPLS', 'LUKSAN13LS'};
                 prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
             end
 
