@@ -125,7 +125,7 @@ jobs:
             if strcmp('${{ matrix.solver }}', 'cobylal')
                 prof('cobyla', '${{ matrix.dim }}', 'l', '${{ matrix.competitor }}', options);
             elseif strcmp('${{ matrix.solver }}', 'cobylan')
-                options.blacklist = {'CERI651B', 'HS99EXP', 'TRO6X2', 'POLAK2', 'GBRAIN', 'HIMMELP6','ORTHREGB', 'PRODPL0', 'DISCS', 'PRODPL1', 'DNIEPER', 'VESUVIA', 'OPTPRLOC', 'NET1'};
+                options.blacklist = {'CERI651B', 'HS99EXP', 'TRO6X2', 'POLAK2', 'GBRAIN', 'HIMMELP6','ORTHREGB', 'PRODPL0', 'DISCS', 'PRODPL1', 'DNIEPER', 'VESUVIA', 'OPTPRLOC', 'NET1', 'CERI651D', 'TRO3X3', 'ERRINROSNE', 'HS85'};
                 prof('cobyla', '${{ matrix.dim }}', 'n', '${{ matrix.competitor }}', options);
             elseif  strcmp('${{ matrix.solver }}', 'lincoa')
                 options.blacklist = {'HS105'};  % Classical LINCOA encounters a SEGFAULT when compiled with -O1.
