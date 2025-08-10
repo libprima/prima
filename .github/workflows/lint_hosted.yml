@@ -115,7 +115,7 @@ jobs:
 
       - name: Conduct the test
         run: |
-          type gfortran ifort ifx aflang g95 nvfortran sunf95 flang
+          type gfortran ifx aflang g95 nvfortran sunf95 flang
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all
 
       - name: Remove the test data
