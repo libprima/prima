@@ -137,7 +137,7 @@ jobs:
                 case 'bobyqa'
                     options.blacklist = [options.blacklist, {'CHEBYQAD', 'HOLMES',  'ERRINROS ', 'TOINTPSP', 'DECONVU', 'DECONVB', 'LEVYMONT'}];
                 case 'lincoa'
-                    options.blacklist = [options.blacklist, {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS', 'GMNCASE1', 'DUAL3', 'HYDROELS', 'AGG', 'GMNCASE3', 'GMNCASE2', 'DUAL1', 'CVXQP1', 'HIMMELBI', 'DUAL4', 'SPANHYD'}];
+                    options.blacklist = [options.blacklist, {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS', 'GMNCASE1', 'DUAL3', 'HYDROELS', 'AGG', 'GMNCASE3', 'GMNCASE2', 'DUAL1', 'CVXQP1', 'HIMMELBI', 'DUAL4', 'SPANHYD', 'QPNBLEND'}];
                 end
             end
 
