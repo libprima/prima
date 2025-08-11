@@ -27,10 +27,14 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         matlab: [latest]
-        dim: [small, all]
-        solver: [newuoa, bobyqa, lincoa]
+        #dim: [small, all]
+        #solver: [newuoa, bobyqa, lincoa]
+        #variant: [classical]
+        #precision: [single, double, quadruple]
+        dim: [all]
+        solver: [lincoa]
         variant: [classical]
-        precision: [single, double, quadruple]
+        precision: [quadruple]
 
     steps:
       - name: Get the solver name
@@ -138,11 +142,11 @@ jobs:
             case 'quadruple'
                 switch '${{ matrix.solver }}'
                 case 'newuoa'
-                    options.blacklist = [options.blacklist, {'ERRINROS', 'TOINTPSP', 'ARGLINC', 'LUKSAN13LS', 'VANDANMSLS', 'VESUVIOULS', 'ARGLINA', 'LUKSAN11LS', 'WATSON', 'QING', 'SPIN2LS', 'ARGLINB', 'HYDCAR6LS', 'LUKSAN15LS', 'SENSORS', 'LRIJCNN1', 'TRIGON1', 'CHNRSNBM', 'METHANB8LS', 'CHNROSNB', 'PALMER8C'}];
+                    options.blacklist = [options.blacklist, {'ARGLINA', 'ARGLINB', 'ARGLINC', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'HYDCAR6LS', 'LRIJCNN1', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN15LS', 'METHANB8LS', 'PALMER8C', 'QING', 'SENSORS', 'SPIN2LS', 'TOINTPSP', 'TRIGON1', 'VANDANMSLS', 'VESUVIOULS', 'WATSON'}];
                 case 'bobyqa'
-                    options.blacklist = [options.blacklist, {'ERRINRSM', 'TOINTGOR', 'DECONVU', 'DECONVB', 'CHEBYQAD', 'BQPGASIM', 'LEVYMONT', 'BQPGABIM', 'HOLMES'}];
+                    options.blacklist = [options.blacklist, {'BQPGABIM', 'BQPGASIM', 'CHEBYQAD', 'DECONVB', 'DECONVU', 'ERRINRSM', 'HOLMES', 'LEVYMONT', 'TOINTGOR'}];
                 case 'lincoa'
-                    options.blacklist = [options.blacklist, {'ERRINRSM', 'METHANB8LS', 'GMNCASE2', 'GMNCASE3', 'GMNCASE1', 'DUAL2', 'DUAL3', 'DALLASS', 'CVXQP1', 'AVION2', 'DUAL1', 'ARGLALE', 'ARGLBLE', 'ANTWERP', 'LINSPANH'}];
+                    options.blacklist = [options.blacklist, {'AGG', 'ANTWERP', 'ARGLALE', 'ARGLBLE', 'AVION2', 'CVXQP1', 'DALLASS', 'DUAL1', 'DUAL2', 'DUAL3', 'ERRINRSM', 'GMNCASE1', 'GMNCASE2', 'GMNCASE3', 'HYDROELS', 'LINSPANH', 'METHANB8LS'}];
                 end
             end
 

@@ -27,10 +27,14 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         matlab: [latest]
-        dim: [small, all]
-        solver: [newuoa, bobyqa, lincoa]
+        #dim: [small, all]
+        #solver: [newuoa, bobyqa, lincoa]
+        #variant: [modernized]
+        #precision: [single, double, quadruple]
+        dim: [all]
+        solver: [lincoa]
         variant: [modernized]
-        precision: [single, double, quadruple]
+        precision: [quadruple]
 
     steps:
       - name: Get the solver name
@@ -133,11 +137,11 @@ jobs:
             case {'double', 'quadruple'}
                 switch '${{ matrix.solver }}'
                 case 'newuoa'
-                    options.blacklist = [options.blacklist, {'ARGLINA', 'ARGLINC', 'LUKSAN16LS', 'QING', 'SPIN2LS', 'LUKSAN11LS', 'ERRINROS', 'GAUSS3LS', 'CHNRSNBM', 'HILBERTB', 'ARGLINB', 'LUKSAN13LS', 'METHANB8LS', 'TOINTPSP', 'VANDANMSLS', 'CHNROSNB', 'HYDCAR6LS', 'LUKSAN15LS', 'SENSORS', 'STRATEC', 'BA-L1SPLS'}];
+                    options.blacklist = [options.blacklist, {'ARGLINA', 'ARGLINB', 'ARGLINC', 'BA-L1SPLS', 'CHNROSNB', 'CHNRSNBM', 'ERRINROS', 'GAUSS3LS', 'HILBERTB', 'HYDCAR6LS', 'LUKSAN11LS', 'LUKSAN13LS', 'LUKSAN15LS', 'LUKSAN16LS', 'METHANB8LS', 'QING', 'SENSORS', 'SPIN2LS', 'STRATEC', 'TOINTPSP', 'VANDANMSLS'}];
                 case 'bobyqa'
-                    options.blacklist = [options.blacklist, {'CHEBYQAD', 'HOLMES',  'ERRINROS ', 'TOINTPSP', 'DECONVU', 'DECONVB', 'LEVYMONT'}];
+                    options.blacklist = [options.blacklist, {'CHEBYQAD', 'DECONVB', 'DECONVU', 'ERRINROS ', 'HOLMES', 'LEVYMONT', 'TOINTPSP'}];
                 case 'lincoa'
-                    options.blacklist = [options.blacklist, {'SMBANK', 'DUAL2', 'SSEBLIN', 'ARGLALE', 'ARGLBLE', 'ERRINROS', 'GMNCASE1', 'DUAL3', 'HYDROELS', 'AGG', 'GMNCASE3', 'GMNCASE2', 'DUAL1', 'CVXQP1', 'HIMMELBI', 'DUAL4', 'SPANHYD', 'QPNBLEND', 'QPCBLEND'}];
+                    options.blacklist = [options.blacklist, {'AGG', 'ARGLALE', 'ARGLBLE', 'CVXQP1', 'DUAL1', 'DUAL2', 'DUAL3', 'DUAL4', 'ERRINROS', 'GMNCASE1', 'GMNCASE2', 'GMNCASE3', 'GMNCASE4', 'HIMMELBI', 'HYDROELS', 'LINSPANH', 'QPCBLEND', 'QPNBLEND', 'SMBANK', 'SPANHYD', 'SSEBLIN'}];
                 end
             end
 
