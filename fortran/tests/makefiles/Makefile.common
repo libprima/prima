@@ -438,7 +438,11 @@ GFSTD := $(shell  [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\
 # allocatable characters. See
 # https://fortran-lang.discourse.group/t/warning-str-may-be-used-uninitialized
 WE := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 11 || $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 8 && -z '$(FFLAGSG)' ]] ; then echo "-Werror"; else echo ""; fi)
-GFORT := $(GFORT) $(WE) -pedantic-errors -fmax-errors=1
+# gfortran 14+ supports the `-ftrampoline-impl=heap` option, which is needed to avoid the
+# warning about executable stacks caused by internal procedures passed as arguments. See
+# https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines
+GTRAMPOLINE := $(shell  [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 13 ]] && (echo "-ftrampoline-impl=heap") || echo "")
+GFORT := $(GFORT) $(WE) $(GTRAMPOLINE) -pedantic-errors -fmax-errors=1
 # `-fautomatic` (the default) tells `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
 # We enable them for small problems to verify that we will not have stack overflows.
@@ -956,6 +960,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "\.sformat.* may be used uninitialized" \
 	| grep -v "\.noise_type_loc.* may be used uninitialized" \
 	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
+	| grep -v "requires executable stack (because the .note.GNU-stack section is executable)" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
