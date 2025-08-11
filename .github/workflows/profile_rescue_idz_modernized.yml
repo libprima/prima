@@ -27,14 +27,10 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         matlab: [latest]
-        #dim: [small, all]
-        #solver: [newuoa, bobyqa, lincoa]
-        #variant: [modernized]
-        #precision: [single, double, quadruple]
-        dim: [all]
-        solver: [lincoa]
+        dim: [small, all]
+        solver: [newuoa, bobyqa, lincoa]
         variant: [modernized]
-        precision: [quadruple]
+        precision: [single, double, quadruple]
 
     steps:
       - name: Get the solver name
