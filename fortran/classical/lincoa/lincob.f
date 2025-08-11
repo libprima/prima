@@ -27,7 +27,7 @@
       use, non_intrinsic :: consts_mod, only : RP, IK
       use, non_intrinsic :: evaluate_mod, only : evaluate
       use, non_intrinsic :: history_mod, only : savehist, rangehist
-      use, non_intrinsic :: linalg_mod, only: matprod, maximum
+      use, non_intrinsic :: linalg_mod, only : matprod, maximum
       use, non_intrinsic :: pintrf_mod, only : OBJ
 
       implicit real(RP) (A-H,O-Z)

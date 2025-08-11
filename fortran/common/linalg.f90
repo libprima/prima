@@ -44,26 +44,26 @@ module linalg_mod
 
 implicit none
 private
-public:: inprod, matprod, outprod  ! Mathematically, INPROD = DOT_PRODUCT, MATPROD = MATMUL
-public:: r1update, r2update, symmetrize
-public:: eye
-public:: diag
-public:: hypotenuse, planerot
-public:: project
-public:: inv, isinv
-public:: solve
-public:: lsqr
-public:: isminor
-public:: issymmetric, isorth, istriu
-public:: sort
-public:: trueloc, falseloc
-public:: minimum, maximum
-public:: norm
-public:: linspace
-public:: hessenberg
-public:: eigmin
-public:: vec2smat, smat2vec, smat_mul_vec
-public:: int
+public :: inprod, matprod, outprod  ! Mathematically, INPROD = DOT_PRODUCT, MATPROD = MATMUL
+public :: r1update, r2update, symmetrize
+public :: eye
+public :: diag
+public :: hypotenuse, planerot
+public :: project
+public :: inv, isinv
+public :: solve
+public :: lsqr
+public :: isminor
+public :: issymmetric, isorth, istriu
+public :: sort
+public :: trueloc, falseloc
+public :: minimum, maximum
+public :: norm
+public :: linspace
+public :: hessenberg
+public :: eigmin
+public :: vec2smat, smat2vec, smat_mul_vec
+public :: int
 
 interface matprod
     module procedure matprod12, matprod21, matprod22
@@ -145,18 +145,18 @@ subroutine r1_sym(A, alpha, x)
 ! A = A+ALPHA*( X*X^T ), 
 ! where A is an NxN matrix, ALPHA is a scalar, and X is an N-dimensional vector.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: alpha
-real(RP), intent(in):: x(:)
+real(RP), intent(in) :: alpha
+real(RP), intent(in) :: x(:)
 ! In-outputs
-real(RP), intent(inout):: A(:, :)  ! A(SIZE(X), SIZE(X))
+real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
 ! Local variables
-character(len=*), parameter:: srname = 'R1_SYM'
-integer(IK):: n, j
+character(len=*), parameter :: srname = 'R1_SYM'
+integer(IK) :: n, j
 
 ! Sizes
 n = int(size(x), kind(n))
@@ -200,18 +200,18 @@ subroutine r1(A, alpha, x, y)
 ! where A is an MxN matrix, ALPHA is a real scalar, X is an M-dimensional vector, and Y is an
 ! N-dimensional vector.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: alpha
-real(RP), intent(in):: x(:)
-real(RP), intent(in):: y(:)
+real(RP), intent(in) :: alpha
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: y(:)
 ! In-outputs
-real(RP), intent(inout):: A(:, :)  ! A(SIZE(X), SIZE(Y))
+real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
 ! Local variables
-character(len=*), parameter:: srname = 'R1'
+character(len=*), parameter :: srname = 'R1'
 
 ! Preconditions
 if (DEBUGGING) then
@@ -237,19 +237,19 @@ subroutine r2_sym(A, alpha, x, y)
 ! A = A+ALPHA*( X*Y^T+Y*X^T ), 
 ! where A is an NxN matrix, X and Y are N-dimensional vectors, and alpha is a scalar.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: alpha
-real(RP), intent(in):: x(:)
-real(RP), intent(in):: y(:)
+real(RP), intent(in) :: alpha
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: y(:)
 ! In-outputs
-real(RP), intent(inout):: A(:, :)  ! A(SIZE(X), SIZE(X))
+real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(X))
 ! Local variables
-character(len=*), parameter:: srname = 'R2_SYM'
-integer(IK):: n, j
+character(len=*), parameter :: srname = 'R2_SYM'
+integer(IK) :: n, j
 
 ! Sizes
 n = int(size(x), kind(n))
@@ -291,21 +291,21 @@ subroutine r2(A, alpha, x, y, beta, u, v)
 ! where A is an MxN matrix, ALPHA and BETA are real scalars, X and U are M-dimensional vectors, 
 ! Y and V are N-dimensional vectors.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: alpha
-real(RP), intent(in):: beta
-real(RP), intent(in):: x(:)
-real(RP), intent(in):: y(:)
-real(RP), intent(in):: u(:)  ! U(SIZE(X))
-real(RP), intent(in):: v(:)  ! V(SIZE(Y))
+real(RP), intent(in) :: alpha
+real(RP), intent(in) :: beta
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: y(:)
+real(RP), intent(in) :: u(:)  ! U(SIZE(X))
+real(RP), intent(in) :: v(:)  ! V(SIZE(Y))
 ! In-outputs
-real(RP), intent(inout):: A(:, :)  ! A(SIZE(X), SIZE(Y))
+real(RP), intent(inout) :: A(:, :)  ! A(SIZE(X), SIZE(Y))
 ! Local variables
-character(len=*), parameter:: srname = 'R2'
+character(len=*), parameter :: srname = 'R2'
 
 ! Preconditions
 if (DEBUGGING) then
@@ -332,18 +332,18 @@ function matprod12(x, y) result(z)
 ! This procedure calculates the matrix product of X and Y, where X is an M-dimensional vector
 ! considered as a row, and Y is an M-by-N matrix.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
-real(RP), intent(in):: y(:, :)
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: y(:, :)
 ! Outputs
-real(RP):: z(size(y, 2))
+real(RP) :: z(size(y, 2))
 ! Local variables
-character(len=*), parameter:: srname = 'MATPROD12'
-integer(IK):: j
+character(len=*), parameter :: srname = 'MATPROD12'
+integer(IK) :: j
 
 ! Preconditions
 if (DEBUGGING) then
@@ -377,18 +377,18 @@ function matprod21(x, y) result(z)
 ! This procedure calculates the matrix product of X and Y, where X is an M-by-N matrix, and Y is an
 ! M-dimensional vector considered as a column.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:, :)
-real(RP), intent(in):: y(:)
+real(RP), intent(in) :: x(:, :)
+real(RP), intent(in) :: y(:)
 ! Outputs
-real(RP):: z(size(x, 1))
+real(RP) :: z(size(x, 1))
 ! Local variables
-character(len=*), parameter:: srname = 'MATPROD21'
-integer(IK):: j
+character(len=*), parameter :: srname = 'MATPROD21'
+integer(IK) :: j
 
 ! Preconditions
 if (DEBUGGING) then
@@ -420,18 +420,18 @@ function matprod22(x, y) result(z)
 ! This procedure calculates the matrix product of X and Y, where X is an M-by-P matrix, and Y is a
 ! P-by-N matrix.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:, :)
-real(RP), intent(in):: y(:, :)
+real(RP), intent(in) :: x(:, :)
+real(RP), intent(in) :: y(:, :)
 ! Outputs
-real(RP):: z(size(x, 1), size(y, 2))
+real(RP) :: z(size(x, 1), size(y, 2))
 ! Local variables
-character(len=*), parameter:: srname = 'MATPROD22'
-integer(IK):: i, j
+character(len=*), parameter :: srname = 'MATPROD22'
+integer(IK) :: i, j
 
 ! Preconditions
 if (DEBUGGING) then
@@ -464,18 +464,18 @@ function inprod(x, y) result(z)
 !--------------------------------------------------------------------------------------------------!
 ! INPROD calculates the inner product of X and Y, i.e., Z = X^T*Y, regarding X and Y as columns.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
-real(RP), intent(in):: y(:)
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: y(:)
 ! Outputs
-real(RP):: z
+real(RP) :: z
 ! Local variables
-character(len=*), parameter:: srname = 'INPROD'
-integer(IK):: i
+character(len=*), parameter :: srname = 'INPROD'
+integer(IK) :: i
 
 ! Preconditions
 if (DEBUGGING) then
@@ -501,18 +501,18 @@ function outprod(x, y) result(z)
 !--------------------------------------------------------------------------------------------------!
 ! OUTPROD calculates the outer product of X and Y, i.e., Z = X*Y^T, regarding X and Y as columns.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
-real(RP), intent(in):: y(:)
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: y(:)
 ! Outputs
-real(RP):: z(size(x), size(y))
+real(RP) :: z(size(x), size(y))
 ! Local variables
-character(len=*), parameter:: srname = 'OUTPROD'
-integer(IK):: i
+character(len=*), parameter :: srname = 'OUTPROD'
+integer(IK) :: i
 
 !====================!
 ! Calculation starts !
@@ -537,17 +537,17 @@ function eye1(n) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! EYE1 is the univariate case of EYE, a function similar to the MATLAB function with the same name.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-integer(IK), intent(in):: n
+integer(IK), intent(in) :: n
 ! Outputs
-real(RP):: x(max(n, 0_IK), max(n, 0_IK))
+real(RP) :: x(max(n, 0_IK), max(n, 0_IK))
 ! Local variables
-character(len=*), parameter:: srname = 'EYE1'
-integer(IK):: i
+character(len=*), parameter :: srname = 'EYE1'
+integer(IK) :: i
 
 !====================!
 ! Calculation starts !
@@ -575,18 +575,18 @@ function eye2(m, n) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! EYE2 is the bivariate case of EYE, a function similar to the MATLAB function with the same name.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-integer(IK), intent(in):: m
-integer(IK), intent(in):: n
+integer(IK), intent(in) :: m
+integer(IK), intent(in) :: n
 ! Outputs
-real(RP):: x(max(m, 0_IK), max(n, 0_IK))
+real(RP) :: x(max(m, 0_IK), max(n, 0_IK))
 ! Local variables
-character(len=*), parameter:: srname = 'EYE2'
-integer(IK):: i
+character(len=*), parameter :: srname = 'EYE2'
+integer(IK) :: i
 
 !====================!
 ! Calculation starts !
@@ -616,24 +616,24 @@ function solve(A, b) result(x)
 ! and invertible, and B is a vector of length SIZE(A, 1). The implementation is NAIVE.
 ! TODO: Better to implement it into several subfunctions: triu, tril, and general square.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ONE, EPS, TEN, MAXPOW10, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_finite
+use, non_intrinsic :: consts_mod, only : RP, IK, ONE, EPS, TEN, MAXPOW10, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
-real(RP), intent(in):: b(:)
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in) :: b(:)
 ! Outputs
-real(RP):: x(size(A, 2))
+real(RP) :: x(size(A, 2))
 ! Local variables
-character(len=*), parameter:: srname = 'SOLVE'
-integer(IK):: P(size(A, 1))
-integer(IK):: i
-integer(IK):: n
-real(RP):: Q(size(A, 1), size(A, 1))
-real(RP):: R(size(A, 1), size(A, 2))
-real(RP):: tol
+character(len=*), parameter :: srname = 'SOLVE'
+integer(IK) :: P(size(A, 1))
+integer(IK) :: i
+integer(IK) :: n
+real(RP) :: Q(size(A, 1), size(A, 1))
+real(RP) :: R(size(A, 1), size(A, 2))
+real(RP) :: tol
 
 ! Sizes
 n = int(size(A, 1), kind(n))
@@ -698,23 +698,23 @@ function inv(A) result(B)
 ! implement it into several subfunctions: triu with M >= N, tril with M <= N; general with M >= N, 
 ! general with M <= N, etc.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, ONE, TEN, MAXPOW10, EPS, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TEN, MAXPOW10, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
+real(RP), intent(in) :: A(:, :)
 ! Outputs
-real(RP):: B(size(A, 1), size(A, 1))
+real(RP) :: B(size(A, 1), size(A, 1))
 ! Local variables
-character(len=*), parameter:: srname = 'INV'
-integer(IK):: P(size(A, 1))
-integer(IK):: InvP(size(A, 1))
-integer(IK):: i
-integer(IK):: n
-real(RP):: Q(size(A, 1), size(A, 1))
-real(RP):: R(size(A, 1), size(A, 1))
-real(RP):: tol
+character(len=*), parameter :: srname = 'INV'
+integer(IK) :: P(size(A, 1))
+integer(IK) :: InvP(size(A, 1))
+integer(IK) :: i
+integer(IK) :: n
+real(RP) :: Q(size(A, 1), size(A, 1))
+real(RP) :: R(size(A, 1), size(A, 1))
+real(RP) :: tol
 
 ! Sizes
 n = int(size(A, 1), kind(n))
@@ -778,20 +778,20 @@ function isinv(A, B, tol) result(is_inv)
 !--------------------------------------------------------------------------------------------------!
 ! This procedure tests whether A = B^{-1} up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, EPS, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
-real(RP), intent(in):: B(:, :)
-real(RP), intent(in), optional:: tol
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in) :: B(:, :)
+real(RP), intent(in), optional :: tol
 ! Outputs
-logical:: is_inv
+logical :: is_inv
 ! Local variables
-character(len=*), parameter:: srname = 'ISINV'
-real(RP):: tol_loc
-integer(IK):: n
+character(len=*), parameter :: srname = 'ISINV'
+real(RP) :: tol_loc
+integer(IK) :: n
 
 ! Sizes
 n = int(size(A, 1), kind(n))
@@ -830,28 +830,28 @@ subroutine qr(A, Q, R, P)
 ! A = Q*R (if no pivoting) or A(:, P) = Q*R (if pivoting), where the columns of Q are orthonormal, 
 ! and R is upper triangular.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
+real(RP), intent(in) :: A(:, :)
 ! Outputs
-real(RP), intent(out), optional:: Q(:, :)
-real(RP), intent(out), optional:: R(:, :)
-integer(IK), intent(out), optional:: P(:)
+real(RP), intent(out), optional :: Q(:, :)
+real(RP), intent(out), optional :: R(:, :)
+integer(IK), intent(out), optional :: P(:)
 ! Local variables
-character(len=*), parameter:: srname = 'QR'
-logical:: pivot
-integer(IK):: i
-integer(IK):: j
-integer(IK):: k
-integer(IK):: m
-integer(IK):: n
-real(RP):: G(2, 2)
-real(RP):: Q_loc(size(A, 1), size(A, 1))
-real(RP):: T(size(A, 2), size(A, 1))
-real(RP):: tol
+character(len=*), parameter :: srname = 'QR'
+logical :: pivot
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: k
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: G(2, 2)
+real(RP) :: Q_loc(size(A, 1), size(A, 1))
+real(RP) :: T(size(A, 2), size(A, 1))
+real(RP) :: tol
 
 if (.not. (present(Q) .or. present(R) .or. present(R))) then
     return
@@ -951,32 +951,32 @@ function lsqr_Rdiag(A, b, Q, Rdiag) result(x)
 ! 3. A HAS FULL COLUMN RANK; 
 ! 4. It seems that b (CGRAD and DNEW) is in the column space of A (not sure yet).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)  ! A(M, N)
-real(RP), intent(in):: b(:)  ! B(M)
-real(RP), intent(in), optional:: Q(:, :)  ! Q(M, :), SIZE(Q, 2) = M or MIN(M, N)
-real(RP), intent(in), optional:: Rdiag(:)  ! Rdiag(MIN(M, N))
+real(RP), intent(in) :: A(:, :)  ! A(M, N)
+real(RP), intent(in) :: b(:)  ! B(M)
+real(RP), intent(in), optional :: Q(:, :)  ! Q(M, :), SIZE(Q, 2) = M or MIN(M, N)
+real(RP), intent(in), optional :: Rdiag(:)  ! Rdiag(MIN(M, N))
 ! Outputs
-real(RP):: x(size(A, 2))
+real(RP) :: x(size(A, 2))
 ! Local variables
-character(len=*), parameter:: srname = 'LSQR_RDIAG'
-logical:: pivot
-integer(IK):: i
-integer(IK):: j
-integer(IK):: m
-integer(IK):: n
-integer(IK):: P(size(A, 2))
-integer(IK):: rank
-real(RP):: Q_loc(size(A, 1), min(size(A, 1), size(A, 2)))
-real(RP):: Rdiag_loc(min(size(A, 1), size(A, 2)))
-real(RP):: tol
-real(RP):: y(size(b))
-real(RP):: yq
-real(RP):: yqa
+character(len=*), parameter :: srname = 'LSQR_RDIAG'
+logical :: pivot
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: m
+integer(IK) :: n
+integer(IK) :: P(size(A, 2))
+integer(IK) :: rank
+real(RP) :: Q_loc(size(A, 1), min(size(A, 1), size(A, 2)))
+real(RP) :: Rdiag_loc(min(size(A, 1), size(A, 2)))
+real(RP) :: tol
+real(RP) :: y(size(b))
+real(RP) :: yq
+real(RP) :: yqa
 
 ! Sizes
 m = int(size(A, 1), kind(m))
@@ -1064,23 +1064,23 @@ function lsqr_Rfull(b, Q, R) result(x)
 ! 1. The economy-size QR factorization is supplied externally (Q is called QFAC and R is called RFAC); 
 ! 2. R is non-singular.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, EPS, TEN, MAXPOW10, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, EPS, TEN, MAXPOW10, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: b(:)  ! B(M)
-real(RP), intent(in):: Q(:, :)  ! Q(M, N)
-real(RP), intent(in):: R(:, :)  ! R(N, N)
+real(RP), intent(in) :: b(:)  ! B(M)
+real(RP), intent(in) :: Q(:, :)  ! Q(M, N)
+real(RP), intent(in) :: R(:, :)  ! R(N, N)
 ! Outputs
-real(RP):: x(size(R, 2))
+real(RP) :: x(size(R, 2))
 ! Local variables
-character(len=*), parameter:: srname = 'LSQR_RFULL'
-integer(IK):: i
-integer(IK):: j
-integer(IK):: m
-integer(IK):: n
-real(RP):: tol
+character(len=*), parameter :: srname = 'LSQR_RFULL'
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: tol
 
 ! Sizes
 m = int(size(Q, 1), kind(m))
@@ -1131,21 +1131,21 @@ function diag(A, k) result(D)
 ! diagonal, K > 0 above the main diagonal, and K < 0 below the main diagonal. When |K| exceeds the
 ! number of rows or columns in A, the function returns an empty rank-1 array.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: memory_mod, only : safealloc
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
-integer(IK), intent(in), optional:: k
+real(RP), intent(in) :: A(:, :)
+integer(IK), intent(in), optional :: k
 ! Outputs
-real(RP), allocatable:: D(:)
+real(RP), allocatable :: D(:)
 ! Local variables
-character(len=*), parameter:: srname = 'DIAG'
-integer(IK):: dlen
-integer(IK):: i
-integer(IK):: k_loc
+character(len=*), parameter :: srname = 'DIAG'
+integer(IK) :: dlen
+integer(IK) :: i
+integer(IK) :: k_loc
 
 !====================!
 ! Calculation starts !
@@ -1182,24 +1182,24 @@ function isbanded(A, lwidth, uwidth, tol) result(is_banded)
 ! This function tests whether the matrix A banded within the bandwidth specified by LWIDTH and
 ! UWIDTH up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
-integer(IK), intent(in):: lwidth
-integer(IK), intent(in):: uwidth
-real(RP), intent(in), optional:: tol
+real(RP), intent(in) :: A(:, :)
+integer(IK), intent(in) :: lwidth
+integer(IK), intent(in) :: uwidth
+real(RP), intent(in), optional :: tol
 ! Outputs
-logical:: is_banded
+logical :: is_banded
 ! Local variables
-character(len=*), parameter:: srname = 'ISBANDED'
-integer(IK):: i
-integer(IK):: m
-integer(IK):: n
-real(RP):: tol_loc
+character(len=*), parameter :: srname = 'ISBANDED'
+integer(IK) :: i
+integer(IK) :: m
+integer(IK) :: n
+real(RP) :: tol_loc
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1242,19 +1242,19 @@ function istril(A, tol) result(is_tril)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether the matrix A is lower triangular up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
-real(RP), intent(in), optional:: tol
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in), optional :: tol
 ! Outputs
-logical:: is_tril
+logical :: is_tril
 ! Local variables
-character(len=*), parameter:: srname = 'ISTRIL'
-integer(IK):: width
-real(RP):: tol_loc
+character(len=*), parameter :: srname = 'ISTRIL'
+integer(IK) :: width
+real(RP) :: tol_loc
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1285,19 +1285,19 @@ function istriu(A, tol) result(is_triu)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether the matrix A is upper triangular up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
-real(RP), intent(in), optional:: tol
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in), optional :: tol
 ! Outputs
-logical:: is_triu
+logical :: is_triu
 ! Local variables
-character(len=*), parameter:: srname = 'ISTRIU'
-integer(IK):: width
-real(RP):: tol_loc
+character(len=*), parameter :: srname = 'ISTRIU'
+integer(IK) :: width
+real(RP) :: tol_loc
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1328,20 +1328,20 @@ function isorth(A, tol) result(is_orth)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether the matrix A has orthonormal columns up to the tolerance TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING, REALMAX, ORTHTOL_DFT
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING, REALMAX, ORTHTOL_DFT
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
-real(RP), intent(in), optional:: tol
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in), optional :: tol
 ! Outputs
-logical:: is_orth
+logical :: is_orth
 ! Local variables
-character(len=*), parameter:: srname = 'ISORTH'
-integer(IK):: n
-real(RP):: tol_loc
+character(len=*), parameter :: srname = 'ISORTH'
+integer(IK) :: n
+real(RP) :: tol_loc
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1384,20 +1384,20 @@ function project1(x, v) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function returns the projection of X to SPAN(V).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, ONE, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_inf, is_finite, is_nan
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_inf, is_finite, is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
-real(RP), intent(in):: v(:)
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: v(:)
 ! Outputs
-real(RP):: y(size(x))
+real(RP) :: y(size(x))
 ! Local variables
-character(len=*), parameter:: srname = 'PROJECT1'
-real(RP):: u(size(v))
-real(RP):: tol
+character(len=*), parameter :: srname = 'PROJECT1'
+real(RP) :: u(size(v))
+real(RP) :: tol
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1445,21 +1445,21 @@ function project2(x, V) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function returns the projection of X to RANGE(V).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, ONE, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_inf, is_finite, is_nan
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, EPS, TEN, MAXPOW10, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_inf, is_finite, is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
-real(RP), intent(in):: V(:, :)
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: V(:, :)
 ! Outputs
-real(RP):: y(size(x))
+real(RP) :: y(size(x))
 ! Local variables
-character(len=*), parameter:: srname = 'PROJECT2'
-real(RP):: U(size(V, 1), min(size(V, 1), size(V, 2)))
-real(RP):: V_loc(size(V, 1), size(V, 2))
-real(RP):: tol
+character(len=*), parameter :: srname = 'PROJECT2'
+real(RP) :: U(size(V, 1), min(size(V, 1), size(V, 2)))
+real(RP) :: V_loc(size(V, 1), size(V, 2))
+real(RP) :: tol
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1512,19 +1512,19 @@ function hypotenuse(x1, x2) result(r)
 !--------------------------------------------------------------------------------------------------!
 ! HYPOTENUSE(X1, X2) returns SQRT(X1^2+X2^2), handling over/underflow.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, ONE, ZERO, REALMIN, REALMAX, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_finite, is_nan
+use, non_intrinsic :: consts_mod, only : RP, ONE, ZERO, REALMIN, REALMAX, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x1
-real(RP), intent(in):: x2
+real(RP), intent(in) :: x1
+real(RP), intent(in) :: x2
 ! Outputs
-real(RP):: r
+real(RP) :: r
 ! Local variables
-character(len=*), parameter:: srname = 'HYPOTENUSE'
-real(RP):: y(2)
+character(len=*), parameter :: srname = 'HYPOTENUSE'
+real(RP) :: y(2)
 
 !====================!
 ! Calculation starts !
@@ -1576,23 +1576,23 @@ function planerot(x) result(G)
 ! 2. Difference from MATLAB: if X contains NaN or consists of only Inf, MATLAB returns a NaN matrix, 
 ! but we return an identity matrix or a matrix of +/-SQRT(2). We intend to keep G always orthogonal.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, ZERO, ONE, REALMIN, EPS, REALMAX, TEN, MAXPOW10, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_finite, is_nan, is_inf
+use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE, REALMIN, EPS, REALMAX, TEN, MAXPOW10, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_finite, is_nan, is_inf
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
+real(RP), intent(in) :: x(:)
 ! Outputs
-real(RP):: G(2, 2)
+real(RP) :: G(2, 2)
 ! Local variables
-character(len=*), parameter:: srname = 'PLANEROT'
-real(RP):: c
-real(RP):: s
-real(RP):: r
-real(RP):: t
-real(RP):: u
-real(RP):: tol
+character(len=*), parameter :: srname = 'PLANEROT'
+real(RP) :: c
+real(RP) :: s
+real(RP) :: r
+real(RP) :: t
+real(RP) :: u
+real(RP) :: tol
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1683,15 +1683,15 @@ subroutine symmetrize(A)
 ! N.B.: Here, we assume that A is a matrix that IS SUPPOSED TO BE symmetric in precise arithmetic, 
 ! and its asymmetry comes only from errors (e.g., rounding, noise).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! In-outputs
-real(RP), intent(inout):: A(:, :)
+real(RP), intent(inout) :: A(:, :)
 ! Local variables
-integer(IK):: j
-character(len=*), parameter:: srname = 'SYMMETRIZE'
+integer(IK) :: j
+character(len=*), parameter :: srname = 'SYMMETRIZE'
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1727,18 +1727,18 @@ pure function isminor0(x, ref) result(is_minor)
 ! computer rounding errors according to REF.
 ! Larger SENSITIVITY means the function is more strict/precise, the value TENTH being due to Powell.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, TENTH, TWO
+use, non_intrinsic :: consts_mod, only : RP, TENTH, TWO
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x
-real(RP), intent(in):: ref
+real(RP), intent(in) :: x
+real(RP), intent(in) :: ref
 ! Outputs
-logical:: is_minor
+logical :: is_minor
 ! Local variables
-real(RP), parameter:: sensitivity = TENTH
-real(RP):: refa
-real(RP):: refb
+real(RP), parameter :: sensitivity = TENTH
+real(RP) :: refa
+real(RP) :: refb
 
 !====================!
 ! Calculation starts !
@@ -1759,18 +1759,18 @@ function isminor1(x, ref) result(is_minor)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether X is minor compared to REF. It is used by Powell, e.g., in COBYLA.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : IK, RP, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : IK, RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
-real(RP), intent(in):: ref(:)
+real(RP), intent(in) :: x(:)
+real(RP), intent(in) :: ref(:)
 ! Outputs
-logical:: is_minor(size(x))
+logical :: is_minor(size(x))
 ! Local variables
-character(len=*), parameter:: srname = 'ISMINOR1'
-integer(IK):: i
+character(len=*), parameter :: srname = 'ISMINOR1'
+integer(IK) :: i
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1798,19 +1798,19 @@ function issymmetric(A, tol) result(is_symmetric)
 !--------------------------------------------------------------------------------------------------!
 ! This function tests whether A is symmetric up to TOL.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, ONE, REALMAX, SYMTOL_DFT, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, ONE, REALMAX, SYMTOL_DFT, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
-real(RP), intent(in), optional:: tol
+real(RP), intent(in) :: A(:, :)
+real(RP), intent(in), optional :: tol
 ! Outputs
-logical:: is_symmetric
+logical :: is_symmetric
 ! Local variables
-character(len=*), parameter:: srname = 'ISSYMMETRIC'
-real(RP):: tol_loc
+character(len=*), parameter :: srname = 'ISSYMMETRIC'
+real(RP) :: tol_loc
 
 ! Preconditions
 if (DEBUGGING) then
@@ -1862,20 +1862,20 @@ function p_norm(x, p) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the P-norm of a vector X.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, ONE, TWO, ZERO, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert, validate
-use, non_intrinsic:: infnan_mod, only : is_finite, is_posinf, is_nan
+use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert, validate
+use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
-real(RP), intent(in), optional:: p
+real(RP), intent(in) :: x(:)
+real(RP), intent(in), optional :: p
 ! Outputs
-real(RP):: y
+real(RP) :: y
 ! Local variables
-character(len=*), parameter:: srname = 'P_NORM'
-real(RP):: p_loc
-real(RP):: scaling
+character(len=*), parameter :: srname = 'P_NORM'
+real(RP) :: p_loc
+real(RP) :: scaling
 
 ! Preconditions
 if (present(p)) then
@@ -1940,19 +1940,19 @@ function named_norm_vec(x, nname) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates named norms of a vector X.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, ZERO
-use, non_intrinsic:: debug_mod, only : warning
-use, non_intrinsic:: infnan_mod, only : is_finite
-use, non_intrinsic:: string_mod, only : lower, strip
+use, non_intrinsic :: consts_mod, only : RP, ZERO
+use, non_intrinsic :: debug_mod, only : warning
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: string_mod, only : lower, strip
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
-character(len=*), intent(in):: nname
+real(RP), intent(in) :: x(:)
+character(len=*), intent(in) :: nname
 ! Outputs
-real(RP):: y
+real(RP) :: y
 ! Local variables
-character(len=*), parameter:: srname = 'NAMED_NORM_VEC'
+character(len=*), parameter :: srname = 'NAMED_NORM_VEC'
 
 !====================!
 ! Calculation starts !
@@ -1989,19 +1989,19 @@ function named_norm_mat(x, nname) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates named norms of a vector X.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, ZERO
-use, non_intrinsic:: debug_mod, only : warning
-use, non_intrinsic:: infnan_mod, only : is_finite
-use, non_intrinsic:: string_mod, only : lower, strip
+use, non_intrinsic :: consts_mod, only : RP, ZERO
+use, non_intrinsic :: debug_mod, only : warning
+use, non_intrinsic :: infnan_mod, only : is_finite
+use, non_intrinsic :: string_mod, only : lower, strip
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:, :)
-character(len=*), intent(in):: nname
+real(RP), intent(in) :: x(:, :)
+character(len=*), intent(in) :: nname
 ! Outputs
-real(RP):: y
+real(RP) :: y
 ! Local variables
-character(len=*), parameter:: srname = 'NAMED_NORM_MAT'
+character(len=*), parameter :: srname = 'NAMED_NORM_MAT'
 
 !====================!
 ! Calculation starts !
@@ -2040,22 +2040,22 @@ function sort_i1(x, direction) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function sorts X according to DIRECTION, which should be 'ascend' (default) or 'descend'.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-integer(IK), intent(in):: x(:)
-character(len=*), intent(in), optional:: direction
+integer(IK), intent(in) :: x(:)
+character(len=*), intent(in), optional :: direction
 ! Outputs
-integer(IK):: y(size(x))
+integer(IK) :: y(size(x))
 ! Local variables
-character(len=*), parameter:: srname = 'SORT_I1'
+character(len=*), parameter :: srname = 'SORT_I1'
 
-integer(IK):: i
-integer(IK):: n
-integer(IK):: newn
-logical:: ascending
+integer(IK) :: i
+integer(IK) :: n
+integer(IK) :: newn
+logical :: ascending
 
 !====================!
 ! Calculation starts !
@@ -2099,23 +2099,23 @@ function sort_i2(x, dim, direction) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function sorts a matrix X according to DIM (1 or 2) and DIRECTION ('ascend' or 'descend').
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: consts_mod, only : IK, DEBUGGING
-use, non_intrinsic:: string_mod, only : strip
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
+use, non_intrinsic :: string_mod, only : strip
 implicit none
 
 ! Inputs
-integer(IK), intent(in):: x(:, :)
-integer, intent(in), optional:: dim
-character(len=*), intent(in), optional:: direction
+integer(IK), intent(in) :: x(:, :)
+integer, intent(in), optional :: dim
+character(len=*), intent(in), optional :: direction
 ! Outputs
-integer(IK):: y(size(x, 1), size(x, 2))
+integer(IK) :: y(size(x, 1), size(x, 2))
 ! Local variables
-character(len=*), parameter:: srname = 'SORT_I2'
-character(len=:), allocatable:: direction_loc
-integer:: dim_loc
-integer(IK):: i
-integer(IK):: n
+character(len=*), parameter :: srname = 'SORT_I2'
+character(len=:), allocatable :: direction_loc
+integer :: dim_loc
+integer(IK) :: i
+integer(IK) :: n
 
 !====================!
 ! Calculation starts !
@@ -2171,13 +2171,13 @@ pure elemental function logical_to_int(x) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! LOGICAL_TO_INT(.TRUE.) = 1, LOGICAL_TO_INT(.FALSE.) = 0
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : IK
+use, non_intrinsic :: consts_mod, only : IK
 implicit none
 
 ! Inputs
-logical, intent(in):: x
+logical, intent(in) :: x
 ! Outputs
-integer(IK):: y
+integer(IK) :: y
 
 y = merge(tsource = 1_IK, fsource = 0_IK, mask = x)
 end function logical_to_int
@@ -2194,18 +2194,18 @@ function trueloc(x) result(loc)
 ! 2. If the return of TRUELOC is NOT used for indexing, its analogs in other languages are:
 ! MATLAB-- find, Python-- numpy.argwhere, Julia-- findall, R-- which.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: memory_mod, only : safealloc
+use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Inputs
-logical, intent(in):: x(:)
+logical, intent(in) :: x(:)
 ! Outputs
-integer(IK), allocatable:: loc(:)  ! INTEGER(IK):: LOC(COUNT(X)) does not work with Absoft 22.0
+integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(X)) does not work with Absoft 22.0
 ! Local variables
-character(len=*), parameter:: srname = 'TRUELOC'
-integer(IK):: n
+character(len=*), parameter :: srname = 'TRUELOC'
+integer(IK) :: n
 
 !====================!
 ! Calculation starts !
@@ -2233,17 +2233,17 @@ function falseloc(x) result(loc)
 !--------------------------------------------------------------------------------------------------!
 ! FALSELOC = TRUELOC(.NOT. X)
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: memory_mod, only : safealloc
+use, non_intrinsic :: consts_mod, only : IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: memory_mod, only : safealloc
 implicit none
 
 ! Inputs
-logical, intent(in):: x(:)
+logical, intent(in) :: x(:)
 ! Outputs
-integer(IK), allocatable:: loc(:)  ! INTEGER(IK):: LOC(COUNT(.NOT.X)) does not work with Absoft 22.0
+integer(IK), allocatable :: loc(:)  ! INTEGER(IK) :: LOC(COUNT(.NOT.X)) does not work with Absoft 22.0
 ! Local variables
-character(len=*), parameter:: srname = 'FALSELOC'
+character(len=*), parameter :: srname = 'FALSELOC'
 
 !====================!
 ! Calculation starts !
@@ -2276,18 +2276,18 @@ function minimum1(x) result(y)
 ! Julia: minimum(x)
 ! R: min(x)
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
+real(RP), intent(in) :: x(:)
 ! Outputs
-real(RP):: y
+real(RP) :: y
 ! Local variables
-character(len=*), parameter:: srname = 'MINIMUM1'
-real(RP):: nan_test
+character(len=*), parameter :: srname = 'MINIMUM1'
+real(RP) :: nan_test
 
 !====================!
 ! Calculation starts !
@@ -2319,18 +2319,18 @@ function minimum2(x) result(y)
 ! Julia: minimum(x)
 ! R: min(x)
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:, :)
+real(RP), intent(in) :: x(:, :)
 ! Outputs
-real(RP):: y
+real(RP) :: y
 ! Local variables
-character(len=*), parameter:: srname = 'MINIMUM2'
-real(RP):: nan_test
+character(len=*), parameter :: srname = 'MINIMUM2'
+real(RP) :: nan_test
 
 !====================!
 ! Calculation starts !
@@ -2363,18 +2363,18 @@ function maximum1(x) result(y)
 ! Julia: maximum(x)
 ! R: max(x)
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:)
+real(RP), intent(in) :: x(:)
 ! Outputs
-real(RP):: y
+real(RP) :: y
 ! Local variables
-character(len=*), parameter:: srname = 'MAXIMUM1'
-real(RP):: nan_test
+character(len=*), parameter :: srname = 'MAXIMUM1'
+real(RP) :: nan_test
 
 !====================!
 ! Calculation starts !
@@ -2406,18 +2406,18 @@ function maximum2(x) result(y)
 ! Julia: maximum(x)
 ! R: max(x)
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
-use, non_intrinsic:: infnan_mod, only : is_nan
+use, non_intrinsic :: consts_mod, only : RP, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: infnan_mod, only : is_nan
 implicit none
 
 ! Inputs
-real(RP), intent(in):: x(:, :)
+real(RP), intent(in) :: x(:, :)
 ! Outputs
-real(RP):: y
+real(RP) :: y
 ! Local variables
-character(len=*), parameter:: srname = 'MAXIMUM2'
-real(RP):: nan_test
+character(len=*), parameter :: srname = 'MAXIMUM2'
+real(RP) :: nan_test
 
 !====================!
 ! Calculation starts !
@@ -2445,21 +2445,21 @@ function linspace_r(xstart, xstop, n) result(x)
 ! Similar to the function `linspace` in MATLAB and Python, this function generates N evenly spaced
 ! numbers, the space between the consecutive points being (XSTOP-XSTART)/(N-1).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: xstart
-real(RP), intent(in):: xstop
-integer(IK), intent(in):: n
+real(RP), intent(in) :: xstart
+real(RP), intent(in) :: xstop
+integer(IK), intent(in) :: n
 ! Outputs
-real(RP):: x(max(n, 0_IK))
+real(RP) :: x(max(n, 0_IK))
 ! Local variables
-character(len=*), parameter:: srname = 'LINSPACE_R'
-integer(IK):: i
-integer(IK):: nm
-real(RP):: xunit
+character(len=*), parameter :: srname = 'LINSPACE_R'
+integer(IK) :: i
+integer(IK) :: nm
+real(RP) :: xunit
 
 !====================!
 ! Calculation starts !
@@ -2503,18 +2503,18 @@ function linspace_i(xstart, xstop, n) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! This function returns INT(LINSPACE_R(REAL(XSTART, RP), REAL(XSTOP, RP), N), IK).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-integer(IK), intent(in):: xstart
-integer(IK), intent(in):: xstop
-integer(IK), intent(in):: n
+integer(IK), intent(in) :: xstart
+integer(IK), intent(in) :: xstop
+integer(IK), intent(in) :: n
 ! Outputs
-integer(IK):: x(max(n, 0_IK))
+integer(IK) :: x(max(n, 0_IK))
 ! Local variables
-character(len=*), parameter:: srname = 'LINSPACE_I'
+character(len=*), parameter :: srname = 'LINSPACE_I'
 
 !====================!
 ! Calculation starts !
@@ -2541,28 +2541,28 @@ subroutine hessenberg_hhd_trid(A, tdiag, tsubdiag)
 ! and its lower triangular part will store the Householder vectors. The code is retrieved from
 ! Powell's trust region subproblem solver in UOBYQA.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, TWO, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TWO, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! In-outputs
-real(RP), intent(inout):: A(:, :)
+real(RP), intent(inout) :: A(:, :)
 ! Outputs
-real(RP), intent(out):: tdiag(:)
-real(RP), intent(out):: tsubdiag(:)
+real(RP), intent(out) :: tdiag(:)
+real(RP), intent(out) :: tsubdiag(:)
 ! Local variables
-character(len=*), parameter:: srname = 'HESSENBERG_HHD_TRID'
-integer(IK):: i
-integer(IK):: j
-integer(IK):: k
-integer(IK):: n
-real(RP):: Asubd
-real(RP):: colsq
-real(RP):: scaling
-real(RP):: w(size(A, 1))
-real(RP):: wz
-real(RP):: z(size(A, 1))
-logical:: scaled
+character(len=*), parameter :: srname = 'HESSENBERG_HHD_TRID'
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: k
+integer(IK) :: n
+real(RP) :: Asubd
+real(RP) :: colsq
+real(RP) :: scaling
+real(RP) :: w(size(A, 1))
+real(RP) :: wz
+real(RP) :: z(size(A, 1))
+logical :: scaled
 
 ! Sizes
 n = int(size(A, 1), kind(n))
@@ -2656,29 +2656,29 @@ subroutine hessenberg_full(A, H, Q)
 ! This subroutine finds a Hessenberg matrix H (all entries below the subdiagonal are 0) such that
 ! H = Q^T*A*Q, where Q is a orthogonal matrix that may also be returned. A will stay unchanged.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, EPS, TWO, TEN, MAXPOW10, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, EPS, TWO, TEN, MAXPOW10, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: A(:, :)
+real(RP), intent(in) :: A(:, :)
 ! Outputs
-real(RP), intent(out):: H(:, :)
-real(RP), intent(out), optional:: Q(:, :)
+real(RP), intent(out) :: H(:, :)
+real(RP), intent(out), optional :: Q(:, :)
 ! Local variables
-character(len=*), parameter:: srname = 'HESSENBERG_FULL'
-integer(IK):: i
-integer(IK):: j
-integer(IK):: n
-real(RP):: colsq
-real(RP):: subd
-real(RP):: v(size(A, 1))
-real(RP):: w(size(A, 1))
-real(RP):: scaling
-logical:: scaled
+character(len=*), parameter :: srname = 'HESSENBERG_FULL'
+integer(IK) :: i
+integer(IK) :: j
+integer(IK) :: n
+real(RP) :: colsq
+real(RP) :: subd
+real(RP) :: v(size(A, 1))
+real(RP) :: w(size(A, 1))
+real(RP) :: scaling
+logical :: scaled
 
 ! Debugging variables
-real(RP):: tol
+real(RP) :: tol
 
 ! Sizes
 n = int(size(A, 1), kind(n))
@@ -2805,29 +2805,29 @@ function eigmin_sym_trid(td, tn, tol) result(eig_min)
 ! !crvmin = eigs(tridh, 1, 'smallestreal'); 
 ! !% It is critical for the efficiency to use `spdiags` to construct `tridh` in the sparse form.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, MAXPOW10, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TEN, MAXPOW10, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 
 ! Inputs
-real(RP), intent(in):: td(:)
-real(RP), intent(in):: tn(:)
-real(RP), intent(in), optional:: tol
+real(RP), intent(in) :: td(:)
+real(RP), intent(in) :: tn(:)
+real(RP), intent(in), optional :: tol
 ! Outputs
-real(RP):: eig_min
+real(RP) :: eig_min
 ! Local variables
-character(len=*), parameter:: srname = 'EIGMIN'
-integer(IK):: iter
-integer(IK):: k
-integer(IK):: ksav
-integer(IK):: maxiter
-integer(IK):: n
-real(RP):: eminlb
-real(RP):: eminub
-real(RP):: piv(size(td))
-real(RP):: pivksv
-real(RP):: pivnew(size(td))
-real(RP):: tol_loc
+character(len=*), parameter :: srname = 'EIGMIN'
+integer(IK) :: iter
+integer(IK) :: k
+integer(IK) :: ksav
+integer(IK) :: maxiter
+integer(IK) :: n
+real(RP) :: eminlb
+real(RP) :: eminub
+real(RP) :: piv(size(td))
+real(RP) :: pivksv
+real(RP) :: pivnew(size(td))
+real(RP) :: tol_loc
 
 ! Sizes
 n = int(size(td), kind(n))
@@ -2938,18 +2938,18 @@ function vec2smat(vec) result(smat)
 ! This function transforms a vector VEC to a symmetric matrix SMAT with the vector storing the upper
 ! triangular part of the matrix column by column.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 ! Inputs
-real(RP), intent(in):: vec(:)
+real(RP), intent(in) :: vec(:)
 ! Outputs
-real(RP):: smat((nint(sqrt(real(8*size(vec) + 1))) - 1) / 2, (nint(sqrt(real(8*size(vec) + 1))) - 1) / 2)
+real(RP) :: smat((nint(sqrt(real(8*size(vec) + 1))) - 1) / 2, (nint(sqrt(real(8*size(vec) + 1))) - 1) / 2)
 ! Local variables
-character(len=*), parameter:: srname = 'SMAT2VEC'
-integer(IK):: ih
-integer(IK):: j
-integer(IK):: n
+character(len=*), parameter :: srname = 'SMAT2VEC'
+integer(IK) :: ih
+integer(IK) :: j
+integer(IK) :: n
 
 ! Sizes
 n = int(size(smat, 1), kind(n))
@@ -2985,18 +2985,18 @@ function smat2vec(smat) result(vec)
 ! This function transforms a symmetric matrix SMAT to a vector VEC that stores the upper triangular
 ! part of the matrix column by column.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 ! Inputs
-real(RP), intent(in):: smat(:, :)
+real(RP), intent(in) :: smat(:, :)
 ! Outputs
-real(RP):: vec((size(smat, 1) * (size(smat, 1) + 1)) / 2)
+real(RP) :: vec((size(smat, 1) * (size(smat, 1) + 1)) / 2)
 ! Local variables
-character(len=*), parameter:: srname = 'SMAT2VEC'
-integer(IK):: ih
-integer(IK):: n
-integer(IK):: j
+character(len=*), parameter :: srname = 'SMAT2VEC'
+integer(IK) :: ih
+integer(IK) :: n
+integer(IK) :: j
 
 ! Preconditions
 if (DEBUGGING) then
@@ -3025,19 +3025,19 @@ function smat_mul_vec(smatv, x) result(y)
 ! This function calculates the product of a symmetric matrix and a vector X, with the upper
 ! triangular part of the matrix stored in the vector SMATV column by column.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic:: consts_mod, only : RP, IK, DEBUGGING
-use, non_intrinsic:: debug_mod, only : assert
+use, non_intrinsic :: consts_mod, only : RP, IK, DEBUGGING
+use, non_intrinsic :: debug_mod, only : assert
 implicit none
 ! Inputs
-real(RP), intent(in):: smatv(:)
-real(RP), intent(in):: x(:)
+real(RP), intent(in) :: smatv(:)
+real(RP), intent(in) :: x(:)
 ! Outputs
-real(RP):: y(size(x))
+real(RP) :: y(size(x))
 ! Local variables
-character(len=*), parameter:: srname = 'SMAT_MUL_VEC'
-integer(IK):: ih
-integer(IK):: n
-integer(IK):: j
+character(len=*), parameter :: srname = 'SMAT_MUL_VEC'
+integer(IK) :: ih
+integer(IK) :: n
+integer(IK) :: j
 
 ! Sizes
 n = int(size(x), kind(n))
