@@ -96,6 +96,7 @@ mexopts = mexopts(ind);
 
 % Compile the solvers.
 exception = [];
+sco_success = false;
 try
 
     if with_compiler_options
