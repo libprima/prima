@@ -1,4 +1,5 @@
 function restore_compiler_options()
+%Restore the compiler options by restoring the mexopts files. It is hacky!!!
 
 if ~isunix || ismac
     error('Configuration of compiler options supports only Linux.')
