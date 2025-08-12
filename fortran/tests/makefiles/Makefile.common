@@ -965,7 +965,6 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "\.sformat.* may be used uninitialized" \
 	| grep -v "\.noise_type_loc.* may be used uninitialized" \
 	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
-	| grep -v "requires executable stack (because the .note.GNU-stack section is executable)" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
