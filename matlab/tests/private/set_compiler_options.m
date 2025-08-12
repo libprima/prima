@@ -18,7 +18,7 @@ try
 catch
 end
 if ~iswritable(config_dir)
-    warning('The directory %s is not writable. Compile options not set.', config_dir);
+    warning('The directory %s is not writable. Compiler options not set.', config_dir);
     return;
 end
 
@@ -30,7 +30,7 @@ for ifile = 1 : length(config_files)
     catch
     end
     if ~iswritable(cfile)
-        warning('The file %s is not writable. Compile options not set.', cfile);
+        warning('The file %s is not writable. Compiler options not set.', cfile);
         return;
     end
 
@@ -70,7 +70,7 @@ if exist(mex_setup_file, 'file')
     catch
     end
     if ~iswritable(prefdir)
-        warning('The directory %s is not writable. The modified compile options may not take effect.', prefdir);
+        warning('The directory %s is not writable. The modified compiler options may not take effect.', prefdir);
     end
 
     try
@@ -78,7 +78,7 @@ if exist(mex_setup_file, 'file')
     catch
     end
     if ~iswritable(mex_setup_file)
-        warning('The file %s is not writable. The modified compile options may not take effect.', mex_setup_file);
+        warning('The file %s is not writable. The modified compiler options may not take effect.', mex_setup_file);
     end
 
     delete(mex_setup_file);
