@@ -12,14 +12,23 @@ mfilepath = fileparts(mfilename('fullpath')); % The directory containing this se
 % Modify mexopts files in `config_dir` after making backups.
 config_dir = fullfile(matlabroot, 'bin', 'glnxa64', 'mexopts');
 config_files = {dir(fullfile(config_dir, 'gfortran*.xml')).name};
-fileattrib(config_dir, '+w');
+
+try
+    fileattrib(config_dir, '+w');
+catch
+end
 if ~iswritable(config_dir)
     warning('The directory %s is not writable. Compile options not set.', config_dir);
     return;
 end
+
 for ifile = 1 : length(config_files)
     cfile = fullfile(config_dir, config_files{ifile});
-    fileattrib(cfile, '+w')
+
+    try
+        fileattrib(cfile, '+w')
+    catch
+    end
     if ~iswritable(cfile)
         warning('The file %s is not writable. Compile options not set.', cfile);
         return;
@@ -55,14 +64,23 @@ end
 % restore `mex_setup_file` using it.
 mex_setup_file = fullfile(prefdir, ['mex_FORTRAN_', computer('arch'), '.xml']);
 if exist(mex_setup_file, 'file')
-    fileattrib(prefdir, '+w');
+
+    try
+        fileattrib(prefdir, '+w');
+    catch
+    end
     if ~iswritable(prefdir)
         warning('The directory %s is not writable. The modified compile options may not take effect.', prefdir);
     end
-    fileattrib(mex_setup_file, '+w');
+
+    try
+        fileattrib(mex_setup_file, '+w');
+    catch
+    end
     if ~iswritable(mex_setup_file)
         warning('The file %s is not writable. The modified compile options may not take effect.', mex_setup_file);
     end
+
     delete(mex_setup_file);
 end
 
