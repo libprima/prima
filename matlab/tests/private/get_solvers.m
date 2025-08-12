@@ -99,7 +99,10 @@ exception = [];
 try
 
     if with_compiler_options
-        set_compiler_options(options.compiler_options);
+        sco_success = set_compiler_options(options.compiler_options);
+        if ~sco_success
+            warning('Failed to set compiler options!!!');
+        end
     end
 
     for is = 1 : length(solvers)
@@ -155,8 +158,11 @@ catch exception
 end
 
 % Restore the compiler options.
-if with_compiler_options
-    restore_compiler_options();
+if with_compiler_options && sco_success
+    rco_success = restore_compiler_options();
+    if ~rco_success
+        warning('Failed to restore compiler options!!!');
+    end
 end
 % Go back to the old directory.
 cd(olddir);

@@ -1,9 +1,11 @@
-function set_compiler_options(compiler_options)
+function success = set_compiler_options(compiler_options)
 %Configure the compiler options by editing the mexopts files. It is hacky!!!
 
 if ~isunix || ismac
     error('Configuration of compiler options supports only Linux.')
 end
+
+success = false;
 
 mfilepath = fileparts(mfilename('fullpath')); % The directory containing this setup script
 
@@ -11,9 +13,17 @@ mfilepath = fileparts(mfilename('fullpath')); % The directory containing this se
 config_dir = fullfile(matlabroot, 'bin', 'glnxa64', 'mexopts');
 config_files = {dir(fullfile(config_dir, 'gfortran*.xml')).name};
 fileattrib(config_dir, '+w');
+if ~iswritable(config_dir)
+    warning('The directory %s is not writable. Compile options not set.', config_dir);
+    return;
+end
 for ifile = 1 : length(config_files)
     cfile = fullfile(config_dir, config_files{ifile});
     fileattrib(cfile, '+w')
+    if ~iswritable(cfile)
+        warning('The file %s is not writable. Compile options not set.', cfile);
+        return;
+    end
 
     cfile_orig = fullfile(config_dir, [config_files{ifile}, '.orig']);
     if ~exist(cfile_orig, 'file')
@@ -41,15 +51,22 @@ end
 % We delete it so that MEX will be reconfigured according to `config_files`.
 % Why not making a backup for it? Because the existing version may be generated using the modified
 % `config_files` when this script was called the last time (N.B.: `mex_setup_file` does not exist
-% in a fresh installation of MATLAB), in which case it would be wrong to store % this copy and
+% in a fresh installation of MATLAB), in which case it would be wrong to store this copy and
 % restore `mex_setup_file` using it.
 mex_setup_file = fullfile(prefdir, ['mex_FORTRAN_', computer('arch'), '.xml']);
 if exist(mex_setup_file, 'file')
     fileattrib(prefdir, '+w');
+    if ~iswritable(prefdir)
+        warning('The directory %s is not writable. The modified compile options may not take effect.', prefdir);
+    end
     fileattrib(mex_setup_file, '+w');
+    if ~iswritable(mex_setup_file)
+        warning('The file %s is not writable. The modified compile options may not take effect.', mex_setup_file);
+    end
     delete(mex_setup_file);
 end
 
 fprintf('\nCompiler options set to \n\n%s\n\n', compiler_options);
+success = true;
 
 return

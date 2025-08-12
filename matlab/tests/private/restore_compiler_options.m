@@ -1,12 +1,19 @@
-function restore_compiler_options()
+function success = restore_compiler_options()
 %Restore the compiler options by restoring the mexopts files. It is hacky!!!
 
 if ~isunix || ismac
     error('Configuration of compiler options supports only Linux.')
 end
 
+success = false;
+
 config_dir = fullfile(matlabroot,'bin', 'glnxa64', 'mexopts');
 config_files = {dir(fullfile(config_dir, 'gfortran*.xml')).name};
+fileattrib(config_dir, '+w');
+if ~iswritable(config_dir)
+    warning('The directory %s is not writable. Compile options not restored.', config_dir);
+    return;
+end
 for ifile = 1 : length(config_files)
     cfile = fullfile(config_dir, config_files{ifile});
     cfile_orig = fullfile(config_dir, [config_files{ifile}, '.orig']);
@@ -38,10 +45,17 @@ end
 mex_setup_file = fullfile(prefdir, ['mex_FORTRAN_', computer('arch'), '.xml']);
 if exist(mex_setup_file, 'file')
     fileattrib(prefdir, '+w');
+    if ~iswritable(prefdir)
+        warning('The directory %s is not writable. The restored compile options may not take effect.', prefdir);
+    end
     fileattrib(mex_setup_file, '+w');
+    if ~iswritable(mex_setup_file)
+        warning('The file %s is not writable. The restored compile options may not take effect.', mex_setup_file);
+    end
     delete(mex_setup_file);
 end
 
 fprintf('\nCompiler options restored successfully.\n\n');
+success = true;
 
 return
