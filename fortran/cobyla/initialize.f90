@@ -8,7 +8,7 @@ module initialize_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Saturday, March 16, 2024 PM04:48:11
+! Last Modified: Tue 12 Aug 2025 04:57:48 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -19,8 +19,8 @@ public :: initxfc, initfilt
 contains
 
 
-subroutine initxfc(calcfc, iprint, maxfun, constr0, ctol, f0, ftarget, rhobeg, x0, nf, chist, &
-    & conhist, conmat, cval, fhist, fval, sim, simi, xhist, evaluated, info)
+subroutine initxfc(calcfc, iprint, maxfun, amat, bvec, constr0, ctol, f0, ftarget, rhobeg, x0, nf, &
+    & chist, conhist, conmat, cval, fhist, fval, sim, simi, xhist, evaluated, info)
 !--------------------------------------------------------------------------------------------------!
 ! This subroutine does the initialization concerning X, function values, and constraints.
 !--------------------------------------------------------------------------------------------------!
@@ -33,7 +33,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT
-use, non_intrinsic :: linalg_mod, only : eye, inv, isinv, maximum
+use, non_intrinsic :: linalg_mod, only : eye, inv, isinv, maximum, matprod
 use, non_intrinsic :: message_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJCON
 
@@ -43,6 +43,8 @@ implicit none
 procedure(OBJCON) :: calcfc ! N.B.: INTENT cannot be specified if a dummy procedure is not a POINTER
 integer(IK), intent(in) :: iprint
 integer(IK), intent(in) :: maxfun
+real(RP), intent(in) :: amat(:, :) ! AMAT(N, M_LCON)
+real(RP), intent(in) :: bvec(:) ! BVEC(M_LCON)
 real(RP), intent(in) :: constr0(:)  ! CONSTR0(M)
 real(RP), intent(in) :: ctol
 real(RP), intent(in) :: f0
@@ -70,6 +72,7 @@ character(len=*), parameter :: srname = 'INITIALIZE'
 integer(IK) :: j
 integer(IK) :: k
 integer(IK) :: m
+integer(IK) :: m_lcon
 integer(IK) :: maxchist
 integer(IK) :: maxconhist
 integer(IK) :: maxfhist
@@ -84,6 +87,7 @@ real(RP) :: x(size(x0))
 real(RP), parameter :: itol = TENTH
 
 ! Sizes
+m_lcon = int(size(bvec), kind(m_lcon))
 m = int(size(conmat, 1), kind(m))
 n = int(size(sim, 1), kind(n))
 maxchist = int(size(chist), kind(maxchist))
@@ -97,6 +101,7 @@ if (DEBUGGING) then
     call assert(m >= 0, 'M >= 0', srname)
     call assert(n >= 1, 'N >= 1', srname)
     call assert(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', srname)
+    call assert(size(amat, 1) == n .and. size(amat, 2) == size(bvec), 'SIZE(AMAT) == [N, SIZE(BVEC)]', srname)
     call assert(size(conmat, 1) == m .and. size(conmat, 2) == n + 1, 'SIZE(CONMAT) = [M, N+1]', srname)
     call assert(size(cval) == n + 1, 'SIZE(CVAL) == N+1', srname)
     call assert(size(fval) == n + 1, 'SIZE(FVAL) == N+1', srname)
@@ -156,7 +161,8 @@ do k = 1, n + 1_IK
     else
         j = k - 1_IK
         x(j) = x(j) + rhobeg
-        call evaluate(calcfc, x, f, constr)
+        constr(1:m_lcon) = matprod(x, amat) - bvec
+        call evaluate(calcfc, x, f, constr(m_lcon + 1:m))
     end if
     cstrv = maximum([ZERO, constr])
 
