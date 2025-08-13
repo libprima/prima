@@ -368,7 +368,9 @@ ifeq ($(TESTDIM),small)
 endif
 # Strangely, with `-Mchkptr`, the compiler may not print the error message of `-Mbounds` anymore.
 DFORT := $(AFLANG) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mrecursive #-Kieee #-Mchkptr
-DFORT := $(DFORT) -Wl,-z,noexecstack
+ifeq ($(OSTYPE),LINUX)
+	DFORT := $(DFORT) -Wl,-z,noexecstack
+endif
 
 dtest_i2_r4_d1_tst_c dtest_i4_r4_d1_tst_c dtest_i8_r4_d1_tst_c dtest_i2_r4_d0_tst_c dtest_i4_r4_d0_tst_c dtest_i8_r4_d0_tst_c: \
 	FCO := $(DFORT) $(FFLAGSO)
@@ -405,7 +407,9 @@ else
 	FFORT := $(FFORT) -fno-stack-arrays -mmlir -fdynamic-heap-array
 endif
 FFORT := $(FFORT) -std=f2018 -pedantic  # As of flang 19.0, only -std=f2018 is supported
-FFORT := $(FFORT) -Wl,-z,noexecstack
+ifeq ($(OSTYPE),LINUX)
+	FFORT := $(FFORT) -Wl,-z,noexecstack
+endif
 
 ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
 	FCO := $(FFORT) $(FFLAGSO)
@@ -477,7 +481,9 @@ GFORT := $(GFORT) $(GFSTD) -fall-intrinsics -frecursive \
 	-ftrapv
 	#-finit-real=nan -finit-integer=-9999999  # This will hide some warnings on uninitialized variables.
 	#-Wrealloc-lhs -Wrealloc-lhs-all
-GFORT := $(GFORT) -Wl,-z,noexecstack
+ifeq ($(OSTYPE),LINUX)
+	GFORT := $(GFORT) -Wl,-z,noexecstack
+endif
 
 gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
 	FCO := $(GFORT) $(FFLAGSO) -Wno-function-elimination -ffpe-trap=zero
@@ -524,7 +530,9 @@ else
 	IFORT := $(IFORT) -auto -heap-arrays
 endif
 IFORT := $(IFORT) -standard-semantics -assume recursion -fimplicit-none
-IFORT := $(IFORT) -Wl,-z,noexecstack
+ifeq ($(OSTYPE),LINUX)
+	IFORT := $(IFORT) -Wl,-z,noexecstack
+endif
 
 itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
 	FCO := $(IFORT) $(FFLAGSO) -fp-trap=divzero
@@ -560,7 +568,9 @@ NFORT := $(NFORT) -I $(TESTSUITE_DIR)
 NFORT := $(NFORT) -colour=error:red,warn:magenta,info:cyan
 NFORT := $(NFORT) -f$(FSTD) -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
-NFORT := $(NFORT) -Wl,-z,noexecstack
+ifeq ($(OSTYPE),LINUX)
+	NFORT := $(NFORT) -Wl,-z,noexecstack
+endif
 
 ntest_i2_r4_d1_tst_c ntest_i4_r4_d1_tst_c ntest_i8_r4_d1_tst_c ntest_i2_r4_d0_tst_c ntest_i4_r4_d0_tst_c ntest_i8_r4_d0_tst_c: \
 	FCO := $(NFORT) $(FFLAGSO) -nan -ieee=full
@@ -594,7 +604,9 @@ else
 	VFORT := $(VFORT) -Mnostack_arrays
 endif
 VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk -Mchkptr -traceback
-VFORT := $(VFORT) -Wl,-z,noexecstack
+ifeq ($(OSTYPE),LINUX)
+	VFORT := $(VFORT) -Wl,-z,noexecstack
+endif
 
 vtest_i2_r4_d1_tst_c vtest_i4_r4_d1_tst_c vtest_i8_r4_d1_tst_c vtest_i2_r4_d0_tst_c vtest_i4_r4_d0_tst_c vtest_i8_r4_d0_tst_c: \
 	FCO := $(VFORT) $(FFLAGSO) #-Ktrap=divz #-Kieee
@@ -627,7 +639,9 @@ else
 	RFORT := $(RFORT) -fno-stack-arrays
 endif
 RFORT := $(RFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkptr #-Kieee
-RFORT := $(RFORT) -Wl,-z,noexecstack
+ifeq ($(OSTYPE),LINUX)
+	RFORT := $(RFORT) -Wl,-z,noexecstack
+endif
 
 rtest_i2_r4_d1_tst_c rtest_i4_r4_d1_tst_c rtest_i8_r4_d1_tst_c rtest_i2_r4_d0_tst_c rtest_i4_r4_d0_tst_c rtest_i8_r4_d0_tst_c: \
 	FCO := $(RFORT) $(FFLAGSO)
@@ -657,7 +671,9 @@ ifeq ($(TESTDIM),small)
 	SFORT := $(SFORT) -stackvar  # Force all automatic arrays to be on the stack to test whether stack overflow can occur
 endif
 SFORT := $(SFORT) -w3 -u -U -ansi -xcheck=%all -C
-SFORT := $(SFORT) -Wl,-z,noexecstack
+ifeq ($(OSTYPE),LINUX)
+	SFORT := $(SFORT) -Wl,-z,noexecstack
+endif
 
 stest_i2_r4_d1_tst_c stest_i4_r4_d1_tst_c stest_i8_r4_d1_tst_c stest_i2_r4_d0_tst_c stest_i4_r4_d0_tst_c stest_i8_r4_d0_tst_c: \
 	FCO := $(SFORT) $(FFLAGSO) -fnonstd -ftrap=division
@@ -697,7 +713,9 @@ else
 	XFORT := $(XFORT) -auto -heap-arrays
 endif
 XFORT := $(XFORT) -standard-semantics -assume recursion -fimplicit-none
-XFORT := $(XFORT) -Wl,-z,noexecstack
+ifeq ($(OSTYPE),LINUX)
+	XFORT := $(XFORT) -Wl,-z,noexecstack
+endif
 
 # In the following, `-check all,nouninit` can be changed to `-check all` later, probably with OneAPI 2024.1. See
 # https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-missing-clang-rt-msan-to-link-Fortran-program-in-debug-build/m-p/1533430
@@ -739,7 +757,9 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 	-Werror=100,113,115,137,146,147,159,163 \
 	-Wimplicit-none -Wline-truncation -Wprecision-loss -Wunused-module-vars -Wunused-vars -Wunset-vars \
 	-fimplicit-none -fbounds-check -ftrace=full -freal=nan -fmodule-private
-9FORT := $(9FORT) -Wl,-z,noexecstack
+ifeq ($(OSTYPE),LINUX)
+	9FORT := $(9FORT) -Wl,-z,noexecstack
+endif
 
 9test_i2_r4_d1_tst_c 9test_i4_r4_d1_tst_c 9test_i8_r4_d1_tst_c 9test_i2_r4_d0_tst_c 9test_i4_r4_d0_tst_c 9test_i8_r4_d0_tst_c: \
 	FCO := $(9FORT) $(FFLAGSO)
@@ -981,6 +1001,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "\.position.* may be used uninitialized" \
 	| grep -v "\.sformat.* may be used uninitialized" \
 	| grep -v "\.noise_type_loc.* may be used uninitialized" \
+	| grep -v "ld: warning: -keep_dwarf_unwind is obsolete" \
 	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
