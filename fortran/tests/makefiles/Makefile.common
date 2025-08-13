@@ -397,7 +397,7 @@ dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d
 # LLVM Flang
 # We must define FFORT as follows, because AOCC will also provide "flang", except that it is
 # located under /opt/AMD. Similar for ARM Flang.
-FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local /tmp -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
+FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local ${HOME}/tmp /tmp -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
 FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
 FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
 FFORT := $(FFORT) -I$(FFINC) -L$(FFLIB)
@@ -834,6 +834,8 @@ $(TESTS_C) $(TESTS_INT_C):
 # Make will ignore the rule if such files do not exist, resulting in "No rule to make ..." mistake.
 # 2. `set -eu -o pipefail` instructs Bash to fail immediately and loudly when anything goes wrong
 # in the piped commands.
+# 3. The calls to `execstack` are for debugging, to check whether executable stack exists when
+# `Wl,-z,noexecstack` is removed from the compiler options.
 #%_tst: %_tst_c
 %_tst:
 	@if [[ ! -f $@_c ]] ; then \
