@@ -459,7 +459,8 @@ WU := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\.
 # gfortran 14+ supports the `-ftrampoline-impl=heap` option, which is needed to avoid the
 # warning about executable stacks caused by internal procedures passed as arguments. See
 # https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines
-TRAMPOLINE := $(shell  [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 13 ]] && (echo "-ftrampoline-impl=heap") || echo "")
+#TRAMPOLINE := $(shell  [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 13 ]] && (echo "-ftrampoline-impl=heap") || echo "")
+TRAMPOLINE :=
 GFORT := $(GFORT) $(WE) $(TRAMPOLINE) -pedantic-errors -fmax-errors=1
 # `-fautomatic` (the default) tells `gfortran` to use the stack for local variables smaller than the
 # value given by -fmax-stack-var-size. `-fstack-arrays` forces all automatic arrays to be on the stack.
