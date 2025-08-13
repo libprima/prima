@@ -110,7 +110,7 @@ jobs:
             # reasons. The example will still be tested on Windows.
             # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
             # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
-            IK=i$(( 2**(4 + $(date +%-d) % 3) ))
+            IK=i$(( 2**(1 + $(date +%-d) % 3) ))
             echo "IK=${IK}"
             echo "IK=${IK}" >> "$GITHUB_ENV"
             if [[ "$RUNNER_OS" != "Windows" ]] ; then

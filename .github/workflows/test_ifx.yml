@@ -67,7 +67,7 @@ jobs:
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
-          IK=i$(( 2**(4 + $(date +%-d) % 3) ))
+          IK=i$(( 2**(1 + $(date +%-d) % 3) ))
           echo "IK=${IK}"
           echo "IK=${IK}" >> "$GITHUB_ENV"
           cd "$ROOT_DIR"/fortran/tests && make xtest_${IK}.${{ matrix.solver }}

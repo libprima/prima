@@ -64,7 +64,7 @@ jobs:
             echo "FFLAGS=$FFLAGS"
             echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
 
-            IK=i$(( 2**(4 + $(date +%-d) % 3) ))
+            IK=i$(( 2**(1 + $(date +%-d) % 3) ))
             echo "IK=${IK}"
             echo "IK=${IK}" >> "$GITHUB_ENV"
 

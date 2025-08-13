@@ -79,7 +79,7 @@ jobs:
           FFLAGS=-O$(($(date +%-d) % 5)) && FFLAGS=${FFLAGS/O0/g} && FFLAGS=${FFLAGS/O4/fast} && export FFLAGS
           echo "FFLAGS=$FFLAGS"
           echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
-          IK=i$(( 2**(4 + $(date +%-d) % 3) ))
+          IK=i$(( 2**(1 + $(date +%-d) % 3) ))
           echo "IK=${IK}"
           echo "IK=${IK}" >> "$GITHUB_ENV"
           export TESTDIM=${{ matrix.testdim }}
