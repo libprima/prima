@@ -483,7 +483,7 @@ GFORT := $(GFORT) $(GFSTD) -fall-intrinsics -frecursive \
 	#-finit-real=nan -finit-integer=-9999999  # This will hide some warnings on uninitialized variables.
 	#-Wrealloc-lhs -Wrealloc-lhs-all
 ifeq ($(OSTYPE),LINUX)
-	GFORT := $(GFORT) -Wl,-z,noexecstack
+	GFORT := $(GFORT) #-Wl,-z,noexecstack
 endif
 
 gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
@@ -850,7 +850,9 @@ $(TESTS_C) $(TESTS_INT_C):
 		if [[ -n "$(FFLAGSO)" ]] ; then \
 			if [[ -x $@_c_$(SUFFIXO) ]] ; then \
 				if command -v execstack >/dev/null 2>&1 ; then \
-					printf "\n Check executable stack:" && execstack -q ./$@_c_$(SUFFIXO) | tee -a "$(LOG_DIR)/$@.log" ; \
+					printf "\n===> Check executable stack: " && execstack -q ./$@_c_$(SUFFIXO) && \
+					printf "\n===> Clear executable stack: " && execstack -c ./$@_c_$(SUFFIXO) \
+					| tee -a "$(LOG_DIR)/$@.log" ; \
 				fi ; \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXO) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
@@ -866,7 +868,9 @@ $(TESTS_C) $(TESTS_INT_C):
 		if [[ -n "$(FFLAGSG)" ]] ; then \
 			if [[ -x $@_c_$(SUFFIXG) ]] ; then \
 				if command -v execstack >/dev/null 2>&1 ; then \
-					printf "\n Check executable stack:" && execstack -q ./$@_c_$(SUFFIXG) | tee -a "$(LOG_DIR)/$@.log" ; \
+					printf "\n===> Check executable stack: " && execstack -q ./$@_c_$(SUFFIXG) && \
+					printf "\n===> Clear executable stack: " && execstack -c ./$@_c_$(SUFFIXG) \
+					| tee -a "$(LOG_DIR)/$@.log" ; \
 				fi ; \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXG) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
