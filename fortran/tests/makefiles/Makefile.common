@@ -265,7 +265,8 @@ $(foreach TST, $(TESTS_INT_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 .PHONY: all test test_c clean $(TESTS) $(TESTS_C) $(TESTS_INT) $(TESTS_INT_C) source_* clean*
 
 # Operating system.
-OSTYPE := LINUX   # We assume the OS is LINUX by default.
+# We assume the OS is LINUX by default.
+OSTYPE := LINUX
 ifeq ($(OS),Windows_NT)
 	OSTYPE := WINDOWS
 else
