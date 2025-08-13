@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, April 21, 2024 PM03:49:40
+! Last Modified: Thu 14 Aug 2025 07:36:47 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -222,6 +222,7 @@ end if
 ! Calculation starts !
 !====================!
 
+! N.B.: The use of OUTPROD is expensive memory-wise, but it is not our concern in this implementation.
 A = A + outprod(alpha * x, y)
 !A = A + alpha * outprod(x, y)
 
@@ -318,6 +319,7 @@ end if
 ! Calculation starts !
 !====================!
 
+! N.B.: The use of OUTPROD is expensive memory-wise, but it is not our concern in this implementation.
 A = A + outprod(alpha * x, y) + outprod(beta * u, v)
 !A = A + (alpha * outprod(x, y) + beta * outprod(u, v))
 

@@ -8,7 +8,7 @@ module update_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Monday, August 07, 2023 AM03:53:59
+! Last Modified: Thu 14 Aug 2025 07:34:04 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -104,6 +104,7 @@ end if
 
 sim_old = sim
 simi_old = simi
+! N.B.: The use of OUTPROD is expensive memory-wise, but it is not our concern in this implementation.
 if (jdrop <= n) then
     sim(:, jdrop) = d
     simi_jdrop = simi(jdrop, :) / inprod(simi(jdrop, :), d)

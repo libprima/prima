@@ -8,7 +8,7 @@ module update_uobyqa_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thursday, April 11, 2024 PM06:37:06
+! Last Modified: Thu 14 Aug 2025 07:37:19 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -85,6 +85,7 @@ vlag = calvlag(pl, d, xpt(:, kopt), kopt)
 pl(:, knew) = pl(:, knew) / vlag(knew)
 plnew = pl(:, knew)
 pl = pl - outprod(plnew, vlag)
+! N.B.: The use of OUTPROD is expensive memory-wise, but it is not our concern in this implementation.
 pl(:, knew) = plnew
 
 ! Update the quadratic model.

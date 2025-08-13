@@ -8,7 +8,7 @@ module update_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, March 15, 2024 PM12:15:35
+! Last Modified: Thu 14 Aug 2025 07:34:12 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -146,6 +146,7 @@ end if
 v1 = (alpha * vlag(npt + 1:npt + n) - tau * hcol(npt + 1:npt + n)) / denom
 v2 = (-beta * hcol(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
 bmat = bmat + outprod(v1, vlag) + outprod(v2, hcol) !call r2update(bmat, ONE, v1, vlag, ONE, v2, hcol)
+! N.B.: The use of OUTPROD is expensive memory-wise, but it is not our concern in this implementation.
 ! Numerically, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be symmetric.
 call symmetrize(bmat(:, npt + 1:npt + n))
 

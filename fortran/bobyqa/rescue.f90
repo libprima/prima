@@ -18,7 +18,7 @@ module rescue_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, March 14, 2024 PM01:18:04
+! Last Modified: Thu 14 Aug 2025 07:34:53 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -769,6 +769,7 @@ alpha = hcol(knew)
 v1 = (alpha * vlag(npt + 1:npt + n) - tau * hcol(npt + 1:npt + n)) / denom
 v2 = (-beta * hcol(npt + 1:npt + n) - tau * vlag(npt + 1:npt + n)) / denom
 bmat = bmat + outprod(v1, vlag) + outprod(v2, hcol) !call r2update(bmat, ONE, v1, vlag, ONE, v2, hcol)
+! N.B.: The use of OUTPROD is expensive memory-wise, but it is not our concern in this implementation.
 ! Numerically, the update above does not guarantee BMAT(:, NPT+1 : NPT+N) to be symmetric.
 call symmetrize(bmat(:, npt + 1:npt + n))
 
