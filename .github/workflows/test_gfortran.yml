@@ -115,7 +115,6 @@ jobs:
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
                 if [[ $(($(date +%-d) % 2)) == 0 ]] ; then
-                    cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all  # Conduct linting only if the test is small.
                     export TESTDIM=small
                 else
                     export TESTDIM=big

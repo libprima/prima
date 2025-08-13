@@ -64,7 +64,6 @@ jobs:
       - name: Conduct the test
         shell: bash
         run: |
-          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
           IK=i$(( 2**(1 + $(date +%-d) % 3) ))

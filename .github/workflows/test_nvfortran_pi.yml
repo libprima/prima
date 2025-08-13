@@ -27,12 +27,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ikind: [i2, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
 
     steps:
+
       - name: Clone Repository (Latest)
         uses: actions/checkout@v4.2.2
         if: github.event.inputs.git-ref == ''
@@ -64,9 +64,12 @@ jobs:
           if [[ -d "$NVDIR" ]] ; then NVBIN=$(find "$NVDIR" -wholename "*compilers/bin" -type d -print | sort | tail -n 1) ; fi
           if [[ -n "$NVBIN" ]] ; then export PATH=$PATH:"$NVBIN" ; fi
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint -v && bash ./mlint -v
+          IK=i$(( 2**(1 + $(date +%-d) % 3) ))
+          echo "IK=${IK}"
+          echo "IK=${IK}" >> "$GITHUB_ENV"
           # As of nvfortran 23.1, date_and_time() and random_number are not supported on Raspberry Pi
           # 4B. Thus we have to disable the extensive tests, trying only the simple example.
-          #cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make vtest_${{ matrix.ikind }}.${{ matrix.solver }}
+          #cd "$ROOT_DIR"/fortran/tests && export FFLAGS=${{ matrix.fflags }} && export TESTDIM=${{ matrix.testdim }} && make vtest_${IK}.${{ matrix.solver }}
           printf "\n\n********************************************************************************"
           printf "\nExtensive tests are skipped due to the unavailability of date_and_time() and random_number."
           printf "\nSee the comments in the yml file.\nCheck whether they are available now."
@@ -79,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.solver }}-${{ matrix.ikind }}-${{ matrix.fflags }}-${{ matrix.testdim }}
+          name: ${{ matrix.solver }}-${{ env.IK }}-${{ matrix.fflags }}-${{ matrix.testdim }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data

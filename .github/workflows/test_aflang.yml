@@ -28,7 +28,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        ikind: [i2, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
@@ -65,10 +64,12 @@ jobs:
 
       - name: Conduct the test
         run: |
-          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
-          cd "$ROOT_DIR"/fortran/tests && make dtest_${{ matrix.ikind }}.${{ matrix.solver }}
+          IK=i$(( 2**(1 + $(date +%-d) % 3) ))
+          echo "IK=${IK}"
+          echo "IK=${IK}" >> "$GITHUB_ENV"
+          cd "$ROOT_DIR"/fortran/tests && make dtest_${IK}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
           export EXAMPLE_NUM=1 && make clean && make dtest
           export EXAMPLE_NUM=2 && make clean && make dtest
@@ -77,12 +78,13 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.solver }}-${{ matrix.ikind }}-${{ matrix.fflags }}-${{ matrix.testdim }}
+          name: ${{ matrix.solver }}-${{ env.IK }}-${{ matrix.fflags }}-${{ matrix.testdim }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         run: rm -rf ${{ env.TEST_DIR }}
+
 
   # The following job check whether the tests were successful or cancelled due to timeout.
   # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.

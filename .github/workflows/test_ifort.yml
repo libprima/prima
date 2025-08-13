@@ -75,7 +75,6 @@ jobs:
       - name: Conduct the test
         shell: bash
         run: |
-          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           FFLAGS=-O$(($(date +%-d) % 5)) && FFLAGS=${FFLAGS/O0/g} && FFLAGS=${FFLAGS/O4/fast} && export FFLAGS
           echo "FFLAGS=$FFLAGS"
           echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"

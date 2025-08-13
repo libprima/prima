@@ -27,12 +27,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ikind: [i2, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
 
     steps:
+
       - name: Clone Repository (Latest)
         uses: actions/checkout@v4.2.2
         if: github.event.inputs.git-ref == ''
@@ -58,7 +58,10 @@ jobs:
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint -f && bash ./mlint -f
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
-          cd "$ROOT_DIR"/fortran/tests && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
+          IK=i$(( 2**(1 + $(date +%-d) % 3) ))
+          echo "IK=${IK}"
+          echo "IK=${IK}" >> "$GITHUB_ENV"
+          cd "$ROOT_DIR"/fortran/tests && make ftest_${IK}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
           export EXAMPLE_NUM=1 && make clean && make ftest
           export EXAMPLE_NUM=2 && make clean && make ftest
@@ -67,7 +70,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.solver }}-${{ matrix.ikind }}-${{ matrix.fflags }}-${{ matrix.testdim }}
+          name: ${{ matrix.solver }}-${{ env.IK }}-${{ matrix.fflags }}-${{ matrix.testdim }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data

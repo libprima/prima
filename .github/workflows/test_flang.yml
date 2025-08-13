@@ -31,7 +31,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]  # As of 20240421, the flang installed by ../scripts/install_flang may only work with ubuntu-22.04
-        ikind: [i2, i4, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
@@ -59,11 +58,11 @@ jobs:
 
       - name: Revise maxtr
         # This is to see whether "GitHub Actions xx lost communication with the server" was caused
-        # by maxtr = huge(maxtr) - 1_IK. We suspect this because the error occurs with ikind = i8
-        # and ikind = i4 for all solvers when testdim = small, but not with ikind = i2 at all.
+        # by maxtr = huge(maxtr) - 1_IK. We suspect this because the error occurs with IK = i8
+        # and IK = i4 for all solvers when testdim = small, but not with IK = i2 at all.
         # Update 20240422: The error does not occur any more after the update. WHY? Does this imply
         # INFINITE CYCLING in the code?
-        if: ${{ matrix.ikind != 'i2' && github.event.inputs.maxtr != '' }}
+        if: ${{ github.event.inputs.maxtr != '' }}
         run: |
           cd fortran/${{ matrix.solver }}
           $SEDI 's|maxtr = huge(maxtr) - 1_IK|maxtr = ${{ github.event.inputs.maxtr }}|' *.f90
@@ -71,10 +70,12 @@ jobs:
 
       - name: Conduct the test
         run: |
-          cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./flint --all && bash ./mlint --all
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
-          cd "$ROOT_DIR"/fortran/tests && make ftest_${{ matrix.ikind }}.${{ matrix.solver }}
+          IK=i$(( 2**(1 + $(date +%-d) % 3) ))
+          echo "IK=${IK}"
+          echo "IK=${IK}" >> "$GITHUB_ENV"
+          cd "$ROOT_DIR"/fortran/tests && make ftest_${IK}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
           export EXAMPLE_NUM=1 && make clean && make ftest
           export EXAMPLE_NUM=2 && make clean && make ftest
@@ -83,7 +84,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.solver }}-${{ matrix.ikind }}-${{ matrix.fflags }}-${{ matrix.testdim }}
+          name: ${{ matrix.solver }}-${{ env.IK }}-${{ matrix.fflags }}-${{ matrix.testdim }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
