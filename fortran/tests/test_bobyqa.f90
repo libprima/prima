@@ -13,7 +13,7 @@ real(RP), intent(out) :: f
 integer :: n
 real(RP), parameter :: alpha = 4.0_RP
 n = size(x)
-f = sum((x(1:n - 1) - 1.0_RP)**2 + alpha * (x(2:n) - x(1:n - 1)**2)**2); 
+f = sum((x(1:n - 1) - 1.0_RP)**2 + alpha * (x(2:n) - x(1:n - 1)**2)**2);
 end subroutine chrosen
 
 subroutine recursive_fun1(x, f)
@@ -42,7 +42,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wednesday, January 03, 2024 PM12:04:30
+! Last Modified: Wed 13 Aug 2025 11:10:49 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -310,8 +310,12 @@ implicit none
 real(RP), intent(in) :: x_internal(:)
 real(RP), intent(out) :: f_internal
 real(RP) :: x_loc(size(x_internal))
+real(RP) :: xl_internal(size(x_internal))
+real(RP) :: xu_internal(size(x_internal))
+xl_internal = -2.0_RP
+xu_internal = 2.0_RP
 x_loc = x_internal
-call bobyqa(recursive_fun1, x_loc, f_internal, xl=xl, xu=xu)
+call bobyqa(recursive_fun1, x_loc, f_internal, xl=xl_internal, xu=xu_internal)
 end subroutine recursive_fun2
 
 end subroutine test_solver

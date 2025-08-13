@@ -1,7 +1,7 @@
 module recursive_mod
 implicit none
 private
-public :: recursive_fun1
+public :: recursive_fun2
 
 contains
 
@@ -18,27 +18,46 @@ end subroutine chrosen
 
 subroutine recursive_fun1(x, f)
 use, non_intrinsic :: consts_mod, only : RP
-use, non_intrinsic :: newuoa_mod, only : newuoa
+use, non_intrinsic :: bobyqa_mod, only : bobyqa
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
+real(RP) :: xl(size(x))
+real(RP) :: xu(size(x))
 real(RP) :: x_loc(size(x))
+xl = -2.0_RP
+xu = 2.0_RP
 x_loc = x
-call newuoa(chrosen, x_loc, f)
+call bobyqa(chrosen, x_loc, f, xl=xl, xu=xu)
 end subroutine recursive_fun1
+
+subroutine recursive_fun2(x, f)
+use, non_intrinsic :: consts_mod, only : RP
+use, non_intrinsic :: bobyqa_mod, only : bobyqa
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+real(RP) :: xl(size(x))
+real(RP) :: xu(size(x))
+real(RP) :: x_loc(size(x))
+xl = -2.0_RP
+xu = 2.0_RP
+x_loc = x
+call bobyqa(recursive_fun1, x_loc, f, xl=xl, xu=xu)
+end subroutine recursive_fun2
 
 end module recursive_mod
 
 
 module test_solver_mod
 !--------------------------------------------------------------------------------------------------!
-! This module tests NEWUOA on a few simple problems.
+! This module tests BOBYQA on a few simple problems.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: September 2021
 !
-! Last Modified: Wed 13 Aug 2025 11:13:57 PM CST
+! Last Modified: Wed 13 Aug 2025 10:58:55 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -51,13 +70,16 @@ contains
 
 subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed, testdim)
 
+use, non_intrinsic :: bobyqa_mod, only : bobyqa
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
+use, non_intrinsic :: debug_mod, only : validate
+use, non_intrinsic :: infnan_mod, only : is_neginf
 use, non_intrinsic :: memory_mod, only : safealloc
-use, non_intrinsic :: newuoa_mod, only : newuoa
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
+use, non_intrinsic :: recursive_mod, only : recursive_fun2
 use, non_intrinsic :: string_mod, only : strip, istr
 
 implicit none
@@ -71,10 +93,11 @@ integer, intent(in), optional :: randseed
 character(len=*), intent(in), optional :: testdim
 
 character(len=*), parameter :: bigprob = 'bigprob'
-character(len=*), parameter :: solname = 'newuoa'
+character(len=*), parameter :: solname = 'bobyqa'
+character(len=*), parameter :: srname = 'TEST_BOBYQA'
 character(len=:), allocatable :: testdim_loc
 character(len=PNLEN) :: probname
-character(len=PNLEN) :: probs_loc(100)
+character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 integer :: randseed_loc
 integer :: rseed
 integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
@@ -97,20 +120,25 @@ integer(IK) :: nrand_loc
 integer(IK), parameter :: bign = 300_IK
 integer(IK), parameter :: largen = 1600_IK
 real(RP) :: f
+real(RP) :: f_unc
 real(RP) :: ftarget
 real(RP) :: rhobeg
 real(RP) :: rhoend
 real(RP), allocatable :: fhist(:)
 real(RP), allocatable :: x(:)
+real(RP), allocatable :: x0(:)
+real(RP), allocatable :: x_unc(:)
 real(RP), allocatable :: xhist(:, :)
+real(RP), allocatable :: xl(:)
+real(RP), allocatable :: xu(:)
 type(PROB_T) :: prob
 
 if (present(probs)) then
     nprobs = int(size(probs), kind(nprobs))
     probs_loc(1:nprobs) = probs
 else
-    nprobs = 5
-    probs_loc(1:nprobs) = ['chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
+    nprobs = 6
+    probs_loc(1:nprobs) = ['ptinsq   ', 'chebyquad', 'chrosen  ', 'trigsabs ', 'trigssqs ', 'vardim   ']
 end if
 
 if (present(mindim)) then
@@ -175,8 +203,9 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
 
         print '(/A, I0, A, I0, A, I0, A, I0)', &
             & strip(probname)//': N = ', n, ' NPT = ', npt, ', MAXFUN = ', maxfun, ', Random test ', irand
-        call newuoa(noisy_calfun, x, f, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
-            & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
+        call bobyqa(noisy_calfun, x, f, xl=prob % xl, xu=prob % xu, &
+            & npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, xhist=xhist, &
+            & ftarget=ftarget, iprint=iprint)
 
         deallocate (x)
         nullify (orig_calfun)
@@ -190,6 +219,9 @@ else
         probname = probs_loc(iprob)
         ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
         dim_list(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
+        if (strip(probname) == 'ptinsq') then
+            dim_list(1:ndim) = int(ceiling(real(dim_list(1:ndim)) / 2.0) * 2, IK)  ! Must be even
+        end if
         do idim = 1, ndim
             n = dim_list(idim)
             call construct(prob, probname, n)  ! Construct the testing problem.
@@ -221,7 +253,7 @@ else
                 end if
                 maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
                 if (rand() <= 0.2) then
-                    maxhist = 0
+                    maxhist = -maxhist
                 end if
                 if (rand() <= 0.2) then
                     ftarget = -TEN**abs(TWO * randn())
@@ -238,13 +270,26 @@ else
                 elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
                     rhobeg = ZERO
                 end if
-                call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
-                x = noisy(prob % x0)
+                call safealloc(x0, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
+                x0 = noisy(prob % x0)
                 orig_calfun => prob % calfun
 
                 print '(/A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, ', Random test ', irand
-                call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
-                    & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
+
+                call safealloc(x, n)
+                x = x0
+                call bobyqa(noisy_calfun, x, f, xl=prob % xl, xu=prob % xu, npt=npt, &
+                    & rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, maxhist=maxhist, fhist=fhist, &
+                    & xhist=xhist, ftarget=ftarget, iprint=iprint)
+
+                if (prob % probtype == 'u') then  ! Run the test without constraints
+                    call safealloc(x_unc, n)
+                    x_unc = x0
+                    call bobyqa(noisy_calfun, x_unc, f_unc, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+                        & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
+                    call validate(all(abs(x - x_unc) <= 0), 'X == X_UNC', srname)
+                    call validate(abs(f - f_unc) <= 0 .or. (is_neginf(f) .and. is_neginf(f_unc)), 'F == F_UNC', srname)
+                end if
 
                 deallocate (x)
                 nullify (orig_calfun)
@@ -259,28 +304,19 @@ end if
 
 ! Test recursive call.
 ! The depth of the recursion is 2. The first recursion is in RECURSIVE_FUN1, and the second is in
-! RECURSIVE_FUN2. RECURSIVE_FUN1(Y) is defined by minimizing the CHROSEN function with Y being
-! the starting point. RECURSIVE_FUN2(Y) is defined by RECURSIVE_FUN1 in a similar way. Note
-! that RECURSIVE_FUN1 is essentially a constant function.
+! RECURSIVE_FUN2. RECURSIVE_FUN1(Y) is defined by minimizing the CHROSEN function subject to
+! -2 <= X <= 2 with Y being the starting point. RECURSIVE_FUN2(Y) is defined by RECURSIVE_FUN1
+! in a similar way. Note that RECURSIVE_FUN1 is essentially a constant function.
 n = 3_IK
 print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
+call safealloc(xl, n)
+xl = -2.0_RP
+call safealloc(xu, n)
+xu = 2.0_RP
 call safealloc(x, n)
 x = randn(n)
-call newuoa(recursive_fun2, x, f, iprint=2_IK)
-deallocate (x)
-
-contains
-
-subroutine recursive_fun2(x_internal, f_internal)
-use recursive_mod, only : recursive_fun1
-implicit none
-real(RP), intent(in) :: x_internal(:)
-real(RP), intent(out) :: f_internal
-real(RP) :: x_loc(size(x_internal))
-!x_loc = x_internal
-x_loc = x_internal + real(n, RP)
-call newuoa(recursive_fun1, x_loc, f_internal)
-end subroutine recursive_fun2
+call bobyqa(recursive_fun2, x, f, xl=xl, xu=xu, iprint=2_IK)
+deallocate (xl, xu, x)
 
 end subroutine test_solver
 
