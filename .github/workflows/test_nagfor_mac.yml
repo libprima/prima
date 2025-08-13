@@ -26,7 +26,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [small, big]
 
@@ -53,12 +52,14 @@ jobs:
           export PATH=$PATH:"~/local/bin"
           source ~/local/bin/nag_licensing || echo "\n\nNAG licensing failed.\n\n"
           # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
-          FFLAGS=-O$(($(date +%-d) % 5))
-          FFLAGS=${FFLAGS/O0/g}
-          FFLAGS=${FFLAGS/O4/fast}
-          export FFLAGS
+          FFLAGS=-O$(($(date +%-d) % 5)) && FFLAGS=${FFLAGS/O0/g} && FFLAGS=${FFLAGS/O4/fast} && export FFLAGS
+          echo "FFLAGS=$FFLAGS"
+          echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
           export TESTDIM=${{ matrix.testdim }}
-          cd "$ROOT_DIR"/fortran/tests && make ntest_${{ matrix.ikind }}.${{ matrix.solver }}
+          IK=i$(( 2**(4 + $(date +%-d) % 3) ))
+          echo "IK=$IK"
+          echo "IK=$IK" >> "$GITHUB_ENV"
+          cd "$ROOT_DIR"/fortran/tests && make ntest_$IK.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
           export EXAMPLE_NUM=1 && make clean && make ntest
           export EXAMPLE_NUM=2 && make clean && make ntest
@@ -67,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.solver }}-${{ matrix.ikind }}-${{ matrix.testdim }}
+          name: ${{ matrix.solver }}-${{ env.IK }}-${{ matrix.testdim }}-${{ env.FFLAGS }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data

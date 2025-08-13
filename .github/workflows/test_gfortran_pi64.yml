@@ -27,7 +27,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ikind: [i2, i8]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
     steps:
@@ -58,19 +57,20 @@ jobs:
             else
                 export TESTDIM=big
             fi
-            echo $TESTDIM
+            echo "TESTDIM=$TESTDIM"
             echo "TESTDIM=$TESTDIM" >> "$GITHUB_ENV"
 
-            FFLAGS=-O$(($(date +%-d) % 5))
-            FFLAGS=${FFLAGS/O0/g}
-            FFLAGS=${FFLAGS/O4/fast}
-            export FFLAGS
-            echo $FFLAGS
+            FFLAGS=-O$(($(date +%-d) % 5)) && FFLAGS=${FFLAGS/O0/g} && FFLAGS=${FFLAGS/O4/fast} && export FFLAGS
+            echo "FFLAGS=$FFLAGS"
             echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
 
+            IK=i$(( 2**(4 + $(date +%-d) % 3) ))
+            echo "IK=$IK"
+            echo "IK=$IK" >> "$GITHUB_ENV"
+
             cd "$ROOT_DIR"/fortran/tests
-            make gtest_${{ matrix.ikind }}_r4_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r4_d1_tst.${{ matrix.solver }}
-            make gtest_${{ matrix.ikind }}_r8_d1_tst_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}_r8_d1_tst.${{ matrix.solver }}
+            make gtest_$IK_r4_d1_tst_c.${{ matrix.solver }} && make gtest_$IK_r4_d1_tst.${{ matrix.solver }}
+            make gtest_$IK_r8_d1_tst_c.${{ matrix.solver }} && make gtest_$IK_r8_d1_tst.${{ matrix.solver }}
 
             export FS=18
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
@@ -83,7 +83,7 @@ jobs:
         # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
         # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
         with:
-          name: ${{ matrix.solver }}-${{ matrix.ikind }}-${{ env.TESTDIM }}-${{ env.FFLAGS }}
+          name: ${{ matrix.solver }}-${{ env.IK }}-${{ env.TESTDIM }}-${{ env.FFLAGS }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
@@ -104,6 +104,5 @@ jobs:
           repository: equipez/github_actions_scripts
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           path: scripts
-
       - name: Check whether the tests were successful or cancelled due to timeout
         run: bash scripts/check_success_timeout ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}

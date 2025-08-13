@@ -30,9 +30,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
         compiler: [gcc]
         #version: [12, 13, 14]  # Too expensive to test all versions
-        #ikind: [i2, i8]
         version: [12, 13]  # Too expensive to test all versions
-        ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
         exclude:
@@ -112,6 +110,9 @@ jobs:
             # reasons. The example will still be tested on Windows.
             # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
             # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
+            IK=i$(( 2**(4 + $(date +%-d) % 3) ))
+            echo "IK=$IK"
+            echo "IK=$IK" >> "$GITHUB_ENV"
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
                 if [[ $(($(date +%-d) % 2)) == 0 ]] ; then
@@ -130,7 +131,7 @@ jobs:
                 echo $FFLAGS
                 echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
 
-                cd "$ROOT_DIR"/fortran/tests && make gtest_${{ matrix.ikind }}_c.${{ matrix.solver }} && make gtest_${{ matrix.ikind }}.${{ matrix.solver }}
+                cd "$ROOT_DIR"/fortran/tests && make gtest_$IK_c.${{ matrix.solver }} && make gtest_$IK.${{ matrix.solver }}
             fi
 
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
@@ -143,7 +144,7 @@ jobs:
         # Note that `$TEST_DIR` does not work on Windows, where its equivalent is `$env:TEST_DIR`.
         # In the following, we enquire `$TEST_DIR` by using the `env` context, which is platform independent.
         with:
-          name: ${{ matrix.os }}-${{ matrix.solver }}-${{ matrix.ikind }}-${{ matrix.version }}-${{ env.TESTDIM }}-${{ env.FFLAGS }}
+          name: ${{ matrix.os }}-${{ matrix.solver }}-${{ env.IK }}-${{ matrix.version }}-${{ env.TESTDIM }}-${{ env.FFLAGS }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
