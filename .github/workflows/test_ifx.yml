@@ -68,9 +68,9 @@ jobs:
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
           IK=i$(( 2**(4 + $(date +%-d) % 3) ))
-          echo "IK=$IK"
-          echo "IK=$IK" >> "$GITHUB_ENV"
-          cd "$ROOT_DIR"/fortran/tests && make xtest_$IK.${{ matrix.solver }}
+          echo "IK=${IK}"
+          echo "IK=${IK}" >> "$GITHUB_ENV"
+          cd "$ROOT_DIR"/fortran/tests && make xtest_${IK}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
           export EXAMPLE_NUM=1 && make clean && make xtest
           export EXAMPLE_NUM=2 && make clean && make xtest

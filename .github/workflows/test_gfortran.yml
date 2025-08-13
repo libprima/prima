@@ -111,8 +111,8 @@ jobs:
             # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
             # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
             IK=i$(( 2**(4 + $(date +%-d) % 3) ))
-            echo "IK=$IK"
-            echo "IK=$IK" >> "$GITHUB_ENV"
+            echo "IK=${IK}"
+            echo "IK=${IK}" >> "$GITHUB_ENV"
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
                 if [[ $(($(date +%-d) % 2)) == 0 ]] ; then
@@ -131,7 +131,7 @@ jobs:
                 echo "FFLAGS=$FFLAGS"
                 echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
 
-                cd "$ROOT_DIR"/fortran/tests && make gtest_$IK_c.${{ matrix.solver }} && make gtest_$IK.${{ matrix.solver }}
+                cd "$ROOT_DIR"/fortran/tests && make gtest_${IK}_c.${{ matrix.solver }} && make gtest_${IK}.${{ matrix.solver }}
             fi
 
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}

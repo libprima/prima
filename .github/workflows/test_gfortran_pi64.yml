@@ -65,12 +65,12 @@ jobs:
             echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
 
             IK=i$(( 2**(4 + $(date +%-d) % 3) ))
-            echo "IK=$IK"
-            echo "IK=$IK" >> "$GITHUB_ENV"
+            echo "IK=${IK}"
+            echo "IK=${IK}" >> "$GITHUB_ENV"
 
             cd "$ROOT_DIR"/fortran/tests
-            make gtest_$IK_r4_d1_tst_c.${{ matrix.solver }} && make gtest_$IK_r4_d1_tst.${{ matrix.solver }}
-            make gtest_$IK_r8_d1_tst_c.${{ matrix.solver }} && make gtest_$IK_r8_d1_tst.${{ matrix.solver }}
+            make gtest_${IK}_r4_d1_tst_c.${{ matrix.solver }} && make gtest_${IK}_r4_d1_tst.${{ matrix.solver }}
+            make gtest_${IK}_r8_d1_tst_c.${{ matrix.solver }} && make gtest_${IK}_r8_d1_tst.${{ matrix.solver }}
 
             export FS=18
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
