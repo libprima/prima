@@ -1,7 +1,7 @@
 module recursive_mod
 implicit none
 private
-public :: recursive_fun1
+public :: recursive_fun2
 
 contains
 
@@ -13,7 +13,7 @@ real(RP), intent(out) :: f
 integer :: n
 real(RP), parameter :: alpha = 4.0_RP
 n = size(x)
-f = sum((x(1:n - 1) - 1.0_RP)**2 + alpha * (x(2:n) - x(1:n - 1)**2)**2); 
+f = sum((x(1:n - 1) - 1.0_RP)**2 + alpha * (x(2:n) - x(1:n - 1)**2)**2);
 end subroutine chrosen
 
 subroutine recursive_fun1(x, f)
@@ -27,6 +27,17 @@ x_loc = x
 call uobyqa(chrosen, x_loc, f)
 end subroutine recursive_fun1
 
+subroutine recursive_fun2(x, f)
+use, non_intrinsic :: consts_mod, only : RP
+use, non_intrinsic :: uobyqa_mod, only : uobyqa
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+real(RP) :: x_loc(size(x))
+x_loc = x
+call uobyqa(recursive_fun1, x_loc, f)
+end subroutine recursive_fun2
+
 end module recursive_mod
 
 
@@ -38,7 +49,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thursday, March 07, 2024 PM02:41:31
+! Last Modified: Thu 14 Aug 2025 12:10:59 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -57,6 +68,7 @@ use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
+use, non_intrinsic :: recursive_mod, only : recursive_fun2
 use, non_intrinsic :: string_mod, only : strip, istr
 use, non_intrinsic :: uobyqa_mod, only : uobyqa
 
@@ -242,18 +254,6 @@ call safealloc(x, n)
 x = randn(n)
 call uobyqa(recursive_fun2, x, f, iprint=2_IK)
 deallocate (x)
-
-contains
-
-subroutine recursive_fun2(x_internal, f_internal)
-use, non_intrinsic :: recursive_mod, only : recursive_fun1
-implicit none
-real(RP), intent(in) :: x_internal(:)
-real(RP), intent(out) :: f_internal
-real(RP) :: x_loc(size(x_internal))
-x_loc = x_internal
-call uobyqa(recursive_fun1, x_loc, f_internal)
-end subroutine recursive_fun2
 
 end subroutine test_solver
 

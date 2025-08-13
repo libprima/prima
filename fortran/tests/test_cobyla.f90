@@ -1,7 +1,7 @@
 module recursive_mod
 implicit none
 private
-public :: recursive_fun1
+public :: recursive_fun2
 
 contains
 
@@ -14,8 +14,8 @@ real(RP), intent(out) :: constr(:)
 integer :: n
 real(RP), parameter :: alpha = 4.0_RP
 n = size(x)
-f = sum((x(1:n - 1) - 1.0_RP)**2 + alpha * (x(2:n) - x(1:n - 1)**2)**2); 
-constr = x(1:n - 1) - x(2:n)**2; 
+f = sum((x(1:n - 1) - 1.0_RP)**2 + alpha * (x(2:n) - x(1:n - 1)**2)**2);
+constr = x(1:n - 1) - x(2:n)**2;
 end subroutine chrosen
 
 subroutine recursive_fun1(x, f, constr)
@@ -30,6 +30,18 @@ x_loc = x
 call cobyla(chrosen, int(size(x) - 1, IK), x_loc, f, nlconstr=constr)
 end subroutine recursive_fun1
 
+subroutine recursive_fun2(x, f, constr)
+use, non_intrinsic :: consts_mod, only : RP, IK
+use, non_intrinsic :: cobyla_mod, only : cobyla
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+real(RP), intent(out) :: constr(:)
+real(RP) :: x_loc(size(x))
+x_loc = x
+call cobyla(recursive_fun1, int(size(x) - 1, IK), x_loc, f, nlconstr=constr)
+end subroutine recursive_fun2
+
 end module recursive_mod
 
 
@@ -41,7 +53,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sunday, March 31, 2024 PM05:11:43
+! Last Modified: Thu 14 Aug 2025 12:12:37 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -63,6 +75,7 @@ use, non_intrinsic :: noise_mod, only : noisy, noisy_calcfc, orig_calcfc
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
+use, non_intrinsic :: recursive_mod, only : recursive_fun2
 use, non_intrinsic :: string_mod, only : strip, istr
 
 implicit none
@@ -370,19 +383,6 @@ x = randn(n)
 call safealloc(nlconstr, n - 1_IK)
 call cobyla(recursive_fun2, n - 1_IK, x, f, nlconstr=nlconstr, iprint=2_IK)
 deallocate (x, nlconstr)
-
-contains
-
-subroutine recursive_fun2(x_internal, f_internal, constr_internal)
-use, non_intrinsic :: recursive_mod, only : recursive_fun1
-implicit none
-real(RP), intent(in) :: x_internal(:)
-real(RP), intent(out) :: f_internal
-real(RP), intent(out) :: constr_internal(:)
-real(RP) :: x_loc(size(x_internal))
-x_loc = x_internal
-call cobyla(recursive_fun1, int(size(x_internal) - 1, IK), x_loc, f_internal, nlconstr=constr_internal)
-end subroutine recursive_fun2
 
 end subroutine test_solver
 

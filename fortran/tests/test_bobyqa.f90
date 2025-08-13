@@ -1,7 +1,7 @@
 module recursive_mod
 implicit none
 private
-public :: recursive_fun1
+public :: recursive_fun2
 
 contains
 
@@ -31,6 +31,21 @@ x_loc = x
 call bobyqa(chrosen, x_loc, f, xl=xl, xu=xu)
 end subroutine recursive_fun1
 
+subroutine recursive_fun2(x, f)
+use, non_intrinsic :: consts_mod, only : RP
+use, non_intrinsic :: bobyqa_mod, only : bobyqa
+implicit none
+real(RP), intent(in) :: x(:)
+real(RP), intent(out) :: f
+real(RP) :: xl(size(x))
+real(RP) :: xu(size(x))
+real(RP) :: x_loc(size(x))
+xl = -2.0_RP
+xu = 2.0_RP
+x_loc = x
+call bobyqa(recursive_fun1, x_loc, f, xl=xl, xu=xu)
+end subroutine recursive_fun2
+
 end module recursive_mod
 
 
@@ -42,7 +57,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wed 13 Aug 2025 11:10:49 PM CST
+! Last Modified: Wed 13 Aug 2025 10:58:55 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -64,6 +79,7 @@ use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
+use, non_intrinsic :: recursive_mod, only : recursive_fun2
 use, non_intrinsic :: string_mod, only : strip, istr
 
 implicit none
@@ -301,22 +317,6 @@ call safealloc(x, n)
 x = randn(n)
 call bobyqa(recursive_fun2, x, f, xl=xl, xu=xu, iprint=2_IK)
 deallocate (xl, xu, x)
-
-contains
-
-subroutine recursive_fun2(x_internal, f_internal)
-use, non_intrinsic :: recursive_mod, only : recursive_fun1
-implicit none
-real(RP), intent(in) :: x_internal(:)
-real(RP), intent(out) :: f_internal
-real(RP) :: x_loc(size(x_internal))
-real(RP) :: xl_internal(size(x_internal))
-real(RP) :: xu_internal(size(x_internal))
-xl_internal = -2.0_RP
-xu_internal = 2.0_RP
-x_loc = x_internal
-call bobyqa(recursive_fun1, x_loc, f_internal, xl=xl_internal, xu=xu_internal)
-end subroutine recursive_fun2
 
 end subroutine test_solver
 

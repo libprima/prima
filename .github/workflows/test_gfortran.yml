@@ -29,8 +29,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
         compiler: [gcc]
-        version: [13]  # Too expensive to test all versions
-        #version: [13, 14]  # Too expensive to test all versions
+        version: [13, 14]  # Too expensive to test all versions
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
         exclude:

@@ -483,7 +483,7 @@ GFORT := $(GFORT) $(GFSTD) -fall-intrinsics -frecursive \
 	#-finit-real=nan -finit-integer=-9999999  # This will hide some warnings on uninitialized variables.
 	#-Wrealloc-lhs -Wrealloc-lhs-all
 ifeq ($(OSTYPE),LINUX)
-	#GFORT := $(GFORT) -Wl,-z,noexecstack
+	GFORT := $(GFORT) -Wl,-z,noexecstack
 endif
 
 gtest_i2_r4_d1_tst_c gtest_i4_r4_d1_tst_c gtest_i8_r4_d1_tst_c gtest_i2_r4_d0_tst_c gtest_i4_r4_d0_tst_c gtest_i8_r4_d0_tst_c: \
