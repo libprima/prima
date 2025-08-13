@@ -849,6 +849,9 @@ $(TESTS_C) $(TESTS_INT_C):
 	else  \
 		if [[ -n "$(FFLAGSO)" ]] ; then \
 			if [[ -x $@_c_$(SUFFIXO) ]] ; then \
+				if command -v execstack >/dev/null 2>&1 ; then \
+					printf "\n Check executable stack:" && execstack -q ./$@_c_$(SUFFIXO) | tee -a "$(LOG_DIR)/$@.log" ; \
+				fi ; \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXO) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
 				$(GDB) ./$@_c_$(SUFFIXO) 2>&1 \
@@ -861,12 +864,20 @@ $(TESTS_C) $(TESTS_INT_C):
 			fi ; \
 		fi ; \
 		if [[ -n "$(FFLAGSG)" ]] ; then \
-			export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
-			printf "\n$@_$(SUFFIXG) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
-			$(GDB) ./$@_c_$(SUFFIXG) 2>&1 \
-			| grep -v "Processor does not support trapping of floating-point exceptions" \
-			| grep -v "libthread_db" \
-			| tee -a "$(LOG_DIR)/$@.log" ; \
+			if [[ -x $@_c_$(SUFFIXG) ]] ; then \
+				if command -v execstack >/dev/null 2>&1 ; then \
+					printf "\n Check executable stack:" && execstack -q ./$@_c_$(SUFFIXG) | tee -a "$(LOG_DIR)/$@.log" ; \
+				fi ; \
+				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
+				printf "\n$@_$(SUFFIXG) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
+				$(GDB) ./$@_c_$(SUFFIXG) 2>&1 \
+				| grep -v "Processor does not support trapping of floating-point exceptions" \
+				| grep -v "libthread_db" \
+				| tee -a "$(LOG_DIR)/$@.log" ; \
+			else \
+				printf "\n$@_c_$(SUFFIXG) is not executable!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
+				exit 126 ; \
+			fi ; \
 		fi ; \
 	fi
 	@set +o pipefail  # Restore the original pipe setting
