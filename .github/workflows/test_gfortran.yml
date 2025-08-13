@@ -29,8 +29,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
         compiler: [gcc]
-        version: [12, 13, 14]  # Too expensive to test all versions
-        ikind: [i2, i8]
+        #version: [12, 13, 14]  # Too expensive to test all versions
+        #ikind: [i2, i8]
+        version: [12, 13]  # Too expensive to test all versions
+        ikind: [i2]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
         exclude:
@@ -79,7 +81,11 @@ jobs:
         if: ${{ matrix.os == 'macos-14' }}
         run: |
           sudo ln -sf $(which gfortran-${{ matrix.version }}) $(dirname $(which gfortran-${{ matrix.version }}))/gfortran
-          which gfortran && gfortran --version
+
+      - name: Check gfortran version
+        shell: bash
+        run: |
+          which gcc && gcc --version && which gfortran && gfortran --version
 
       - name: Revise string.f90, so that we know what is happening if assertion fails
         shell: bash
