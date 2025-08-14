@@ -1,0 +1,14 @@
+1. Flang tests fail with segfaults when problems are big due to big array sizes (eye, outprod, etc).
+   See
+   https://github.com/zequipe/prima/actions/runs/16951338278/job/48044587461
+   https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml
+   Update flang and test again. See
+   https://github.com/llvm/llvm-project/issues/88344
+
+2. Sunf95 tests fail (git 3355686, seed 2533
+
+   COBYLA: XFILT contains NaN: (cobyla -O1, big)
+   https://github.com/zequipe/prima/actions/runs/16944539338/job/48022078759
+
+   UOBYQA:  UPDATE: Assertion fails: FVAL(KOPT) = MINVAL(FVAL).
+   https://github.com/zequipe/prima/actions/runs/16944539338/job/48022078856
