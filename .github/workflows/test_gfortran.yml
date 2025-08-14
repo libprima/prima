@@ -45,9 +45,11 @@ jobs:
         run: git config --global http.postBuffer 1048576000 && git config --global core.compression 0
 
       - name: Run `sudo apt update -y`
+        if: startsWith(matrix.os, 'ubuntu')
         run: sudo apt update -y  # Otherwise, free-disk-space or other actions relying on `apt` may fail
 
       - name: Free disk space
+        if: startsWith(matrix.os, 'ubuntu')
         uses: jlumbroso/free-disk-space@main
         with:
           # all of these default to true, but feel free to set to "false" if necessary for your workflow
