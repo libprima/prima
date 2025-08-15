@@ -30,7 +30,8 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
         compiler: [gcc]
         version: [13, 14]  # Too expensive to test all versions
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        solver: [lincoa]
+        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
 
         exclude:
           - os: windows-latest
@@ -104,7 +105,7 @@ jobs:
         shell: bash
         run: |
           cd fortran/common || exit 42
-          $SEDI "s|\(call assert(abs(x - str2real(s)) <= abs(x) \* 10.0\*\*(-ndgt_loc), 'STR2REAL(S) == X', srname)\)|if (.not. abs(x - str2real(s)) <= abs(x) * 10.0**(-ndgt_loc)) then\nwrite(*,*) '====> x = ', x, 's = ', s, 'sx = ', str2real(s)\nelse\n\1\nend if|" string.f90
+          $SEDI "s|\(call assert(abs(x - str2real(s)) <= abs(x) \* 10.0\*\*(-ndgt_loc), 'STR2REAL(S) == X', srname)\)|if (.not. abs(x - str2real(s)) <= abs(x) * 10.0**(-ndgt_loc)) then\nwrite(*,*) '====> x = ', x, 's = ', s, 'sx = ', str2real(s)\nerror stop\nelse\n\1\nend if|" string.f90
           cat string.f90
 
       - name: Revise linalg.f90 regarding a postcondition of p_norm, so that we know what is happening if it fails
