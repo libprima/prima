@@ -142,6 +142,7 @@ jobs:
                 FFLAGS=-O$(($(date +%-d) % 5))
                 FFLAGS=${FFLAGS/O0/g}
                 FFLAGS=${FFLAGS/O4/fast}
+                FFLAGS=-fast
                 export FFLAGS
                 echo "FFLAGS=$FFLAGS"
                 echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
