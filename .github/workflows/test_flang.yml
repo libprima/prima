@@ -65,11 +65,11 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
-      - name: Install Flang
-        run: bash .github/scripts/install_flang
-
       - name: Miscellaneous setup
         run: bash .github/scripts/misc_setup
+
+      - name: Install Flang
+        run: bash .github/scripts/install_flang
 
       - name: Revise maxtr
         # This is to see whether "GitHub Actions xx lost communication with the server" was caused

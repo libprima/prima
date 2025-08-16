@@ -70,11 +70,11 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
-      - name: Install AOCC
-        run: bash .github/scripts/install_aocc
-
       - name: Miscellaneous setup
         run: bash .github/scripts/misc_setup
+
+      - name: Install AOCC
+        run: bash .github/scripts/install_aocc
 
       - name: Conduct the test
         run: |
