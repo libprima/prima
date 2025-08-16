@@ -77,6 +77,9 @@ jobs:
         # and IK = i4 for all solvers when testdim = small, but not with IK = i2 at all.
         # Update 20240422: The error does not occur any more after the update. WHY? Does this imply
         # INFINITE CYCLING in the code?
+        # update 20250816: First, server shutdown is observed on LINCOA/BOBYQA small tests with IK = i4.
+        # Is this the same issue as before? Second, in the current workflow (and many others), the
+        # definition of IK changes daily. If this issue is related to IK, it will not be observed every day.
         if: ${{ github.event.inputs.maxtr != '' }}
         run: |
           cd fortran/${{ matrix.solver }}
