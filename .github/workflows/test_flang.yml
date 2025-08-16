@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]  # As of 20240421, the flang installed by ../scripts/install_flang may only work with ubuntu-22.04
+        os: [ubuntu-latest]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
@@ -70,6 +70,12 @@ jobs:
 
       - name: Install Flang
         run: bash .github/scripts/install_flang
+
+      - name: Revise linalg.f90 for flang
+        # With flang-new 20.1.8, matprod in linalg.f90 often fails to compute matrix multiplications
+        # correctly, generating garbage values (NaN or numbers that are nearly zero). No idea why.
+        # The following is a workaround the replaces matprod with the intrinsic matmul.
+        run: cd fortran/common && bash ./get_intrinsic_linalg && mv intrinsic_linalg.f90 linalg.f90
 
       - name: Revise maxtr
         # This is to see whether "GitHub Actions xx lost communication with the server" was caused

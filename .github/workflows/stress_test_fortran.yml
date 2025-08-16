@@ -27,9 +27,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-13, macos-14]
-        # Zaikun 20250814 The flang test (f) is expected to fail with a segfault due to
-        # https://github.com/llvm/llvm-project/issues/88344 . Updating flang may fix it. See
-        # https://github.com/llvm/llvm-project/pull/98457
         compiler: [g, v, s, f, x, d]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [large]
@@ -128,6 +125,13 @@ jobs:
       - name: Install Flang
         if: ${{ matrix.compiler == 'f' }}
         run: bash .github/scripts/install_flang
+
+      - name: Revise linalg.f90 for flang
+        if: ${{ matrix.compiler == 'f' }}
+        # With flang-new 20.1.8, matprod in linalg.f90 often fails to compute matrix multiplications
+        # correctly, generating garbage values (NaN or numbers that are nearly zero). No idea why.
+        # The following is a workaround the replaces matprod with the intrinsic matmul.
+        run: cd fortran/common && bash ./get_intrinsic_linalg && mv intrinsic_linalg.f90 linalg.f90
 
       - name: Conduct the test
         run: |
