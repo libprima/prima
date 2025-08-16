@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14]
+        os: [macos-latest]
         cc: [gcc, clang]
         fc: [gfortran-11, gfortran-12, gfortran-13]
 

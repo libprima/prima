@@ -31,7 +31,7 @@ jobs:
 
       # The matrix is the same as that of test_matlab.yml
       matrix:
-        os: [ubuntu-22.04, ubuntu-latest, macos-13, windows-latest, windows-2025]
+        os: [ubuntu-22.04, ubuntu-latest, macos-13, windows-2022, windows-latest]
         matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, R2024b, R2025a, latest]
 
         exclude:
@@ -39,6 +39,17 @@ jobs:
           # Below R2022a, MEX does not work on windows-latest due to the version of MS Visual Studio;
           # R2022a/b should work according to the documentation of MathWorks and GitHub Actions, but
           # they do not as of July 2025.
+          - os: windows-2022
+            matlab: R2020b
+          - os: windows-2022
+            matlab: R2021a
+          - os: windows-2022
+            matlab: R2021b
+          - os: windows-2022
+            matlab: R2022a
+          - os: windows-2022
+            matlab: R2022b
+
           - os: windows-latest
             matlab: R2020b
           - os: windows-latest
@@ -49,18 +60,6 @@ jobs:
             matlab: R2022a
           - os: windows-latest
             matlab: R2022b
-
-          - os: windows-2025
-            matlab: R2020b
-          - os: windows-2025
-            matlab: R2021a
-          - os: windows-2025
-            matlab: R2021b
-          - os: windows-2025
-            matlab: R2022a
-          - os: windows-2025
-            matlab: R2022b
-
 
     steps:
 

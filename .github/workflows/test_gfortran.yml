@@ -34,7 +34,7 @@ jobs:
 
         exclude:
           - os: windows-latest
-            version: 14
+            version: 14  # As of 20250816, gfortran 14 is not available on Windows runners.
 
     steps:
 
@@ -85,13 +85,13 @@ jobs:
         run: $env:Path += ";C:\Program Files\Git\usr\bin;C:\Program Files\Git\bin;C:\ProgramData\Chocolatey\bin"
 
       - name: Set up Fortran
-        if: ${{ matrix.os != 'macos-14' }}
+        if: ${{ matrix.os != 'macos-latest' }}
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: ${{ matrix.compiler }}
           version: ${{ matrix.version }}
-      - name: Set up Fortran for macOS 14  # As of 20240219, fortran-lang/setup-fortran does not support macos-14
-        if: ${{ matrix.os == 'macos-14' }}
+      - name: Set up Fortran for macOS latest  # As of 20250816, fortran-lang/setup-fortran does not support macos-15
+        if: ${{ matrix.os == 'macos-latest' }}
         run: |
           sudo ln -sf $(which gfortran-${{ matrix.version }}) $(dirname $(which gfortran-${{ matrix.version }}))/gfortran
 
