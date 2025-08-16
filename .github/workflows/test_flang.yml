@@ -75,7 +75,8 @@ jobs:
         # With flang-new 20.1.8, matprod in linalg.f90 often fails to compute matrix multiplications
         # correctly, generating garbage values (NaN or numbers that are nearly zero). No idea why.
         # The following is a workaround the replaces matprod with the intrinsic matmul.
-        run: cd fortran/common && bash ./get_intrinsic_linalg && mv intrinsic_linalg.f90 linalg.f90
+        run: |
+          cd fortran/common && bash ./get_intrinsic_linalg && mv intrinsic_linalg.f90 linalg.f90 && cat linalg.f90
 
       - name: Revise maxtr
         # This is to see whether "GitHub Actions xx lost communication with the server" was caused

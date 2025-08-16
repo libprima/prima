@@ -64,6 +64,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
     - [![Test MATLAB, macOS Intel](https://github.com/opt2ai/prima/actions/workflows/test_matlab_mac_intel.yml/badge.svg)](https://github.com/opt2ai/prima/actions/workflows/test_matlab_mac_intel.yml)
     - [![Test MATLAB, Windows](https://github.com/opt2ai/prima/actions/workflows/test_matlab_windows.yml/badge.svg)](https://github.com/opt2ai/prima/actions/workflows/test_matlab_windows.yml)
+    - [![Plot performance profiles with intrinsic `linalg`](https://github.com/opt2ai/prima/actions/workflows/profile_intrinsic_linalg.yml/badge.svg)](https://github.com/opt2ai/prima/actions/workflows/profile_intrinsic_linalg.yml)
 
 - [Tests](https://github.com/sprimalib/prima/actions) at [sprimalib/prima](https://github.com/sprimalib/prima)<a name="stress-tests"></a>
 
