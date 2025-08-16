@@ -3,6 +3,8 @@
 
 DIR="$(realpath "$1")"
 LINALG="$DIR/common/linalg.f90"
+GET_INTRISIC_LINALG="$DIR/common/get_intrinsic_linalg"
+INTRINSIC_LINALG="$DIR/common/intrinsic_linalg.f90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -13,6 +15,15 @@ if [[ -f "$LINALG" ]] ; then
     # See https://github.com/llvm/llvm-project/issues/89528
     STR="Y is NaN if and only if X contains NaN"
     sed -i "/$STR/d" "$LINALG"
+
+    # With flang-new 20.1.8, matprod in linalg.f90 often fails to compute matrix multiplications
+    # correctly, generating garbage values (NaN or numbers that are nearly zero). No idea why.
+    # The following is a workaround the replaces matprod with the intrinsic matmul.
+    # Remove this and test again when flang is updated.
+    if [[ -f "$GET_INTRISIC_LINALG" ]] ; then
+        bash "$GET_INTRISIC_LINALG"
+        mv "$INTRINSIC_LINALG" "$LINALG"
+    fi
 fi
 
 exit 0

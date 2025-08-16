@@ -3,8 +3,9 @@
 # for `matprod` (matrix multiplication) and `dot_product` for `inprod` (inner product).
 # Usage: ./get_intrinsic_linalg
 
-LINALG_ORIG="linalg.f90"
-LINALG_NEW="intrinsic_linalg.f90"
+THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LINALG_ORIG="$THIS_DIR"/linalg.f90
+LINALG_NEW="$THIS_DIR"/intrinsic_linalg.f90
 
 cat >"$LINALG_NEW" << EOF
 !--------------------------------------------------------------------------------------------------!

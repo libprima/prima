@@ -126,14 +126,6 @@ jobs:
         if: ${{ matrix.compiler == 'f' }}
         run: bash .github/scripts/install_flang
 
-      - name: Revise linalg.f90 for flang
-        if: ${{ matrix.compiler == 'f' }}
-        # With flang-new 20.1.8, matprod in linalg.f90 often fails to compute matrix multiplications
-        # correctly, generating garbage values (NaN or numbers that are nearly zero). No idea why.
-        # The following is a workaround the replaces matprod with the intrinsic matmul.
-        run: |
-          cd fortran/common && bash ./get_intrinsic_linalg && mv intrinsic_linalg.f90 linalg.f90 && cat linalg.f90
-
       - name: Conduct the test
         run: |
           cd "$ROOT_DIR"/fortran/tests
