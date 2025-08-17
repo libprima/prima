@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sunday, March 24, 2024 AM11:21:48
+! Last Modified: Sun 17 Aug 2025 06:24:11 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -152,7 +152,7 @@ if (maxfun <= max(0, min_maxfun - 1)) then
     if (maxfun > 0) then
         maxfun = int(min_maxfun, kind(maxfun))
     else  ! We assume that non-positive values of MAXFUN are produced by overflow.
-        maxfun = (huge(maxfun) - 1_IK) / 2_IK
+        maxfun = 10_IK**min(range(maxfun), 5)  !!MATLAB: maxfun =  10^5;
         ! N.B.: Do NOT set MAXFUN to HUGE(MAXFUN), as it may cause overflow and infinite cycling
         ! when used as the upper bound of DO loops. This occurred on 20240225 with gfortran 13. See
         ! https://fortran-lang.discourse.group/t/loop-variable-reaching-integer-huge-causes-infinite-loop
