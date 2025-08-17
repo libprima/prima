@@ -92,7 +92,7 @@ endif
 # Define the compiler-dependent "fast flags", which will be used when FFLAGS is -fast.
 AFF := -O4
 DFF := -O4 -Ofast -ffast-math  # As of AOCC 4.2, -Ofast implies -O3, but it is not clear whether it implies -ffast-math
-FFF := -O3 -ffast-math -fstack-arrays  # Suggested by flang 20.1.7
+FFF := -O3 -ffast-math  # Suggested by flang 20.1.7
 GFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 NFF := -O4
 RFF := -Ofast -ffast-math # -Ofast implies -O3, but no documentation found about the relation between -Ofast and -ffast-math
@@ -119,6 +119,7 @@ else  # Non-Intel CPU, especially AMD.
 	XFF := -Ofast -xHost
 endif
 
+TESTSEED ?=
 TESTDIM ?= small
 
 # Log file stamp.
@@ -909,10 +910,8 @@ $(TESTS_C) $(TESTS_INT_C):
 	$(eval RP := $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//")))
 	$(eval QPAVLB := $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16))
 	$(eval EXTRA_FLAGS := -g -DPRIMA_DEBUGGING=$(DBG) -DPRIMA_AGGRESSIVE_OPTIONS=$(AGGRESSIVE) \
-		-DPRIMA_INTEGER_KIND=$(IK) -DPRIMA_REAL_PRECISION=$(RP) -DPRIMA_QP_AVAILABLE=$(QPAVLB))
-	$(eval EXTRA_FLAGS := $(shell if ! echo $@ | grep -q 'atest'; then \
-		echo "$(EXTRA_FLAGS) -DPRIMA_TESTDIM=\"'$(TESTDIM)'\""; \
-		else echo "$(EXTRA_FLAGS)"; fi))
+		-DPRIMA_INTEGER_KIND=$(IK) -DPRIMA_REAL_PRECISION=$(RP) -DPRIMA_QP_AVAILABLE=$(QPAVLB) -DPRIMA_TESTDIM=\"'$(TESTDIM)'\")
+	$(eval EXTRA_FLAGS := $(shell if [[ -z "$(TESTSEED)" ]] ; then echo "$(EXTRA_FLAGS)"; else echo "$(EXTRA_FLAGS) -DPRIMA_TESTSEED=$(TESTSEED)"; fi))
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
 	(if echo $@ | grep -q '9test'; then \
 		if [[ -n '$(FFLAGSO)' ]] ; then \
