@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sun 17 Aug 2025 06:24:11 PM CST
+! Last Modified: Sun 17 Aug 2025 07:47:41 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -73,14 +73,26 @@ character(len=*), parameter :: srname = 'PREPROC'
 character(len=:), allocatable :: min_maxfun_str
 integer :: min_maxfun  ! INTEGER(IK) may overflow if IK corresponds to the 16-bit integer.
 integer :: unit_memo  ! INTEGER(IK) may overflow if IK corresponds to the 16-bit integer.
+integer(IK) :: iprint_in
 integer(IK) :: m_loc
 integer(IK) :: maxfilt_in
+integer(IK) :: maxfun_in
+integer(IK) :: maxhist_in
+integer(IK) :: npt_in
 logical :: is_constrained_loc
 logical :: lbx(n)
 logical :: ubx(n)
+real(RP) :: ctol_in
+real(RP) :: cweight_in
+real(RP) :: eta1_in
+real(RP) :: eta2_in
+real(RP) :: gamma1_in
+real(RP) :: gamma2_in
 real(RP) :: rhobeg_default
+real(RP) :: rhobeg_in
 real(RP) :: rhobeg_old
 real(RP) :: rhoend_default
+real(RP) :: rhoend_in
 real(RP) :: x0_old(n)
 
 ! Preconditions
@@ -129,8 +141,10 @@ end if
 
 ! Validate IPRINT
 if (abs(iprint) > 3) then
+    iprint_in =  iprint
     iprint = IPRINT_DFT
-    call warning(solver, 'Invalid IPRINT; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to '//num2str(iprint))
+    call warning(solver, 'Invalid IPRINT: '//num2str(iprint_in)// &
+        & '; it should be 0, 1, -1, 2, -2, 3, or -3; it is set to '// num2str(iprint))
 end if
 
 ! Validate MAXFUN
@@ -149,6 +163,7 @@ case default  ! CASE ('NEWUOA', 'BOBYQA', 'LINCOA')
     min_maxfun_str = 'N + 3'
 end select
 if (maxfun <= max(0, min_maxfun - 1)) then
+    maxfun_in = maxfun
     if (maxfun > 0) then
         maxfun = int(min_maxfun, kind(maxfun))
     else  ! We assume that non-positive values of MAXFUN are produced by overflow.
@@ -158,13 +173,16 @@ if (maxfun <= max(0, min_maxfun - 1)) then
         ! https://fortran-lang.discourse.group/t/loop-variable-reaching-integer-huge-causes-infinite-loop
         ! https://fortran-lang.discourse.group/t/loops-dont-behave-like-they-should
     end if
-    call warning(solver, 'Invalid MAXFUN; it should be at least '//min_maxfun_str//'; it is set to '//num2str(maxfun))
+    call warning(solver, 'Invalid MAXFUN: '//num2str(maxfun_in)// &
+        & '; it should be at least '//min_maxfun_str//' with N = '//num2str(n)//'; it is set to '//num2str(maxfun))
 end if
 
 ! Validate MAXHIST
 if (maxhist <= 0) then
+    maxhist_in = maxhist
     maxhist = maxfun
-    call warning(solver, 'Invalid MAXHIST; it should be a positive integer; it is set to '//num2str(maxhist))
+    call warning(solver, 'Invalid MAXHIST: '//num2str(maxhist_in)// &
+        & '; it should be a positive integer; it is set to '//num2str(maxhist))
 end if
 maxhist = min(maxhist, maxfun)  ! MAXHIST > MAXFUN is never needed.
 
@@ -177,9 +195,11 @@ end if
 if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa') &
     & .and. present(npt)) then
     if (npt < n + 2 .or. npt >= maxfun .or. 2 * npt > int(n + 2) * int(n + 1)) then  ! INT(*) avoids overflow when IK is 16-bit.
+        npt_in = npt
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
-        call warning(solver, 'Invalid NPT; it should be an integer in the interval [N+2, (N+1)(N+2)/2]'// &
-            & ' and less than MAXFUN; it is set to '//num2str(npt))
+        call warning(solver, 'Invalid NPT: '//num2str(npt_in)// &
+            & '; it should be an integer in the interval [N+2, (N+1)(N+2)/2] with N = '//num2str(n)// &
+            & ' and less than MAXFUN = '//num2str(maxfun)//'; it is set to '//num2str(npt))
     end if
 end if
 
@@ -208,37 +228,39 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
     maxfilt = min(maxfun, max(MIN_MAXFILT, maxfilt))
     if (is_constrained_loc) then
         if (maxfilt_in <= 0) then
-            call warning(solver, 'Invalid MAXFILT; it should be a positive integer; it is set to ' &
-                & //num2str(maxfilt))
+            call warning(solver, 'Invalid MAXFILT: '//num2str(maxfilt_in)// &
+                & '; it should be a positive integer; it is set to '//num2str(maxfilt))
         elseif (maxfilt_in < min(maxfun, MIN_MAXFILT)) then
-            call warning(solver, 'MAXFILT is too small; it is set to '//num2str(maxfilt))
+            call warning(solver, 'MAXFILT = '//num2str(maxfilt_in)//' is too small; it is set to '//num2str(maxfilt))
         elseif (maxfilt < min(maxfilt_in, maxfun)) then
-            call warning(solver, 'MAXFILT is set to '//num2str(maxfilt)//' due to memory limit')
+            call warning(solver, 'MAXFILT is reduced from '//num2str(maxfilt_in)//' to '//num2str(maxfilt)//' due to memory limit')
         end if
     end if
 end if
 
 ! Validate ETA1 and ETA2
 if (.not. (eta1 >= 0 .and. eta1 < 1)) then  ! ETA1 = NaN falls into this case.
+    eta1_in = eta1
     ! Take ETA2 into account if it has a valid value.
     if (eta2 >= 0 .and. eta2 < 1) then
         eta1 = eta2 / 7.0_RP
     else
         eta1 = ETA1_DFT
     end if
-    call warning(solver, 'Invalid ETA1; it should be in the interval [0, 1) and not more than ETA2;'// &
-        & ' it is set to '//num2str(eta1))
+    call warning(solver, 'Invalid ETA1: '//num2str(eta1_in)// &
+        & '; it should be in the interval [0, 1) and not more than ETA2 = '//num2str(eta2)//'; it is set to '//num2str(eta1))
 end if
 
 if (.not. (eta2 >= eta1 .and. eta2 < 1)) then  ! ETA2 = NaN falls into this case.
+    eta2_in = eta2
     ! Take ETA1 into account if it has a valid value.
     if (eta1 >= 0 .and. eta1 < 1) then
         eta2 = (eta1 + TWO) / 3.0_RP
     else
         eta2 = ETA2_DFT
     end if
-    call warning(solver, 'Invalid ETA2; it should be in the interval [0, 1) and not less than ETA1;'// &
-        & ' it is set to '//num2str(eta2))
+    call warning(solver, 'Invalid ETA2: '//num2str(eta2_in)// &
+        & '; it should be in the interval [0, 1) and not less than ETA1 = '//num2str(eta1)//'; it is set to '//num2str(eta2))
 end if
 
 ! The following revision may update ETA1 slightly. It prevents ETA1 > ETA2 due to rounding
@@ -247,13 +269,17 @@ eta1 = min(eta1, eta2)
 
 ! Validate GAMMA1 and GAMMA2
 if (.not. (gamma1 > 0 .and. gamma1 < 1)) then  ! GAMMA1 = NaN falls into this case.
+    gamma1_in = gamma1
     gamma1 = GAMMA1_DFT
-    call warning(solver, 'Invalid GAMMA1; it should in the interval (0, 1); it is set to '//num2str(gamma1))
+    call warning(solver, 'Invalid GAMMA1: '//num2str(gamma1_in)// &
+        & '; it should in the interval (0, 1); it is set to '//num2str(gamma1))
 end if
 
 if (.not. (is_finite(gamma2) .and. gamma2 >= 1)) then  ! GAMMA2 = NaN falls into this case.
+    gamma2_in = gamma2
     gamma2 = GAMMA2_DFT
-    call warning(solver, 'Invalid GAMMA2; it should be a real number not less than 1; it is set to '//num2str(gamma2))
+    call warning(solver, 'Invalid GAMMA2: '//num2str(gamma2_in)// &
+        & '; it should be a real number not less than 1; it is set to '//num2str(gamma2))
 end if
 
 ! Validate RHOBEG and RHOEND
@@ -271,15 +297,18 @@ if (lower(solver) == 'bobyqa') then
     ! Do NOT merge the IF below into the ELSEIF above! Otherwise, XU and XL may be accessed even if
     ! the solver is not BOBYQA, because the logical evaluation is not short-circuit.
     if (rhobeg > minval(xu - xl) / TWO) then
+        rhobeg_in = rhobeg
         ! Do NOT make this revision if RHOBEG not positive or not finite, because otherwise RHOBEG
         ! will get a huge value when XU or XL contains huge values that indicate unbounded variables.
         rhobeg = minval(xu - xl) / 4.0_RP  ! Here, we do not take RHOBEG_DEFAULT.
-        call warning(solver, 'Invalid RHOBEG; '//solver//' requires 0 < RHOBEG <= MINVAL(XU-XL)/2;' &
-            & //' it is set to MINVAL(XU-XL)/4')
+        call warning(solver, 'Invalid RHOBEG: '//num2str(rhobeg_in)// &
+            & '; '//solver//' requires 0 < RHOBEG <= MINVAL(XU-XL)/2 = '//num2str(minval(xu - xl) / 2.0_RP)// &
+            & '; it is set to '//num2str(rhobeg))
     end if
 end if
 
 if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then  ! RHOBEG = NaN falls into this case.
+    rhobeg_in = rhobeg
     ! Take RHOEND into account if it has a valid value. We do not do this if the solver is BOBYQA,
     ! which requires that RHOBEG <= (XU-XL)/2.
     if (is_finite(rhoend) .and. rhoend > 0 .and. lower(solver) /= 'bobyqa') then
@@ -287,13 +316,15 @@ if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then  ! RHOBEG = NaN falls into 
     else
         rhobeg = rhobeg_default
     end if
-    call warning(solver, 'Invalid RHOBEG; it should be a positive number; it is set to '//num2str(rhobeg))
+    call warning(solver, 'Invalid RHOBEG: '//num2str(rhobeg_in)// &
+        & '; it should be a positive number; it is set to '//num2str(rhobeg))
 end if
 
 if (.not. (is_finite(rhoend) .and. rhoend >= 0 .and. rhoend <= rhobeg)) then  ! RHOEND = NaN falls into this case.
+    rhoend_in =  rhoend
     rhoend = max(EPS, min((RHOEND_DFT / RHOBEG_DFT) * rhobeg, rhoend_default))
-    call warning(solver, 'Invalid RHOEND; we should have RHOBEG >= RHOEND >= 0; '// &
-        & 'it is set to '//num2str(rhoend))
+    call warning(solver, 'Invalid RHOEND: '//num2str(rhoend_in)// &
+        & '; we should have '//num2str(rhobeg)//' = RHOBEG >= RHOEND >= 0; it is set to '//num2str(rhoend))
 end if
 
 ! For BOBYQA, revise X0 or RHOBEG so that the distance between X0 and the inactive bounds is at
@@ -328,8 +359,8 @@ if (lower(solver) == 'bobyqa') then
         !!x0(ubx_minus) = xu(ubx_minus) - rhobeg;
 
         if (any(abs(x0_old - x0) > 0)) then
-            call warning(solver, 'X0 is revised so that the distance between X0 and the inactive bounds is at least RHOBEG; '// &
-                & 'set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
+            call warning(solver, 'X0 is revised so that the distance between X0 and the inactive bounds is at least RHOBEG = '// &
+                & num2str(rhobeg)//'; revise RHOBEG or set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
         end if
     end if
 
@@ -345,7 +376,8 @@ if (lower(solver) == 'bobyqa') then
     if (rhobeg_old - rhobeg > EPS * max(ONE, rhobeg_old)) then
         rhoend = max(EPS, min((rhoend / rhobeg_old) * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
         if (has_rhobeg) then
-            call warning(solver, 'RHOBEG is revised to '//num2str(rhobeg)//' and RHOEND to '//num2str(rhoend)// &
+            call warning(solver, 'RHOBEG is revised from '//num2str(rhobeg_in)//' to '//num2str(rhobeg)// &
+                & ' and RHOEND from '//num2str(rhoend_in)//' to '//num2str(rhoend)// &
                 & ' so that the distance between X0 and the inactive bounds is at least RHOBEG')
         end if
     end if
@@ -359,9 +391,11 @@ rhoend = min(max(rhoend, EPS), rhobeg)
 ! Validate CTOL (it can be 0)
 if (present(ctol)) then
     if (.not. (ctol >= 0)) then  ! CTOL = NaN falls into this case.
+        ctol_in = ctol
         ctol = CTOL_DFT
         if (is_constrained_loc) then
-            call warning(solver, 'Invalid CTOL; it should be a nonnegative number; it is set to '//num2str(ctol))
+            call warning(solver, 'Invalid CTOL: '//num2str(ctol_in)// &
+                & '; it should be a nonnegative number; it is set to '//num2str(ctol))
         end if
     end if
 end if
@@ -369,9 +403,11 @@ end if
 ! Validate CWEIGHT (it can be +Inf)
 if (present(cweight)) then
     if (.not. (cweight >= 0)) then  ! CWEIGHT = NaN falls into this case.
+        cweight_in = cweight
         cweight = CWEIGHT_DFT
         if (is_constrained_loc) then
-            call warning(solver, 'Invalid CWEIGHT; it should be a nonnegative number; it is set to '//num2str(cweight))
+            call warning(solver, 'Invalid CWEIGHT: '//num2str(cweight_in)// &
+                & '; it should be a nonnegative number; it is set to '//num2str(cweight))
         end if
     end if
 end if

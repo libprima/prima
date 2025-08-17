@@ -223,21 +223,21 @@ else
                 else
                     npt = int(TEN * rand() * real(n, RP), kind(npt))
                 end if
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     npt = 0
                 end if
                 iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     maxfun = 0
                 end if
                 maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     maxhist = 0
                 end if
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     ftarget = -TEN**abs(TWO * randn())
-                elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
+                elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.
                     ftarget = REALMAX
                 else
                     ftarget = -REALMAX
@@ -245,9 +245,9 @@ else
 
                 rhobeg = noisy(prob % Delta0)
                 rhoend = max(1.0E-6_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 5.0_RP))
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     rhoend = rhobeg
-                elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
+                elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.
                     rhobeg = ZERO
                 end if
                 call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.

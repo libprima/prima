@@ -272,27 +272,27 @@ else
                 call setseed(rseed)
                 iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     maxfun = 0
                 end if
                 maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     maxhist = -maxhist
                 end if
                 maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     maxfilt = 0
                 end if
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     ctol = randn() * TEN**(-abs(TWO * randn()))
-                elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
+                elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.
                     ctol = REALMAX
                 else
                     ctol = ZERO
                 end if
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     ftarget = -TEN**abs(TWO * randn())
-                elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
+                elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.
                     ftarget = REALMAX
                 else
                     ftarget = -REALMAX
@@ -300,9 +300,9 @@ else
 
                 rhobeg = noisy(prob % Delta0)
                 rhoend = max(1.0E-6_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 5.0_RP))
-                if (rand() <= 0.2) then
+                if (rand() <= 0.1) then
                     rhoend = rhobeg
-                elseif (rand() <= 0.2) then  ! Note that the value of rand() changes.
+                elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.
                     rhobeg = ZERO
                 end if
                 call safealloc(x0, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
