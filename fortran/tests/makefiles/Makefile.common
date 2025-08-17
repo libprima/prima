@@ -407,13 +407,9 @@ ifeq ($(TESTDIM),small)
 	FFORT := $(FFORT) -fstack-arrays
 else
 	FFORT := $(FFORT) -fno-stack-arrays -mmlir -fdynamic-heap-array
-	# As of flang-new version 19.0.0, the above options do not guarantee that the arrays are allocated
-	# on the heap. Segfaults may still occur if the arrays are large enough. See
-	# https://github.com/llvm/llvm-project/issues/88344
-	# Updating flang may fix the issue. See
-	# https://github.com/llvm/llvm-project/pull/98457
+    # See https://github.com/llvm/llvm-project/issues/88344
 endif
-FFORT := $(FFORT) -std=f2018 -pedantic  # As of flang 19.0, only -std=f2018 is supported
+FFORT := $(FFORT) -std=f2018 -pedantic  # As of flang 20.0, only -std=f2018 is supported
 ifeq ($(OSTYPE),LINUX)
 	FFORT := $(FFORT) -Wl,-z,noexecstack
 endif
