@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sun 17 Aug 2025 05:45:09 PM CST
+! Last Modified: Sun 17 Aug 2025 11:42:38 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -34,6 +34,47 @@ end interface randn
 
 
 contains
+
+
+function scramble_seed(n, seed) result(scrambled_seed)
+!--------------------------------------------------------------------------------------------------!
+! This function scrambles the input SEED using a linear congruential generator (LCG) algorithm.
+! The output is a vector of length N, where each entry is a scrambled version of the input seed.
+! The LCG parameters used are based on the MINSTD algorithm.
+! -------------------------------------------------------------------------------------------------!
+use, non_intrinsic :: consts_mod, only : INT64
+implicit none
+
+! Inputs
+integer, intent(in) :: n
+integer, intent(in) :: seed
+
+! Outputs
+integer :: scrambled_seed(n)
+
+! LCG parameters (MINSTD)
+integer(INT64), parameter :: modulus = 2147483647_INT64  ! 2^31 - 1
+integer(INT64), parameter :: multiplier = 48271_INT64
+
+! Local variables
+integer :: i
+integer :: j
+integer(INT64) :: iseed
+
+! Map seed to [1, modulus-1] in case it is larger (unlikely).
+iseed = modulo(int(seed, INT64), modulus)
+if (iseed == 0) iseed = 1  ! Ensure non-zero seed
+
+! Apply LCG to generate n scrambled seeds.
+do i = 1, n
+    ! Compute next state (64-bit safe multiplication)
+    do j = 1, 16  ! Loop to ensure good scrambling; without this, flang-new 20 produces poor results
+        iseed = modulo(multiplier * iseed, modulus)
+    end do
+    ! Convert to the default integer and store
+    scrambled_seed(i) = int(iseed)
+end do
+end function scramble_seed
 
 
 subroutine getseed(seed)
@@ -72,49 +113,15 @@ end subroutine getseed
 subroutine setseed0(seed)
 !--------------------------------------------------------------------------------------------------!
 ! This procedure uses SEED to initialize the random seed. See SEED_TO_PUT for details.
-! N.B.: We use exclusively the DEFAULT INTEGER and the DOUBLE-PRECISION REAL in this procedure.
+! N.B.: We use exclusively the DEFAULT INTEGER in this procedure.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : DP
-use, non_intrinsic :: debug_mod, only : errstop
-use, non_intrinsic :: infos_mod, only : MEMORY_ALLOCATION_FAILS
 implicit none
 
 integer, intent(in) :: seed
-
-character(len=*), parameter :: srname = 'SETSEED0'
-integer :: alloc_status
-integer :: p
-integer :: i
 integer :: n  ! Should be a default INTEGER according to F2018.
-integer, allocatable :: seed_to_put(:)
-real(DP), allocatable :: cos_seed(:)
 
 call random_seed(size=n)
-
-if (allocated(seed_to_put)) deallocate (seed_to_put)
-allocate (seed_to_put(1:n), stat=alloc_status)
-if (.not. (alloc_status == 0 .and. allocated(seed_to_put))) then
-    call errstop(srname, 'Memory allocation fails', MEMORY_ALLOCATION_FAILS)
-end if
-
-if (allocated(cos_seed)) deallocate (cos_seed)
-allocate (cos_seed(1:n), stat=alloc_status)
-if (.not. (alloc_status == 0 .and. allocated(cos_seed))) then
-    call errstop(srname, 'Memory allocation fails', MEMORY_ALLOCATION_FAILS)
-end if
-
-! Some compilers cannot guarantee ABS(COS) <= 1 when the variable is huge. This may cause overflow.
-! Note that 1.0_DP cannot be written as ONE, because KIND(ONE) = RP, which may not be DP.
-cos_seed = min(max(cos(real([(i, i=seed - (n - 1), seed)], DP)), -1.0_DP), 1.0_DP)
-seed_to_put = ceiling(0.9_DP * real(huge(0), DP) * cos_seed)
-deallocate (cos_seed)
-! P takes a `+1` at the end, so that it is guarantee to be positive.
-p = int(real(huge(0), DP) / 1.0E2_DP) + 1
-seed_to_put = modulo(seed_to_put, p) + 1
-
-call random_seed(put=seed_to_put)
-deallocate (seed_to_put)
-
+call random_seed(put=scramble_seed(n, seed))
 end subroutine setseed0
 
 subroutine setseed1(seed)
@@ -169,8 +176,8 @@ real(RP) :: x
 call random_number(harvest=x)
 ! Zaikun 20250817: The following line takes the fractional part of K*X, with K being a reasonably
 ! large integer. If X follows U([0, 1)), then the fractional part of K*X follows U([0, 1)) as well.
-! We do this because the X generated above seems not random enough with some compilers, e.g.,
-! flang-new 20.1.8. We hope this transformation can improve the randomness.
+! We do this because the X generated above seems not "random enough" with some compilers, e.g.,
+! flang-new 20.1.8 (SCRAMBLE_SEED helps). We hope this transformation can improve the randomness.
 x = x * real(10**min(range(0), range(x)), RP)
 x = max(ZERO, min(ONE, x - real(floor(x), RP)))  ! MAX/MIN are for safety. Not needed in theory.
 end function rand0
