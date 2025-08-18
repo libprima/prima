@@ -32,14 +32,6 @@ jobs:
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
 
-        # As of AOCC Flang 16.0.3, the following combination encounters a SEGFAULT when evaluating
-        # constr_internal(1:m_lcon) = matprod(x_internal, amat) - bvec in calcfc_internal
-        # Is it because of stack overflow due to the large arrays?
-        exclude:
-          - solver: cobyla
-            fflags: -g
-            testdim: big
-
     steps:
 
       - name: Run `sudo apt update -y`
