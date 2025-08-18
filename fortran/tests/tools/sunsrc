@@ -128,4 +128,18 @@ if [[ -f "$COBYLB" ]] ; then
     sed -i "s|calcfc_internal|calcfc|" "$COBYLB"
 fi
 
+# With sunf95, the recursive call of subroutines does not work correctly. Assertions will fail,
+# including "NF <= MAXFUN", "XFILT does not contain NaN", "FFILT does not contain NaN", etc.
+# Delete the lines between 'Test recursive call' and 'end module test_solver_mod' in
+# test_SOLVER.f90, and then add 'end subroutine test_solver\nend module test_solver_mod'
+# at the end of the file.
+for SOLVER in uobyqa newuoa bobyqa lincoa cobyla; do
+    TEST_SOLVERF90="$DIR/test_${SOLVER}.f90"
+    if [[ -f "$TEST_SOLVERF90" ]] ; then
+        sed -i '/Test recursive call/,/end module test_solver_mod/d' "$TEST_SOLVERF90" || exit 1
+        echo -e "end subroutine test_solver\nend module test_solver_mod" >> $TEST_SOLVERF90
+    fi
+done
+
+
 exit 0

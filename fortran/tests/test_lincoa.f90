@@ -83,7 +83,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sun 17 Aug 2025 07:33:30 PM CST
+! Last Modified: Tue 19 Aug 2025 01:36:05 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -408,7 +408,7 @@ else
     end do
 end if
 
-
+! Test recursive call.
 ! The depth of the recursion is 2. The first recursion is in RECURSIVE_FUN1, and the second is in
 ! RECURSIVE_FUN2. RECURSIVE_FUN1(Y) is defined by minimizing the CHROSEN function subject to
 ! Aineq * X <= Bineq with Y being the starting point. RECURSIVE_FUN2(Y) is defined by
