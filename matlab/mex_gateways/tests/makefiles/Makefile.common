@@ -606,7 +606,7 @@ source_%: $(SRC_DIRS)
 	@rm -rf ./$(COMMON)/$(CMN_DEBUGF90) ./$(COMMON)/$(CMN_FPRINTF90)  # Remove the common version of debug.*90 and fprint.*90.
 	@cp $(MEXGATE_DIR)/$(MEX_DEBUGF90) $(MEXGATE_DIR)/$(MEX_FPRINTF90) ./$(COMMON)  # Use the MEX version of debug.*90 and fprint.*90 instead of the common version.
 	@cp $(FINTRFH) ./ && chmod 777 ./fintrf.h 2>/dev/null || : # The MathWorks header file for Fortran MEX. chmod is necessary.
-	@find ./ -type f \( \
+	@find ./ \( \
 		-name "*.mod" \
 		-o -name "*.o" \
 		-o -name "*.dbg" \
@@ -616,21 +616,20 @@ source_%: $(SRC_DIRS)
 		-o -name "*.stb" \
 		-o -name "*.out" \
 		-o -name "*__genmod.f90" \
+		-o -name "flint" \
+		-o -name "mlint" \
 		\) -exec rm {} \;  # Cleaning up; important!!!
+	@printf "\nPreparing the source code for $@.\n"
 	@if echo $@ | grep -q "stest"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/sunsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "9test"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/9src ./ ; \
 	fi
 	@if echo $@ | grep -q "atest\|9test"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/a9src ./ ; \
 	fi
 	@if echo $@ | grep -q "stest\|9test"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/s9src ./ ; \
 	fi
 	@printf "Done.\n"

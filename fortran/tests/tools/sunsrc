@@ -104,8 +104,8 @@ fi
 
 # sunf95 encounters internal errors when handling message.f90.
 # In addition, message.f90 does not work due to the changes to string.f90, especially to real2str_vector.
-cd "$DIR" && grep -R 'call .*msg' | sed 's|:.*$||' | grep -v 'debug.F90\|fmxapi.F90' | xargs sed -i "s|call .*msg.*$|write(*,*) solver|" && cd - || exit 1
-cd "$DIR" && grep -R 'use.*message_mod' | sed 's|:.*$||' | xargs sed -i "/use.*message_mod/d" && cd - || exit 1
+cd "$DIR" && grep -R 'call .*msg' | sed 's|:.*$||' | grep -v 'debug.F90\|fmxapi.F90' | xargs sed -i "s|call .*msg.*$|write(*,*) solver|" && cd - > /dev/null || exit 1
+cd "$DIR" && grep -R 'use.*message_mod' | sed 's|:.*$||' | xargs sed -i "/use.*message_mod/d" && cd - > /dev/null || exit 1
 printf "module message_mod \n end module message_mod" > "$MESSAGE"
 
 if [[ -f "$DEBUG" ]] ; then

@@ -1040,7 +1040,7 @@ source_%: $(SRC_DIRS)
 	@printf "\nMaking a copy of the source code for the test.\n"
 	@for DIR in $(SRC_DIRS); do cp -r "$$DIR" ./; done
 	@for SRC in $(DRIVER_SRC); do cp $(DRIVER_DIR)/"$$SRC" ./; done
-	@find ./ -type f \( \
+	@find ./ \( \
 		-name "*.mod" \
 		-o -name "*.o" \
 		-o -name "*.dbg" \
@@ -1050,6 +1050,8 @@ source_%: $(SRC_DIRS)
 		-o -name "*.stb" \
 		-o -name "*.out" \
 		-o -name "*__genmod.f90" \
+		-o -name "flint" \
+		-o -name "mlint" \
 		\) -exec rm {} \;  # Cleaning up; important!!!
 	# Classic Flang 17.0, Huawei Bisheng Flang 2.1.0, Arm Fortran Compiler version 23.10, and AOCC
 	# 4.2 are buggy concerning 0-dimensional arrays, and they report false positive out-bound
@@ -1057,32 +1059,26 @@ source_%: $(SRC_DIRS)
 	# https://github.com/flang-compiler/flang/issues/1238
 	# Check it again when new versions are available. Make a test using
 	# https://github.com/zequipe/test_compiler/blob/master/test_solve.f90
+	@printf "\nPreparing the source code for $@.\n"
 	@if echo $@ | grep -q "gtest" && echo $(FFLAGS) | grep -q "fast"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/gsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "ftest"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/flsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "vtest" && echo $(FFLAGS) | grep -q "fast"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/vsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "rtest\|dtest"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/rdsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "stest"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/sunsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "9test"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/9src ./ ; \
 	fi
 	@if echo $@ | grep -q "atest\|9test"; then \
-		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/a9src ./ ; \
 	fi
 	@printf "Done.\n"

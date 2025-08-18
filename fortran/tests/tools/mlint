@@ -101,7 +101,7 @@ ROOT_DIR=../..
 TIME=$(date +%s)
 RANDNUM="$((RANDOM*RANDOM))"
 TEST_DIR=/tmp/"$(basename -- "$0")"_"$TIME"_"$RANDNUM"
-printf  "Test directory:\n\n%s\n" "$TEST_DIR"
+printf  "Test directory:\n\n%s\n\n" "$TEST_DIR"
 # We export TEST_DIR, which will be referred to by the Makefiles.
 export TEST_DIR
 TEST_ROOT="$TEST_DIR"/prima
@@ -110,6 +110,8 @@ MTEST_SOLVER_DIR="$MTEST_DIR"/test."$SOLVER"
 
 # The log directory in the testing directory.
 TEST_LOG_DIR="$MTEST_SOLVER_DIR"/log
+printf "Test log directory:\n\n%s\n\n" "$TEST_LOG_DIR"
+printf "Solver log directory:\n\n%s\n\n" "$SOLVER_LOG_DIR"
 
 # The checktest script
 CHCKTST="$MTEST_DIR"/tools/checktest
