@@ -1065,7 +1065,7 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/flsrc ./ ; \
 	fi
-	@if echo $@ | grep -q "vtest"; then \
+	@if echo $@ | grep -q "vtest" && echo $(FFLAGS) | grep -q "fast"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/vsrc ./ ; \
 	fi
