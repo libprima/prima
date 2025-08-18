@@ -1065,6 +1065,10 @@ source_%: $(SRC_DIRS)
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/flsrc ./ ; \
 	fi
+	@if echo $@ | grep -q "vtest"; then \
+		printf "\nPreparing the source code for $@.\n" ; \
+		bash $(TOOLS_DIR)/vsrc ./ ; \
+	fi
 	@if echo $@ | grep -q "rtest\|dtest"; then \
 		printf "\nPreparing the source code for $@.\n" ; \
 		bash $(TOOLS_DIR)/rdsrc ./ ; \

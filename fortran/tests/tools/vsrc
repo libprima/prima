@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# This script pre-processes the Fortran source code for nvfortran.
+
+DIR="$(realpath "$1")"
+POWALG="$DIR/common/powalg.f90"
+
+if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
+    printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
+    exit 1
+fi
+
+if [[ -f "$POWALG" ]] ; then
+    # nvfortran 25.7.0 raises a false positive error of out-bound index for Anew(:, n+1:n) and
+    # Anew(:, 1:0) in powalg.f90. The following line removes the code concerned. Re-test the code
+    # when nvfortran is updated.
+    STR="Anew"
+    sed -i "/$STR/d" "$POWALG"
+fi
+
+exit 0

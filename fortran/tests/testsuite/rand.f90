@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sun 17 Aug 2025 11:42:38 PM CST
+! Last Modified: Mon 18 Aug 2025 10:16:31 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -62,16 +62,17 @@ integer :: j
 integer(INT64) :: iseed
 
 ! Map seed to [1, modulus-1] in case it is larger (unlikely).
-iseed = modulo(int(seed, INT64), modulus)
+iseed = abs(modulo(int(seed, INT64), modulus))
 if (iseed == 0) iseed = 1  ! Ensure non-zero seed
 
 ! Apply LCG to generate n scrambled seeds.
 do i = 1, n
-    ! Compute next state (64-bit safe multiplication)
     do j = 1, 16  ! Loop to ensure good scrambling; without this, flang-new 20 produces poor results
-        iseed = modulo(multiplier * iseed, modulus)
+        ! Compute the next ISEED. Since MULTIPLIER is a prime number, and the input ISEED < MODULUS,
+        ! the output ISEED is non-zero.
+        iseed = modulo(multiplier * iseed, modulus)  ! 64-bit safe multiplication, avoiding overflow
     end do
-    ! Convert to the default integer and store
+    ! Convert to the default integer and store.
     scrambled_seed(i) = int(iseed)
 end do
 end function scramble_seed
