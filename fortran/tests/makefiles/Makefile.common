@@ -554,13 +554,11 @@ itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_ts
 	FCF := $(IFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags -fp-trap=divzero,overflow $(IFF)
 
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
-	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow#invalid,underflow,denormal
+	FCO := $(IFORT) $(FFLAGSO)
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
-	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow#,invalid,underflow,denormal
+	FCG := $(IFORT) $(FFLAGSG) -check all
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
-	FCF := $(IFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags -fp-trap=divzero,overflow $(IFF)
+	FCF := $(IFORT) $(IFF)
 
 # NAG nagfor
 # In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
