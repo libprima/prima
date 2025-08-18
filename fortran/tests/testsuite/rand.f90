@@ -6,7 +6,7 @@ module rand_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Mon 18 Aug 2025 10:16:31 AM CST
+! Last Modified: Tue 19 Aug 2025 02:44:38 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -169,50 +169,38 @@ function rand0() result(x)
 !--------------------------------------------------------------------------------------------------!
 ! This function sets X to a random number sampled from U([0, 1)).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ZERO, ONE
+use, non_intrinsic :: consts_mod, only : RP
 implicit none
 
 real(RP) :: x
 
 call random_number(harvest=x)
-! Zaikun 20250817: The following line takes the fractional part of K*X, with K being a reasonably
-! large integer. If X follows U([0, 1)), then the fractional part of K*X follows U([0, 1)) as well.
-! We do this because the X generated above seems not "random enough" with some compilers, e.g.,
-! flang-new 20.1.8 (SCRAMBLE_SEED helps). We hope this transformation can improve the randomness.
-x = x * real(10**min(range(0), range(x)), RP)
-x = max(ZERO, min(ONE, x - real(floor(x), RP)))  ! MAX/MIN are for safety. Not needed in theory.
 end function rand0
 
 function rand1(n) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! This function sets X to an N-dimensional random vector with entries iid sampled from U([0, 1)).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE
+use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none
 
 integer(IK), intent(in) :: n
 real(RP) :: x(n)
 
 call random_number(harvest=x)
-! Zaikun 20250817: See the comment in RAND0 for the following two lines.
-x = x * real(10**min(range(0), range(x)), RP)
-x = max(ZERO, min(ONE, x - real(floor(x), RP)))  ! MAX/MIN are for safety. Not needed in theory.
 end function
 
 function rand2(m, n) result(x)
 !--------------------------------------------------------------------------------------------------!
 ! This function sets X to an MxN random matrix with entries iid sampled from U([0, 1)).
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE
+use, non_intrinsic :: consts_mod, only : RP, IK
 implicit none
 
 integer(IK), intent(in) :: m, n
 real(RP) :: x(m, n)
 
 call random_number(harvest=x)
-! Zaikun 20250817: See the comment in RAND0 for the following two lines.
-x = x * real(10**min(range(0), range(x)), RP)
-x = max(ZERO, min(ONE, x - real(floor(x), RP)))  ! MAX/MIN are for safety. Not needed in theory.
 end function
 
 
