@@ -83,7 +83,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tue 19 Aug 2025 01:36:05 AM CST
+! Last Modified: Tue 19 Aug 2025 09:25:26 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -318,8 +318,8 @@ else
                 end if
                 iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
-                if (rand() <= 0.1) then
-                    maxfun = 0
+                if (rand() <= 0.05) then
+                    maxfun = 0  ! This leads to a very large maxfun and hence time consuming.
                 end if
                 maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
                 if (rand() <= 0.1) then
