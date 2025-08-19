@@ -86,6 +86,15 @@ jobs:
           $SEDI 's|maxtr = huge(maxtr) - 1_IK|maxtr = ${{ github.event.inputs.maxtr }}|' *.f90
           grep 'maxtr = ' *.f90
 
+      - name: Revise string.f90
+        run: |
+          cd fortran/common/
+          $SEDI "s|\(^.*\)\(x <= -REALMAX \* (1.0 - 10.0\*\*(-ndgt_loc)) .eqv. str2real(s) <= -REALMAX \* (1.0 - 10.0\*\*(-ndgt_loc))\)|if (.not. \2) then\n write(*,*) '====> x = ', s, 's = ', s, 'str2real(s) = ', str2real(s)\nerror stop\nelse\n\1\2|" string.f90
+          $SEDI "s|\(^\s*\& 'IS_NEGINF(X) \.EQV\. IS_NEGINF(STR2REAL(S)).*$\)|\1\nend if|" string.f90
+          $SEDI "s|\(^.*\)\(x >= REALMAX \* (1.0 - 10.0\*\*(-ndgt_loc)) .eqv. str2real(s) >= REALMAX \* (1.0 - 10.0\*\*(-ndgt_loc))\)|if (.not. \2) then\n write(*,*) '====> x = ', s, 's = ', s, 'str2real(s) = ', str2real(s)\nerror stop\nelse\n\1\2|" string.f90
+          $SEDI "s|\(^\s*\& 'IS_POSINF(X) \.EQV\. IS_POSINF(STR2REAL(S)).*$\)|\1\nend if|" string.f90
+          cat string.f90
+
       - name: Conduct the test
         run: |
           export FFLAGS=${{ matrix.fflags }}
