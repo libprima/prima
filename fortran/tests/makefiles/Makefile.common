@@ -728,22 +728,22 @@ xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_ts
 	FCF := $(XFORT) -fp-trap=divzero $(XFF)
 
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fp-trap=divzero,overflow#,invalid,underflow,denormal
+	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fp-trap=divzero#,overflow#,invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fp-trap=divzero,overflow#,invalid,underflow,denormal
+	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fp-trap=divzero#,overflow#,invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FCF := $(XFORT) -ftrapuv -fp-trap=divzero,overflow $(XFF)
+	FCF := $(XFORT) -ftrapuv -fp-trap=divzero $(XFF)
 
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fp-trap=divzero,overflow#,invalid,underflow,denormal
+	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fp-trap=divzero#,overflow#,invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fp-trap=divzero,overflow#invalid,underflow,denormal
+	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fp-trap=divzero#,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FCF := $(XFORT) -ftrapuv -fp-trap=divzero,overflow $(XFF)
+	FCF := $(XFORT) -ftrapuv -fp-trap=divzero $(XFF)
 
 # G95
 # G95 supports f2003, but not higher.
