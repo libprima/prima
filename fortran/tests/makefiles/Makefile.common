@@ -711,6 +711,7 @@ XFORT := $(XFORT) -warn all -debug extended -warn errors -traceback -debug-param
 # involve many automatic arrays.
 # About -fp-stack-check: According to Steve Lionel (Dr. Fortran), "drop -fp-stack-check - that does
 # nothing useful for you (it is for pre-SSE x87 32-bit code.)".
+# Zaikun 20250819: Even comparing with quiet NaN may trigger FPE with `ifx -fpe-all=0`.
 ifeq ($(TESTDIM),small)
 	XFORT := $(XFORT) -auto -no-heap-arrays
 else

@@ -83,7 +83,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tue 19 Aug 2025 09:25:26 AM CST
+! Last Modified: Tue 19 Aug 2025 10:11:55 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -318,9 +318,6 @@ else
                 end if
                 iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
-                if (rand() <= 0.05) then
-                    maxfun = 0  ! This leads to a very large maxfun and hence is time consuming.
-                end if
                 maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
                 if (rand() <= 0.1) then
                     maxhist = -maxhist
@@ -336,9 +333,9 @@ else
                 else
                     ctol = ZERO
                 end if
-                if (rand() <= 0.1) then
-                    ftarget = -TEN**abs(TWO * randn())
-                elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.
+                if (rand() <= 0.8) then
+                    ftarget = -TEN**abs(real(min(range(ftarget), 12), RP) * rand())
+                elseif (rand() <= 0.5) then  ! Note that the value of rand() changes.
                     ftarget = REALMAX
                 else
                     ftarget = -REALMAX
