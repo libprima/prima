@@ -57,7 +57,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tue 19 Aug 2025 10:09:22 PM CST
+! Last Modified: Tue 19 Aug 2025 10:59:55 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -246,7 +246,7 @@ else
                 if (rand() <= 0.1) then
                     npt = 0
                 end if
-                iprint = int(sign(min(3.0_RP, 1.5_RP * abs(randn())), randn()), kind(iprint))
+                iprint = int(randn(), kind(iprint))
                 maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
                 maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
                 if (rand() <= 0.1) then
