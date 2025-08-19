@@ -1983,7 +1983,7 @@ end
 if isfield(options, 'honour_x0') && ~options.honour_x0
     % N.B.: The following code is valid only if lb <= x0 <= ub and rhobeg <= min(ub-lb)/2, which
     % hold after `pre_options` and `project` are invoked.
-    x0_old = x0;
+    x0_in = x0;
     lbx = (x0 <= lb + 0.5*options.rhobeg);
     lbx_plus = (x0 > lb + 0.5*options.rhobeg) & (x0 < lb + options.rhobeg);
     ubx_minus = (x0 < ub - 0.5*options.rhobeg) & (x0 > ub - options.rhobeg);
@@ -1992,7 +1992,7 @@ if isfield(options, 'honour_x0') && ~options.honour_x0
     x0(lbx_plus) = lb(lbx_plus) + options.rhobeg;
     x0(ubx_minus) = ub(ubx_minus) - options.rhobeg;
     x0(ubx) = ub(ubx);
-    if any(abs(x0_old-x0) > 0)
+    if any(abs(x0_in-x0) > 0)
         wid = sprintf('%s:ReviseX0', invoker);
         wmsg = sprintf('%s: x0 is revised so that the distance between x0 and the inactive bounds is at least rhobeg; set options.honour_x0 to true if you prefer to keep x0.', invoker);
         warning(wid, '%s', wmsg);
@@ -2003,14 +2003,14 @@ end
 % Revise rhobeg if needed.
 % N.B.: If x0 has been revised above (i.e., options.honour_x0 is false), then the following revision
 % is unnecessary in precise arithmetic. However, it may still be needed due to rounding errors.
-rhobeg_old = options.rhobeg;
+rhobeg_in = options.rhobeg;
 rho_ratio = options.rhoend / options.rhobeg;
 lbx = (lb > -inf & x0 - lb <= eps*max(abs(lb), 1));  % x0 essentially equals lb
 ubx = (ub < inf & x0 - ub >= -eps*max(abs(ub), 1));  % x0 essentially equals ub
 x0(lbx) = lb(lbx);
 x0(ubx) = ub(ubx);
 options.rhobeg = max(eps, min([options.rhobeg; x0(~lbx) - lb(~lbx); ub(~ubx) - x0(~ubx)]));
-if rhobeg_old - options.rhobeg > eps*max(1, rhobeg_old)
+if rhobeg_in - options.rhobeg > eps*max(1, rhobeg_in)
     options.rhoend = max(eps, min(rho_ratio*options.rhobeg, options.rhoend));  % We do not revise rhoend unless rhobeg is revised
     if ismember('rhobeg', user_options_fields) || ismember('rhoend', user_options_fields)
         wid = sprintf('%s:ReviseRhobeg', invoker);

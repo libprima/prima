@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Sun 17 Aug 2025 07:47:41 PM CST
+! Last Modified: Tue 19 Aug 2025 01:55:20 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -90,10 +90,9 @@ real(RP) :: gamma1_in
 real(RP) :: gamma2_in
 real(RP) :: rhobeg_default
 real(RP) :: rhobeg_in
-real(RP) :: rhobeg_old
 real(RP) :: rhoend_default
 real(RP) :: rhoend_in
-real(RP) :: x0_old(n)
+real(RP) :: x0_in(n)
 
 ! Preconditions
 if (DEBUGGING) then
@@ -284,6 +283,9 @@ end if
 
 ! Validate RHOBEG and RHOEND
 
+rhobeg_in = rhobeg
+rhoend_in = rhoend
+
 ! Revise the default values for RHOBEG/RHOEND according to the solver.
 if (lower(solver) == 'bobyqa') then
     rhobeg_default = max(EPS, min(RHOBEG_DFT, minval(xu - xl) / 4.0_RP))
@@ -297,7 +299,6 @@ if (lower(solver) == 'bobyqa') then
     ! Do NOT merge the IF below into the ELSEIF above! Otherwise, XU and XL may be accessed even if
     ! the solver is not BOBYQA, because the logical evaluation is not short-circuit.
     if (rhobeg > minval(xu - xl) / TWO) then
-        rhobeg_in = rhobeg
         ! Do NOT make this revision if RHOBEG not positive or not finite, because otherwise RHOBEG
         ! will get a huge value when XU or XL contains huge values that indicate unbounded variables.
         rhobeg = minval(xu - xl) / 4.0_RP  ! Here, we do not take RHOBEG_DEFAULT.
@@ -308,7 +309,6 @@ if (lower(solver) == 'bobyqa') then
 end if
 
 if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then  ! RHOBEG = NaN falls into this case.
-    rhobeg_in = rhobeg
     ! Take RHOEND into account if it has a valid value. We do not do this if the solver is BOBYQA,
     ! which requires that RHOBEG <= (XU-XL)/2.
     if (is_finite(rhoend) .and. rhoend > 0 .and. lower(solver) /= 'bobyqa') then
@@ -321,7 +321,6 @@ if (.not. (is_finite(rhobeg) .and. rhobeg > 0)) then  ! RHOBEG = NaN falls into 
 end if
 
 if (.not. (is_finite(rhoend) .and. rhoend >= 0 .and. rhoend <= rhobeg)) then  ! RHOEND = NaN falls into this case.
-    rhoend_in =  rhoend
     rhoend = max(EPS, min((RHOEND_DFT / RHOBEG_DFT) * rhobeg, rhoend_default))
     call warning(solver, 'Invalid RHOEND: '//num2str(rhoend_in)// &
         & '; we should have '//num2str(rhobeg)//' = RHOBEG >= RHOEND >= 0; it is set to '//num2str(rhoend))
@@ -334,7 +333,7 @@ end if
 if (lower(solver) == 'bobyqa') then
     ! Revise X0 if allowed and needed.
     if (.not. honour_x0) then
-        x0_old = x0  ! Recorded to see whether X0 is really revised.
+        x0_in = x0  ! Recorded to see whether X0 is really revised.
         ! N.B.: The following revision is valid only if XL <= X0 <= XU and RHOBEG <= MINVAL(XU-XL)/2,
         ! which should hold at this point due to the revision of RHOBEG and moderation of X0.
         ! The cases below are mutually exclusive in precise arithmetic as MINVAL(XU-XL) >= 2*RHOBEG.
@@ -358,7 +357,7 @@ if (lower(solver) == 'bobyqa') then
         !!x0(ubx) = xu(ubx);
         !!x0(ubx_minus) = xu(ubx_minus) - rhobeg;
 
-        if (any(abs(x0_old - x0) > 0)) then
+        if (any(abs(x0_in - x0) > 0)) then
             call warning(solver, 'X0 is revised so that the distance between X0 and the inactive bounds is at least RHOBEG = '// &
                 & num2str(rhobeg)//'; revise RHOBEG or set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
         end if
@@ -367,14 +366,13 @@ if (lower(solver) == 'bobyqa') then
     ! Revise RHOBEG if needed.
     ! N.B.: If X0 has been revised above (i.e., HONOUR_X0 is FALSE), then the following revision
     ! is unnecessary in precise arithmetic. However, it may still be needed due to rounding errors.
-    rhobeg_old = rhobeg
     lbx = (is_finite(xl) .and. x0 - xl <= EPS * max(ONE, abs(xl))) ! X0 essentially equals XL
     ubx = (is_finite(xu) .and. x0 - xu >= -EPS * max(ONE, abs(xu))) ! X0 essentially equals XU
     x0(trueloc(lbx)) = xl(trueloc(lbx))
     x0(trueloc(ubx)) = xu(trueloc(ubx))
     rhobeg = max(EPS, minval([rhobeg, x0(falseloc(lbx)) - xl(falseloc(lbx)), xu(falseloc(ubx)) - x0(falseloc(ubx))]))
-    if (rhobeg_old - rhobeg > EPS * max(ONE, rhobeg_old)) then
-        rhoend = max(EPS, min((rhoend / rhobeg_old) * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
+    if (rhobeg_in - rhobeg > EPS * max(ONE, rhobeg_in)) then
+        rhoend = max(EPS, min((rhoend / rhobeg_in) * rhobeg, rhoend)) ! We do not revise RHOEND unless RHOBEG is truly revised.
         if (has_rhobeg) then
             call warning(solver, 'RHOBEG is revised from '//num2str(rhobeg_in)//' to '//num2str(rhobeg)// &
                 & ' and RHOEND from '//num2str(rhoend_in)//' to '//num2str(rhoend)// &

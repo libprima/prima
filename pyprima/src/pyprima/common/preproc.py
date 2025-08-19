@@ -205,20 +205,20 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
     # least RHOBEG. If HONOUR_X0 == TRUE, revise RHOBEG if needed; otherwise, revise HONOUR_X0 if needed.
     if present(honour_x0):
         if honour_x0:
-            rhobeg_old = rhobeg;
+            rhobeg_in = rhobeg;
             lbx = np.isfinite(xl) & (x0 - xl <= EPS * np.maximum(1, np.abs(xl))) # X0 essentially equals XL
             ubx = np.isfinite(xu) & (x0 - xu >= -EPS * np.maximum(1, np.abs(xu))) # X0 essentially equals XU
             x0[lbx] = xl[lbx]
             x0[ubx] = xu[ubx]
             rhobeg = max(EPS, np.min([rhobeg, x0[~lbx] - xl[~lbx], xu[~ubx] - x0[~ubx]]))
-            if rhobeg_old - rhobeg > EPS * max(1, rhobeg_old):
+            if rhobeg_in - rhobeg > EPS * max(1, rhobeg_in):
                 rhoend = max(EPS, min(0.1 * rhobeg, rhoend)) # We do not revise RHOEND unless RHOBEG is truly revised.
                 if has_rhobeg:
                     warn(f'{solver}: RHOBEG is revised to {rhobeg} and RHOEND to at most 0.1*RHOBEG so that the distance between X0 and the inactive bounds is at least RHOBEG')
             else:
                 rhoend = np.minimum(rhoend, rhobeg)  # This may update RHOEND slightly.
         else:
-            x0_old = x0  # Recorded to see whether X0 is really revised.
+            x0_in = x0  # Recorded to see whether X0 is really revised.
             # N.B.: The following revision is valid only if XL <= X0 <= XU and RHOBEG <= MINVAL(XU-XL)/2,
             # which should hold at this point due to the revision of RHOBEG and moderation of X0.
             # The cases below are mutually exclusive in precise arithmetic as MINVAL(XU-XL) >= 2*RHOBEG.
@@ -231,7 +231,7 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
             x0[ubx] = xu[ubx]
             x0[ubx_minus] = xu[ubx_minus] - rhobeg
 
-            if (any(np.abs(x0_old - x0) > 0)):
+            if (any(np.abs(x0_in - x0) > 0)):
                 warn(f'{solver}: X0 is revised so that the distance between X0 and the inactive bounds is at least RHOBEG set HONOUR_X0 to .TRUE. if you prefer to keep X0 unchanged')
 
     # Validate CTOL (it can be 0)
