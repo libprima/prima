@@ -49,7 +49,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wed 20 Aug 2025 05:06:58 PM CST
+! Last Modified: Wed 20 Aug 2025 06:41:36 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -60,13 +60,13 @@ public :: test_solver
 contains
 
 
-subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed, testdim)
+subroutine test_solver(probs, mindim, maxdim, nrand, randseed, testdim)
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
 use, non_intrinsic :: memory_mod, only : safealloc
 use, non_intrinsic :: newuoa_mod, only : newuoa
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
-use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
+use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
 use, non_intrinsic :: recursive_mod, only : recursive_fun2
@@ -77,7 +77,6 @@ implicit none
 character(len=PNLEN), intent(in), optional :: probs(:)
 integer(IK), intent(in), optional :: mindim
 integer(IK), intent(in), optional :: maxdim
-integer(IK), intent(in), optional :: dimstride
 integer(IK), intent(in), optional :: nrand
 integer, intent(in), optional :: randseed
 character(len=*), intent(in), optional :: testdim
@@ -86,12 +85,9 @@ character(len=*), parameter :: bigprob = 'bigprob'
 character(len=*), parameter :: solname = 'newuoa'
 character(len=:), allocatable :: testdim_loc
 character(len=PNLEN) :: probname
-character(len=PNLEN) :: probs_loc(100)
+character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 integer :: randseed_loc
 integer :: rseed
-integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
-integer(IK) :: dimstride_loc
-integer(IK) :: idim
 integer(IK) :: iprint
 integer(IK) :: iprob
 integer(IK) :: irand
@@ -100,14 +96,13 @@ integer(IK) :: maxfun
 integer(IK) :: maxhist
 integer(IK) :: mindim_loc
 integer(IK) :: n
-integer(IK) :: ndim
 integer(IK) :: nnpt
 integer(IK) :: nprobs
 integer(IK) :: npt
 integer(IK) :: npt_list(100)  ! Maximal number of prescribed NPT to test: 100
 integer(IK) :: nrand_loc
-integer(IK), parameter :: bign = 300_IK
-integer(IK), parameter :: largen = 1600_IK
+integer(IK), parameter :: bign = 300_IK  ! Dimension of the big problem.
+integer(IK), parameter :: largen = 1600_IK  ! Dimension of the large problem.
 real(RP) :: f
 real(RP) :: ftarget
 real(RP) :: rhobeg
@@ -135,12 +130,6 @@ if (present(maxdim)) then
     maxdim_loc = maxdim
 else
     maxdim_loc = MAXDIM_DFT
-end if
-
-if (present(dimstride)) then
-    dimstride_loc = dimstride
-else
-    dimstride_loc = DIMSTRIDE_DFT
 end if
 
 if (present(nrand)) then
@@ -195,12 +184,20 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
 else
 
     do iprob = 1, nprobs
+
         probname = probs_loc(iprob)
-        ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
-        dim_list(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
-        do idim = 1, ndim
-            n = dim_list(idim)
-            call construct(prob, probname, n)  ! Construct the testing problem.
+
+        do irand = 1, max(0_IK, nrand_loc) + 1_IK
+            ! Initialize the random seed using IRAND, RP, and RANDSEED_LOC. Do not include IK so
+            ! that the results for different IK are the same.
+            rseed = int(sum(istr(solname)) + sum(istr(probname)) + irand + RP + randseed_loc)
+            call setseed(rseed)
+
+            ! Set the problem dimension N to a random value in the range [MINDIM, MAXDIM].
+            n = mindim_loc +  floor(rand() * real(maxdim_loc - mindim_loc + 1_IK, RP), kind(n))
+
+            ! Construct the testing problem.
+            call construct(prob, probname, n)
 
             ! NPT_LIST defines some extreme values of NPT.
             nnpt = 11
@@ -209,52 +206,48 @@ else
                 & 2_IK * n, 2_IK * n + 1_IK, 2_IK * n + 2_IK, &
                 & (n + 1_IK) * (n + 2_IK) / 2_IK - 1_IK, (n + 1_IK) * (n + 2_IK) / 2_IK, &
                 & (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK]
-            do irand = 1, max(0_IK, nrand_loc) + 1_IK
-                ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
-                ! that the results for different IK are the same.
-                rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
-                call setseed(rseed)
-                if (irand <= 1) then
-                    npt = npt_list(ceiling(real(nnpt, RP)*rand()))  ! Randomly select NPT from NPT_LIST
-                else
-                    npt = int(TEN * rand() * real(n, RP), kind(npt))
-                end if
-                iprint = int(randn(), kind(iprint))
-                maxfun = int(1.0E2_RP * rand() * real(n, RP), kind(maxfun))
-                maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
-                if (rand() <= 0.1) then
-                    maxhist = -maxhist
-                end if
-                if (rand() <= 0.8) then
-                    ftarget = -TEN**abs(real(min(range(ftarget), 12), RP) * rand())
-                elseif (rand() <= 0.5) then  ! Note that the value of rand() changes.
-                    ftarget = REALMAX
-                else
-                    ftarget = -REALMAX
-                end if
+            if (irand <= 1) then
+                npt = npt_list(ceiling(real(nnpt, RP)*rand()))  ! Randomly select NPT from NPT_LIST
+            else
+                npt = int(TEN * rand() * real(n, RP), kind(npt))
+            end if
 
-                rhobeg = noisy(prob % Delta0)
-                rhoend = max(1.0E-5_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 5.0_RP))
-                if (rand() <= 0.1) then
-                    rhoend = rhobeg
-                elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.
-                    rhobeg = ZERO
-                end if
-                call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
-                x = noisy(prob % x0)
-                orig_calfun => prob % calfun
+            iprint = int(randn(), kind(iprint))
+            maxfun = int(1.0E2_RP * rand() * real(n, RP), kind(maxfun))
+            maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
+            if (rand() <= 0.1) then
+                maxhist = -maxhist
+            end if
+            if (rand() <= 0.8) then
+                ftarget = -TEN**abs(real(min(range(ftarget), 12), RP) * rand())
+            elseif (rand() <= 0.5) then  ! Note that the value of rand() changes.
+                ftarget = REALMAX
+            else
+                ftarget = -REALMAX
+            end if
 
-                print '(/A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, ', Random test ', irand
-                call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
-                    & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
+            rhobeg = noisy(prob % Delta0)
+            rhoend = max(1.0E-5_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 5.0_RP))
+            if (rand() <= 0.1) then
+                rhoend = rhobeg
+            elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.
+                rhobeg = ZERO
+            end if
 
-                deallocate (x)
-                nullify (orig_calfun)
-            end do
+            call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
+            x = noisy(prob % x0)
+            orig_calfun => prob % calfun
 
-            ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
-            call destruct(prob)  ! Destruct the testing problem.
+            print '(/A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, ', Random test ', irand
+            call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
+                & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
+
+            deallocate (x)
+            nullify (orig_calfun)
         end do
+
+        ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
+        call destruct(prob)  ! Destruct the testing problem.
     end do
 end if
 
