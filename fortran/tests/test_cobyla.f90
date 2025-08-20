@@ -53,7 +53,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wed 20 Aug 2025 06:44:42 PM CST
+! Last Modified: Wed 20 Aug 2025 07:54:48 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -95,7 +95,7 @@ character(len=PNLEN) :: fix_dim_probs(100)  ! Problems with fixed dimensions
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)  ! Maximal number of problems to test: 100
 integer :: randseed_loc
-integer :: rseed
+integer :: seed
 integer(IK) :: iprint
 integer(IK) :: iprob
 integer(IK) :: irand
@@ -180,8 +180,8 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
     probname = bigprob
     n = merge(bign, largen, testdim_loc == 'big')
     do irand = 1, 1  ! The test is expensive
-        rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
-        call setseed(rseed)
+        seed = int(sum(istr(solname)) * sum(istr(probname)) + irand * RP + n + randseed_loc)
+        call setseed(seed)
         m = int(min(int(5.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         m = min(m, floor(real(huge(m)) / 8.0, IK) - n - 2_IK)  ! Avoid integer overflow when calculating UNIT_MEMO in PREPROC/HISTORY
         call construct(prob, probname, n, m)
@@ -239,8 +239,8 @@ else
         do irand = 1, max(0_IK, nrand_loc) + 1_IK
             ! Initialize the random seed using IRAND, RP, and RANDSEED_LOC. Do not include IK so
             ! that the results for different IK are the same.
-            rseed = int(sum(istr(solname)) + sum(istr(probname)) + irand + RP + randseed_loc)
-            call setseed(rseed)
+            seed = int(sum(istr(solname)) * sum(istr(probname)) + irand * RP + randseed_loc)
+            call setseed(seed)
 
             ! Set the problem dimension N to a random value in the range [MINDIM, MAXDIM].
             n = mindim_loc +  floor(rand() * real(maxdim_loc - mindim_loc + 1_IK, RP), kind(n))

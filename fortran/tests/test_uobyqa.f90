@@ -49,7 +49,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wed 20 Aug 2025 06:45:16 PM CST
+! Last Modified: Wed 20 Aug 2025 07:58:06 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -87,7 +87,7 @@ character(len=:), allocatable :: testdim_loc
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
 integer :: randseed_loc
-integer :: rseed
+integer :: seed
 integer(IK) :: iprint
 integer(IK) :: iprob
 integer(IK) :: irand
@@ -155,8 +155,8 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
     n = merge(bign, largen, testdim_loc == 'big')
     call construct(prob, probname, n)
     do irand = 1, 1  ! The test is expensive
-        rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
-        call setseed(rseed)
+        seed = int(sum(istr(solname)) * sum(istr(probname)) + irand * RP + n + randseed_loc)
+        call setseed(seed)
         npt = (n + 2_IK) * (n + 1_IK) / 2_IK
         iprint = 2_IK
         maxfun = npt + int(min(1000.0_RP, real(2_IK*npt, RP)) * rand(), IK)
@@ -187,8 +187,8 @@ else
         do irand = 1, max(0_IK, nrand_loc) + 1_IK
             ! Initialize the random seed using IRAND, RP, and RANDSEED_LOC. Do not include IK so
             ! that the results for different IK are the same.
-            rseed = int(sum(istr(solname)) + sum(istr(probname)) + irand + RP + randseed_loc)
-            call setseed(rseed)
+            seed = int(sum(istr(solname)) * sum(istr(probname)) + irand * RP + randseed_loc)
+            call setseed(seed)
 
             ! Set the problem dimension N to a random value in the range [MINDIM, MAXDIM].
             n = mindim_loc +  floor(rand() * real(maxdim_loc - mindim_loc + 1_IK, RP), kind(n))
