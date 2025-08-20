@@ -49,7 +49,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wed 20 Aug 2025 07:57:05 PM CST
+! Last Modified: Thu 21 Aug 2025 12:21:41 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -159,7 +159,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
     do irand = 1, 1  ! The test is expensive
         seed = int(sum(istr(solname)) * sum(istr(probname)) + irand * RP + n + randseed_loc)
         call setseed(seed)
-        npt = max(n + 2_IK, int(4.0 * rand() * real(n, RP), kind(npt)))
+        npt = int(4.0 * rand() * real(n, RP), kind(npt))
         iprint = 2_IK
         maxfun = npt + int(min(1000.0_RP, real(2_IK*npt, RP)) * rand(), IK)
         maxhist = maxfun

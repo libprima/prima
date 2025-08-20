@@ -83,7 +83,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wed 20 Aug 2025 07:56:14 PM CST
+! Last Modified: Thu 21 Aug 2025 12:18:01 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -216,7 +216,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         m = int(min(int(5.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         m = min(m, floor(real(huge(m)) / 8.0, IK) - n - 2_IK)  ! Avoid integer overflow when calculating UNIT_MEMO in PREPROC/HISTORY
         call construct(prob, probname, n, m)
-        npt = max(n + 2_IK, int(4.0 * rand() * real(n, RP), kind(npt)))
+        npt = int(4.0 * rand() * real(n, RP), kind(npt))
         iprint = 2_IK
         maxfun = npt + int(min(1000.0_RP, real(2_IK*npt, RP)) * rand(), IK)
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
