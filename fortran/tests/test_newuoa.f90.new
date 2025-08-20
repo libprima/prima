@@ -18,24 +18,24 @@ end subroutine chrosen
 
 subroutine recursive_fun1(x, f)
 use, non_intrinsic :: consts_mod, only : RP
-use, non_intrinsic :: uobyqa_mod, only : uobyqa
+use, non_intrinsic :: newuoa_mod, only : newuoa
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
 real(RP) :: x_loc(size(x))
 x_loc = x
-call uobyqa(chrosen, x_loc, f)
+call newuoa(chrosen, x_loc, f)
 end subroutine recursive_fun1
 
 subroutine recursive_fun2(x, f)
 use, non_intrinsic :: consts_mod, only : RP
-use, non_intrinsic :: uobyqa_mod, only : uobyqa
+use, non_intrinsic :: newuoa_mod, only : newuoa
 implicit none
 real(RP), intent(in) :: x(:)
 real(RP), intent(out) :: f
 real(RP) :: x_loc(size(x))
 x_loc = x
-call uobyqa(recursive_fun1, x_loc, f)
+call newuoa(recursive_fun1, x_loc, f)
 end subroutine recursive_fun2
 
 end module recursive_mod
@@ -43,13 +43,13 @@ end module recursive_mod
 
 module test_solver_mod
 !--------------------------------------------------------------------------------------------------!
-! This module tests UOBYQA on a few simple problems.
+! This module tests NEWUOA on a few simple problems.
 !
 ! Coded by Zaikun ZHANG (www.zhangzk.net).
 !
 ! Started: September 2021
 !
-! Last Modified: Wed 20 Aug 2025 08:59:21 AM CST
+! Last Modified: Wed 20 Aug 2025 03:18:15 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -64,13 +64,13 @@ subroutine test_solver(probs, mindim, maxdim, dimstride, nrand, randseed, testdi
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, TEN, ZERO, REALMAX
 use, non_intrinsic :: memory_mod, only : safealloc
+use, non_intrinsic :: newuoa_mod, only : newuoa
 use, non_intrinsic :: noise_mod, only : noisy, noisy_calfun, orig_calfun
 use, non_intrinsic :: param_mod, only : MINDIM_DFT, MAXDIM_DFT, DIMSTRIDE_DFT, NRAND_DFT, RANDSEED_DFT
 use, non_intrinsic :: prob_mod, only : PNLEN, PROB_T, construct, destruct
 use, non_intrinsic :: rand_mod, only : setseed, rand, randn
 use, non_intrinsic :: recursive_mod, only : recursive_fun2
 use, non_intrinsic :: string_mod, only : strip, istr
-use, non_intrinsic :: uobyqa_mod, only : uobyqa
 
 implicit none
 
@@ -83,13 +83,15 @@ integer, intent(in), optional :: randseed
 character(len=*), intent(in), optional :: testdim
 
 character(len=*), parameter :: bigprob = 'bigprob'
-character(len=*), parameter :: solname = 'uobyqa'
+character(len=*), parameter :: solname = 'newuoa'
 character(len=:), allocatable :: testdim_loc
 character(len=PNLEN) :: probname
 character(len=PNLEN) :: probs_loc(100)
 integer :: randseed_loc
 integer :: rseed
+integer(IK) :: dim_list(100)  ! Maximal number of dimensions to test: 100
 integer(IK) :: dimstride_loc
+integer(IK) :: idim
 integer(IK) :: iprint
 integer(IK) :: iprob
 integer(IK) :: irand
@@ -98,11 +100,14 @@ integer(IK) :: maxfun
 integer(IK) :: maxhist
 integer(IK) :: mindim_loc
 integer(IK) :: n
+integer(IK) :: ndim
+integer(IK) :: nnpt
 integer(IK) :: nprobs
 integer(IK) :: npt
+integer(IK) :: npt_list(10)
 integer(IK) :: nrand_loc
-integer(IK), parameter :: bign = 80_IK
-integer(IK), parameter :: largen = 160_IK
+integer(IK), parameter :: bign = 300_IK
+integer(IK), parameter :: largen = 1600_IK
 real(RP) :: f
 real(RP) :: ftarget
 real(RP) :: rhobeg
@@ -165,7 +170,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
     do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
         call setseed(rseed)
-        npt = (n + 2_IK) * (n + 1_IK) / 2_IK
+        npt = max(n + 2_IK, int(4.0 * rand() * real(n, RP), kind(npt)))
         iprint = 2_IK
         maxfun = npt + int(min(1000.0_RP, real(2_IK*npt, RP)) * rand(), IK)
         maxhist = maxfun
@@ -176,8 +181,9 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         x = noisy(prob % x0)
         orig_calfun => prob % calfun
 
-        print '(/A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ', MAXFUN = ', maxfun, ', Random test ', irand
-        call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+        print '(/A, I0, A, I0, A, I0, A, I0)', &
+            & strip(probname)//': N = ', n, ' NPT = ', npt, ', MAXFUN = ', maxfun, ', Random test ', irand
+        call newuoa(noisy_calfun, x, f, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
             & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 
         deallocate (x)
@@ -190,20 +196,36 @@ else
 
     do iprob = 1, nprobs
         probname = probs_loc(iprob)
-        do n = mindim_loc, maxdim_loc, dimstride_loc
+        ndim = (maxdim_loc - mindim_loc) / dimstride_loc + 1_IK
+        dim_list(1:ndim) = mindim_loc + dimstride_loc*[(idim - 1_IK, idim=1_IK, ndim)]
+        do idim = 1, ndim
+            n = dim_list(idim)
             call construct(prob, probname, n)  ! Construct the testing problem.
 
-            do irand = 1, nrand_loc
+            ! NPT_LIST defines some extreme values of NPT.
+            nnpt = 11
+            npt_list(1:nnpt) = [0_IK, 1_IK, &
+                & n + 1_IK, n + 2_IK, n + 3_IK, &
+                & 2_IK * n, 2_IK * n + 1_IK, 2_IK * n + 2_IK, &
+                & (n + 1_IK) * (n + 2_IK) / 2_IK - 1_IK, (n + 1_IK) * (n + 2_IK) / 2_IK, &
+                & (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK]
+            do irand = 1, max(0_IK, nrand_loc) + 1_IK
                 ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
                 ! that the results for different IK are the same.
                 rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
                 call setseed(rseed)
+                if (irand <= 1) then
+                    npt = npt_list(ceiling(real(nnpt, RP)*rand()))  ! Randomly select NPT from NPT_LIST
+                else
+                    npt = int(TEN * rand() * real(n, RP), kind(npt))
+                end if
                 iprint = int(randn(), kind(iprint))
                 maxfun = int(1.0E2_RP * rand() * real(n, RP), kind(maxfun))
                 maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
                 if (rand() <= 0.1) then
                     maxhist = -maxhist
                 end if
+                write(*,*) maxfun, maxhist
                 if (rand() <= 0.8) then
                     ftarget = -TEN**abs(real(min(range(ftarget), 12), RP) * rand())
                 elseif (rand() <= 0.5) then  ! Note that the value of rand() changes.
@@ -223,8 +245,8 @@ else
                 x = noisy(prob % x0)
                 orig_calfun => prob % calfun
 
-                print '(/A, I0, A, I0)', strip(probname)//': N = ', n, ', Random test ', irand
-                call uobyqa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
+                print '(/A, I0, A, I0, A, I0)', strip(probname)//': N = ', n, ' NPT = ', npt, ', Random test ', irand
+                call newuoa(noisy_calfun, x, f, rhobeg=rhobeg, rhoend=rhoend, npt=npt, maxfun=maxfun, &
                     & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
 
                 deallocate (x)
@@ -247,7 +269,7 @@ n = 3_IK
 print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
 call safealloc(x, n)
 x = randn(n)
-call uobyqa(recursive_fun2, x, f, iprint=2_IK)
+call newuoa(recursive_fun2, x, f, iprint=2_IK)
 deallocate (x)
 
 end subroutine test_solver

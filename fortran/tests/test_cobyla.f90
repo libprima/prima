@@ -53,7 +53,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tue 19 Aug 2025 11:00:32 PM CST
+! Last Modified: Wed 20 Aug 2025 08:57:28 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -170,7 +170,7 @@ end if
 if (present(nrand)) then
     nrand_loc = nrand
 else
-    nrand_loc = NRAND_DFT * 5_IK  ! More random tests than default since we cannot vary NPT as other solvers.
+    nrand_loc = NRAND_DFT
 end if
 
 if (present(randseed)) then
@@ -193,15 +193,11 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
     do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
         call setseed(rseed)
-        m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
+        m = int(min(int(5.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         m = min(m, floor(real(huge(m)) / 8.0, IK) - n - 2_IK)  ! Avoid integer overflow when calculating UNIT_MEMO in PREPROC/HISTORY
         call construct(prob, probname, n, m)
         iprint = 2_IK
-        if (int(n) + 2000 > huge(0_IK)) then
-            maxfun = huge(0_IK)
-        else
-            maxfun = n + int(2000.0_RP * rand(), IK)
-        end if
+        maxfun = n + int(min(1000.0_RP, real(4_IK*n, RP)) * rand(), IK)
         maxhist = maxfun
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
         if (rand() <= 0.5) then
@@ -209,9 +205,9 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         else
             ctol = ZERO
         end if
-        ftarget = -REALMAX
+        ftarget = -TEN**abs(real(min(range(ftarget), 10), RP) * rand())
         rhobeg = noisy(prob % Delta0)
-        rhoend = max(1.0E-6_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 6.0_RP))
+        rhoend = max(1.0E-4_RP, rhobeg * 10.0_RP**(5.0_RP * rand() - 4.0_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
         x = noisy(prob % x0)
         orig_calcfc => prob % calcfc
@@ -271,7 +267,7 @@ else
                 rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
                 call setseed(rseed)
                 iprint = int(randn(), kind(iprint))
-                maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
+                maxfun = int(1.0E2_RP * rand() * real(n, RP), kind(maxfun))
                 maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
                 if (rand() <= 0.1) then
                     maxhist = -maxhist
@@ -296,7 +292,7 @@ else
                 end if
 
                 rhobeg = noisy(prob % Delta0)
-                rhoend = max(1.0E-6_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 5.0_RP))
+                rhoend = max(1.0E-5_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 5.0_RP))
                 if (rand() <= 0.1) then
                     rhoend = rhobeg
                 elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.

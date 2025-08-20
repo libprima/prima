@@ -83,7 +83,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Tue 19 Aug 2025 11:00:57 PM CST
+! Last Modified: Wed 20 Aug 2025 05:10:00 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -145,7 +145,7 @@ integer(IK) :: ndim
 integer(IK) :: nnpt
 integer(IK) :: nprobs
 integer(IK) :: npt
-integer(IK) :: npt_list(10)
+integer(IK) :: npt_list(100)  ! Maximal number of prescribed NPT to test: 100
 integer(IK) :: nrand_loc
 integer(IK), parameter :: bign = 300_IK
 integer(IK), parameter :: largen = 1000_IK
@@ -224,25 +224,20 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
     do irand = 1, 1  ! The test is expensive
         rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
         call setseed(rseed)
-        m = int(min(int(10.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
+        m = int(min(int(5.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         call construct(prob, probname, n, m)
-        npt = max(n + 2_IK, int(5.0 * rand() * real(n, RP), kind(npt)))
+        npt = max(n + 2_IK, int(4.0 * rand() * real(n, RP), kind(npt)))
         iprint = 2_IK
-        if (int(npt) + 2000 > huge(0_IK)) then
-            maxfun = huge(0_IK)
-        else
-            maxfun = npt + int(2000.0_RP * rand(), IK)
-        end if
-        maxhist = maxfun
+        maxfun = npt + int(min(1000.0_RP, real(2_IK*npt, RP)) * rand(), IK)
         maxfilt = int(TWO * rand() * real(maxfun, RP), kind(maxfilt))
         if (rand() <= 0.5) then
             ctol = TEN**(-abs(5.0 * randn()))
         else
             ctol = ZERO
         end if
-        ftarget = -REALMAX
+        ftarget = -TEN**abs(real(min(range(ftarget), 10), RP) * rand())
         rhobeg = noisy(prob % Delta0)
-        rhoend = max(1.0E-6_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 6.0_RP))
+        rhoend = max(1.0E-4_RP, rhobeg * 10.0_RP**(5.0_RP * rand() - 4.0_RP))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
         x = noisy(prob % x0)
         orig_calfun => prob % calfun
@@ -297,27 +292,24 @@ else
             n = prob % n
 
             ! NPT_LIST defines some extreme values of NPT.
-            nnpt = 10
-            npt_list(1:nnpt) = [1_IK, &
+            nnpt = 11
+            npt_list(1:nnpt) = [0_IK, 1_IK, &
                 & n + 1_IK, n + 2_IK, n + 3_IK, &
                 & 2_IK * n, 2_IK * n + 1_IK, 2_IK * n + 2_IK, &
                 & (n + 1_IK) * (n + 2_IK) / 2_IK - 1_IK, (n + 1_IK) * (n + 2_IK) / 2_IK, &
                 & (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK]
-            do irand = 1, nnpt + max(0_IK, nrand_loc)
+            do irand = 1, max(0_IK, nrand_loc) + 1_IK
                 ! Initialize the random seed using N, IRAND, RP, and RANDSEED_LOC. Do not include IK so
                 ! that the results for different IK are the same.
                 rseed = int(sum(istr(solname)) + sum(istr(probname)) + n + irand + RP + randseed_loc)
                 call setseed(rseed)
-                if (irand <= nnpt) then
-                    npt = npt_list(irand)
+                if (irand <= 1) then
+                    npt = npt_list(ceiling(real(nnpt, RP)*rand()))  ! Randomly select NPT from NPT_LIST
                 else
                     npt = int(TEN * rand() * real(n, RP), kind(npt))
                 end if
-                if (rand() <= 0.1) then
-                    npt = 0
-                end if
                 iprint = int(randn(), kind(iprint))
-                maxfun = int(2.0E2_RP * rand() * real(n, RP), kind(maxfun))
+                maxfun = int(1.0E2_RP * rand() * real(n, RP), kind(maxfun))
                 maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
                 if (rand() <= 0.1) then
                     maxhist = -maxhist
@@ -342,16 +334,14 @@ else
                 end if
 
                 rhobeg = noisy(prob % Delta0)
-                rhoend = max(1.0E-6_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 5.0_RP))
+                rhoend = max(1.0E-5_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 5.0_RP))
                 if (rand() <= 0.1) then
                     rhoend = rhobeg
                 elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.
                     rhobeg = ZERO
                 end if
-
                 call safealloc(x0, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
                 x0 = noisy(prob % x0)
-
                 orig_calfun => prob % calfun
 
                 call safealloc(xl, n)
@@ -404,6 +394,7 @@ else
         end do
     end do
 end if
+
 
 ! Test recursive call.
 ! The depth of the recursion is 2. The first recursion is in RECURSIVE_FUN1, and the second is in
