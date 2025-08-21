@@ -57,7 +57,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thu 21 Aug 2025 10:12:50 AM CST
+! Last Modified: Thu 21 Aug 2025 11:47:04 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -212,8 +212,8 @@ else
 
             ! Set the problem dimension N to a random value in the range [MINDIM, MAXDIM].
             n = mindim_loc +  floor(rand() * real(maxdim_loc - mindim_loc + 1_IK, RP), kind(n))
-            if (strip(probname) == 'ptinsq' .and. modulo(n, 2_IK) == 1) then
-                n = n + 1_IK  ! Must be even
+            if (strip(probname) == 'ptinsq') then
+                n = 2_IK * int(ceiling(real(n) / 2.0), IK)  ! Ensure that N is even for PTINSQ
             end if
 
             ! Construct the testing problem.
