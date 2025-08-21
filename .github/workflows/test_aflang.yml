@@ -68,6 +68,12 @@ jobs:
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
 
+      - name: Revise bign
+        run: |
+          cd fortran/tests
+          $SEDI 's|^\s*bign\s*=.*$|bign = 200_IK|' test_newuoa.f90
+          $SEDI 's|^\s*bign\s*=.*$|bign = 200_IK|' test_lincoa.f90
+
       - name: Conduct the test
         run: |
           export FFLAGS=${{ matrix.fflags }}

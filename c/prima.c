@@ -28,7 +28,7 @@
  * pointer - NULL is interpreted as not present
  *
  * If variables are added to options/problems that are optional, the algorithm_c.f90 files must
- * be updated to treat the default values appropriately. For examples see rhobeg/rhoend(double),
+ * be updated to treat the default values appropriately. For examples see rhobeg/rhoend (double),
  * maxfun/npt(int), and xl/xu (array/pointer).
  */
 
