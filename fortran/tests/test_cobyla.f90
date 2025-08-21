@@ -53,7 +53,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thu 21 Aug 2025 12:26:37 AM CST
+! Last Modified: Thu 21 Aug 2025 10:13:12 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -196,7 +196,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         end if
         ftarget = -TEN**abs(real(min(range(ftarget), 10), RP) * rand())
         rhobeg = noisy(prob % Delta0)
-        rhoend = max(1.0E-4_RP, rhobeg * 10.0_RP**(5.0_RP * rand() - 4.0_RP))
+        rhoend = min(0.1_RP * rhobeg, max(1.0E-3_RP, rhobeg * 10.0_RP**(-3.0_RP * rand())))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
         x = noisy(prob % x0)
         orig_calcfc => prob % calcfc
