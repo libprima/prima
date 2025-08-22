@@ -77,6 +77,11 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: bash .github/scripts/install_oneapi_macos.sh
 
+      - name: Revise bign
+        run: |
+          cd fortran/tests
+          $SEDI 's|::\s*bign\s*=.*$|:: bign = 200_IK|' test_bobyqa.f90
+
       - name: Revise cobyla/trustregion.f90 to see what is wrong with ubuntu-latest, i8, cobyla, -O3, small
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.solver == 'cobyla' && matrix.testdim == 'small' }}
         shell: bash

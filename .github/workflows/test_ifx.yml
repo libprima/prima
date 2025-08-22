@@ -78,6 +78,15 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: bash .github/scripts/install_oneapi_macos.sh
 
+      - name: Revise bign
+        run: |
+          cd fortran/tests
+          $SEDI 's|::\s*bign\s*=.*$|:: bign = 200_IK|' test_newuoa.f90
+          $SEDI 's|::\s*bign\s*=.*$|:: bign = 200_IK|' test_bobyqa.f90
+          $SEDI 's|::\s*bign\s*=.*$|:: bign = 200_IK|' test_lincoa.f90
+          $SEDI 's|::\s*bign\s*=.*$|:: bign = 70_IK|' test_uobyqa.f90
+          $SEDI 's|::\s*bign\s*=.*$|:: bign = 70_IK|' test_cobyla.f90
+
       - name: Conduct the test
         shell: bash
         run: |

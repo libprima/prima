@@ -142,7 +142,7 @@ integer(IK) :: nprobs
 integer(IK) :: npt
 integer(IK) :: npt_list(100)  ! Maximal number of prescribed NPT to test: 100
 integer(IK) :: nrand_loc
-integer(IK), parameter :: bign = 300_IK
+integer(IK), parameter :: bign = 300_IK  ! Dimension of the big problems
 integer(IK), parameter :: largen = 1000_IK
 real(RP) :: cstrv
 real(RP) :: ctol

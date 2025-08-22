@@ -108,7 +108,7 @@ integer(IK) :: mindim_loc
 integer(IK) :: n
 integer(IK) :: nprobs
 integer(IK) :: nrand_loc
-integer(IK), parameter :: bign = 80_IK
+integer(IK), parameter :: bign = 80_IK  ! Dimension of the big problems
 integer(IK), parameter :: largen = 1000_IK
 real(RP) :: cstrv
 real(RP) :: ctol

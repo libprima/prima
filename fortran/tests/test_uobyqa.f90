@@ -99,7 +99,7 @@ integer(IK) :: n
 integer(IK) :: nprobs
 integer(IK) :: npt
 integer(IK) :: nrand_loc
-integer(IK), parameter :: bign = 80_IK
+integer(IK), parameter :: bign = 80_IK  ! Dimension of the big problems
 integer(IK), parameter :: largen = 160_IK
 real(RP) :: f
 real(RP) :: ftarget
