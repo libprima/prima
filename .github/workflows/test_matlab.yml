@@ -158,7 +158,7 @@ jobs:
         run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat %ONEAPI_VERSION%"'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2.5.0
+        uses: matlab-actions/setup-matlab@v2.6.0
         with:
           release: ${{ matrix.matlab }}
           cache: true
