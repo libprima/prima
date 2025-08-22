@@ -211,7 +211,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
     probname = bigprob
     n = merge(bign, largen, testdim_loc == 'big')
     do irand = 1, 1  ! The test is expensive
-        seed = int(sum(istr(solname)) * sum(istr(probname)) + irand * RP + n + randseed_loc)
+        seed = int(sum(istr(solname)) + sum(istr(probname)) + irand * RP + n + randseed_loc)
         call setseed(seed)
         m = int(min(int(2.0_RP * rand() * real(n, RP)), 10**min(range(0), range(0_IK))), IK)
         m = min(m, floor(real(huge(m)) / 8.0, IK) - n - 2_IK)  ! Avoid integer overflow when calculating UNIT_MEMO in PREPROC/HISTORY
@@ -267,7 +267,7 @@ else
         do irand = 1, max(0_IK, nrand_loc) + 1_IK
             ! Initialize the random seed using IRAND, RP, and RANDSEED_LOC. Do not include IK so
             ! that the results for different IK are the same.
-            seed = int(sum(istr(solname)) * sum(istr(probname)) + irand * RP + randseed_loc)
+            seed = int(sum(istr(solname)) + sum(istr(probname)) + irand * RP + randseed_loc)
             call setseed(seed)
 
             ! Set the problem dimension N to a random value in the range [MINDIM, MAXDIM].

@@ -157,7 +157,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
     n = merge(bign, largen, testdim_loc == 'big')
     call construct(prob, probname, n)
     do irand = 1, 1  ! The test is expensive
-        seed = int(sum(istr(solname)) * sum(istr(probname)) + irand * RP + n + randseed_loc)
+        seed = int(sum(istr(solname)) + sum(istr(probname)) + irand * RP + n + randseed_loc)
         call setseed(seed)
         npt = int(4.0 * rand() * real(n, RP), kind(npt))
         iprint = 2_IK
@@ -190,7 +190,7 @@ else
         do irand = 1, max(0_IK, nrand_loc) + 1_IK
             ! Initialize the random seed using IRAND, RP, and RANDSEED_LOC. Do not include IK so
             ! that the results for different IK are the same.
-            seed = int(sum(istr(solname)) * sum(istr(probname)) + irand * RP + randseed_loc)
+            seed = int(sum(istr(solname)) + sum(istr(probname)) + irand * RP + randseed_loc)
             call setseed(seed)
 
             ! Set the problem dimension N to a random value in the range [MINDIM, MAXDIM].
