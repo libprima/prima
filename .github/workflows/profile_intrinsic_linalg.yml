@@ -129,7 +129,7 @@ jobs:
           cd fortran/common && bash ./get_intrinsic_linalg && mv intrinsic_linalg.f90 linalg.f90 && cat linalg.f90
 
       - name: Conduct the test
-        uses: matlab-actions/run-command@v2.2.1
+        uses: matlab-actions/run-command@v2.2.2
         with:
           command: |
             blacklist = {};

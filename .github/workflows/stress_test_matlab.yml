@@ -125,7 +125,7 @@ jobs:
           cat fortran/common/ppf.h
 
       - name: Conduct the test
-        uses: matlab-actions/run-command@v2.2.1
+        uses: matlab-actions/run-command@v2.2.2
         with:
           command: |
             ver;
