@@ -31,6 +31,7 @@ jobs:
         compiler: [gcc]
         version: [13, 14]  # Too expensive to test all versions
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        testdim: [small, big]
 
         exclude:
           - os: windows-latest
@@ -130,12 +131,7 @@ jobs:
             echo "IK=${IK}" >> "$GITHUB_ENV"
             if [[ "$RUNNER_OS" != "Windows" ]] ; then
                 # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
-                if [[ $(($(date +%-d) % 2)) == 0 ]] ; then
-                    export TESTDIM=small
-                else
-                    export TESTDIM=big
-                fi
-                echo "TESTDIM=$TESTDIM"
+                export TESTDIM=${{ matrix.testdim }}
                 echo "TESTDIM=$TESTDIM" >> "$GITHUB_ENV"
 
                 FFLAGS=-O$(($(date +%-d) % 5))
