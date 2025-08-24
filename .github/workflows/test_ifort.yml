@@ -78,9 +78,10 @@ jobs:
         run: bash .github/scripts/install_oneapi_macos.sh
 
       - name: Revise bign
+        shell: bash
         run: |
           cd fortran/tests
-          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_bobyqa.f90
+          $SEDI 's|::\s*bign\s*=.*$|:: bign = 200_IK|' test_bobyqa.f90
 
       - name: Revise cobyla/trustregion.f90 to see what is wrong with ubuntu-latest, i8, cobyla, -O3, small
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.solver == 'cobyla' && matrix.testdim == 'small' }}
