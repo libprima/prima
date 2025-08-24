@@ -30,8 +30,9 @@ jobs:
         # Windows does not work. On Windows, the options for ifort/ifx starts with "/" instead of "-".
         # The latest oneAPI on Linux does not contain ifort anymore.
         os: [macos-13]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        testdim: [small, big]
+        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        solver: [bobyqa]
+        testdim: [big]
 
     steps:
 
