@@ -30,9 +30,8 @@ jobs:
         # Windows does not work. On Windows, the options for ifort/ifx starts with "/" instead of "-".
         # The latest oneAPI on Linux does not contain ifort anymore.
         os: [macos-13]
-        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        solver: [bobyqa]
-        testdim: [big]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        testdim: [small, big]
 
     steps:
 
@@ -79,7 +78,7 @@ jobs:
         run: bash .github/scripts/install_oneapi_macos.sh
 
       - name: Revise bign
-        shell: bash
+        shell: bash  # N.B.: We must use bash and use [[:space:]] instead of \s for compatibility with macOS.
         run: |
           cd fortran/tests
           $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_bobyqa.f90
