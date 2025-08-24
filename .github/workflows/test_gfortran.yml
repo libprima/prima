@@ -101,6 +101,13 @@ jobs:
         run: |
           which gcc && gcc --version && which gfortran && gfortran --version
 
+      - name: Revise Makefile.common to exclude r16 tests when the dimension is big
+        if: ${{ matrix.testdim == 'big' }}
+        shell: bash
+        run: |
+          cd fortran/tests/makefiles || exit 42
+          $SEDI 's|\$(TST)_.*r16_d[0,1]_tst||g' Makefile.common && cat Makefile.common
+
       - name: Revise string.f90, so that we know what is happening if assertion fails
         shell: bash
         run: |
