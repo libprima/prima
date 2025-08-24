@@ -83,7 +83,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thu 21 Aug 2025 11:47:12 AM CST
+! Last Modified: Sun 24 Aug 2025 04:23:34 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -383,23 +383,24 @@ else
         ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
         call destruct(prob)  ! Destruct the testing problem.
     end do
+
+
+    ! Test recursive call.
+    ! The depth of the recursion is 2. The first recursion is in RECURSIVE_FUN1, and the second is in
+    ! RECURSIVE_FUN2. RECURSIVE_FUN1(Y) is defined by minimizing the CHROSEN function subject to
+    ! Aineq * X <= Bineq with Y being the starting point. RECURSIVE_FUN2(Y) is defined by
+    ! RECURSIVE_FUN1 in a similar way. Note that RECURSIVE_FUN1 is essentially a constant function.
+    n = 3_IK
+    print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
+    deallocate (Aineq, bineq)
+    ! For unknown reason, `safealloc` does not work here with `nvfortran -O1`, nvfortran 23.7.
+    allocate (Aineq(1:2_IK * n, 1:n), bineq(1:2_IK * n), x(1:n))
+    Aineq = hilbert(int(size(Aineq, 1), IK), int(size(Aineq, 2), IK))
+    bineq = 1.0_RP
+    x = randn(n)
+    call lincoa(recursive_fun2, x, f, Aineq=Aineq, bineq=bineq, iprint=2_IK)
+
 end if
-
-
-! Test recursive call.
-! The depth of the recursion is 2. The first recursion is in RECURSIVE_FUN1, and the second is in
-! RECURSIVE_FUN2. RECURSIVE_FUN1(Y) is defined by minimizing the CHROSEN function subject to
-! Aineq * X <= Bineq with Y being the starting point. RECURSIVE_FUN2(Y) is defined by
-! RECURSIVE_FUN1 in a similar way. Note that RECURSIVE_FUN1 is essentially a constant function.
-n = 3_IK
-print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
-deallocate (Aineq, bineq)
-! For unknown reason, `safealloc` does not work here with `nvfortran -O1`, nvfortran 23.7.
-allocate (Aineq(1:2_IK * n, 1:n), bineq(1:2_IK * n), x(1:n))
-Aineq = hilbert(int(size(Aineq, 1), IK), int(size(Aineq, 2), IK))
-bineq = 1.0_RP
-x = randn(n)
-call lincoa(recursive_fun2, x, f, Aineq=Aineq, bineq=bineq, iprint=2_IK)
 
 end subroutine test_solver
 

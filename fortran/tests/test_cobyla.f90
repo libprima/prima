@@ -53,7 +53,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Thu 21 Aug 2025 10:13:12 AM CST
+! Last Modified: Sun 24 Aug 2025 04:22:41 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -354,21 +354,22 @@ else
         ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
         call destruct(prob)  ! Destruct the testing problem.
     end do
+
+
+    ! Test recursive call.
+    ! The depth of the recursion is 2. The first recursion is in RECURSIVE_FUN1, and the second is in
+    ! RECURSIVE_FUN2. RECURSIVE_FUN1(Y) is defined by minimizing the CHROSEN function subject to
+    ! X(1:N-1) - X(2:N)**2 <= 0 with Y being the starting point. RECURSIVE_FUN2(Y) is defined by
+    ! RECURSIVE_FUN1 in a similar way. Note that RECURSIVE_FUN1 is essentially a constant function.
+    n = 3_IK
+    print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
+    call safealloc(x, n)
+    x = randn(n)
+    call safealloc(nlconstr, n - 1_IK)
+    call cobyla(recursive_fun2, n - 1_IK, x, f, nlconstr=nlconstr, iprint=2_IK)
+    deallocate (x, nlconstr)
+
 end if
-
-
-! Test recursive call.
-! The depth of the recursion is 2. The first recursion is in RECURSIVE_FUN1, and the second is in
-! RECURSIVE_FUN2. RECURSIVE_FUN1(Y) is defined by minimizing the CHROSEN function subject to
-! X(1:N-1) - X(2:N)**2 <= 0 with Y being the starting point. RECURSIVE_FUN2(Y) is defined by
-! RECURSIVE_FUN1 in a similar way. Note that RECURSIVE_FUN1 is essentially a constant function.
-n = 3_IK
-print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
-call safealloc(x, n)
-x = randn(n)
-call safealloc(nlconstr, n - 1_IK)
-call cobyla(recursive_fun2, n - 1_IK, x, f, nlconstr=nlconstr, iprint=2_IK)
-deallocate (x, nlconstr)
 
 end subroutine test_solver
 

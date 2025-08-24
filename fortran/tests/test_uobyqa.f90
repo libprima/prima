@@ -49,7 +49,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Fri 22 Aug 2025 09:48:23 PM CST
+! Last Modified: Sun 24 Aug 2025 04:24:41 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -233,20 +233,21 @@ else
         ! DESTRUCT deallocates allocated arrays/pointers and nullify the pointers. Must be called.
         call destruct(prob)  ! Destruct the testing problem.
     end do
+
+
+    ! Test recursive call.
+    ! The depth of the recursion is 2. The first recursion is in RECURSIVE_FUN1, and the second is in
+    ! RECURSIVE_FUN2. RECURSIVE_FUN1(Y) is defined by minimizing the CHROSEN function with Y being
+    ! the starting point. RECURSIVE_FUN2(Y) is defined by RECURSIVE_FUN1 in a similar way. Note
+    ! that RECURSIVE_FUN1 is essentially a constant function.
+    n = 3_IK
+    print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
+    call safealloc(x, n)
+    x = randn(n)
+    call uobyqa(recursive_fun2, x, f, iprint=2_IK)
+    deallocate (x)
+
 end if
-
-
-! Test recursive call.
-! The depth of the recursion is 2. The first recursion is in RECURSIVE_FUN1, and the second is in
-! RECURSIVE_FUN2. RECURSIVE_FUN1(Y) is defined by minimizing the CHROSEN function with Y being
-! the starting point. RECURSIVE_FUN2(Y) is defined by RECURSIVE_FUN1 in a similar way. Note
-! that RECURSIVE_FUN1 is essentially a constant function.
-n = 3_IK
-print '(/A, I0)', 'Testing recursive call of '//solname//' on a problem with N = ', n
-call safealloc(x, n)
-x = randn(n)
-call uobyqa(recursive_fun2, x, f, iprint=2_IK)
-deallocate (x)
 
 end subroutine test_solver
 
