@@ -6,7 +6,7 @@ module noise_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sun 17 Aug 2025 07:34:40 PM CST
+! Last Modified: Mon 25 Aug 2025 12:11:45 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: pintrf_mod, only : OBJ, OBJCON
@@ -238,7 +238,7 @@ if (r > 0.8_RP) then
 !elseif (r > 0.7_RP) then
     !noisy_f = IEEE_VALUE(0.0_RP, IEEE_QUIET_NAN)  ! NaN
 elseif (r < 0.1_RP) then
-    noisy_f = -10.0_RP * max(abs(f), ONE)  ! Discontinuously decreased values
+    noisy_f = -10.0_RP * rand() * max(abs(f), ONE)  ! Discontinuously decreased values
 end if
 call setseed(seedsav)  ! Recover the random seed by SEEDSAV.
 deallocate (seedsav)  ! SEEDSAV is deallocated automatically at return.

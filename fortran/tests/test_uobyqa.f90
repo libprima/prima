@@ -49,7 +49,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Sun 24 Aug 2025 04:24:41 PM CST
+! Last Modified: Mon 25 Aug 2025 12:06:56 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -100,7 +100,7 @@ integer(IK) :: nprobs
 integer(IK) :: npt
 integer(IK) :: nrand_loc
 integer(IK), parameter :: bign = 80_IK  ! Dimension of the big problems
-integer(IK), parameter :: largen = 160_IK
+integer(IK), parameter :: largen = 160_IK  ! Dimension of the large problems
 real(RP) :: f
 real(RP) :: ftarget
 real(RP) :: rhobeg
@@ -149,7 +149,7 @@ else
 end if
 
 
-! Test the big problem
+! Test the big/large problem
 if (testdim_loc == 'big' .or. testdim_loc == 'large') then
     probname = bigprob
     n = merge(bign, largen, testdim_loc == 'big')
@@ -161,7 +161,7 @@ if (testdim_loc == 'big' .or. testdim_loc == 'large') then
         iprint = 2_IK
         maxfun = npt + int(min(1000.0_RP, real(2_IK*npt, RP)) * rand(), IK)
         maxhist = maxfun
-        ftarget = -TEN**abs(real(min(range(ftarget), 10), RP) * rand())
+        ftarget = -TEN**abs(real(min(range(ftarget), 12), RP) * rand())
         rhobeg = noisy(prob % Delta0)
         rhoend = min(0.1_RP * rhobeg, max(1.0E-3_RP, rhobeg * 10.0_RP**(-3.0_RP * rand())))
         call safealloc(x, n) ! Not all compilers support automatic allocation yet, e.g., Absoft.
