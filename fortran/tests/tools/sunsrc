@@ -136,8 +136,8 @@ fi
 for SOLVER in uobyqa newuoa bobyqa lincoa cobyla; do
     TEST_SOLVERF90="$DIR/test_${SOLVER}.f90"
     if [[ -f "$TEST_SOLVERF90" ]] ; then
-        sed -i '/Test recursive call/,/end module test_solver_mod/d' "$TEST_SOLVERF90" || exit 1
-        echo -e "end subroutine test_solver\nend module test_solver_mod" >> $TEST_SOLVERF90
+        sed -i '/Test recursive call/,/^end module test_solver_mod/d' "$TEST_SOLVERF90" || exit 1
+        echo -e "end if\nend subroutine test_solver\nend module test_solver_mod" >> $TEST_SOLVERF90
     fi
 done
 
