@@ -69,6 +69,12 @@ jobs:
       - name: Install nvfortran
         run: bash .github/scripts/install_nvfortran
 
+      - name: Revise bign
+        shell: bash  # N.B.: We must use bash and use [[:space:]] instead of \s for compatibility with macOS.
+        run: |
+          cd fortran/tests || exit 42
+          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_lincoa.f90
+
       - name: Revise bobyqa/trustregion.f90 to see why `xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1` leads to a SIGFPE
         shell: bash
         run: |
