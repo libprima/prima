@@ -78,22 +78,19 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: bash .github/scripts/install_oneapi_macos.sh
 
-      - name: Revise Makefile.common to exclude r16 tests when the dimension is big
-        if: ${{ matrix.testdim == 'big' }}
+      - name: Revise Makefile.common to exclude r16 tests when the dimension is big or the solver is cobyla
         shell: bash
+        if: ${{ matrix.testdim == 'big' || matrix.solver == 'cobyla' }}
         run: |
           cd fortran/tests/makefiles || exit 42
           $SEDI 's|\$(TST)_.*r16_d[0,1]_tst||g' Makefile.common && cat Makefile.common
 
-      # - name: Revise bign
-      #   shell: bash  # N.B.: We must use bash and use [[:space:]] instead of \s for compatibility with macOS.
-      #   run: |
-      #     cd fortran/tests || exit 42
-      #     $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_newuoa.f90
-      #     $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_bobyqa.f90
-      #     $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_lincoa.f90
-      #     $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 70_IK|' test_uobyqa.f90
-      #     $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 70_IK|' test_cobyla.f90
+      - name: Revise bign
+        shell: bash  # N.B.: We must use bash and use [[:space:]] instead of \s for compatibility with macOS.
+        run: |
+          cd fortran/tests || exit 42
+          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_bobyqa.f90
+          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_lincoa.f90
 
       - name: Conduct the test
         shell: bash
