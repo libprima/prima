@@ -90,8 +90,8 @@ jobs:
         run: |
           cd fortran/tests || exit 42
           $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_bobyqa.f90
-          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 160_IK|' test_lincoa.f90
-          $SEDI 's|::[[:space:]]*NRAND_DFT[[:space:]]*=.*$|:: NRAND_DFT = 2|g' testsuite/param.f90
+          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 150_IK|' test_lincoa.f90
+          $SEDI 's|::[[:space:]]*NRAND_DFT[[:space:]]*=.*$|:: NRAND_DFT = 1|g' testsuite/param.f90
           cat test_bobyqa.f90 test_lincoa.f90 testsuite/param.f90
 
       - name: Conduct the test

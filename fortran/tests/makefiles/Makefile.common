@@ -533,7 +533,7 @@ ifeq ($(TESTDIM),small)
 else
 	IFORT := $(IFORT) -auto -heap-arrays
 endif
-IFORT := $(IFORT) -fimplicit-none #-standard-semantics -assume recursion
+IFORT := $(IFORT) -fimplicit-none -standard-semantics -assume recursion
 ifeq ($(OSTYPE),LINUX)
 	IFORT := $(IFORT) -Wl,-z,noexecstack
 endif
@@ -718,7 +718,7 @@ ifeq ($(TESTDIM),small)
 else
 	XFORT := $(XFORT) -auto -heap-arrays
 endif
-XFORT := $(XFORT) -fimplicit-none #-standard-semantics -assume recursion
+XFORT := $(XFORT) -fimplicit-none -standard-semantics -assume recursion
 ifeq ($(OSTYPE),LINUX)
 	XFORT := $(XFORT) -Wl,-z,noexecstack
 endif
