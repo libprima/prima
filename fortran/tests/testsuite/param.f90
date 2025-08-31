@@ -6,7 +6,7 @@ module param_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Wed 20 Aug 2025 05:52:21 PM CST
+! Last Modified: Sun 31 Aug 2025 10:18:53 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 use, non_intrinsic :: consts_mod, only : RP, IK, TENTH
@@ -17,7 +17,7 @@ public :: MINDIM_DFT, MAXDIM_DFT, NRAND_DFT, NOISE_LEVEL_DFT, RANDSEED_DFT, NOIS
 ! Testing univariate problems can help us to uncover some bugs that can only occur in extreme cases.
 integer(IK), parameter :: MINDIM_DFT = 1
 integer(IK), parameter :: MAXDIM_DFT = 20
-integer(IK), parameter :: NRAND_DFT = 3
+integer(IK), parameter :: NRAND_DFT = 3  ! Default number of random tests when the dimension is small
 integer, parameter :: RANDSEED_DFT = 42
 real(RP), parameter :: NOISE_LEVEL_DFT = TENTH
 character(len=*), parameter :: NOISE_TYPE_DFT = 'gaussian'
