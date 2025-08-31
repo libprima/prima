@@ -87,8 +87,8 @@ jobs:
         run: |
           cd fortran/tests/makefiles || exit 42
           $SEDI 's|\$(TST)_.*r16_d[0,1]_tst||g' Makefile.common  # Skip r16 tests
-#          $SEDI 's|\$(TESTDIM)\ =\ "big"|true|' Makefile.common  # Skip _d0 tests even if TESTDIM is "small"
-#          $SEDI 's| since we are testing a BIG problem||' Makefile.common  # Revise the message accordingly
+          #$SEDI 's|\$(TESTDIM)\ =\ "big"|true|' Makefile.common  # Skip _d0 tests even if TESTDIM is "small"
+          #$SEDI 's| since we are testing a BIG problem||' Makefile.common  # Revise the message accordingly
           cat Makefile.common
 
       - name: Revise bign
