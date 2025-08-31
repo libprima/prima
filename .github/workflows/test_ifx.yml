@@ -100,7 +100,7 @@ jobs:
           echo "IK=${IK}" >> "$GITHUB_ENV"
           cd "$ROOT_DIR"/fortran/tests
           if [[ "${{ matrix.solver }}" == "cobyla" || "${{ matrix.testdim }}" == "big" ]]; then
-              RP=r$(( 2**(1 + $(date +%-d) % 2) ))
+              RP=r$(( 2**(2 + $(date +%-d) % 2) ))
               echo "RP=${RP}"
               make xtest_${IK}_${RP}_d1_tst.${{ matrix.solver }}
           else
