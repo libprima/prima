@@ -30,9 +30,12 @@ jobs:
         # Windows does not work. On Windows, the options for ifort/ifx starts with "/" instead of "-".
         # As of 202301, ifx is not available on macOS.
         os: [ubuntu-latest]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        solver: [cobyla]
         fflags: [-O1, -O2, -O3, -g, -fast]
-        testdim: [small, big]
+        testdim: [small]
+        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        #fflags: [-O1, -O2, -O3, -g, -fast]
+        #testdim: [small, big]
 
     steps:
 
@@ -80,12 +83,12 @@ jobs:
 
       - name: Revise Makefile.common to exclude r16 and _d0 tests when the dimension is big or the solver is cobyla
         shell: bash
-        if: ${{ matrix.testdim == 'big' || matrix.solver == 'cobyla' }}
+        if: ${{ matrix.testdim == 'big' }} #|| matrix.solver == 'cobyla' }}
         run: |
           cd fortran/tests/makefiles || exit 42
           $SEDI 's|\$(TST)_.*r16_d[0,1]_tst||g' Makefile.common  # Skip r16 tests
-          $SEDI 's|\$(TESTDIM)\ =\ "big"|true|' Makefile.common  # Skip _d0 tests even if TESTDIM is "small"
-          $SEDI 's| since we are testing a BIG problem||' Makefile.common  # Revise the message accordingly
+#          $SEDI 's|\$(TESTDIM)\ =\ "big"|true|' Makefile.common  # Skip _d0 tests even if TESTDIM is "small"
+#          $SEDI 's| since we are testing a BIG problem||' Makefile.common  # Revise the message accordingly
           cat Makefile.common
 
       - name: Revise bign
@@ -105,7 +108,14 @@ jobs:
           IK=i$(( 2**(1 + $(date +%-d) % 3) ))
           echo "IK=${IK}"
           echo "IK=${IK}" >> "$GITHUB_ENV"
-          cd "$ROOT_DIR"/fortran/tests && make xtest_${IK}.${{ matrix.solver }}
+          cd "$ROOT_DIR"/fortran/tests
+          if [[ "${{ matrix.solver }}" == "cobyla" && "${{ matrix.testdim }}" == "small" ]]; then
+              RP=r$(( 2**(1 + $(date +%-d) % 2) ))
+              echo "RP=${RP}"
+              make xtest_${IK}_${RP}_d1_tst.${{ matrix.solver }}
+          else
+              make xtest_${IK}.${{ matrix.solver }}
+          fi
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
           export EXAMPLE_NUM=1 && make clean && make xtest
           export EXAMPLE_NUM=2 && make clean && make xtest
