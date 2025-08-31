@@ -100,7 +100,7 @@ jobs:
           cd "$ROOT_DIR"/fortran/tests
           if [[ "${{ matrix.solver }}" == "cobyla" || "${{ matrix.testdim }}" == "big" ]]; then
               $SEDI 's|::[[:space:]]*NRAND_DFT[[:space:]]*=.*$|:: NRAND_DFT = 1|g' testsuite/param.f90  # Number of random tests when the dimension is small
-              RP=r$(( 2**(2 + $(date +%-d) % 2) ))
+              RP=r$(( 2**(1 + $(date +%-d) % 2) ))
               echo "RP=${RP}"
               make xtest_${IK}_${RP}_d1_tst.${{ matrix.solver }}
           else
