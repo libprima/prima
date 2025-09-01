@@ -86,7 +86,7 @@ jobs:
         run: |
           cd fortran/tests || exit 42
           $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_bobyqa.f90
-          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 160_IK|' test_lincoa.f90
+          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 150_IK|' test_lincoa.f90
           cat test_bobyqa.f90 test_lincoa.f90
 
       - name: Conduct the test
