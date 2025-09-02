@@ -28,10 +28,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        matlab: [latest]
+        os: [ubuntu-22.04, ubuntu-latest]
+        matlab: [R2021a, R2024b, R2025a, latest]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         dim: [small]
+        gfortran_version: [13, 14, latest]
+        use_system_libgcc: [true, false]  # Whether to use the system libgcc or the one shipped with MATLAB.
+    exclude:
+      - os: ubuntu-22.04
+        gfortran_version: 14
+      - os: ubuntu-22.04
+        gfortran_version: latest
 
     steps:
 
@@ -96,6 +103,18 @@ jobs:
           cache: true
           products: Parallel_Computing_Toolbox
 
+      - name: Link system libgcc to MATLAB if needed
+        if: ${{ matrix.use_system_libgcc == 'true' && startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          matlab_root=$(realpath $(dirname $(which matlab))/../)
+          echo "MATLAB root is ${matlab_root}"
+          matlab_libgcc="${matlab_root}/sys/os/glnxa64/libgcc_s.so.1"
+          ls -alh ${matlab_libgcc} || exit 42
+          system_libgcc="/usr/lib/x86_64-linux-gnu/libgcc_s.so.1"
+          ls -alh ${system_libgcc} || exit 42
+          ln -sf ${system_libgcc} ${matlab_libgcc} || exit 42
+          echo "Linked ${system_libgcc} to ${matlab_libgcc}."
+
       - name: Revise get_solvers.m to print the revised header file
         run: |
           cd matlab/tests/private || exit 1
@@ -147,7 +166,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}
+          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.matlab }}-${{ matrix.use_system_libgcc }}-${{ matrix.gfortran_version }}
           path: |
             /tmp/${{ matrix.solver }}_verify_prima/*prob_start*
             /tmp/${{ matrix.solver }}_verify_prima/*prob_end*
