@@ -147,7 +147,7 @@ jobs:
       - name: Revise compiled.m to print necessary information
         run: |
           cd matlab/setup_tools || exit 42
-          $SEDI 's|\(common_mex_options\s*=\s*.*\);$|\1|' compile.m
+          $SEDI 's|\(common_mex_options\s*=\s*.*$\)$|\1\ncommon_mex_options{:}|' compile.m
           $SEDI 's|\(if\s*~support_internal_procedures\)|support_internal_procedures\n\1|' compile.m
           cat compile.m
 
