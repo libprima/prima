@@ -28,14 +28,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        #os: [ubuntu-22.04, ubuntu-latest]
-        os: [ubuntu-latest]
-        #matlab: [R2022a, R2024b, R2025a, latest]  # R2021a/b do not suppoert gfortran 10+.
-        matlab: [R2025a]  # R2021a/b do not suppoert gfortran 10+.
-        solver: [newuoa] #, cobyla, lincoa, bobyqa, uobyqa]
+        os: [ubuntu-22.04, ubuntu-latest]
+        matlab: [R2022a, R2024b, R2025a, latest]  # R2021a/b do not suppoert gfortran 10+.
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         dim: [small]
-        #gfortran_version: [13, 14, latest]
-        gfortran_version: [14]
+        gfortran_version: [13, 14, latest]
         use_system_libgcc: [true, false]  # Whether to use the system libgcc or the one shipped with MATLAB.
         exclude:
           - os: ubuntu-22.04
@@ -122,14 +119,23 @@ jobs:
         run: |
           matlab_root=$(realpath $(dirname $(which matlab))/../)
           echo "MATLAB root is ${matlab_root}"
+
           matlab_libgcc="${matlab_root}/sys/os/glnxa64/libgcc_s.so.1"
           echo "MATLAB libgcc is:"
           ls -alh ${matlab_libgcc} || exit 42
+          echo "gcc strings in MATLAB libgcc are:"
           strings ${matlab_libgcc} | grep -i gcc
+          echo "latest gcc version string in MATLAB libgcc is:"
+          readelf -V ${matlab_libgcc} | grep -oiE 'GCC_([0-9]+)(.[0-9]+){0,2}' | sort -V | tail -1
+
           system_libgcc="/usr/lib/x86_64-linux-gnu/libgcc_s.so.1"
           echo "System libgcc is:"
           ls -alh ${system_libgcc} || exit 42
+          echo "gcc strings in system libgcc are:"
           strings ${system_libgcc} | grep -i gcc
+          echo "latest gcc version string in system libgcc is:"
+          readelf -V ${system_libgcc} | grep -oiE 'GCC_([0-9]+)(.[0-9]+){0,2}' | sort -V | tail -1
+
           if [[ "${{ matrix.use_system_libgcc }}" == "true" ]] ; then
               ln -sf ${system_libgcc} ${matlab_libgcc} || exit 42
               echo "Linked ${system_libgcc} to ${matlab_libgcc}."
@@ -138,7 +144,10 @@ jobs:
           fi
           echo "After the operation, MATLAB libgcc is:"
           ls -alh ${matlab_libgcc} || exit 42
+          echo "gcc strings in MATLAB libgcc are:"
           strings ${matlab_libgcc} | grep -i gcc
+          echo "latest gcc version string in MATLAB libgcc is:"
+          readelf -V ${matlab_libgcc} | grep -oiE 'GCC_([0-9]+)(.[0-9]+){0,2}' | sort -V | tail -1
 
       - name: Revise get_solvers.m to print the revised header file
         run: |
