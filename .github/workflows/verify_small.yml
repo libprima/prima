@@ -124,7 +124,7 @@ jobs:
           echo "MATLAB libgcc is:"
           ls -alh ${matlab_libgcc} || exit 42
           echo "gcc strings in MATLAB libgcc are:"
-          strings ${matlab_libgcc} | grep -i gcc
+          strings ${matlab_libgcc} | grep -iE "^GCC_"
           echo "latest gcc version string in MATLAB libgcc is:"
           readelf -V ${matlab_libgcc} | grep -oiE 'GCC_([0-9]+)(.[0-9]+){0,2}' | sort -V | tail -1
 
@@ -132,7 +132,7 @@ jobs:
           echo "System libgcc is:"
           ls -alh ${system_libgcc} || exit 42
           echo "gcc strings in system libgcc are:"
-          strings ${system_libgcc} | grep -i gcc
+          strings ${system_libgcc} | grep -iE "^GCC_"
           echo "latest gcc version string in system libgcc is:"
           readelf -V ${system_libgcc} | grep -oiE 'GCC_([0-9]+)(.[0-9]+){0,2}' | sort -V | tail -1
 
@@ -145,7 +145,7 @@ jobs:
           echo "After the operation, MATLAB libgcc is:"
           ls -alh ${matlab_libgcc} || exit 42
           echo "gcc strings in MATLAB libgcc are:"
-          strings ${matlab_libgcc} | grep -i gcc
+          strings ${matlab_libgcc} | grep -iE "^GCC_"
           echo "latest gcc version string in MATLAB libgcc is:"
           readelf -V ${matlab_libgcc} | grep -oiE 'GCC_([0-9]+)(.[0-9]+){0,2}' | sort -V | tail -1
 
