@@ -140,6 +140,13 @@ jobs:
           cd matlab/tests/private || exit 1
           $SEDI "s|return|for ifile = 1 : length(config_files), ifile, cfile = fullfile(config_dir, config_files{ifile}) , system(['cat ', cfile]); end|" set_compiler_options.m
 
+      - name: Revise compiled.m to print necessary information
+        run: |
+          cd matlab/setup_tools || exit 42
+          $SEDI 's|\(common_mex_options\s*=\s*.*\);$|\1|' compile.m
+          $SEDI 's|\(if\s*~support_internal_procedures\)|support_internal_procedures\n\1|' compile.m
+          cat compile.m
+
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.2.2
         with:
