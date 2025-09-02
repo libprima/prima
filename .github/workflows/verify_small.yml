@@ -80,18 +80,19 @@ jobs:
           repository: matcutest/matcutest_compiled
           path: matcutest
 
-      - name: Set up gfortran on Linux with the latest version
-        if: ${{ gfortran_version == 'latest' }}
+      - name: Decide the gfortran version to use
+        run: |
+          if [[ "${{ matrix.gfortran_version }}" != "latest" ]]; then
+            echo "GFORTRAN_VERSION=${{ matrix.gfortran_version }}" >> $GITHUB_ENV
+          fi
+          echo "To use gfortran version ${{ env.GFORTRAN_VERSION }}"
+
+      - name: Set up gfortran on Linux
+        if: startsWith(matrix.os, 'ubuntu')
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: gcc
           version: ${{ env.GFORTRAN_VERSION }}
-      - name: Set up gfortran on Linux with a specified version
-        if: ${{ gfortran_version != 'latest' }}
-        uses: fortran-lang/setup-fortran@main
-        with:
-          compiler: gcc
-          version: ${{ matrix.gfortran_version }}
 
       - name: Check gfortran version on Linux
         if: startsWith(matrix.os, 'ubuntu')
