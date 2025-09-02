@@ -58,7 +58,7 @@ function info = getMexLibgcc()
         [~, libgccStrings] = system(sprintf('strings "%s"', libgccPath));
 
         % Find the latest GCC version mentioned in the strings, supposing that the latest is mentioned in the last line
-        [~, latestGccString] = system(sprintf('strings "%s" | grep -E "^GCC_" | tail -n1', libgccPath));
+        [~, latestGccString] = system(sprintf('strings "%s" | grep -E "^GCC_[0-9]+" | tail -n1', libgccPath));
         latestGccString = strtrim(latestGccString);
         % Try to parse a version like 14.0.0 from the latestGccString
         tok = regexp(latestGccString, '([0-9]+(\.[0-9]+)?+(\.[0-9]+)?)', 'tokens', 'once');
