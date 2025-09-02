@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        matlab: [R2022b, R2023a, R2023b, R2024a, R2024b, latest]
+        matlab: [latest]
         ik: [16, 64]
         dim: [all]
         solver: [cobylal, cobylan, uobyqa, newuoa, bobyqa, lincoa]  # prima is too expensive
