@@ -125,7 +125,7 @@ jobs:
           matlab_libgcc="${matlab_root}/sys/os/glnxa64/libgcc_s.so.1"
           echo "MATLAB libgcc is:"
           ls -alh ${matlab_libgcc} || exit 42
-          srings ${matlab_libgcc} | grep -i gcc
+          strings ${matlab_libgcc} | grep -i gcc
           system_libgcc="/usr/lib/x86_64-linux-gnu/libgcc_s.so.1"
           echo "System libgcc is:"
           ls -alh ${system_libgcc} || exit 42
