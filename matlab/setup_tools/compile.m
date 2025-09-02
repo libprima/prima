@@ -74,7 +74,6 @@ end
 % Otherwise, the solvers will not work properly in recursive invocations. See
 % https://fortran-lang.discourse.group/t/frecursive-assume-recursion-and-recursion-thread-safety
 compiler_configurations = mex.getCompilerConfigurations('fortran', 'selected');
-extra_compiler_options = '';
 compiler_manufacturer = lower(compiler_configurations.Manufacturer);
 % Get the major version of the compiler. `sscanf(..., '%d')` stops at the first non-digit, so it
 % works for ‘14’, ‘14.1’, ‘14.1.2’, etc.
@@ -83,10 +82,12 @@ if isempty(compiler_major_version)
     compiler_major_version = NaN;  % Failed to get the version number
 end
 
+% First, set `extra_compiler_options` to the extra compiler options needed by the Fortran compiler.
+extra_compiler_options = '';
 if contains(compiler_manufacturer, 'gnu')  % gfortran
     % -Wno-missing-include-dirs is needed to suppress the warning about missing include directories
-    % when Simulink is not installed.
-    extra_compiler_options = '-g -Wno-missing-include-dirs -fno-stack-arrays -frecursive';
+    % when Simulink is not installed. Note the space before the new options.
+    extra_compiler_options = [extra_compiler_options, ' -g -Wno-missing-include-dirs -fno-stack-arrays -frecursive'];
 
     % -ftrampoline-impl=heap instructs the compiler to put the trampolines on the heap instead of the
     % stack. This option is available since gcc/gfortran 14. Without this option, executable stacks
@@ -115,16 +116,19 @@ if contains(compiler_manufacturer, 'gnu')  % gfortran
     end
 elseif contains(compiler_manufacturer, 'intel')  % Intel compiler
     if ispc
-        extra_compiler_options = '/Z7 /heap-arrays /assume:recursion';
+        extra_compiler_options = [extra_compiler_options, ' /Z7 /heap-arrays /assume:recursion'];
     else
-        extra_compiler_options = '-g -heap-arrays -assume recursion';
+        extra_compiler_options = [extra_compiler_options, ' -g -heap-arrays -assume recursion'];
     end
 elseif contains(compiler_manufacturer, 'nag')  % NAG compiler
-    extra_compiler_options = '-g';
+    extra_compiler_options = [extra_compiler_options, ' -g'];
 else
     warning('prima:UnrecognizedCompiler', 'Unrecognized compiler %s. The package may not work.', ...
         compiler_configurations.Name);
 end
+
+%  Finally, set `compiler_options` so that `extra_compiler_options` is appended to COMPFLAGS (on Windows)
+%  or FFLAGS (on other platforms) when MEX is called with `compiler_options`.
 if ispc  % Windows
     compiler_options = ['COMPFLAGS="$COMPFLAGS ', extra_compiler_options, '"'];
 else
