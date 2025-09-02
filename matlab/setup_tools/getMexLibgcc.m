@@ -1,10 +1,11 @@
 function info = getMexLibgcc()
 %GETMEXLIBGCC Resolve libgcc_s used by the current configuration of Fortran MEX and its GCC version.
 % Output struct fields:
-%   libgccPath      - full path to the resolved libgcc_s.so.1; empty if not detectable
-%   gccVersion      - GCC version string (e.g., '14.2.0'); empty if not detectable
+%   libgccPath: full path to the resolved libgcc_s.so.1; empty if not detectable
+%   libgccStrings: strings embedded in libgcc_s.so.1 (a string separated by line breaks); empty if not detectable
+%   latestGccVersion: latest GCC version string embedded in libgcc_s.so.1 (e.g., '14.0.0'); empty if not detectable
 %
-% Requirements: Linux, ldd, strings, grep, head. No root needed.
+% Requirements: Linux, ldd, strings, grep, tail. No root needed.
 
     % Get name of the current function
     callstack = dbstack;
@@ -15,7 +16,7 @@ function info = getMexLibgcc()
     assert(isCommandAvailable('ldd'), sprintf('%s: ldd command not found.', funName));
     assert(isCommandAvailable('strings'), sprintf('%s: strings command not found.', funName));
     assert(isCommandAvailable('grep'), sprintf('%s: grep command not found.', funName));
-    assert(isCommandAvailable('head'), sprintf('%s: head command not found.', funName));
+    assert(isCommandAvailable('tail'), sprintf('%s: tail command not found.', funName));
 
     % exampleFile is an example provided by MATLAB for trying MEX.
     % NOTE: MATLAB MAY CHANGE THE LOCATION OF THIS FILE IN THE FUTURE.
@@ -50,26 +51,26 @@ function info = getMexLibgcc()
     end
     libgccPath = parseLibPath(lddOut, 'libgcc_s.so.1');
 
-    % Extract GCC version string
-    gccVersion = '';
+    libgccStrings = '';
+    latestGccVersion = '';
     if ~isempty(libgccPath)
-        % We suppose that the system embeds a GCC build marker the strings tool can find.
-        [~, marker] = system(sprintf('strings "%s" | grep -Ei "^GCC:|GCC \\(" | head -n1', libgccPath));
-        marker = strtrim(marker);
-        % Try to parse a version like 14.2.0 from the marker
-        % Examples:
-        %   GCC: (Ubuntu 14.2.0-3ubuntu1) 14.2.0
-        %   GCC: (GNU) 13.2.1 20240109
-        %   GCC: (Red Hat 13.2.1-7) 13.2.1 20240316
-        tok = regexp(marker, '([0-9]+\.[0-9]+(\.[0-9]+)?)', 'tokens', 'once');
+        % Extract strings from libgcc
+        [~, libgccStrings] = system(sprintf('strings "%s"', libgccPath));
+
+        % Find the latest GCC version mentioned in the strings, supposing that the latest is mentioned in the last line
+        [~, latestGccString] = system(sprintf('strings "%s" | grep -Ei "^GCC_" | tail -n1', libgccPath));
+        latestGccString = strtrim(latestGccString);
+        % Try to parse a version like 14.0.0 from the latestGccString
+        tok = regexp(latestGccString, '([0-9]+(\.[0-9]+)?+(\.[0-9]+)?)', 'tokens', 'once');
         if ~isempty(tok)
-            gccVersion = tok{1};
+            latestGccVersion = tok{1};
         end
     end
 
     info = struct( ...
         'libgccPath', libgccPath, ...
-        'gccVersion', gccVersion);
+        'libgccStrings', libgccStrings, ...
+        'latestGccVersion', latestGccVersion);
 end
 
 

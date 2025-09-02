@@ -125,9 +125,11 @@ jobs:
           matlab_libgcc="${matlab_root}/sys/os/glnxa64/libgcc_s.so.1"
           echo "MATLAB libgcc is:"
           ls -alh ${matlab_libgcc} || exit 42
+          srings ${matlab_libgcc} | grep -i gcc
           system_libgcc="/usr/lib/x86_64-linux-gnu/libgcc_s.so.1"
           echo "System libgcc is:"
           ls -alh ${system_libgcc} || exit 42
+          strings ${system_libgcc} | grep -i gcc
           if [[ "${{ matrix.use_system_libgcc }}" == "true" ]] ; then
               ln -sf ${system_libgcc} ${matlab_libgcc} || exit 42
               echo "Linked ${system_libgcc} to ${matlab_libgcc}."
@@ -136,6 +138,7 @@ jobs:
           fi
           echo "After the operation, MATLAB libgcc is:"
           ls -alh ${matlab_libgcc} || exit 42
+          strings ${matlab_libgcc} | grep -i gcc
 
       - name: Revise get_solvers.m to print the revised header file
         run: |
@@ -151,7 +154,9 @@ jobs:
         run: |
           cd matlab/setup_tools || exit 42
           $SEDI 's|\(.*lddOut.*\);|\1|' getMexLibgcc.m
-          $SEDI 's|\(.*marker.*\);|\1|' getMexLibgcc.m
+          $SEDI 's|\(.*Path.*\);|\1|' getMexLibgcc.m
+          $SEDI 's|\(.*String.*\);|\1|' getMexLibgcc.m
+          $SEDI 's|\(.*Version.*\);|\1|' getMexLibgcc.m
           cat getMexLibgcc.m
           $SEDI 's|\(common_mex_options\s*=\s*.*$\)$|\1\ncommon_mex_options{:}|' compile.m
           $SEDI 's|\(.*\s*=\s*getMexLibgcc().gccVersion.*\)|\1\ngetMexLibgcc() |' compile.m

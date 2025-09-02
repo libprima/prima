@@ -96,7 +96,7 @@ if contains(compiler_manufacturer, 'gnu')  % gfortran
     % https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines/9919?u=zaikunzhang
     % First, get the major version of GCC corresponding to the libgcc used by the Fortran MEX.
     try
-        gcc_version = getMexLibgcc().gccVersion;
+        gcc_version = getMexLibgcc().latestGccVersion;  % Latest gcc version string embedded in libgcc
     catch exception
         gcc_version = '';
         % As of 20250902, getMexLibgcc supports only Linux; indeed, if MEX is configured according
