@@ -148,7 +148,9 @@ jobs:
         run: |
           cd matlab/setup_tools || exit 42
           $SEDI 's|\(common_mex_options\s*=\s*.*$\)$|\1\ncommon_mex_options{:}|' compile.m
-          $SEDI 's|\(if\s*~support_internal_procedures\)|support_internal_procedures\n\1|' compile.m
+          $SEDI 's|\(.*_version\s*=\s*.*\);|\1 |' compile.m
+          $SEDI 's|\(compiler_options\s*=\s*.*\);|\1 |' compile.m
+          $SEDI "s|\(if\s*~support_internal_procedures\)|verLessThan('matlab', '25.1'), verLessThan('matlab', '25.2'), compiler_manufacturer,  compiler_options, support_internal_procedures\n\1|" compile.m
           cat compile.m
 
       - name: Conduct the test
