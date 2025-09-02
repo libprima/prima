@@ -82,10 +82,13 @@ jobs:
 
       - name: Decide the gfortran version to use
         run: |
-          if [[ "${{ matrix.gfortran_version }}" != "latest" ]]; then
-            echo "GFORTRAN_VERSION=${{ matrix.gfortran_version }}" >> $GITHUB_ENV
+          if [[ "${{ matrix.gfortran_version }}" == "latest" ]]; then
+              export GFORTRAN_VERSION=${{ env.GFORTRAN_VERSION }}
+          else
+              export GFORTRAN_VERSION=${{ matrix.gfortran_version }}
+              echo "GFORTRAN_VERSION=${GFORTRAN_VERSION}" >> $GITHUB_ENV
           fi
-          echo "To use gfortran version ${{ env.GFORTRAN_VERSION }}"
+          echo "To use gfortran version ${GFORTRAN_VERSION}"
 
       - name: Set up gfortran on Linux
         if: startsWith(matrix.os, 'ubuntu')
