@@ -34,11 +34,11 @@ jobs:
         dim: [small]
         gfortran_version: [13, 14, latest]
         use_system_libgcc: [true, false]  # Whether to use the system libgcc or the one shipped with MATLAB.
-    exclude:
-      - os: ubuntu-22.04
-        gfortran_version: 14
-      - os: ubuntu-22.04
-        gfortran_version: latest
+        exclude:
+          - os: ubuntu-22.04
+            gfortran_version: 14
+          - os: ubuntu-22.04
+            gfortran_version: latest
 
     steps:
 
