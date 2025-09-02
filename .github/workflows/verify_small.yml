@@ -120,8 +120,10 @@ jobs:
           matlab_root=$(realpath $(dirname $(which matlab))/../)
           echo "MATLAB root is ${matlab_root}"
           matlab_libgcc="${matlab_root}/sys/os/glnxa64/libgcc_s.so.1"
+          echo "MATLAB libgcc is:"
           ls -alh ${matlab_libgcc} || exit 42
           system_libgcc="/usr/lib/x86_64-linux-gnu/libgcc_s.so.1"
+          echo "System libgcc is:"
           ls -alh ${system_libgcc} || exit 42
           if [[ "${{ matrix.use_system_libgcc }}" == "true" ]] ; then
               ln -sf ${system_libgcc} ${matlab_libgcc} || exit 42
@@ -129,6 +131,8 @@ jobs:
           else
               echo "Keep ${matlab_libgcc} untouched."
           fi
+          echo "After the operation, MATLAB libgcc is:"
+          ls -alh ${matlab_libgcc} || exit 42
 
       - name: Revise get_solvers.m to print the revised header file
         run: |
