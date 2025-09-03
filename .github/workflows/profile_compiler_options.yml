@@ -108,6 +108,58 @@ jobs:
           cd matlab/tests/private || exit 1
           $SEDI "s|return|for ifile = 1 : length(config_files), ifile, cfile = fullfile(config_dir, config_files{ifile}) , system(['cat ', cfile]); end|" set_compiler_options.m
 
+      - name: Link system libgcc to MATLAB if needed
+        if: startsWith(matrix.os, 'ubuntu')
+        shell: bash
+        run: |
+          matlab_root=$(realpath $(dirname $(which matlab))/../)
+          echo "MATLAB root is ${matlab_root}"
+
+          matlab_libgcc="${matlab_root}/sys/os/glnxa64/libgcc_s.so.1"
+          echo "MATLAB libgcc is:"
+          ls -alh ${matlab_libgcc} || exit 42
+          echo "gcc strings in MATLAB libgcc are:"
+          strings ${matlab_libgcc} | grep -iE "^GCC_"
+          echo "latest gcc version string in MATLAB libgcc is:"
+          readelf -V ${matlab_libgcc} | grep -oiE 'GCC_([0-9]+)(.[0-9]+){0,2}' | sort -V | tail -1
+
+          system_libgcc="/usr/lib/x86_64-linux-gnu/libgcc_s.so.1"
+          echo "System libgcc is:"
+          ls -alh ${system_libgcc} || exit 42
+          echo "gcc strings in system libgcc are:"
+          strings ${system_libgcc} | grep -iE "^GCC_"
+          echo "latest gcc version string in system libgcc is:"
+          readelf -V ${system_libgcc} | grep -oiE 'GCC_([0-9]+)(.[0-9]+){0,2}' | sort -V | tail -1
+
+          if [[ "${{ matrix.use_system_libgcc }}" == "true" ]] ; then
+              ln -sf ${system_libgcc} ${matlab_libgcc} || exit 42
+              echo "Linked ${system_libgcc} to ${matlab_libgcc}."
+          else
+              echo "Keep ${matlab_libgcc} untouched."
+          fi
+          echo "After the operation, MATLAB libgcc is:"
+          ls -alh ${matlab_libgcc} || exit 42
+          echo "gcc strings in MATLAB libgcc are:"
+          strings ${matlab_libgcc} | grep -iE "^GCC_"
+          echo "latest gcc version string in MATLAB libgcc is:"
+          readelf -V ${matlab_libgcc} | grep -oiE 'GCC_([0-9]+)(.[0-9]+){0,2}' | sort -V | tail -1
+
+      - name: Revise getMexLibgcc and compiled.m to print necessary information
+        run: |
+          cd matlab/setup_tools || exit 42
+          $SEDI 's|\(.*lddOut.*\);|\1|' getMexLibgcc.m
+          $SEDI 's|\(.*Path.*\);|\1|' getMexLibgcc.m
+          $SEDI 's|\(.*String.*\);|\1|' getMexLibgcc.m
+          $SEDI 's|\(.*Version.*\);|\1|' getMexLibgcc.m
+          cat getMexLibgcc.m
+          $SEDI 's|\(common_mex_options\s*=\s*.*$\)$|\1\ncommon_mex_options{:}|' compile.m
+          $SEDI 's|\(.*\s*=\s*getMexLibgcc().gccVersion.*\)|\1\ngetMexLibgcc() |' compile.m
+          $SEDI 's|\(.*_version\s*=\s*.*\);|\1 |' compile.m
+          $SEDI 's|\(compiler_options\s*=\s*.*\);|\1 |' compile.m
+          $SEDI "s|\(if\s*~support_internal_procedures\)|verLessThan('matlab', '25.1'), verLessThan('matlab', '25.2'), compiler_manufacturer,  compiler_options, support_internal_procedures\n\1|" compile.m
+          cat compile.m
+
+
       - name: Conduct the test
         uses: matlab-actions/run-command@v2.2.2
         with:
