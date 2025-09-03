@@ -31,6 +31,7 @@ jobs:
         dim: [small]
         solver: [lincoa]
         competitor: [classical, archiva, norma]
+        use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
         with_optim_toolbox: [yes, no]
         ctol_indicator: [0, 1, 2]
 
@@ -169,7 +170,7 @@ jobs:
         uses: actions/upload-artifact@v4.3.1
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.with_optim_toolbox }}-${{ matrix.ctol_indicator }}
+          name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.with_optim_toolbox }}-${{ matrix.ctol_indicator }}-${{ matrix.use_system_libgcc }}
           path: |
             /tmp/${{ matrix.solver }}_profile_prima/*summary*.pdf
             /tmp/${{ matrix.solver }}_profile_prima/*.txt
