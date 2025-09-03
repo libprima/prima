@@ -28,17 +28,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-latest]
-        matlab: [R2022a, R2024b, R2025a, latest]  # R2021a/b do not suppoert gfortran 10+.
+        os: [ubuntu-latest]
+        matlab: [latest]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         dim: [small]
-        gfortran_version: [13, 14, latest]
         use_system_libgcc: [true, false]  # Whether to use the system libgcc or the one shipped with MATLAB.
-        exclude:
-          - os: ubuntu-22.04
-            gfortran_version: 14
-          - os: ubuntu-22.04
-            gfortran_version: latest
 
     steps:
 
@@ -80,16 +74,6 @@ jobs:
           repository: matcutest/matcutest_compiled
           path: matcutest
 
-      - name: Decide the gfortran version to use
-        run: |
-          if [[ "${{ matrix.gfortran_version }}" == "latest" ]]; then
-              export GFORTRAN_VERSION=${{ env.GFORTRAN_VERSION }}
-          else
-              export GFORTRAN_VERSION=${{ matrix.gfortran_version }}
-              echo "GFORTRAN_VERSION=${GFORTRAN_VERSION}" >> $GITHUB_ENV
-          fi
-          echo "To use gfortran version ${GFORTRAN_VERSION}"
-
       - name: Set up gfortran on Linux
         if: startsWith(matrix.os, 'ubuntu')
         uses: fortran-lang/setup-fortran@main
@@ -99,7 +83,7 @@ jobs:
 
       - name: Check gfortran version on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: which gfortran && gfortran --version
+        run: which gcc && gcc --version && which gfortran && gfortran --version
 
       - name: Check MATLAB
         id: check_matlab

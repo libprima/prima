@@ -92,7 +92,7 @@ jobs:
           version: ${{ env.GFORTRAN_VERSION }}
       - name: Check gfortran version on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: which gfortran && gfortran --version
+        run: which gcc && gcc --version && which gfortran && gfortran --version
 
       - name: Decide the version of oneAPI to use
         shell: bash
