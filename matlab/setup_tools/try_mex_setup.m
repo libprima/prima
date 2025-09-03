@@ -3,9 +3,9 @@ function success = try_mex_setup(language, verbose)
 % At return,
 % success = 1 means MEX is correctly set up.
 % success = 0 means MEX setup fails.
-% success = -1 means MEX setup runs successfully, but either we cannot try MEX on the example
-% file because such a file is not found, or the MEX file of the example file works but the result
-% is incorrect.
+% success = -1 means MEX setup runs successfully, but we cannot try MEX on the example file
+% because such a file is not found, or the example is not `timestwo`, or the MEX file of the example
+% file works but the result is incorrect.
 
 verbose = (nargin >=2 && verbose);
 
@@ -17,7 +17,7 @@ if success == 1
 end
 
 orig_warning_state = warning;
-warning('off','all'); % We do not want to see warnings
+warning('off', 'all'); % We do not want to see warnings
 
 % Try `mex('-setup', language)`
 mex_setup = -1;
@@ -150,30 +150,22 @@ function success = mex_well_configured(language, verbose)
 % At return,
 % success = 1 means MEX compiles the example successfully and the resultant MEX file works well.
 % success = 0 means MEX cannot compile the example or the resultant MEX file does not work.
-% success = -1 means either we cannot try MEX on the example file because such a file is not found,
-% or the MEX file of the example file works but the result is incorrect.
+% success = -1 means we cannot try MEX on the example file because such a file is not found,
+% or the example is not `timestwo`, or the MEX file of the example file works but the result is incorrect.
 
 verbose = (nargin >=2 && verbose);
 
 success = 1;
 
 orig_warning_state = warning;
-warning('off','all'); % We do not want to see warnings
+warning('off', 'all'); % We do not want to see warnings
 
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
 
 % Locate example_file, which is an example provided by MATLAB for trying MEX.
-% NOTE: MATLAB MAY CHANGE THE LOCATION OF THIS FILE IN THE FUTURE.
-switch lower(language)
-case 'fortran'
-    example_file_name = 'timestwo.F';
-case {'c', 'c++', 'cpp'}
-    example_file_name = 'timestwo.c';
-otherwise
-    error(sprintf('%s:UnsupportedLang', funname), '%s: Language ''%s'' is not supported by %s.', funname, language, funname);
-end
-example_file = fullfile(matlabroot, 'extern', 'examples', 'refbook', example_file_name);
+% mexname is the name of the MEX file without extension.
+[example_file, mexname] = official_mex_example('Fortran');
 
 % Check whether example_file exists
 if ~exist(example_file, 'file')
@@ -181,7 +173,7 @@ if ~exist(example_file, 'file')
         fprintf('\n');
         wid = sprintf('%s:ExampleFileNotExist', funname);
         warning('on', wid);
-        warning(wid, 'We cannot find\n%s,\nwhich is a MATLAB built-in example for trying MEX on %s. It will be ignored.\n', example_file, language);
+        warning(wid, 'We cannot find\n%s,\nwhich is supposed to be a MATLAB built-in example for trying MEX on %s. It will be ignored.\n', example_file, language);
     end
     success = -1;
     return
@@ -192,51 +184,61 @@ end
 % In general, we should clear a MEX function before compiling it. Otherwise, it may lead to a
 % failure of even crash. See https://github.com/equipez/test_matlab/tree/master/crash
 % Without the next line, `mex(example_file)` fails on Windows if we run this script two times.
-clear('timestwo');
+clear(mexname);
 %!------------------------------------------------------------------------------------------------!%
-temp_mexdir = tempdir();  % The directory to output the MEX file of `timestwo`.
+temp_mexdir = tempdir();  % The directory to output the compiled MEX file
 mex_status = -1;
 exception = [];
 try
-    [~, mex_status] = evalc('mex(example_file, ''-outdir'', temp_mexdir)'); % Use evalc so that no output will be displayed
+    [~, mex_status] = evalc('mex(''-outdir'', temp_mexdir, ''-output'', mexname, example_file)'); % Use evalc so that no output will be displayed
 catch exception
     % Do nothing
 end
 
 if ~isempty(exception) || mex_status ~= 0
-    delete(fullfile(temp_mexdir, 'timestwo.*'));  % Remove the trash before returning
+    delete(fullfile(temp_mexdir, [mexname, '.*']));  % Remove the trash before returning
     if verbose
-        fprintf('\nThe MEX of your MATLAB failed to compile\n%s,\nwhich is a MATLAB built-in example for trying MEX on %s.\n', example_file, language);
-        fprintf('\nTo see the detailed error message, execute the following command:\n');
-        fprintf('\n  mex(''-v'', fullfile(matlabroot, ''extern'', ''examples'', ''refbook'', ''%s''));\n', example_file_name);
+        fprintf('\nThe MEX of your MATLAB failed to compile\n%s,\nwhich is supposed to be a MATLAB built-in example for trying MEX on %s.\n', example_file, language);
+        fprintf('\nThe error message is\n%s\n', exception.message);
     end
     success = 0;
     return
 end
 
 % Check whether the mexified example_file works
-addpath(temp_mexdir);  % Make `timestwo` available on path
+% N.B.: We assume that the MEX function is `timestwo`, which multiplies a given number by two.
+% If it is not, we raise a warning (even if verbose = false) and return with success = -1.
+if ~strcmpi(mexname, 'timestwo')
+    fprintf('\n');
+    wid = sprintf('%s:MexExampleIsNotTimestwo', funname);
+    warning('on', wid);
+    warning(wid, 'The MEX example is not timestwo but %s; we will not test whether it works correctly.\n', mexname);
+    success = -1;
+    return
+end
+
+addpath(temp_mexdir);  % Make the MEX function available on path
 exception = [];
 try
-    [~, timestwo_out] = evalc('timestwo(1)'); % Try whether timestwo works correctly
+    [~, mexfun_out] = evalc([mexname, '(1)']);
 catch exception
     % Do nothing
 end
 
 rmpath(temp_mexdir);  % Clean up the path before returning.
-delete(fullfile(temp_mexdir, 'timestwo.*'));  % Remove the trash before returning
+delete(fullfile(temp_mexdir, [mexname, '.*']));  % Remove the trash before returning
 
 if ~isempty(exception)
     if verbose
-        fprintf('\nThe MEX of your MATLAB compiled\n%s,\nbut the resultant MEX file does not work.\n', example_file);
+        fprintf('\nThe MEX of your MATLAB compiled\n%s,\nbut the resultant MEX file does not work:\n%s\n', example_file, exception.message);
     end
     success = 0;
-elseif abs(timestwo_out - 2) >= 20*eps
+elseif abs(mexfun_out - 2) >= 20*eps
     if verbose
         fprintf('\n');
         wid = sprintf('%s:ExampleFileWorksIncorrectly', funname);
         warning('on', wid);
-        warning(wid, 'The MEX of your MATLAB compiled\n%s,\nbut the resultant MEX file returns %.16f when calculating 2 times 1.', example_file, timestwo_out);
+        warning(wid, 'The MEX of your MATLAB compiled\n%s,\nbut the resultant MEX file returns %.16f when calculating 2 times 1.', example_file, mexfun_out);
     end
     success = -1;
 end

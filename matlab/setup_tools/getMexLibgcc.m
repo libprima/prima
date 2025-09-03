@@ -19,12 +19,8 @@ function info = getMexLibgcc()
     assert(isCommandAvailable('tail'), sprintf('%s: tail command not found.', funName));
 
     % exampleFile is an example provided by MATLAB for trying MEX.
-    % NOTE: MATLAB MAY CHANGE THE LOCATION OF THIS FILE IN THE FUTURE.
-    exampleFile = fullfile(matlabroot, 'extern', 'examples', 'refbook', 'timestwo.F');
-    [~, mexName] = fileparts(exampleFile);
-    if ~exist(exampleFile, 'file')
-        error('%s: The official MEX example not found: %s', funName, exampleFile);
-    end
+    % mexName is the name of the MEX file without extension.
+    [exampleFile, mexName] = official_mex_example('Fortran');
 
     % Build MEX into a temp directory
     % NOTE: We do not try setting up MEX here, because we want to probe the current MEX setup.
@@ -32,10 +28,10 @@ function info = getMexLibgcc()
     mkdir(outDir);
     c = onCleanup(@() safeCleanup(outDir));  % Cleanup temp dir on function exit
     try
-        clear('timestwo');
+        clear(mexName);
         evalc('mex(''-outdir'', outDir, ''-output'', mexName, exampleFile)');
-    catch ME
-        error('%s: Failed to build MEX from %s.\nThe error message is\n%s\nMake sure that MEX is properly set up.', funName, exampleFile, ME.message);
+    catch exception
+        error('%s: Failed to build MEX from %s.\nThe error message is\n%s\nMake sure that MEX is properly set up.', funName, exampleFile, exception.message);
     end
 
     % Find produced MEX
