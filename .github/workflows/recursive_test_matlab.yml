@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
 
-      # The matrix is essentially the same as that of stress_test_matlab.yml, except for test
+      # The matrix is the same as that of stress_test_matlab.yml, except for test
       matrix:
         os: [ubuntu-latest, macos-13, windows-latest]
         matlab: [R2023a, latest]
