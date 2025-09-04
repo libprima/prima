@@ -118,9 +118,6 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           GFVER=${{ env.GFORTRAN_VERSION }}
-          if [[ "${{ matrix.os }}" = "ubuntu-22.04" ]] ; then
-              GFVER=13
-          fi
           if [[ "${{ matrix.matlab }}" = "R2020b" || "${{ matrix.matlab }}" = "R2021a" || "${{ matrix.matlab }}" = "R2021b" ]] ; then
               GFVER=9
           fi
