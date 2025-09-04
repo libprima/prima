@@ -95,14 +95,17 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: which gcc && gcc --version && which gfortran && gfortran --version
 
-      - name: Decide the version of oneAPI to use
+      - name: Decide the version of oneAPI to use on macOS and Windows
         shell: bash
+        if: ${{ startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'windows') }}
         run: |
-          ONEAPI_VERSION=
-          if [[ "${{ matrix.os }}" = "windows-"* ]] ; then
-              if [[ "${{ matrix.matlab }}" = "R2020"* || "${{ matrix.matlab }}" = "R2021"* || "${{ matrix.matlab }}" = "R2022"* || "${{ matrix.matlab }}" = "R2023"* ]] ; then
-                  ONEAPI_VERSION=2023
-              fi
+          # Initialize ONEAPI_VERSION to "latest", causing the installer script to install the latest oneAPI.
+          ONEAPI_VERSION="latest"
+          # On Windows. the latest oneAPI supported by MATLAB R2023a/b and R2024a/b is 2023 and 2024,
+          # respectively. Thus we set ONEAPI_VERSION to the following. If matrix.matlab is "latest",
+          # then ONEAPI_VERSION will be "latest".
+          if [[ "${{ matrix.os }}" == windows* ]]; then
+              ONEAPI_VERSION=$(echo "${{ matrix.matlab }}" | sed -e 's/R\([0-9]*\)\([ab]\)/\1/')
           fi
           echo "ONEAPI_VERSION=$ONEAPI_VERSION" >> $GITHUB_ENV
           echo "ONEAPI_VERSION:" $ONEAPI_VERSION

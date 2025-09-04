@@ -64,16 +64,17 @@ jobs:
           $SEDI "s/max(\[0, chist\]) > 0)/max(\[0, chist\]) > 0)\nprobinfo.raw_data\noutput\nchist/" postprima.m
           cat postprima.m
 
-      - name: Decide the version of oneAPI to use
+      - name: Decide the version of oneAPI to use on macOS and Windows
         shell: bash
+        if: ${{ startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'windows') }}
         run: |
-          # Initialize the variable ONEAPI_VERSION to an empty string, which means the default version
-          ONEAPI_VERSION=
-          if [[ "${{ matrix.os }}" = "windows-"* ]] ; then
-              # The latest oneAPI supported by MATLAB R2023a/b and R2024a/b is 2023 and 2024, respectively
-              if [[ "${{ matrix.matlab }}" = "R2023"* || "${{ matrix.matlab }}" = "R2024"* ]] ; then
-                  ONEAPI_VERSION="$(echo "${{ matrix.matlab }}" | cut -c 2-5)"
-              fi
+          # Initialize ONEAPI_VERSION to "latest", causing the installer script to install the latest oneAPI.
+          ONEAPI_VERSION="latest"
+          # On Windows. the latest oneAPI supported by MATLAB R2023a/b and R2024a/b is 2023 and 2024,
+          # respectively. Thus we set ONEAPI_VERSION to the following. If matrix.matlab is "latest",
+          # then ONEAPI_VERSION will be "latest".
+          if [[ "${{ matrix.os }}" == windows* ]]; then
+              ONEAPI_VERSION=$(echo "${{ matrix.matlab }}" | sed -e 's/R\([0-9]*\)\([ab]\)/\1/')
           fi
           echo "ONEAPI_VERSION=$ONEAPI_VERSION" >> $GITHUB_ENV
           echo "ONEAPI_VERSION:" $ONEAPI_VERSION
