@@ -137,6 +137,7 @@ jobs:
           readelf -V ${matlab_libgcc} | grep -oiE 'GCC_([0-9]+)(.[0-9]+){0,2}' | sort -V | tail -1
 
       - name: Revise getMexLibgcc and compiled.m to print necessary information
+        shell: bash
         run: |
           cd matlab/setup_tools || exit 42
           $SEDI 's|\(.*lddOut.*\);|\1|' getMexLibgcc.m

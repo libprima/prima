@@ -145,6 +145,7 @@ jobs:
           $SEDI "s|return|for ifile = 1 : length(config_files), ifile, cfile = fullfile(config_dir, config_files{ifile}) , system(['cat ', cfile]); end|" set_compiler_options.m
 
       - name: Revise getMexLibgcc and compiled.m to print necessary information
+        shell: bash
         run: |
           cd matlab/setup_tools || exit 42
           $SEDI 's|\(.*lddOut.*\);|\1|' getMexLibgcc.m
