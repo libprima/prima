@@ -459,7 +459,7 @@ Zaikun Zhang](https://www.zhangzk.net).
 ### Users
 
 Some known users of PRIMA are as follows (in alphabetical order).
-- [AWS Center for Quantum Computing](https://github.com/aws-cqc): https://github.com/aws-cqc/DeviceLayout.jl/blob/main/docs/src/examples/singletransmon.md
-- [NVIDIA CUDA-QX](https://nvidia.github.io/cudaqx/): https://github.com/NVIDIA/cudaqx/blob/main/NOTICE
-- [Qoro Quantum](https://qoroquantum.net): https://github.com/QoroQuantum/divi/blob/main/divi/exp/scipy/pyprima/LICENCE.txt
-- [SciPy](https://scipy.org):
+- [AWS Center for Quantum Computing](https://github.com/aws-cqc/DeviceLayout.jl/blob/main/docs/src/examples/singletransmon.md)
+- [NVIDIA CUDA-QX](https://github.com/NVIDIA/cudaqx/blob/main/NOTICE)
+- [Qoro Quantum](https://github.com/QoroQuantum/divi/blob/main/divi/exp/scipy/pyprima/LICENCE.txt)
+- [SciPy](https://docs.scipy.org/doc/scipy/release/1.16.0-notes.html#highlights-of-this-release)
