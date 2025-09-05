@@ -23,6 +23,7 @@
     - [Gitee](https://gitee.com/libprima/prima)
     - [GitHub](https://github.com/libprima/prima)
 - [Star history](#star-history)
+- [Users](#users)
 
 
 ### What
@@ -454,3 +455,11 @@ Zaikun Zhang](https://www.zhangzk.net).
 
 
 <p align="center"><strong>Thank you for your support.</strong></p>
+
+### Users
+
+Some known users of PRIMA are as follows (in alphabetical order).
+- [AWS Center for Quantum Computing](https://github.com/aws-cqc): https://github.com/aws-cqc/DeviceLayout.jl/blob/main/docs/src/examples/singletransmon.md
+- [NVIDIA CUDA-QX](https://nvidia.github.io/cudaqx/): https://github.com/NVIDIA/cudaqx/blob/main/NOTICE
+- [Qoro Quantum](https://qoroquantum.net): https://github.com/QoroQuantum/divi/blob/main/divi/exp/scipy/pyprima/LICENCE.txt
+- [SciPy](https://scipy.org):
