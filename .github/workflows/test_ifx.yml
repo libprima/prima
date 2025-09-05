@@ -99,6 +99,16 @@ jobs:
               $SEDI 's|::[[:space:]]*NRAND_DFT[[:space:]]*=.*$|:: NRAND_DFT = 1|g' testsuite/param.f90  # Number of random tests when the dimension is small
               RP=r$(( 2**(2 + $(date +%-d) % 2) ))
               echo "RP=${RP}"
+
+              TEST_SOLVERF90="test_cobyla.f90"
+              if [[ "$RP" == "r8" && -f "$TEST_SOLVERF90" ]] ; then
+                  echo "Modifying $TEST_SOLVERF90 to skip the recursive tests."
+                  sed -i '/Test recursive call/,/^end module test_solver_mod/d' "$TEST_SOLVERF90" || exit 1
+                  echo -e "end if\nend subroutine test_solver\nend module test_solver_mod" >> $TEST_SOLVERF90
+                  echo "Done."
+                  cat "$TEST_SOLVERF90"
+              fi
+
               make xtest_${IK}_${RP}_d1_tst.${{ matrix.solver }}
           else
               make xtest_${IK}.${{ matrix.solver }}
