@@ -111,6 +111,7 @@ jobs:
           if [[ "${MATLAB_VERSION_NUMBER}" != "latest" && "${MATLAB_VERSION_NUMBER}" -le 2021 ]]; then
               GFVER=9
           fi
+          echo "GFVER=$GFVER"
           echo "GFVER=$GFVER" >> $GITHUB_ENV
       - name: Set up gfortran on Linux
         if: startsWith(matrix.os, 'ubuntu')
