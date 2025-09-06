@@ -186,6 +186,14 @@ catch exception
 
 end
 
+% Uninstall the solvers installed by the test
+cd(fullfile(test_dir, 'prima'));
+setup('uninstall');
+if strcmpi(options.competitor, 'archiva') || strcmpi(options.competitor, 'norma')
+    cd(fullfile(test_dir, options.competitor));
+    setup('uninstall');
+end
+
 setpath(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
 fprintf('\nCurrently in %s\n\n', pwd());

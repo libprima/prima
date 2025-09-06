@@ -9,7 +9,6 @@ matd = fileparts(mfiledir); % Matlab directory
 interfaces = fullfile(matd, 'interfaces'); % Directory of the interfaces
 mexdir = fullfile(interfaces, 'private'); % The private subdirectory of the interfaces
 tests = fullfile(matd, 'tests'); % Directory containing some tests
-tools = fullfile(matd, 'setup_tools'); % Directory containing some tools
 
 % Remove the compiled MEX files.
 clean_mex(mexdir);
@@ -18,7 +17,7 @@ clean_mex(mexdir);
 orig_warning_state = warning;
 warning('off', 'MATLAB:rmpath:DirNotFound'); % Maybe the paths were not added. We do not want to see this warning.
 warning('off', 'MATLAB:SavePath:PathNotSaved'); % Maybe we do not have the permission to save path.
-rmpath(interfaces, tests, tools);
+rmpath(interfaces, tests);
 savepath;
 warning(orig_warning_state); % Restore the behavior of displaying warnings
 
@@ -26,7 +25,8 @@ warning(orig_warning_state); % Restore the behavior of displaying warnings
 user_startup = fullfile(userpath,'startup.m');
 if exist(user_startup, 'file')
     add_path_string = sprintf('addpath(''%s'');', interfaces);
-    full_add_path_string = sprintf('%s\t%s %s', add_path_string, '%', path_string_stamp);
+    % full_add_path_string must match the string with the same name defined in the setup script.
+    full_add_path_string = sprintf('%s %s %s', add_path_string, '%', path_string_stamp);
     try
         del_str_ln(user_startup, full_add_path_string);
     catch
