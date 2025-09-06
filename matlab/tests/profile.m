@@ -186,23 +186,21 @@ catch exception
 
 end
 
-% Uninstall the solvers installed by the test
-cd(fullfile(test_dir, 'prima'));
-setup('uninstall');
-if strcmpi(options.competitor, 'archiva') || strcmpi(options.competitor, 'norma')
-    cd(fullfile(test_dir, options.competitor));
-    setup('uninstall');
-end
+% Restore the path to oldpath.
+% N.B.: Do NOT try uninstalling the solvers, because we may call `verify` again with 'ncp', which
+% means not to compile the solvers and reuse the existing MEX files, which would fail if we
+% uninstall the solvers here.
+setpath(oldpath);
 
-setpath(oldpath);  % Restore the path to oldpath.
-cd(olddir);  % Go back to olddir.
+% Go back to olddir.
+cd(olddir);
 fprintf('\nCurrently in %s\n\n', pwd());
 
+% `dev_arch` a subdirectory of fullfile(s_root_dir, 'archiva'). It contains the "archiva" version of
+% solvers used as a benchmark for the development of the current version of the solvers.
+% It may not be the latest archiva version. To make sure that it is the one desired, we print the
+% path of `dev_arch` here if the competitor is 'archiva'
 if strcmpi(options.competitor, 'archiva')
-    % `dev_arch` a subdirectory of fullfile(s_root_dir, 'archiva'). It contains the "archiva" version of
-    % solvers used as a benchmark for the development of the current version of the solvers.
-    % It may not be the latest archiva version. To make sure that it is the one desired, we print the
-    % path of `dev_arch` here if the competitor is 'archiva'
     archiva_dir_name = 'dev_arch';
     mfilepath = fileparts(mfilename('fullpath'));  % Directory where this .m file resides.
     root_dir = fileparts(fileparts(mfilepath));  % root directory of the project

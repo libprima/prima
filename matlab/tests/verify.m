@@ -108,16 +108,17 @@ catch exception
 
 end
 
-% Uninstall the solvers installed by the test
-cd(fullfile(test_dir, 'prima'));
-setup('uninstall');
-cd(fullfile(test_dir, 'norma'));
-setup('uninstall');
+% Restore the path to oldpath.
+% N.B.: Do NOT try uninstalling the solvers, because we may call `verify` again with 'ncp', which
+% means not to compile the solvers and reuse the existing MEX files, which would fail if we
+% uninstall the solvers here.
+setpath(oldpath);
 
-setpath(oldpath);  % Restore the path to oldpath.
-cd(olddir);  % Go back to olddir.
+% Go back to olddir.
+cd(olddir);
 fprintf('\nCurrently in %s\n\n', pwd());
 
-if ~isempty(exception)  % Rethrow any exception caught above.
+% Rethrow any exception caught above.
+if ~isempty(exception)
     rethrow(exception);
 end
