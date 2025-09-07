@@ -17,10 +17,10 @@ copyfile(fullfile(matlabroot, 'extern', 'include', 'fintrf.h'), fintrf);
 fileattrib(fintrf, '+w')
 
 % Add time stamp to fintrf.
-time = datestr(datetime(), 'HH.MM.SS, yyyy-mm-dd');
+time = char(datetime());
 matv = [version, ', ', computer];
 S = fileread(fintrf);
-S = ['/* MATLAB version: ', matv, ' */', newline, '/* Retrieved at ', time, ' */', newline, S];
+S = ['/* MATLAB version: ', matv, ' */', newline, '/* Retrieved on ', time, ' */', newline, S];
 fid = fopen(fintrf, 'w');  % Open/create file for writing. Discard existing contents.
 if fid == -1
     error('Cannot open file %s', fintrf);

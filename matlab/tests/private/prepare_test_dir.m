@@ -2,7 +2,7 @@ function test_dir = prepare_test_dir(solver, test_name, test_options)
 %PREPARE_TEST_DIR prepares a copy of the package in `test_dir` for the solver named `solver and test
 % named `test_name`,  with options in `test_options`, which specifies the competitor etc.
 
-if verLessThan('matlab', '9.10') && ispc
+if isMATLABReleaseOlderThan('R2020b') && ispc
     callstack = dbstack;
     funname = callstack(1).name; % Name of the current function
     warning('%s may FAIL because ''copyfile'' of MATLAB R2020b or earlier may raise an error when handling unix symbolic links under Windows.', funname);

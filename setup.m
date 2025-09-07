@@ -64,8 +64,14 @@ function setup(varargin)
 package_name = 'prima';
 
 % Check the version of MATLAB.
-if verLessThan('matlab', '9.4')   % MATLAB R2018a = MATLAB 9.4
-    fprintf('\nSorry, this package does not support MATLAB R2017b or earlier releases.\n\n');
+oldest_supported_release = 'R2020b';
+try
+    matlab_too_old = isMATLABReleaseOlderThan(oldest_supported_release);
+catch
+    matlab_too_old = true;  % isMATLABReleaseOlderThan was introduced in MATLAB R2020b.
+end
+if matlab_too_old
+    fprintf('\nSorry, this package does not support MATLAB %s or earlier releases.\n\n', oldest_supported_release);
     return
 end
 

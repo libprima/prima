@@ -87,10 +87,10 @@ try  % We use `try ... catch ...` in order to restore `allprec_file` in case of 
     end
     fprintf(fid, 'function precision_list = %s()\n', allprec);
     fprintf(fid, '%%%s ', upper(allprec));
-    fprintf(fid, ' returns a cell array containing the names of all the precisions available for the\n');
+    fprintf(fid, 'returns a cell array containing the names of all the precisions available for the\n');
     fprintf(fid, '%% Fortran solvers in this package.\n');
     fprintf(fid, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n');
-    fprintf(fid, '%% This file is created automatically by \n%% %s.m at %s.\n', mfilename, datestr(datetime(), 'yyyymmdd.HH:MM:SS'));
+    fprintf(fid, '%% This file is created automatically\n%% by %s.m\n%% on %s.\n', mfilename, char(datetime()));
     fprintf(fid, '%% NEVER EDIT IT, OR THE EARTH WILL EXPLODE.\n');
     fprintf(fid, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n');
     fprintf(fid, '%s', precision_list_string);

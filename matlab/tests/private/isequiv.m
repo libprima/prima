@@ -272,7 +272,6 @@ return
 function equiv = compare(solvers, prob, ir, single_test, options)
 pname = prob.name;
 objective = prob.objective;
-nonlcon = prob.nonlcon;
 x0 = prob.x0;
 n = length(x0);
 

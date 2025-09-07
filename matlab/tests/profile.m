@@ -127,7 +127,7 @@ try
     options.test_feature = test_feature;
 
     if ~isfield(options, 'time')
-        options.time = datestr(datetime(), 'yymmdd_HHMM');
+        options.time = char(datetime('now','Format','yyMMdd_HHmm'));
     end
 
     % Define the solvers to test.

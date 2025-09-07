@@ -2,7 +2,7 @@ This is the README file for using PRIMA under MATLAB.
 
 ## Prerequisites
 
-PRIMA supports MATLAB R2018a and later releases. To use PRIMA, you need first
+PRIMA supports MATLAB R2020b and later releases. To use PRIMA, you need first
 set up the [MEX](https://www.mathworks.com/help/matlab/ref/mex.html) of your MATLAB.
 **The setup of MEX is a pure MATLAB usage problem and it has nothing to do with PRIMA.**
 

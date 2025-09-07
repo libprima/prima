@@ -1,4 +1,5 @@
-function T = dataprof(frec, fmin, pdim, options)
+%function T = dataprof(frec, fmin, pdim, options)
+function T = dataprof(frec, fmin)
 % To be implemented.
 
 delsame = 0;
@@ -44,7 +45,10 @@ end
 
 T = mean(T, 3);
 
-sol = textread('solvers', '%s');
+fid = fopen('solvers','r');
+C = textscan(fid, '%s', 'Delimiter', '\n');
+fclose(fid);
+sol = C{1};
 for is = 1:ns
     sol{is} = regexprep(sol{is}, '_4test', '');
     %sol{is} = regexprep(sol{is}, 'newuoa', 'NEWUOA');
@@ -116,7 +120,7 @@ end
 
 xlabel('$\log_2(\alpha), \quad \alpha = \mathrm{NF}/\mathrm{NF}_{\min}$', 'fontsize', fontsize, 'interpreter', 'latex');
 ylabel('$\pi_s(\alpha)$', 'fontsize', fontsize, 'interpreter', 'latex');
-xlabh = get(gca,'XLabel');
+%xlabh = get(gca,'XLabel');
 %set(xlabh,'Position',get(xlabh,'Position') - [0 .0175 0])
 set(gca,'FontSize',fontsize);
 
@@ -146,7 +150,7 @@ end
 clf;
 hfig=figure(2);
 for is = 1:ns
-    [xs, ys] = stairs([1:1.2*M]/(n+1), D(is, :));
+    [xs, ys] = stairs((1:1.2*M)/(n+1), D(is, :));
     plot(xs, ys, lines{is}, 'Color', colors{is},  'Linewidth',linewidth);
     hold on;
 end
@@ -164,7 +168,7 @@ end
 
 xlabel('$\beta = \mathrm{NF}/(n+1)$', 'fontsize',fontsize, 'interpreter', 'latex');
 ylabel('$\delta_s(\beta)$', 'fontsize', fontsize, 'interpreter', 'latex');
-xlabh = get(gca, 'XLabel');
+%xlabh = get(gca, 'XLabel');
 %set(xlabh,'Position',get(xlabh,'Position') - [0 .0175 0])
 set(gca, 'FontSize', fontsize);
 

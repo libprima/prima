@@ -1,6 +1,6 @@
 function outputfiles = prof(varargin)
 
-time = datestr(datetime(), 'yymmdd_HHMM');
+time = char(datetime('now','Format','yyMMdd_HHmm'));
 
 % Set up the directory to save the testing data, i.e., `data_dir`.
 mfiledir = fileparts(mfilename('fullpath')); % Directory where this .m file resides.

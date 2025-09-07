@@ -232,3 +232,6 @@ cython_debug/
 
 # Version file
 _version.txt
+
+# MathWorks files
+fintrf.h

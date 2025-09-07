@@ -18,13 +18,3 @@ increases the trust-region radius, leading to a very different iterate compared 
 version.
 
 4. The infos (exitflags) should be returned from a function, not to hard code them.
-
-5. 20250814 Update matlab/compile.m to include
-
--ftrampoline-impl=heap
-
-in the compilation flags for gfortran 14+. This will remove the warnings about executable stack.
-After doing so, remember to run all the test with MATLAB R2024b-, as the internal procedures were
-removed in R2025a.
-
-In addition, try the linker option `-Wl,-z,noexecstack`, which marks the stack as non-executable.

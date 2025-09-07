@@ -165,9 +165,9 @@ common_mex_options = {verbose_option, compiler_options, linker_options};
 % https://stackoverflow.com/questions/79699706/matlab-2025a-vs-fortran-mex-files-with-internal-subroutines
 % https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines
 % https://stackoverflow.com/questions/79705107/fortran-implementating-a-parametrized-objective-function-without-using-module-v
-% The version number of R2025a is 25.1.
-support_internal_procedures = (verLessThan('matlab', '25.1')  || ~verLessThan('matlab', '25.2') || ...
-    ~contains(compiler_manufacturer, 'gnu') || contains(compiler_options, '-ftrampoline-impl=heap'));
+matlab_supports_ip = (isMATLABReleaseOlderThan('R2025a')  || ~isMATLABReleaseOlderThan('R2025b'));
+compiler_supports_ip = (~contains(compiler_manufacturer, 'gnu') || contains(compiler_options, '-ftrampoline-impl=heap'));
+support_internal_procedures = (matlab_supports_ip || compiler_supports_ip);
 if ~support_internal_procedures
     if verbose
         warning('prima:ThreadRecursionUnsafe', ...
