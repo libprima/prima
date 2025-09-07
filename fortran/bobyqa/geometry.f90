@@ -8,7 +8,7 @@ module geometry_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sunday, April 21, 2024 PM03:19:27
+! Last Modified: Sun 07 Sep 2025 10:44:12 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -477,6 +477,8 @@ if (ibd > 0) then
 end if
 
 ! Calculate DENOM for the current choice of D. Indeed, only DEN_LINE(KNEW) is needed.
+! Zaikun 20250907: It was observed numerically that D could be ZERO here (i.e., XLINE = XOPT).
+! Should this be impossible in theory?
 d = xline - xopt
 den_line = calden(kopt, bmat, d, xpt, zmat)
 
@@ -586,12 +588,11 @@ if (den_cauchy(knew) > max(den_line(knew), ZERO) .or. is_nan(den_line(knew))) th
     d = s
 end if
 
-! In case D is zero or contains Inf/NaN, replace it with a displacement from XPT(:, KNEW) to
-! XOPT. Powell's code does not have this.
+! In case D is zero or contains Inf/NaN, replace it with a displacement from XPT(:, KNEW) to XOPT.
+! Powell's code does not have this. Note that it is crucial to ensure that a geometry step is nonzero.
 if (sum(abs(d)) <= 0 .or. .not. is_finite(sum(abs(d)))) then
     d = xpt(:, knew) - xopt
-    scaling = delbar / norm(d)
-    d = max(0.6_RP * scaling, min(HALF, scaling)) * d
+    d = min(HALF, delbar / norm(d)) * d  ! Since XPT respects the bounds, so does XOPT + D.
 end if
 
 !====================!
