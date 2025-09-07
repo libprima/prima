@@ -6,6 +6,14 @@ Translated from Zaikun Zhang's modern-Fortran reference implementation in PRIMA.
 Dedicated to late Professor M. J. D. Powell FRS (1936--2015).
 
 Python translation by Nickolai Belakovski.
+
+N.B. (Zaikun 20220131): Powell's implementation of COBYLA uses RHO rather than DELTA as the
+trust-region radius, and RHO is never increased. DELTA does not exist in Powell's COBYLA code.
+Following the idea in Powell's other solvers (UOBYQA, ..., LINCOA), our code uses DELTA as the
+trust-region radius, while RHO works a lower bound of DELTA and indicates the current resolution
+of the algorithm. DELTA is updated in a classical way subject to DELTA >= RHO, whereas RHO is
+updated as in Powell's COBYLA code and is never increased. The new implementation improves the
+performance of COBYLA.
 '''
 
 import numpy as np
