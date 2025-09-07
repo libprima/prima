@@ -511,7 +511,7 @@ for k = 1 : nf - nhist
 end
 xhist(:, nf - nhist + 1 : nf) = output.xhist(:, 1 : nhist);
 % output can be large, particularly when n and maxfun are large. Clear it to save memory.
-clear(output);
+clear('output');
 
 if (nf <= 0)
     % Sometimes PRIMA may return nf = 0, e.g., when it detects infeasibility.
@@ -524,12 +524,12 @@ else
     % scales the constraints so that their gradients have norm 1), making results not comparable.
     xhist_cell = num2cell(xhist(:, 1:nf), 1);
     % xhist can be large, particularly when n and maxfun are large. Clear it to save memory.
-    clear(xhist);
+    clear('xhist');
     fval_history(1:nf) = cellfun(prob.orig_objective, xhist_cell);
     orig_cstrv = @(x) get_cstrv(x, prob.Aineq, prob.bineq, prob.Aeq, prob.beq, prob.lb, prob.ub, prob.orig_nonlcon);
     cv_history(1:nf) = cellfun(orig_cstrv, xhist_cell);
     % xhist_cell can be large, particularly when n and maxfun are large. Clear it to save memory.
-    clear(xhist_cell);
+    clear('xhist_cell');
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Set the (nf+1)-th entries of fval_history and cv_history to the values returned by the solver.
