@@ -35,29 +35,25 @@ if isfield(options, 'nr')
 else
     nr = 10;
 end
-% ir is the index of the random experiment to be conducted. If it is negative, then experiments
-% 1, ..., nr, ..., nr + 20 will be conducted. nr + 20 is because there are fixed experiments
-% that will always be run.
+
+% ir is the index of the random experiment to be conducted. If it is not provided, then experiments
+% minir to maxir will be conducted. By default, minir = 1 and maxir = max(nr, 10). max(nr, 10) is
+% because there are fixed experiments that will always be run.
 if isfield(options, 'ir')
     ir = options.ir;
+    minir = ir;
+    maxir = ir;
 else
-    ir = -1;
-end
-
-if ir < 0
     if isfield(options, 'minir')
         minir = options.minir;
     else
-        minir = 0;
+        minir = 1;
     end
     if isfield(options, 'maxir')
         maxir = options.maxir;
     else
-        maxir = nr + 20;
+        maxir = max([minir, nr, 10]);
     end
-else
-    minir = ir;
-    maxir = ir;
 end
 
 if isfield(options, 'minip')
@@ -275,12 +271,13 @@ objective = prob.objective;
 x0 = prob.x0;
 n = length(x0);
 
-% Some randomization
 % Set seed using pname, n, and ir. We ALTER THE RANDOM SEED weekly to test the solvers as much as possible.
 yw = options.yw;
 rseed = max(0, min(2^32 - 1,  sum(pname) + n + ir + yw));  % A random seed defined by the current test and yw
 orig_rng_state = rng();  % Save the current random number generator settings
 rng(rseed);  % Set the random seed for reproducibility
+
+% Some randomization
 prob.x0 = x0 + 0.5*randn(size(x0));
 test_options = struct();
 test_options.rhobeg = randn;
@@ -294,7 +291,7 @@ test_options.cweight = 1e3*randn;
 test_options.npt = floor(10*randn*n);
 test_options.maxfun = floor(10*randn*n);  % For reproducibility, do not remove this even if `options` contains `maxfun`.
 if isfield(options, 'maxfun')
-    test_options.maxfun = options.maxfun;
+    test_options.maxfun = options.maxfun;  % Useful for debugging, when we may set `maxfun` to a small value.
 end
 test_options.ftarget = objective(x0) - 10*abs(randn)*max(1, objective(x0));
 %test_options.fortran = (rand > 0.5);
@@ -346,50 +343,38 @@ end
 
 call_by_package = (rand < 0.5);  % Call by the package instead of the solver
 call_by_structure = (rand < 0.5);  % Pass the problem by a structure
-if mod(ir, 50) == 0 && ~isempty(dir('*_output.txt'))
-    delete('*_output.txt');
-end
-if ir == 1
-    test_options.npt = (n+2)*(n+1)/2;
-end
-if ir == 2
-    test_options.npt = n + 2;
-end
-if ir == 3
-    test_options.maxfun = test_options.npt + 1;
-end
-if ir == 4
-    test_options.maxfun = 1000*n;
-end
-if ir == 5
-    test_options.maxfun = 1;
-end
-if ir == 6
-    test_options.maxfun = ceil(n/2);
-end
-if ir == 7
-    test_options.ftarget = inf;
-end
-if ir == 8
-    test_options.rhoend = test_options.rhobeg;
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if ir == 9
-    test_options.npt = 2*n;
-end
-if 10 <= ir && ir <= 12
-    test_options.npt = ceil(rand*n^2);
-end
-if 13 <= ir && ir <= 15
-    test_options.npt = floor(2*rand*n);
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% The TOUGH tests
 if rand < 0.5
-    % The TOUGH tests
     prob = tough(prob, rseed);  % We must pass the random seed `rseed` to `tough` to ensure reproducibility.
     test_options.chkfunval = false;  % The checking would fail due to noise.
 end
+
+% Fixed tests that will always be run
+switch ir
+case 1
+    test_options.npt = (n+2)*(n+1)/2;
+case 2
+    test_options.npt = n + 2;
+case 3
+    test_options.npt = 2*n;
+case 4
+    test_options.npt = ceil(rand*n^2);
+case 5
+    test_options.maxfun = test_options.npt + 1;
+case 6
+    test_options.maxfun = 1000*n;
+case 7
+    test_options.ftarget = inf;
+case 8
+    test_options.rhoend = test_options.rhobeg;
+end
+
 prob.options = test_options;
+
+if mod(ir, 5) == 0 && ~isempty(dir('*_output.txt'))
+    delete('*_output.txt');
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BEGIN: Call the solvers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % N.B.: In some tests, we may invoke this function with solvers{1} == solvers{2}. So do NOT assume
