@@ -98,8 +98,11 @@ for iprec = 1 : 2*nprec
     prof_output{iprec} = perfprof(frec, fmin, prof_options);
     %dataprof(frec, fmin, pdim, prof_options);
 end
-% Clear the variables to save memory. Otherwise, on GitHub Actions, the memory may be exhausted and
-% cause the runners to shut down.
+
+% Clear variables to release the memory associated with them. This is important if memory is
+% limited, e.g., when we run the tests on GitHub Actions with GitHub-hosted runners. Without doing
+% this, the hosted runners may shut down due to memory exhaustion, as it happened on 20250731 with
+% MATLAB R2025a.
 clear('frec', 'fmin', 'pdim', 'plist');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -155,10 +158,11 @@ epsname = fullfile(outdir, strcat(figname,'.eps'));
 set(gcf,'position',[0, 0, 4600, 920]);
 saveas(hfig, epsname, 'epsc2');
 
-% Close all figures. Closing figures can release memory associated with them, which is important
-% when we run the tests on GitHub Actions with GitHub-hosted runners Without doing this, the hosted
-% runners may shut down due to memory exhaustion, as it happened on 20250731 with MATLAB R2025a.
-close all;
+% Close the figure to release the memory associated with it. This is important if memory is limited,
+% e.g., when we run the tests on GitHub Actions with GitHub-hosted runners. Without doing this, the
+% hosted runners may shut down due to memory exhaustion, as it happened on 20250731 with MATLAB
+% R2025a.
+close(hfig);
 
 % Try converting the eps to pdf.
 try

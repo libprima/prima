@@ -99,6 +99,11 @@ for ip = 1:np
     end
 end
 
+% Clear variables to release the memory associated with them. This is important if memory is
+% limited, e.g., when we run the tests on GitHub Actions with GitHub-hosted runners. Without doing
+% this, the hosted runners may shut down due to memory exhaustion, as it happened on 20250731 with
+% MATLAB R2025a.
+clear('frec', 'fmin');
 
 % pp{is, ir} is the performance profile of the is-th solver during the ir-th run.
 pp = cell(ns, nr);
@@ -146,6 +151,12 @@ for ir = 1 : nr
         pp{is, ir} = [xx'; yy'];
     end
 end
+
+% Clear variables to release the memory associated with them. This is important if memory is
+% limited, e.g., when we run the tests on GitHub Actions with GitHub-hosted runners. Without doing
+% this, the hosted runners may shut down due to memory exhaustion, as it happened on 20250731 with
+% MATLAB R2025a.
+clear('T');
 
 % For each solver, we average the performance profiles across the random runs. The resultant profile
 % for the is-th solver is recorded in perf_prof{is}.
@@ -232,6 +243,12 @@ else
 end
 epsname = fullfile(options.outdir, strcat(figname,'.eps'));
 saveas(hfig, epsname, 'epsc2');
+
+% Close the figure to release the memory associated with it. This is important if memory is limited,
+% e.g., when we run the tests on GitHub Actions with GitHub-hosted runners. Without doing this, the
+% hosted runners may shut down due to memory exhaustion, as it happened on 20250731 with MATLAB
+% R2025a.
+close(hfig);
 
 % Try converting the eps to pdf.
 try
