@@ -64,7 +64,7 @@ solver_options.rhoend = 1.0e-3;
 solver_options.maxfun = min(100*n, 5e3);
 fun = @chrosen;
 for i = 1 : depth
-    fun = @(x) rfun(x, fun, solver, n, solver_options);
+    fun = @(x) rfun(x, fun, solver, solver_options);
 end
 
 % Conduct the test
@@ -89,7 +89,7 @@ return
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function f = rfun(x, fun, solver, n, solver_options)
+function f = rfun(x, fun, solver, solver_options)
 %RFUN defines a function of x by minimizing fun([x; y]) with respect to y in R^2 using a solver.
 solver_options.iprint = 0;
 solver_options.rhoend = 1.0e-2;

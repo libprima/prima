@@ -21,12 +21,12 @@ function information = package_info(request)
 invoker_list = {'prima', 'preprima', 'parse_input'};
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
-if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
+if length(callstack) > 1 && ismember(callstack(2).name, invoker_list)
+    invoker = callstack(2).name; % Name of the function who calls this function
+else
     % Private/unexpected error
     error(sprintf('%s:InvalidInvoker', funname), ...
     '%s: UNEXPECTED ERROR: %s should only be called by %s.', funname, funname, strjoin(invoker_list, ', '));
-else
-    invoker = callstack(2).name; % Name of the function who calls this function
 end
 
 name = 'PRIMA';

@@ -385,14 +385,10 @@ if 13 <= ir && ir <= 15
     test_options.npt = floor(2*rand*n);
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if 1 <= ir && ir <= 20
+if rand < 0.5
     % The TOUGH tests
-    % We must pass the random seed `rseed` to `tough` to ensure reproducibility.
+    prob = tough(prob, rseed);  % We must pass the random seed `rseed` to `tough` to ensure reproducibility.
     test_options.chkfunval = false;  % The checking would fail due to noise.
-    prob = tough(prob, rseed);
-else
-    prob.objective  = objective;
-    prob.nonlcon = nonlcon;
 end
 prob.options = test_options;
 

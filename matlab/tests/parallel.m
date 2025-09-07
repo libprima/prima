@@ -71,7 +71,7 @@ for i = 1 : 2
 
     %ticBytes(gcp)
 
-    parfor i = 1:np
+    parfor ip = 1:np
         fprintf('\n>>>>>> Parallel test for %s, %d-th run <<<<<<\n', solver_name, i);
         test(solver, n, solver_options, random_seed + i);
     end

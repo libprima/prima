@@ -30,12 +30,12 @@ invoker_list = [all_solvers(), 'prima'];
 invoker_list = [invoker_list, strcat(invoker_list, '.m')];
 callstack = dbstack;
 funname = callstack(1).name; % Name of the current function
-if (length(callstack) == 1 || ~ismember(callstack(2).name, invoker_list))
+if length(callstack) > 1 && ismember(callstack(2).name, invoker_list)
+    invoker = callstack(2).name; % Name of the function who calls this function
+else
     % Private/unexpected error
     error(sprintf('%s:InvalidInvoker', funname), ...
     '%s: UNEXPECTED ERROR: %s should only be called by %s.', funname, funname, strjoin(invoker_list, ', '));
-else
-    invoker = callstack(2).name; % Name of the function who calls this function
 end
 
 if (nargin ~= 1) && (nargin ~= 10)
@@ -435,11 +435,7 @@ problem = rmfield(problem, unknown_fields);  % Remove the unknown fields
 
 if ~isempty(unknown_fields)
     wid = sprintf('%s:UnknownProbField', invoker);
-    if length(unknown_fields) == 1
-        wmsg = sprintf('%s: problem with an unknown field %s; it is ignored.', invoker, strjoin(unknown_fields, ', '));
-    else
-        wmsg = sprintf('%s: problem with unknown fields %s; they are ignored.', invoker, strjoin(unknown_fields, ', '));
-    end
+    wmsg = sprintf('%s: problem with unknown field(s) %s, which will be ignored.', invoker, strjoin(unknown_fields, ', '));
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
@@ -1023,11 +1019,7 @@ options = rmfield(options, unknown_fields);  % Remove the unknown fields
 % even though we have declared that this field will be ignored.
 if ~isempty(unknown_fields)
     wid = sprintf('%s:UnknownOption', invoker);
-    if length(unknown_fields) == 1
-        wmsg = sprintf('%s: unknown option %s; it is ignored.', invoker, strjoin(unknown_fields, ', '));
-    else
-        wmsg = sprintf('%s: unknown options %s; they are ignored.', invoker, strjoin(unknown_fields, ', '));
-    end
+    wmsg = sprintf('%s: unknown option(s) %s, which will be ignored.', invoker, strjoin(unknown_fields, ', '));
     warning(wid, '%s', wmsg);
     warnings = [warnings, wmsg];
 end
