@@ -73,11 +73,7 @@ try
         yw = year_week('Asia/Shanghai');
     end
     options.yw = yw;  % options.yw is needed in `isequiv`.
-    if mod(yw, 4) == 0
-        options.integer_kind = 0;
-    else
-        options.integer_kind = 2^(mod(yw, 4) + 3);
-    end
+    options.integer_kind = mod(yw, 4) * 2^(mod(yw, 4) + 3);  % 0, 16, 32, or 64
 
     % Make the solvers available. Note that the solvers are under `test_dir`.
     get_solvers(solvers, test_dir, options);
