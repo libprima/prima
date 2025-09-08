@@ -34,6 +34,7 @@ jobs:
         competitor: [classical, archiva, norma]
         use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
         ctol_indicator: [0, 1, 2]
+        test_feasibility_problems: [true, false]
 
     steps:
 
@@ -175,6 +176,7 @@ jobs:
             options.nr = 1;
             options.precision = '${{ matrix.precision }}';
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
+            options.test_feasibility_problems = ${{ matrix.test_feasibility_problems }};
 
             try
               prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', 'l', options);

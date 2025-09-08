@@ -69,8 +69,9 @@ thorough_test = 0;
 minip = 1;
 maxip = 2^32 - 1;
 strict = 2;
-
 verbose = false;
+% Zaikun 20250908: It turns out that CUTEst contains many feasibility problems. We do not test them by default.
+test_feasibility_problems = false;
 
 % Directories for recording the starting/ending of problems (tic/toc are unavailable in parfor).
 stamp = options.stamp;
@@ -96,7 +97,7 @@ disp(['prob_end_runs_dir = ', prob_end_runs_dir]);
 % Set options
 options = setopt(options, precision, rhobeg, rhoend, npt, maxfun_dim, maxfun, maxit, ftarget, perm, randomizex0, ...
     eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
-    sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict, verbose);
+    sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict, verbose, test_feasibility_problems);
 
 assert(options.maxdim <= maxn);
 
@@ -113,6 +114,13 @@ else
     requirements.mincon = options.mincon;
     requirements.maxcon = options.maxcon;
     requirements.type = options.type;
+
+    if ~options.test_feasibility_problems
+        % If requirements does not contain `is_feasibility`, then we test all problems, including feasibility problems.
+        % If requirements.is_feasibility = false, then we test only the problems that are not feasibility problems.
+        % If requirements.is_feasibility = true, then we test only feasibility problems.
+        requirements.is_feasibility = false;
+    end
 
     if isfield(options, 'blacklist')
         requirements.blacklist = options.blacklist;
@@ -555,7 +563,7 @@ return
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function options = setopt(options, precision, rhobeg, rhoend, npt, maxfun_dim, maxfun, maxit, ftarget, perm, ...
         randomizex0, eval_options, nr, ctol, ctol_multiple, cpenalty, type, mindim, maxdim, mincon, maxcon, ...
-        sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict, verbose) % Set options
+        sequential, debug, chkfunval, output_xhist, output_nlchist, thorough_test, minip, maxip, strict, verbose, test_feasibility_problems) % Set options
 
 if (~isfield(options, 'precision'))
     options.precision = precision;
@@ -650,6 +658,9 @@ if (~isfield(options, 'strict'))
 end
 if (~isfield(options, 'verbose'))
     options.verbose = verbose;
+end
+if (~isfield(options, 'test_feasibility_problems'))
+    options.test_feasibility_problems = test_feasibility_problems;
 end
 
 % Set eval_options

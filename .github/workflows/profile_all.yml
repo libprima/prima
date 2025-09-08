@@ -33,6 +33,7 @@ jobs:
         use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
         with_optim_toolbox: [yes, no]
         ctol_indicator: [0, 1, 2]
+        test_feasibility_problems: [true, false]
         exclude:
           - solver: cobylan
             with_optim_toolbox: yes
@@ -54,6 +55,13 @@ jobs:
             ctol_indicator: 1
           - solver: bobyqa
             ctol_indicator: 2
+          - solver: uobyqa
+            test_feasibility_problems: true
+          - solver: newuoa
+            test_feasibility_problems: true
+          - solver: bobyqa
+            test_feasibility_problems: true
+
 
     steps:
       - name: Get the solver name
@@ -202,6 +210,7 @@ jobs:
             options = struct();
             options.nr = 4;  % 4 random runs for each problem
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
+            options.test_feasibility_problems = ${{ matrix.test_feasibility_problems }};
 
             if strcmp('${{ matrix.solver }}', 'cobylal')
                 %options.nr = 3;

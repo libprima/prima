@@ -34,6 +34,7 @@ jobs:
         use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
         with_optim_toolbox: [yes, no]
         ctol_indicator: [0, 1, 2]
+        test_feasibility_problems: [true, false]
 
     steps:
 
@@ -181,6 +182,7 @@ jobs:
             options = struct();
             options.nr = 3;
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
+            options.test_feasibility_problems = ${{ matrix.test_feasibility_problems }};
 
             prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
 

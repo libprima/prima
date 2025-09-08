@@ -34,7 +34,7 @@ jobs:
         use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
         precision: [single, quadruple]
         ctol_indicator: [0, 1, 2]
-
+        test_feasibility_problems: [true, false]
         exclude:
           - solver: uobyqa
             ctol_indicator: 1
@@ -51,6 +51,13 @@ jobs:
           - solver: uobyqa  # See https://github.com/libprima/prima/issues/98
             competitor: classical
             precision: single
+          - solver: uobyqa
+            test_feasibility_problems: true
+          - solver: newuoa
+            test_feasibility_problems: true
+          - solver: bobyqa
+            test_feasibility_problems: true
+
 
     steps:
       - name: Get the solver name
@@ -202,6 +209,7 @@ jobs:
             options.nr = 1;
             options.precision = '${{ matrix.precision }}';
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
+            options.test_feasibility_problems = ${{ matrix.test_feasibility_problems }};
 
             try
               if strcmp('${{ matrix.solver }}', 'cobylal')
