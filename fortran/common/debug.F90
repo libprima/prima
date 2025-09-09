@@ -8,7 +8,7 @@ module debug_mod
 !
 ! Started: July 2020.
 !
-! Last Modified: Tue 09 Sep 2025 08:59:09 PM CST
+! Last Modified: Tue 09 Sep 2025 11:53:28 PM CST
 !--------------------------------------------------------------------------------------------------!
 implicit none
 private
@@ -100,7 +100,7 @@ character(len=*), intent(in) :: msg
 integer, intent(in), optional :: code
 
 ! `backtr` prints a backtrace. With gfortran 12, even without calling `backtrace`, a backtrace is
-! printed when the program is stopped by an error stop, but this seems not the case with gfortran 14.
+! printed when the program is stopped by an error stop.
 call backtr()
 
 write (STDERR, '(/A/)') 'ERROR: '//trim(adjustl(srname))//': '//trim(adjustl(msg))//'.'
