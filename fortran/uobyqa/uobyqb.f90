@@ -8,7 +8,7 @@ module uobyqb_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Friday, April 05, 2024 AM09:50:59
+! Last Modified: Wed 10 Sep 2025 02:34:19 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -46,7 +46,7 @@ subroutine uobyqb(calfun, iprint, maxfun, eta1, eta2, ftarget, gamma1, gamma2, r
 ! Common modules
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, REALMAX, DEBUGGING
-use, non_intrinsic :: debug_mod, only : assert
+use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
@@ -144,6 +144,7 @@ real(RP), parameter :: trtol = 1.0E-2_RP  ! Convergence tolerance of trust-regio
 ! Sizes.
 n = int(size(x), kind(n))
 npt = (n + 1_IK) * (n + 2_IK) / 2_IK
+call validate(npt > 0, 'NPT > 0', srname)  ! Validate that NPT does not overflow.
 maxxhist = int(size(xhist, 2), kind(maxxhist))
 maxfhist = int(size(fhist), kind(maxfhist))
 maxhist = max(maxxhist, maxfhist)
