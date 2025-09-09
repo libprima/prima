@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tue 19 Aug 2025 01:55:20 PM CST
+! Last Modified: Tue 09 Sep 2025 08:30:45 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -166,7 +166,7 @@ if (maxfun <= max(0, min_maxfun - 1)) then
     if (maxfun > 0) then
         maxfun = int(min_maxfun, kind(maxfun))
     else  ! We assume that non-positive values of MAXFUN are produced by overflow.
-        maxfun = 10_IK**min(range(maxfun), 5)  !!MATLAB: maxfun =  10^5;
+        maxfun = max(min_maxfun, 10_IK**min(range(maxfun), 5))  !!MATLAB: maxfun =  max(min_maxfun, 10^5);
         ! N.B.: Do NOT set MAXFUN to HUGE(MAXFUN), as it may cause overflow and infinite cycling
         ! when used as the upper bound of DO loops. This occurred on 20240225 with gfortran 13. See
         ! https://fortran-lang.discourse.group/t/loop-variable-reaching-integer-huge-causes-infinite-loop
@@ -418,6 +418,7 @@ end if
 if (DEBUGGING) then
     call validate(abs(iprint) <= 3, 'IPRINT is 0, 1, -1, 2, -2, 3, or -3', solver)
     call validate(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', solver)
+    call validate(maxfun >= min_maxfun, 'MAXFUN >= MIN_MAXFUN', solver)
     if (present(npt)) then
         call validate(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', solver)
         call validate(npt >= 3, 'NPT >= 3', solver)
