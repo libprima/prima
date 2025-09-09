@@ -168,7 +168,7 @@ jobs:
         with:
           command: |
             blacklist = {};
-            blacklist = [blacklist, {'PALMER4E', 'LSNNODOC'}];  % Classical lincoa segfaults
+            blacklist = [blacklist, {'PALMER4E'}];  % Classical lincoa segfaults
 
             ver;
             root_dir = pwd();
