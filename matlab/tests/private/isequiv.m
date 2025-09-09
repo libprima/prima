@@ -553,6 +553,7 @@ if ~isempty(exception)
         prob1.Aeq
         prob1.beq
         test_options
+        options
         fprintf('\nThe seed is\t\t%d\n\n', yw);
         rethrow(exception)
     end

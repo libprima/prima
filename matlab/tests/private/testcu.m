@@ -503,6 +503,7 @@ if ~isempty(exception)
     options
     prob
     prob.options
+    options
     rethrow(exception)
 end
 
