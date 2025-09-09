@@ -1,0 +1,7 @@
+1. Implement the following for LINCOA, BOBYQA. It has been done for COBYLA, NEWUOA, UOBYQA.
+See cobylb.f90, newuob.f90, uobyqb.f90 for reference.
+If X is close to one of the points in the interpolation set, then we do not evaluate the
+objective and constraints at X, assuming them to have the values at the closest point.
+N.B.: If this happens, do NOT include X into the filter, as F and CONSTR are inaccurate.
+
+After this, turn on the checking that "XHIST does not contain a repeating segment". See history.f90.
