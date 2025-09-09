@@ -367,6 +367,7 @@ else % The problem turns out 'normal' during preprima
     % The mexified Fortran function is a private function generating only private errors;
     % however, public errors can occur due to, e.g., evalobj; error handling needed
     try
+        setenv('GFORTRAN_ERROR_BACKTRACE', '1');  % Enable Fortran backtrace if the compiler is gfortran
         [x, fx, constrviolation, exitflag, nf, xhist, fhist, chist] = ...
             fsolver(fun, x0, Aineq, bineq, Aeq, beq, lb, ub, rhobeg, rhoend, eta1, eta2, gamma1, ...
             gamma2, ftarget, ctol, cweight, maxfun, npt, iprint, maxhist, double(output_xhist), maxfilt);

@@ -280,6 +280,7 @@ else
             fsolver = str2func(get_mexname(solver, precision, debug_flag, variant, mexdir));
             % The mexified Fortran Function is a private function generating only private errors;
             % however, public errors can occur due to, e.g., evalobj; error handling needed.
+            setenv('GFORTRAN_ERROR_BACKTRACE', '1');  % Enable Fortran backtrace if the compiler is gfortran
             [x, fx, exitflag, nf, xhist, fhist] = ...
                 fsolver(fun, x0, rhobeg, rhoend, eta1, eta2, gamma1, gamma2, ftarget, maxfun, npt, ...
                 iprint, maxhist, double(output_xhist));

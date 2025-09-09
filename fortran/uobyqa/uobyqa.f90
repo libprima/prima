@@ -19,7 +19,7 @@ module uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Thursday, February 22, 2024 PM03:29:24
+! Last Modified: Wed 10 Sep 2025 02:03:43 AM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -159,7 +159,7 @@ use, non_intrinsic :: consts_mod, only : DEBUGGING
 use, non_intrinsic :: consts_mod, only : MAXFUN_DIM_DFT
 use, non_intrinsic :: consts_mod, only : RHOBEG_DFT, RHOEND_DFT, FTARGET_DFT, IPRINT_DFT
 use, non_intrinsic :: consts_mod, only : RP, IK, TWO, HALF, TEN, TENTH, EPS
-use, non_intrinsic :: debug_mod, only : assert, warning
+use, non_intrinsic :: debug_mod, only : assert, warning, validate
 use, non_intrinsic :: evaluate_mod, only : moderatex
 use, non_intrinsic :: history_mod, only : prehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite, is_posinf
@@ -207,6 +207,7 @@ integer(IK) :: maxhist_loc
 integer(IK) :: n
 integer(IK) :: nf_loc
 integer(IK) :: nhist
+integer(IK) :: npt
 real(RP) :: eta1_loc
 real(RP) :: eta2_loc
 real(RP) :: f_loc
@@ -221,6 +222,8 @@ real(RP), allocatable :: xhist_loc(:, :)  ! XHIST_LOC(N, MAXXHIST)
 
 ! Sizes
 n = int(size(x), kind(n))
+npt =  (n + 1_IK) * (n + 2_IK) / 2_IK
+call validate(npt > 0, 'NPT > 0', srname)  ! Validate that NPT does not overflow.
 
 ! Replace any NaN in X by ZERO and Inf/-Inf in X by REALMAX/-REALMAX.
 x = moderatex(x)
@@ -263,7 +266,7 @@ end if
 if (present(maxfun)) then
     maxfun_loc = maxfun
 else
-    maxfun_loc = max(MAXFUN_DIM_DFT * n, (n + 1_IK) * (n + 2_IK) / 2_IK + 1_IK)
+    maxfun_loc = max(MAXFUN_DIM_DFT * n, npt + 1_IK)
 end if
 
 if (present(iprint)) then
@@ -305,7 +308,7 @@ end if
 if (present(maxhist)) then
     maxhist_loc = maxhist
 else
-    maxhist_loc = maxval([maxfun_loc, 1_IK + (n + 1_IK) * (n + 2_IK) / 2_IK, MAXFUN_DIM_DFT * n])
+    maxhist_loc = maxval([maxfun_loc, npt + 1_IK, MAXFUN_DIM_DFT * n])
 end if
 
 ! Preprocess the inputs in case some of them are invalid.
