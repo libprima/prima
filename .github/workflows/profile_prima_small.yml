@@ -167,6 +167,9 @@ jobs:
         uses: matlab-actions/run-command@v2.3.0
         with:
           command: |
+            blacklist = {};
+            blacklist = [blacklist, {'PALMER4E', 'LSNNODOC'}];  % Classical lincoa segfaults
+
             ver;
             root_dir = pwd();
 
@@ -176,8 +179,16 @@ jobs:
             options = struct();
             options.nr = 3;
             options.ctol_multiple = 10^(2*str2num('${{ matrix.ctol_indicator }}'));
+            options.blacklist = blacklist;
 
-            prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
+            try
+              prof('${{ matrix.solver }}', '${{ matrix.dim }}', '${{ matrix.competitor }}', options);
+            catch exception
+              % Copy the crash dump files to root_dir if exceptions occur.
+              copy_crash_dump_files(root_dir, true)
+              dir(root_dir)
+              rethrow(exception);
+            end
 
 
             % Move the files to prepare for uploading artifacts
@@ -220,6 +231,7 @@ jobs:
         with:
           name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.with_optim_toolbox }}-${{ matrix.ctol_indicator }}-${{ matrix.use_system_libgcc }}
           path: |
+            matlab_crash_dump*
             /tmp/${{ matrix.solver }}_profile_prima/*summary*.pdf
             /tmp/${{ matrix.solver }}_profile_prima/*.txt
             /tmp/${{ matrix.solver }}_profile_prima/*prob_start*
