@@ -137,15 +137,18 @@ if length(argin) == 3 && strcmp(invoker, 'profile')
     end
 end
 
+user_sets_dim = false; % Whether the user sets the dimension range explicitly.
 if length(argin) == 2
     if ischarstr(argin{1}) && isnumvec(argin{2}) && length(argin{2}) == 2
         solver = argin{1};
         mindim = min(argin{2});
         maxdim = max(argin{2});
+        user_sets_dim = true;
     elseif ischarstr(argin{2}) && isnumvec(argin{1}) && length(argin{1}) == 2
         solver = argin{2};
         mindim = min(argin{1});
         maxdim = max(argin{1});
+        user_sets_dim = true;
     elseif ischarstr(argin{1}) && ischarstr(argin{2})
         argin = lower(argin);
         if length(intersect(argin, known_solvers)) == 1
@@ -202,7 +205,7 @@ if isempty(prob)
     options.maxdim = maxdim;
 
     % Revise the dimension range for COBYLA, UOBYQA, and PRIMA.
-    if strcmpi(solver, 'cobyla') || strcmpi(solver, 'uobyqa') || strcmpi(solver, 'prima')
+    if ~user_sets_dim && (strcmpi(solver, 'cobyla') || strcmpi(solver, 'uobyqa') || strcmpi(solver, 'prima'))
         if options.maxdim == 50
             options.maxdim = 20;
         end
@@ -223,7 +226,7 @@ if isempty(prob)
     options.maxcon = 100*options.maxdim;
 
     % Revise the dimension range for verification to avoid overtime of GitHub Actions.
-    if strcmpi(invoker, 'verify')
+    if ~user_sets_dim && strcmpi(invoker, 'verify')
         if strcmpi(solver, 'cobyla')
             options.maxdim = min(options.maxdim, 80); %!!!
         elseif strcmpi(solver, 'newuoa')
