@@ -105,7 +105,7 @@ C
 C
 C     Multiply the search direction by the second derivative matrix of Q and
 C     calculate some scalars for the choice of steplength. Then set BLEN to
-C     the length of the the step to the trust region boundary and STPLEN to
+C     the length of the step to the trust region boundary and STPLEN to
 C     the steplength, ignoring the simple bounds.
 C
       GOTO 210
