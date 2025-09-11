@@ -71,3 +71,4 @@ ignore$
 ^\.development/archiva/
 ^\.development/norma/
 ^benchmark/
+fortran/original/
