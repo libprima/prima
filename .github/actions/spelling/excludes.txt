@@ -70,9 +70,4 @@ ignore$
 \.pdf$
 ^\.development/archiva/
 ^\.development/norma/
-rescue_idz/norma/
-fortran/original/
-^\Qbenchmark/rescue_idz/archiva/230305/fortran/.keep\E$
-^\Qbenchmark/rescue_idz/archiva/230305/norma/fortran/.keep\E$
-^\Qbenchmark/rescue_idz/archiva/230305/norma/matlab/.keep\E$
-^\Qbenchmark/rescue_idz/archiva/230305/matlab/.keep\E$
+^benchmark/
