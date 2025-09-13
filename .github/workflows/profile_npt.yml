@@ -52,6 +52,10 @@ jobs:
           - dim: big
             npt: 4*n
 
+          - dim: large  # There is no problem to test
+            npt: 3*n
+            solver: lincoa
+
           - dim: large
             npt: 3*n
             solver: bobyqa
