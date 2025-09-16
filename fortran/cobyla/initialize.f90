@@ -8,7 +8,7 @@ module initialize_cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tue 12 Aug 2025 04:57:48 PM CST
+! Last Modified: Tue 16 Sep 2025 12:35:23 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -29,7 +29,7 @@ subroutine initxfc(calcfc, iprint, maxfun, amat, bvec, constr0, ctol, f0, ftarge
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, TENTH, REALMAX, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+use, non_intrinsic :: evaluate_mod, only : evaluate, moderatec
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT
@@ -161,8 +161,10 @@ do k = 1, n + 1_IK
     else
         j = k - 1_IK
         x(j) = x(j) + rhobeg
-        constr(1:m_lcon) = matprod(x, amat) - bvec
-        call evaluate(calcfc, x, f, constr(m_lcon + 1:m))
+        constr(1:m_lcon) = moderatec(matprod(x, amat) - bvec)  ! Linear constraints.
+        call evaluate(calcfc, x, f, constr(m_lcon + 1:m))  ! Nonlinear constraints.
+        ! Note that EVALUATE moderates the nonlinear constraint values. Thus we also moderate the
+        ! linear constraint values here to make CSTRV consistent.
     end if
     cstrv = maximum([ZERO, constr])
 

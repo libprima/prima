@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tue 12 Aug 2025 04:58:06 PM CST
+! Last Modified: Tue 16 Sep 2025 12:36:40 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -42,7 +42,7 @@ subroutine cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, et
 use, non_intrinsic :: checkexit_mod, only : checkexit
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, HALF, TENTH, EPS, REALMAX, DEBUGGING, MIN_MAXFILT
 use, non_intrinsic :: debug_mod, only : assert
-use, non_intrinsic :: evaluate_mod, only : evaluate
+use, non_intrinsic :: evaluate_mod, only : evaluate, moderatec
 use, non_intrinsic :: history_mod, only : savehist, rangehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : INFO_DFT, MAXTR_REACHED, SMALL_TR_RADIUS, DAMAGING_ROUNDING, CALLBACK_TERMINATE
@@ -393,8 +393,10 @@ do tr = 1, maxtr
             cstrv = cval(j)
         else
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-            constr(1:m_lcon) = matprod(x, amat) - bvec
-            call evaluate(calcfc, x, f, constr(m_lcon + 1:m))
+            constr(1:m_lcon) = moderatec(matprod(x, amat) - bvec)  ! Linear constraints
+            call evaluate(calcfc, x, f, constr(m_lcon + 1:m))  ! Nonlinear constraints
+            ! Note that EVALUATE moderates the nonlinear constraint values. Thus we also moderate the
+            ! linear constraint values here to make CSTRV consistent.
             cstrv = maximum([ZERO, constr])
             nf = nf + 1_IK
             ! Save X, F, CONSTR, CSTRV into the history.
@@ -586,8 +588,10 @@ do tr = 1, maxtr
             cstrv = cval(j)
         else
             ! Evaluate the objective and constraints at X, taking care of possible Inf/NaN values.
-            constr(1:m_lcon) = matprod(x, amat) - bvec
-            call evaluate(calcfc, x, f, constr(m_lcon + 1:m))
+            constr(1:m_lcon) = moderatec(matprod(x, amat) - bvec)  ! Linear constraints
+            call evaluate(calcfc, x, f, constr(m_lcon + 1:m))  ! Nonlinear constraints
+            ! Note that EVALUATE moderates the nonlinear constraint values. Thus we also moderate the
+            ! linear constraint values here to make CSTRV consistent.
             cstrv = maximum([ZERO, constr])
             nf = nf + 1_IK
             ! Save X, F, CONSTR, CSTRV into the history.
@@ -652,8 +656,10 @@ end do  ! End of DO TR = 1, MAXTR. The iterative procedure ends.
 ! Ensure that D has not been updated after SHORTD == TRUE occurred, or the code below is incorrect.
 x = sim(:, n + 1) + d
 if (info == SMALL_TR_RADIUS .and. shortd .and. norm(x - sim(:, n + 1)) > 1.0E-3_RP * rhoend .and. nf < maxfun) then
-    constr(1:m_lcon) = matprod(x, amat) - bvec
-    call evaluate(calcfc, x, f, constr(m_lcon + 1:m))
+    constr(1:m_lcon) = moderatec(matprod(x, amat) - bvec)  ! Linear constraints
+    call evaluate(calcfc, x, f, constr(m_lcon + 1:m))  ! Nonlinear constraints
+    ! Note that EVALUATE moderates the nonlinear constraint values. Thus we also moderate the linear
+    ! constraint values here to make CSTRV consistent.
     cstrv = maximum([ZERO, constr])
     nf = nf + 1_IK
     ! Save X, F, CONSTR, CSTRV into the history.

@@ -42,7 +42,7 @@ module cobyla_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Sunday, April 07, 2024 PM04:12:44
+! Last Modified: Tue 16 Sep 2025 12:35:02 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -499,13 +499,15 @@ call safealloc(constr_loc, m)  ! NOT removable even in F2003!
 ! If NLCONSTR0 is present, then F0 must be present, and we assume that F(X0) = F0 even if F0 is NaN.
 ! If NLCONSTR0 is absent, then F0 must be either absent or NaN, both of which will be interpreted as
 ! F(X0) is not provided and we have to evaluate F(X0) and NLCONSTR(X0) now.
-constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)
+constr_loc(1:m - m_nlcon) = moderatec(matprod(x, amat) - bvec)  ! Linear and bound constraints
+! Note that EVALUATE moderates the nonlinear constraint values. Thus we also moderate the
+! bound/linear constraint values here to make CSTRV consistent.
 if (present(f0) .and. present(nlconstr0) .and. all(is_finite(x))) then
     f_loc = moderatef(f0)
     constr_loc(m - m_nlcon + 1:m) = moderatec(nlconstr0)
 else
     x = moderatex(x)
-    call evaluate(calcfc, x, f_loc, constr_loc(m - m_nlcon + 1:m))
+    call evaluate(calcfc, x, f_loc, constr_loc(m - m_nlcon + 1:m))  ! Nonlinear constraints
     ! N.B.: Do NOT call FMSG, SAVEHIST, or SAVEFILT for the function/constraint evaluation at X0.
     ! They will be called during the initialization, which will read the function/constraint at X0.
 end if
