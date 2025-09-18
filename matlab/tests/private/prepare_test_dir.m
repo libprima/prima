@@ -62,7 +62,7 @@ norma_dir = fullfile(root_dir, '.development', 'norma');
 % fullfile(root_dir, '.development', 'archiva', 'dev_arch'), and an equivalent version is in
 % fullfile(root_dir, '.development', 'archiva', 'dev_arch', 'norma'), which is the "norma" version
 % of the "archiva" version. We use the latter because the name of the solver there is SOLVER_norma,
-% which is convenient for the test. Consequently, when we compiler the archiva version, the solver
+% which is convenient for the test. Consequently, when we compile the archiva version, the solver
 % name is SOLVER_norma. See get_solvers.m for details.
 archiva_dir = fullfile(root_dir, '.development', 'archiva', 'dev_arch', 'norma');
 

@@ -108,7 +108,7 @@ end
 % N.B.: Do NOT try uninstalling the solvers, because we may call `verify` again with 'ncp', which
 % means not to compile the solvers and reuse the existing MEX files, which would fail if we
 % uninstall the solvers here.
-setpath(oldpath);
+path(oldpath);
 
 % Go back to olddir.
 cd(olddir);

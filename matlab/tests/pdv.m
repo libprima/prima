@@ -127,7 +127,7 @@ end
 
 % Restore the random number generator state
 rng(orig_rng_state);
-setpath(oldpath);  % Restore the path to oldpath.
+path(oldpath);  % Restore the path to oldpath.
 cd(olddir);  % Go back to olddir.
 fprintf('\nCurrently in %s\n\n', pwd());
 

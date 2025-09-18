@@ -170,6 +170,6 @@ cd(olddir);
 
 % If there is an exception, restore the path and rethrow the exception.
 if ~isempty(exception)
-    setpath(oldpath);
+    path(oldpath);
     rethrow(exception);
 end
