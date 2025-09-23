@@ -458,7 +458,7 @@ Zaikun Zhang](https://www.zhangzk.net).
 
 ### Users
 
-Some users of PRIMA are as follows (in alphabetical order). If you want your project to be listed
+Some users of PRIMA are as follows. If you want your project to be listed
 here, please [open a GitHub issue](https://github.com/libprima/prima/issues).
 
 - [SciPy](https://docs.scipy.org/doc/scipy/release/1.16.0-notes.html#highlights-of-this-release)
