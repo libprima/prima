@@ -38,7 +38,7 @@ jobs:
         # See https://github.com/fortran-lang/setup-fortran?tab=readme-ov-file#runner-compatibility
         # for the toolchains provided by fortran-lang/setup-fortran. We test the latest three on each OS.
         # First define the toolchains on Linux and macOS.
-        os: [ubuntu-22.04, ubuntu-latest, macos-13, macos-latest]
+        os: [ubuntu-22.04, ubuntu-latest, macos-15-intel, macos-latest]
         toolchain:
           - {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
           - {compiler: gcc, version: 12, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}

@@ -31,7 +31,7 @@ jobs:
 
       # The matrix is the same as that of test_matlab.yml
       matrix:
-        os: [ubuntu-22.04, ubuntu-latest, macos-13, windows-2022, windows-latest]
+        os: [ubuntu-22.04, ubuntu-latest, macos-15-intel, windows-2022, windows-latest]
         matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, R2024b, R2025a, R2025b, latest]
 
         exclude:

@@ -34,7 +34,7 @@ jobs:
           - compiler: s  # BOBYQA fails stest for unknown reason
             solver: bobyqa
         include:
-          - os: macos-13
+          - os: macos-15-intel
             compiler: [g]
             solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
             testdim: [large]

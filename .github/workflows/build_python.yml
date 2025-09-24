@@ -25,8 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # As of 20250803 macos-13 is AMD64, and macOS-latest is ARM64.
-        os: [ubuntu-22.04, ubuntu-latest, windows-2022, windows-latest, macos-13, macos-latest]
+        os: [ubuntu-22.04, ubuntu-latest, windows-2022, windows-latest, macos-15-intel, macos-latest]
 
     steps:
       - name: Clone Repository (Latest)
