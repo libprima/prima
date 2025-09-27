@@ -100,7 +100,7 @@ jobs:
           echo "To use gfortran version ${GFORTRAN_VERSION}"
 
       - name: Set up Fortran
-        if: ${{ matrix.os != 'macos-latest' }}
+        #if: ${{ matrix.os != 'macos-latest' }}
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: ${{ matrix.compiler }}
