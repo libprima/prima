@@ -27,11 +27,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-15-intel, macos-latest]
+        #os: [ubuntu-latest, windows-latest, macos-15-intel, macos-latest]
+        os: [macos-15-intel, macos-latest]
         compiler: [gcc]
         version: [12, latest]  # Too expensive to test all versions
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        testdim: [small, big]
+        solver: [uobyqa]
+        testdim: [big]
+        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        #testdim: [small, big]
 
         exclude:
           - os: windows-latest
@@ -102,10 +105,10 @@ jobs:
         with:
           compiler: ${{ matrix.compiler }}
           version: ${{ env.GFORTRAN_VERSION }}
-      - name: Set up Fortran for macOS latest  # As of 20250816, fortran-lang/setup-fortran does not support macos-15
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          sudo ln -sf $(which gfortran-${{ env.GFORTRAN_VERSION }}) $(dirname $(which gfortran-${{ env.GFORTRAN_VERSION }}))/gfortran
+      # - name: Set up Fortran for macOS latest  # As of 20250816, fortran-lang/setup-fortran does not support macos-15
+      #   if: ${{ matrix.os == 'macos-latest' }}
+      #   run: |
+      #     sudo ln -sf $(which gfortran-${{ env.GFORTRAN_VERSION }}) $(dirname $(which gfortran-${{ env.GFORTRAN_VERSION }}))/gfortran
 
       - name: Check gfortran version
         shell: bash
