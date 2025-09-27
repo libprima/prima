@@ -88,7 +88,8 @@ jobs:
         shell: bash  # N.B.: We must use bash and use [[:space:]] instead of \s for compatibility with macOS.
         run: |
           cd fortran/tests || exit 42
-          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_bobyqa.f90
+          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_newuoa.f90
+          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 180_IK|' test_bobyqa.f90
           $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_lincoa.f90
 
       - name: Revise cobyla/trustregion.f90 to see what is wrong with ubuntu-latest, i8, cobyla, -O3, small
