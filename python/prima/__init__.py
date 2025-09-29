@@ -10,6 +10,7 @@ from ._bounds import process_bounds
 from enum import Enum
 import numpy as np
 from ._common import _project
+from ._common import get_arrays_tol
 
 
 class ConstraintType(Enum):
@@ -115,6 +116,59 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
 
     lb, ub = process_bounds(bounds, lenx0)
 
+    # Check which variables are fixed and eliminate them from the problem.
+    # Save the indices and values so that we can call the original function with
+    # an array of the appropriate size, and so that we can add the fixed values to the
+    # result when COBYLA returns.
+    tol = get_arrays_tol(lb, ub)
+    _fixed_idx = (
+        (lb <= ub)
+        & (np.abs(lb - ub) < tol)
+    )
+    if any(_fixed_idx):
+        _fixed_values = 0.5 * (
+            lb[_fixed_idx] + ub[_fixed_idx]
+        )
+        _fixed_values = np.clip(
+            _fixed_values,
+            lb[_fixed_idx],
+            ub[_fixed_idx],
+        )
+        if isinstance(x0, np.ndarray):
+            x0 = np.array(x0)[~_fixed_idx]
+        elif x0_is_scalar:
+            raise Exception("You have provided a scalar x with fixed bounds, there is" \
+            "no optimization to be done.")
+        else:
+            # In this case x is presumably a list, so we turn it into a numpy array
+            # for the convenience of indexing and then turn it back into a list
+            x0 = np.array(x0)[~_fixed_idx].tolist()
+        lb = lb[~_fixed_idx]
+        ub = ub[~_fixed_idx]
+        original_fun = fun
+        def fixed_fun(x):
+            newx = np.zeros(lenx0)
+            newx[_fixed_idx] = _fixed_values
+            newx[~_fixed_idx] = x
+            return original_fun(newx, *args)
+        fun = fixed_fun
+        # Adjust linear_constraint
+        if linear_constraint:
+            new_lb = linear_constraint.lb - linear_constraint.A[:, _fixed_idx] @ _fixed_values
+            new_ub = linear_constraint.ub - linear_constraint.A[:, _fixed_idx] @ _fixed_values
+            new_A = linear_constraint.A[:, ~_fixed_idx]
+            linear_constraint = LinearConstraint(new_A, new_lb, new_ub)
+        # Adjust nonlinear constraints
+        if nonlinear_constraint_function:
+            original_nlc_fun = nonlinear_constraint_function
+            def fixed_nlc_fun(x):
+                newx = np.zeros(lenx0)
+                newx[_fixed_idx] = _fixed_values
+                newx[~_fixed_idx] = x
+                return original_nlc_fun(newx, *args)
+            nonlinear_constraint_function = fixed_nlc_fun
+
+
     # Project x0 onto the feasible set
     if nonlinear_constraint_function is None:
         result = _project(x0, lb, ub, {"linear": linear_constraint, "nonlinear": None})
@@ -142,7 +196,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         options['nlconstr0'] = nlconstr0
         options['m_nlcon'] = len(nlconstr0)
 
-    return _minimize(
+    result = _minimize(
         fun,
         x0,
         args,
@@ -157,3 +211,10 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         callback,
         options
     )
+
+    if any(_fixed_idx):
+        newx = np.zeros(lenx0)
+        newx[_fixed_idx] = _fixed_values
+        newx[~_fixed_idx] = result.x
+        result.x = newx
+    return result
