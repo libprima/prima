@@ -463,6 +463,5 @@ here, please [open a GitHub issue](https://github.com/libprima/prima/issues).
 
 - [SciPy](https://docs.scipy.org/doc/scipy/release/1.16.0-notes.html#highlights-of-this-release)
 - [NVIDIA CUDA-QX](https://nvidia.github.io/cudaqx/api/solvers/cpp_api.html#_CPPv4N5cudaq5optim6cobylaE)
-- [Qoro Quantum](https://github.com/QoroQuantum/divi/blob/main/divi/extern/scipy/pyprima/LICENCE.txt)
-<!-- - [Human Neocortical Neurosolver](https://github.com/jonescompneurolab/hnn-core/issues/1080) (HNN) by Brown University -->
+- [Qoro Quantum](https://github.com/QoroQuantum/divi/blob/main/divi/extern/scipy/pyprima/LICENCE.txt) <!-- - [Human Neocortical Neurosolver](https://github.com/jonescompneurolab/hnn-core/issues/1080) (HNN) by Brown University -->
 - [AWS Center for Quantum Computing](https://github.com/aws-cqc/DeviceLayout.jl/blob/main/docs/src/examples/singletransmon.md)
