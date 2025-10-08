@@ -151,6 +151,21 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
             newx[~_fixed_idx] = x
             return original_fun(newx, *args)
         fun = fixed_fun
+        # Adjust linear_constraint
+        if linear_constraint:
+            new_lb = linear_constraint.lb - linear_constraint.A[:, _fixed_idx] @ _fixed_values
+            new_ub = linear_constraint.ub - linear_constraint.A[:, _fixed_idx] @ _fixed_values
+            new_A = linear_constraint.A[:, ~_fixed_idx]
+            linear_constraint = LinearConstraint(new_A, new_lb, new_ub)
+        # Adjust nonlinear constraints
+        if nonlinear_constraint_function:
+            original_nlc_fun = nonlinear_constraint_function
+            def fixed_nlc_fun(x):
+                newx = np.zeros(lenx0)
+                newx[_fixed_idx] = _fixed_values
+                newx[~_fixed_idx] = x
+                return original_nlc_fun(newx, *args)
+            nonlinear_constraint_function = fixed_nlc_fun
 
 
     # Project x0 onto the feasible set

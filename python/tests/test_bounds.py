@@ -1,4 +1,4 @@
-from pyprima import minimize, LinearConstraint as LC, NonlinearConstraint as NLC
+from prima import minimize, LinearConstraint as LC, NonlinearConstraint as NLC
 import numpy as np
 
 def test_eliminate_fixed_bounds():
@@ -12,7 +12,7 @@ def test_eliminate_fixed_bounds():
     bounds = [(a, b) for a, b in zip(lb, ub)]    
     res = minimize(f, x0=np.array([1, 2, 3, 4, 5]), bounds=bounds)
     assert np.allclose(res.x, np.array([-0.5, -0.5, 1, 0, -0.5]), atol=1e-3)
-    assert np.allclose(res.f, 1.75, atol=1e-3)
+    assert np.allclose(res.fun, 1.75, atol=1e-3)
 
 
 def test_eliminate_fixed_bounds_with_linear_constraints():
@@ -33,7 +33,7 @@ def test_eliminate_fixed_bounds_with_linear_constraints():
     assert np.isclose(res.x[0], -1, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[1], 5, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[2], 5, atol=1e-6, rtol=1e-6)
-    assert np.isclose(res.f, 51, atol=1e-6, rtol=1e-6)
+    assert np.isclose(res.fun, 51, atol=1e-6, rtol=1e-6)
 
 
 def test_eliminate_fixed_bounds_with_nonlinear_constraints():
@@ -57,4 +57,4 @@ def test_eliminate_fixed_bounds_with_nonlinear_constraints():
     assert np.isclose(res.x[0], -1, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[1], 0, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[2], 3, atol=1e-6, rtol=1e-6)
-    assert np.isclose(res.f, 10, atol=1e-6, rtol=1e-6)
+    assert np.isclose(res.fun, 10, atol=1e-6, rtol=1e-6)
