@@ -1,5 +1,6 @@
 from prima import minimize, LinearConstraint as LC, NonlinearConstraint as NLC
 import numpy as np
+import pytest
 
 def test_eliminate_fixed_bounds():
     # Test the logic for detecting and eliminating fixed bounds
@@ -58,3 +59,27 @@ def test_eliminate_fixed_bounds_with_nonlinear_constraints():
     assert np.isclose(res.x[1], 0, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[2], 3, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.fun, 10, atol=1e-6, rtol=1e-6)
+
+
+def test_infeasible_bounds():
+    def f(x):
+        return np.sum(x**2)
+
+    lb = [1, None, None]
+    ub = [-1, None, None]
+    bounds = [(a, b) for a, b in zip(lb, ub)]
+    with pytest.raises(AssertionError) as excinfo:
+        minimize(f, x0=np.array([1, 2, 3]), bounds=bounds)
+    assert str(excinfo.value) == "Some of the provided bounds are infeasible. infeasible=array([ True, False, False]) lb[infeasible]=array([1.]), ub[infeasible]=array([-1.])"
+
+
+def test_infeasible_bounds_nan():
+    def f(x):
+        return np.sum(x**2)
+
+    lb = [np.nan, None, None]
+    ub = [-1, None, None]
+    bounds = [(a, b) for a, b in zip(lb, ub)]
+    with pytest.raises(AssertionError) as excinfo:
+        minimize(f, x0=np.array([1, 2, 3]), bounds=bounds)
+    assert str(excinfo.value) == "Some of the provided bounds are infeasible. infeasible=array([ True, False, False]) lb[infeasible]=array([nan]), ub[infeasible]=array([-1.])"

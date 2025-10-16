@@ -30,5 +30,10 @@ def process_bounds(bounds, lenx0):
     # If there were fewer bounds than variables, pad the rest with -/+ infinity
     lb = np.concatenate((lb, -np.inf*np.ones(lenx0 - len(lb))))
     ub = np.concatenate((ub, np.inf*np.ones(lenx0 - len(ub))))
+
+    # Check the infeasibility of the bounds.
+    # TODO: Return a code instead of asserting because a feasibility check is a valid solution
+    infeasible = np.logical_not(lb <= ub)
+    assert not np.any(infeasible), f"Some of the provided bounds are infeasible. {infeasible=} {lb[infeasible]=}, {ub[infeasible]=}"
     
     return lb, ub
