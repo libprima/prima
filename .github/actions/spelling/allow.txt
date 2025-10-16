@@ -2525,3 +2525,4 @@ Qoro
 HHmm
 MMdd
 ZAMB
+excinfo
