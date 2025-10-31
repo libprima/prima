@@ -212,7 +212,7 @@ jobs:
 
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v4.3.1
+        uses: actions/upload-artifact@v5
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           name: ${{ matrix.solver }}
