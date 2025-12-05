@@ -51,14 +51,14 @@ jobs:
           swap-storage: false  # Important, or the runner may be shut down due to memory starvation.
 
       - name: Clone Repository (Latest)
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         if: github.event.inputs.git-ref == ''
         with:
           fetch-depth: 2  # checkout fetches only one commit by default. Set it to two for the `norma` test
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
       - name: Clone Repository (Custom Ref)
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         if: github.event.inputs.git-ref != ''
         with:
           fetch-depth: 2  # checkout fetches only one commit by default. Set it to two for the `norma` test
@@ -73,7 +73,7 @@ jobs:
         run: bash .github/scripts/misc_setup
 
       - name: Clone MatCUTEst
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           repository: matcutest/matcutest_compiled

@@ -29,13 +29,13 @@ jobs:
 
     steps:
       - name: Clone Repository (Latest)
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         if: github.event.inputs.git-ref == ''
         with:
           submodules: recursive
           fetch-depth: 0  # Get tags for use with git describe
       - name: Clone Repository (Custom Ref)
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.1
         if: github.event.inputs.git-ref != ''
         with:
           ref: ${{ github.event.inputs.git-ref }}
@@ -98,7 +98,7 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v6.0.1
 
       - name: Build sdist
         run: pipx run build --sdist
