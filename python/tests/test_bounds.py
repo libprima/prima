@@ -83,3 +83,54 @@ def test_infeasible_bounds_nan():
     with pytest.raises(AssertionError) as excinfo:
         minimize(f, x0=np.array([1, 2, 3]), bounds=bounds)
     assert str(excinfo.value) == "Some of the provided bounds are infeasible. infeasible=array([ True, False, False]) lb[infeasible]=array([nan]), ub[infeasible]=array([-1.])"
+
+
+@pytest.mark.parametrize('with_Aineq', [False, True])
+@pytest.mark.parametrize('with_Aeq', [False, True])
+@pytest.mark.parametrize('with_nlcon', [False, True])
+def test_all_fixed(with_nlcon, with_Aeq, with_Aineq):
+    def f(x):
+        return np.sum(x**2)
+
+    lb = [-1, 2, 4]
+    ub = [-1, 2, 4]
+    bounds = [(a, b) for a, b in zip(lb, ub)]
+    nlc = NLC(lambda x: x[2]**2, lb=-np.inf, ub=0)
+    lc_eq = LC([0, 0, 1], lb=21, ub=21)
+    lc_ineq = LC([0, 0, 1], lb=22, ub=23)
+    constraints = []
+    if with_nlcon:
+        constraints.append(nlc)
+    if with_Aeq:
+        constraints.append(lc_eq)
+    if with_Aineq:
+        constraints.append(lc_ineq)
+
+    result = minimize(f, x0=np.array([1, 2, 3]), bounds=bounds, constraints=constraints)
+    assert all(result.x == [-1, 2, 4])
+    assert result.fun == 21
+    assert result.nfev == 1
+    if not with_nlcon and not with_Aeq and not with_Aineq:
+        assert np.array_equal(result.nlconstr, [])
+        assert result.maxcv == 0
+    if not with_nlcon and not with_Aeq and with_Aineq:
+        assert np.array_equal(result.nlconstr, [])
+        assert result.maxcv == 18
+    if not with_nlcon and with_Aeq and not with_Aineq:
+        assert np.array_equal(result.nlconstr, [])
+        assert result.maxcv == 17
+    if not with_nlcon and with_Aeq and with_Aineq:
+        assert np.array_equal(result.nlconstr, [])
+        assert result.maxcv == 18
+    if with_nlcon and not with_Aeq and not with_Aineq:
+        assert np.array_equal(result.nlconstr, [16])
+        assert result.maxcv == 16
+    if with_nlcon and not with_Aeq and with_Aineq:
+        assert np.array_equal(result.nlconstr, [16])
+        assert result.maxcv == 18
+    if with_nlcon and with_Aeq and not with_Aineq:
+        assert np.array_equal(result.nlconstr, [16])
+        assert result.maxcv == 17
+    if with_nlcon and with_Aeq and with_Aineq:
+        assert np.array_equal(result.nlconstr, [16])
+        assert result.maxcv == 18

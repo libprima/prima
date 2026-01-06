@@ -1,4 +1,4 @@
-from ._prima import minimize as _minimize, __version__, PRIMAMessage
+from ._prima import minimize as _minimize, __version__, PRIMAMessage, PRIMAResult
 # Bounds may appear unused in this file but we need to import it to make it available to the user
 from scipy.optimize import NonlinearConstraint, LinearConstraint, Bounds
 from ._nonlinear_constraints import process_nl_constraints
@@ -11,6 +11,7 @@ from enum import Enum
 import numpy as np
 from ._common import _project
 from ._common import get_arrays_tol
+from .infos import FIXED_SUCCESS
 
 
 class ConstraintType(Enum):
@@ -125,7 +126,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         (lb <= ub)
         & (np.abs(lb - ub) < tol)
     )
-    if any(_fixed_idx):
+    if any(_fixed_idx) and not all(_fixed_idx):
         _fixed_values = 0.5 * (
             lb[_fixed_idx] + ub[_fixed_idx]
         )
@@ -183,7 +184,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     else:
         A_eq, b_eq, A_ineq, b_ineq = None, None, None, None
 
-    if nonlinear_constraint_function is not None:
+    if nonlinear_constraint_function is not None and not all(_fixed_idx):
         # If there is a nonlinear constraint function, we will call COBYLA, which needs the number of nonlinear
         # constraints (m_nlcon). In order to get this number we need to evaluate the constraint function at x0.
         # The constraint value at x0 (nlconstr0) is not discarded but passed down to the Fortran backend, as its
@@ -195,6 +196,36 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         options['f0'] = f0
         options['nlconstr0'] = nlconstr0
         options['m_nlcon'] = len(nlconstr0)
+
+    if all(_fixed_idx):
+        x = 0.5 * (
+            lb[_fixed_idx] + ub[_fixed_idx]
+        )
+        x = np.clip(
+            x,
+            lb[_fixed_idx],
+            ub[_fixed_idx],
+        )
+        success = True
+        status = FIXED_SUCCESS
+        message = "All variables were fixed by the provided bounds."
+        fun = fun(x)
+        nfev = 1
+        nlconstr = nonlinear_constraint_function(x) if nonlinear_constraint_function is not None else np.array([])
+        maxcv = max(max((A_ineq @ x) - b_ineq) if A_ineq is not None else 0,
+                    max((abs((A_eq @ x) - b_eq))) if A_eq is not None else 0,
+                    max(np.append(0, nlconstr)))
+        result = PRIMAResult()
+        result.x = x
+        result.success = success
+        result.status = status
+        result.message = message
+        result.fun = fun
+        result.nfev = nfev
+        result.maxcv = maxcv
+        result.nlconstr = nlconstr
+        result.method = method
+        return result
 
     result = _minimize(
         fun,
