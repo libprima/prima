@@ -8,8 +8,9 @@ from .common._linear_constraints import (
 from .common._bounds import process_bounds
 from enum import Enum
 from .common._project import _project
+from .common.infos import FIXED_SUCCESS
 from .common.linalg import get_arrays_tol
-from .cobyla.cobyla import cobyla
+from .cobyla.cobyla import cobyla, COBYLAResult
 import numpy as np
 from collections.abc import Iterable
 
@@ -132,7 +133,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         (lb <= ub)
         & (np.abs(lb - ub) < tol)
     )
-    if any(_fixed_idx):
+    if any(_fixed_idx) and not all(_fixed_idx):
         _fixed_values = 0.5 * (
             lb[_fixed_idx] + ub[_fixed_idx]
         )
@@ -193,6 +194,31 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
             f = fun(x, *args)
             constr = np.zeros(0)
             return f, constr
+
+    if all(_fixed_idx):
+        x=0.5 * ( lb[_fixed_idx] + ub[_fixed_idx] )
+        x = np.clip(
+            x,
+            lb[_fixed_idx],
+            ub[_fixed_idx],
+        )
+        f, nlconstr = calcfc(x)
+        cstrv = max(max((A_ineq @ x) - b_ineq) if A_ineq is not None else 0,
+                    max((abs((A_eq @ x) - b_eq))) if A_eq is not None else 0,
+                    max(np.append(0, nlconstr)))
+        result = COBYLAResult(
+            x=x,
+            f=f,
+            constr=nlconstr,
+            cstrv=cstrv,
+            nf=1,
+            xhist=[x],
+            fhist=[f],
+            chist=[cstrv],
+            conhist=[nlconstr],
+            info=FIXED_SUCCESS
+        )
+        return result
 
     f0, nlconstr0 = calcfc(x0)
 

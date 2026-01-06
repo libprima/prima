@@ -481,6 +481,8 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
         callback
     )
 
+    constr = constr[mmm - m_nlcon:]
+
     return COBYLAResult(x, f, constr, cstrv, nf, xhist, fhist, chist, conhist, info)
 
 
