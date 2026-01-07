@@ -124,9 +124,12 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     tol = get_arrays_tol(lb, ub)
     _fixed_idx = (
         (lb <= ub)
-        & (np.abs(lb - ub) < tol)
+        & (ub <= lb + tol)
     )
     if any(_fixed_idx) and not all(_fixed_idx):
+        # We should NOT reduce the problem if all variables are fixed. Otherwise, Aineq would be [], and
+        # then bineq will be set to [] in the end. In this way, we lose completely the information in
+        # these constraints. Consequently, we cannot evaluate the constraint violation correctly when needed.
         _fixed_values = 0.5 * (
             lb[_fixed_idx] + ub[_fixed_idx]
         )
@@ -137,9 +140,6 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         )
         if isinstance(x0, np.ndarray):
             x0 = np.array(x0)[~_fixed_idx]
-        elif x0_is_scalar:
-            raise Exception("You have provided a scalar x with fixed bounds, there is" \
-            "no optimization to be done.")
         else:
             # In this case x is presumably a list, so we turn it into a numpy array
             # for the convenience of indexing and then turn it back into a list
@@ -244,7 +244,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     )
 
     if any(_fixed_idx):
-        newx = np.zeros(lenx0)
+        newx = np.zeros(lenx0) + np.nan
         newx[_fixed_idx] = _fixed_values
         newx[~_fixed_idx] = result.x
         result.x = newx
