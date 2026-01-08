@@ -29,8 +29,6 @@ class SelfCleaningPyObject {
 };
 
 struct PRIMAResult {
-    // Blank constructor for construction from Python
-    PRIMAResult() {}
     // Construct PRIMAResult from prima_result_t
     PRIMAResult(const prima_result_t& result, const int num_vars, const int num_constraints, const std::string method)  :
     x(num_vars, result.x),
@@ -91,7 +89,6 @@ PYBIND11_MODULE(_prima, m) {
 #endif
 
     py::class_<PRIMAResult>(m, "PRIMAResult")
-      .def(py::init<>())
       .def_readwrite("x", &PRIMAResult::x)
       .def_readwrite("success", &PRIMAResult::success)
       .def_readwrite("status", &PRIMAResult::status)
@@ -102,13 +99,6 @@ PYBIND11_MODULE(_prima, m) {
       .def_readwrite("nlconstr", &PRIMAResult::nlconstr)
       .def_readwrite("method", &PRIMAResult::method)
       .def("__repr__", &PRIMAResult::repr);
-
-    py::enum_<prima_message_t>(m, "PRIMAMessage")
-      .value("NONE", PRIMA_MSG_NONE)
-      .value("EXIT", PRIMA_MSG_EXIT)
-      .value("RHO", PRIMA_MSG_RHO)
-      .value("FEVL", PRIMA_MSG_FEVL)
-      .export_values();
 
 
     m.def("minimize", [](const py::function& python_objective_function,
@@ -176,7 +166,7 @@ PYBIND11_MODULE(_prima, m) {
         // The following are not options, but part of the problem. We are using the options dictionary
         // as a convenient way to pass them to C++.
         if(options_dict.contains("f0"))        { problem.f0        = options_dict["f0"].cast<double>(); }
-        if(options_dict.contains("m_nlcon"))   { problem.m_nlcon   = options_dict["m_nlcon"].cast<double>(); }
+        if(options_dict.contains("m_nlcon"))   { problem.m_nlcon   = options_dict["m_nlcon"].cast<int>(); }
         if(options_dict.contains("nlconstr0"))    {
           try
           {

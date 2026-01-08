@@ -1,5 +1,5 @@
 from scipy.optimize import rosen, Bounds, NonlinearConstraint, LinearConstraint
-from pyprima import minimize
+from prima import minimize
 import numpy as np
 import concurrent.futures
 
@@ -44,7 +44,7 @@ def test_threading():
     problems = [problem1, problem2, problem3, problem4]
 
     def run_problem(problem):
-        return minimize(**problem)
+        return minimize(options={'fortran': False}, **problem)
 
     single_threaded_results = [run_problem(problem) for problem in problems]
 
@@ -53,6 +53,6 @@ def test_threading():
 
     for single_threaded_result, multithreaded_result in zip(single_threaded_results, multithreaded_results):
         assert np.allclose(single_threaded_result.x, multithreaded_result.x)
-        assert np.allclose(single_threaded_result.constr, multithreaded_result.constr)
-        assert single_threaded_result.nf == multithreaded_result.nf
-        assert single_threaded_result.f == multithreaded_result.f
+        assert np.allclose(single_threaded_result.nlconstr, multithreaded_result.nlconstr)
+        assert single_threaded_result.nfev == multithreaded_result.nfev
+        assert single_threaded_result.fun == multithreaded_result.fun
