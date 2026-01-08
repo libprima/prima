@@ -3,8 +3,8 @@ import pytest
 optiprofiler = pytest.importorskip("optiprofiler", exc_type=ImportError)
 
 from optiprofiler.problems import load_cutest_problem
-import pyprima
-from pyprima import minimize, Bounds, LinearConstraint, NonlinearConstraint
+import prima
+from prima import minimize, Bounds, LinearConstraint, NonlinearConstraint
 import numpy as np
 
 
@@ -21,9 +21,9 @@ def set_comparing():
     # This is a hack to force these tests to use manual math instead of optimized
     # numpy or other routines. This should ensure we have the same results across
     # different architectures.
-    pyprima.common.linalg.USE_NAIVE_MATH = True
+    prima.pyprima.common.linalg.USE_NAIVE_MATH = True
     yield
-    pyprima.common.linalg.USE_NAIVE_MATH = False
+    prima.pyprima.common.linalg.USE_NAIVE_MATH = False
 
 
 def get_constraints(problem):

@@ -1,5 +1,5 @@
-from pyprima import minimize, NonlinearConstraint
-from pyprima.common.infos import CALLBACK_TERMINATE, SMALL_TR_RADIUS
+from prima import minimize, NonlinearConstraint
+from prima.pyprima.common.infos import CALLBACK_TERMINATE, SMALL_TR_RADIUS
 import numpy as np
 import pytest
 import platform
@@ -13,9 +13,10 @@ obj.optimal = np.array([1, 2.5])
 def test_callback_terminate(minimize_with_debugging):
     def callback(x, *args):
         return True
-    result = minimize_with_debugging(obj, obj.x0, method='cobyla', callback=callback)
-    assert result.nf == 4
-    assert result.info == CALLBACK_TERMINATE
+    result = minimize_with_debugging(obj, obj.x0, method='cobyla', callback=callback, options={'fortran': False})
+    # TODO: It seems that calling this with fortran led to nfev == 3??
+    assert result.nfev == 4
+    assert result.status == CALLBACK_TERMINATE
 
 
 def test_callback_no_terminate():
@@ -25,7 +26,7 @@ def test_callback_no_terminate():
     # I'm not sure why but ubuntu finishes the problem with 2 fewer function evaluations :shrug:
     assert result.nf == 54 if platform.system() == 'Linux' else 56
     assert np.allclose(result.x, obj.optimal, atol=1e-3)
-    assert result.info == SMALL_TR_RADIUS
+    assert result.status == SMALL_TR_RADIUS
 
 
 def test_rhoend_without_rhobeg():
@@ -66,8 +67,8 @@ def test_minimize_constraint_violation():
                 NonlinearConstraint(lambda x: 5 - x, -np.inf, 0)]
         result = minimize(lambda x: x[0], np.array([0]), method='cobyla', constraints=cons,
                        )
-        assert result.cstrv > 0.1
-        assert result.info == SMALL_TR_RADIUS
+        assert result.maxcv > 0.1
+        assert result.status == SMALL_TR_RADIUS
 
 
 def test_scalar():

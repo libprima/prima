@@ -69,7 +69,7 @@ def test_ftarget():
 @pytest.mark.skipif(platform == "win32", reason="Windows outputs some strange characters, probably \\r\\n")
 def test_iprint(capfd):
     x0 = [0.0] * 2
-    options = {'iprint': PRIMAMessage.EXIT}
+    options = {'iprint': PRIMAMessage.EXIT.value}
     res = minimize(fun, x0, options=options)
     assert fun.result_point_and_value_are_optimal(res)
     outerr = capfd.readouterr()
