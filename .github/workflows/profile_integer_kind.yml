@@ -239,7 +239,7 @@ jobs:
           printf "\n<<<<<<<<<<<<<<<<\n\n"
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v4.3.1
+        uses: actions/upload-artifact@v5
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           name: artifact-${{ matrix.solver }}-${{ matrix.dim }}-${{ matrix.competitor }}-${{ matrix.compiler_options }}-${{ matrix.ik }}-${{ matrix.use_system_libgcc }}
@@ -280,7 +280,7 @@ jobs:
     needs: test
     steps:
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@v5
         with:
           name: 00-merged-artifacts
           pattern: artifact-*
