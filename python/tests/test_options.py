@@ -67,21 +67,32 @@ def test_ftarget():
 
 
 @pytest.mark.skipif(platform == "win32", reason="Windows outputs some strange characters, probably \\r\\n")
-def test_iprint(capfd):
+def test_iprint(capfd, backend_fixture):
     x0 = [0.0] * 2
-    options = {'iprint': PRIMAMessage.EXIT.value}
-    res = minimize(fun, x0, options=options)
+    nlc = NLC(lambda x: np.array([x[0], x[1]]), lb=[-np.inf]*2, ub=[10]*2)
+    options = {'iprint': PRIMAMessage.EXIT.value, 'backend': backend_fixture}
+    res = minimize(fun, x0, options=options, constraints=nlc)
     assert fun.result_point_and_value_are_optimal(res)
     outerr = capfd.readouterr()
     # In order to account for some machines (i.e. 32bit machines we test on) providing
     # slightly different values, we use this formatting function to get the numbers in
     # the right format, whatever they may be.
     fmt = lambda x: np.format_float_scientific(x, precision=16, unique=False, exp_digits=3).upper()
-    assert outerr.out == f'''
-Return from NEWUOA because the trust region radius reaches its lower bound.
-Number of function values = {res.nfev}   Least value of F =  {fmt(res.fun)}
+    if backend_fixture == 'Fortran':
+        assert outerr.out == f'''
+Return from COBYLA because the trust region radius reaches its lower bound.
+Number of function values = {res.nfev}   Least value of F =  {fmt(res.fun)}   Constraint violation =  0.0000000000000000E+000
 The corresponding X is:  {fmt(res.x[0])}   {fmt(res.x[1])}
+The constraint value is: {fmt(res.nlconstr[0])}  {fmt(res.nlconstr[1])}
 '''
+    elif backend_fixture == "Python":
+        fmt = lambda x: np.format_float_scientific(x, precision=15, unique=False, exp_digits=2)
+        assert outerr.out == f'''Return from COBYLA because the trust region radius reaches its lower bound.
+Number of function values = {res.nfev}   Least value of F = {fmt(res.fun).lower()}   Constraint violation = 0.0
+The corresponding X is: [{res.x[0]:.8f} {res.x[1]:.8f}]
+The constraint value is: [{res.nlconstr[0]:.8f} {res.nlconstr[1]:.8f}]
+
+''' # TODO: Why is there an extra newline here?
     assert outerr.err == ''
 
 
