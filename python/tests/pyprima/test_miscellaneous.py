@@ -10,10 +10,10 @@ obj.x0 = np.array([5, 5])
 obj.optimal = np.array([1, 2.5])
 
 
-def test_callback_terminate(minimize_with_debugging):
+def test_callback_terminate(minimize_with_debugging, backend_fixture):
     def callback(x, *args):
         return True
-    result = minimize_with_debugging(obj, obj.x0, method='cobyla', callback=callback, options={'backend': 'Python'})
+    result = minimize_with_debugging(obj, obj.x0, method='cobyla', callback=callback, options={'backend': backend_fixture})
     # TODO: It seems that calling this with fortran led to nfev == 3??
     assert result.nfev == 4
     assert result.status == CALLBACK_TERMINATE
@@ -60,15 +60,15 @@ def test_iprint(iprint):
     assert np.allclose(result.x, obj.optimal, atol=1e-3)
 
 
-def test_minimize_constraint_violation():
-        # We set up conflicting constraints so that the algorithm will be
-        # guaranteed to end up with maxcv > 0.
-        cons = [NonlinearConstraint(lambda x: x - 4, -np.inf, 0),
-                NonlinearConstraint(lambda x: 5 - x, -np.inf, 0)]
-        result = minimize(lambda x: x[0], np.array([0]), method='cobyla', constraints=cons,
-                       )
-        assert result.maxcv > 0.1
-        assert result.status == SMALL_TR_RADIUS
+def test_minimize_constraint_violation(backend_fixture):
+    # We set up conflicting constraints so that the algorithm will be
+    # guaranteed to end up with maxcv > 0.
+    cons = [NonlinearConstraint(lambda x: x - 4, -np.inf, 0),
+            NonlinearConstraint(lambda x: 5 - x, -np.inf, 0)]
+    result = minimize(lambda x: x[0], np.array([0]), method='cobyla', constraints=cons,
+                    options={'backend': backend_fixture})
+    assert result.maxcv > 0.1
+    assert result.status == SMALL_TR_RADIUS
 
 
 def test_scalar():

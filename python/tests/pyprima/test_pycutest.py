@@ -11,7 +11,7 @@ import numpy as np
 '''
 This module tests various problem from the CUTEST set in order to really stress test
 the implementation and also cover some cases not covered by the naive tests in
-test_end_to_end.py. The list is semi-arbitrary, some of these helped to fine bugs
+test_end_to_end.py. The list is semi-arbitrary, some of these helped to find bugs
 when testing the Python implementation against the Fortran one.
 '''
 
@@ -43,6 +43,8 @@ def run_problem(name, expected_x, expected_f, expected_constraints, expected_nf,
     problem = load_cutest_problem(name)
     constraints = get_constraints(problem)
     bounds = Bounds(problem.lb, problem.ub)
+    options = options if options is not None else {}
+    options['backend'] = 'Python'
     result = minimize(problem.fun, problem.x0, method='cobyla', constraints=constraints, bounds=bounds, options=options)
     assert np.allclose(result.x, expected_x, atol=1e-15)
     assert np.isclose(result.f, expected_f, atol=1e-15)
