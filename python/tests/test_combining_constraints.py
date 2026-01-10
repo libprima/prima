@@ -5,32 +5,31 @@ import pytest
 from contextlib import nullcontext as does_not_raise
 
 
-@pytest.mark.parametrize('fortran', [True, False])
-def test_providing_linear_and_nonlinear_constraints(fortran):
+@pytest.mark.parametrize('backend', ['Fortran', 'Python'])
+def test_providing_linear_and_nonlinear_constraints(backend):
     nlc = prima_NLC(lambda x: x[0]**2, lb=[25], ub=[100])
     lc = prima_LC(np.array([1,1]), lb=10, ub=15)
     x0 = [0, 0]
-    res = prima_minimize(fun, x0, constraints=[nlc, lc], options={'fortran': fortran})
+    res = prima_minimize(fun, x0, constraints=[nlc, lc], options={'backend': backend})
     assert np.isclose(res.x[0], 5.5, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[1], 4.5, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.fun, 0.5, atol=1e-6, rtol=1e-6)
     assert res.method == "cobyla"
 
 
-@pytest.mark.parametrize('fortran,expectation', [
-    (True, does_not_raise()),
-    (False, pytest.warns(UserWarning, match="The pure Python implementation only supports COBYLA at this time. The method is switched from lincoa to COBYLA."))
+@pytest.mark.parametrize('backend,expectation', [
+    ('Fortran', does_not_raise()),
+    ('Python', pytest.warns(UserWarning, match="The pure Python implementation only supports COBYLA at this time. The Fortran implementation will be used instead."))
 ])
-def test_providing_bounds_and_linear_constraints(fortran, expectation):
+def test_providing_bounds_and_linear_constraints(backend, expectation):
     lc = prima_LC(np.array([1,1]), lb=10, ub=15)
     bounds = prima_Bounds(1, 1)
     x0 = [0, 0]
     with expectation:
-        res = prima_minimize(fun, x0, constraints=lc, bounds=bounds, options={'fortran': fortran})
+        res = prima_minimize(fun, x0, constraints=lc, bounds=bounds, options={'backend': backend})
     assert np.isclose(res.x[0], 1, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[1], 9, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.fun, 41, atol=1e-6, rtol=1e-6)
-    assert res.method == "lincoa" if fortran else 'cobyla'
 
 
 def test_providing_bounds_and_nonlinear_constraints():
