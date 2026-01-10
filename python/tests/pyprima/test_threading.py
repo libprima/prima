@@ -44,7 +44,7 @@ def test_threading():
     problems = [problem1, problem2, problem3, problem4]
 
     def run_problem(problem):
-        return minimize(options={'fortran': False}, **problem)
+        return minimize(options={'backend': 'Python'}, **problem)
 
     single_threaded_results = [run_problem(problem) for problem in problems]
 

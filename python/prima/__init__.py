@@ -448,21 +448,16 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         nlconstr0 = None
         m_nlcon = 0
 
-    user_requested_fortran = options.get('fortran') is True
-    default_to_fortran = options.get('fortran') is None
-    if user_requested_fortran or default_to_fortran:
-        try:
-            from ._prima import minimize as _minimize
-            options['fortran'] = True
-        except ImportError:
-            if user_requested_fortran:
-                warn(f"options['fortran'] = True but the Fortran bindings are not available. options['fortran'] is reset to False. ")
-            options['fortran'] = False
-    else:
-        options['fortran'] = False
+    if 'backend' not in options:  # default to Fortran
+        options['backend'] = 'Fortran'
 
+    if method.lower().strip() != 'cobyla' and options['backend'].lower() == 'python':
+        warn('The pure Python implementation only supports COBYLA at this time. '
+             'The Fortran implementation will be used instead.')
+        options['backend'] = 'Fortran'
 
-    if options['fortran']:
+    if options['backend'].lower() == 'fortran':
+        from ._prima import minimize as _minimize
         if m_nlcon > 0:
             options['f0'] = f0
             options['nlconstr0'] = nlconstr0
@@ -493,11 +488,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
             nlconstr = result.nlconstr,
             method = result.method,
         )
-    else:
-        if method.lower().strip() != 'cobyla':
-            warn('The pure Python implementation only supports COBYLA at this time. '
-                 f'The method is switched from {method} to COBYLA.')
-            method = 'cobyla'
+    elif options['backend'].lower() == "python":
         def calcfc(x):
             f = fun(x, *args)
             if nonlinear_constraint_function is not None:
@@ -505,7 +496,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
             else:
                 nlconstr = np.zeros(0)
             return f, nlconstr
-        options.pop('fortran', None)
+        options.pop('backend', None)
         result = cobyla(
             calcfc,
             m_nlcon,
@@ -532,6 +523,8 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
             nlconstr = result.constr,
             method = method,
         )
+    else:
+        raise ValueError(f"Backend must be either 'Fortran' or 'Python', not '{options['backend']}'")
 
     if any(_fixed_idx):
         newx = np.zeros(lenx0) + np.nan

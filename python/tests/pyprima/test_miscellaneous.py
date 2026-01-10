@@ -13,7 +13,7 @@ obj.optimal = np.array([1, 2.5])
 def test_callback_terminate(minimize_with_debugging):
     def callback(x, *args):
         return True
-    result = minimize_with_debugging(obj, obj.x0, method='cobyla', callback=callback, options={'fortran': False})
+    result = minimize_with_debugging(obj, obj.x0, method='cobyla', callback=callback, options={'backend': 'Python'})
     # TODO: It seems that calling this with fortran led to nfev == 3??
     assert result.nfev == 4
     assert result.status == CALLBACK_TERMINATE
