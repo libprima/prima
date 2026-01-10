@@ -2,6 +2,11 @@ import os
 import pytest
 import sys
 
+@pytest.fixture(params=['Fortran', 'Python'])
+def backend_fixture(request):
+    # Parametrizing the entire test suite: https://github.com/pytest-dev/pytest/issues/3196
+    return request.param
+
 @pytest.fixture(scope='function')
 def minimize_with_debugging():
     # This is a hack to force us to use DEBUGGING for a test, so that we get
