@@ -1,8 +1,8 @@
 import pytest
-# This exists mainly for those CI tests in which cutest/pycutest/optiprofiler are not installed.
-optiprofiler = pytest.importorskip("optiprofiler", exc_type=ImportError)
+# This exists mainly for those CI tests in which cutest/pycutest are not installed.
+pytest.importorskip("pycutest", exc_type=ImportError)
 
-from optiprofiler.problems import load_cutest_problem
+from .load_cutest_problem import load_cutest_problem
 import prima
 from prima import minimize, Bounds, LinearConstraint, NonlinearConstraint
 import numpy as np
@@ -26,30 +26,30 @@ def set_comparing():
     prima.pyprima.common.linalg.USE_NAIVE_MATH = False
 
 
-def get_constraints(problem):
-    constraints = []
-    if problem.m_linear_ub > 0:
-        constraints.append(LinearConstraint(problem.a_ub, -np.inf, problem.b_ub))
-    if problem.m_linear_eq > 0:
-        constraints.append(LinearConstraint(problem.a_eq, problem.b_eq, problem.b_eq))
-    if problem.m_nonlinear_ub > 0:
-        constraints.append(NonlinearConstraint(problem.c_ub, -np.inf, np.zeros(problem.m_nonlinear_ub)))
-    if problem.m_nonlinear_eq > 0:
-        constraints.append(NonlinearConstraint(problem.c_eq, np.zeros(problem.m_nonlinear_eq), np.zeros(problem.m_nonlinear_eq)))
-    return constraints
+def get_constraints(constraints_in):
+    constraints_out = []
+    if constraints_in['b_ub'].size > 0:
+        constraints_out.append(LinearConstraint(constraints_in['a_ub'], -np.inf, constraints_in['b_ub']))
+    if constraints_in['b_eq'].size > 0:
+        constraints_out.append(LinearConstraint(constraints_in['a_eq'], constraints_in['b_eq'], constraints_in['b_eq']))
+    if constraints_in['m_nonlinear_ub'] > 0:
+        constraints_out.append(NonlinearConstraint(constraints_in['c_ub'], -np.inf, np.zeros(constraints_in['m_nonlinear_ub'])))
+    if constraints_in['m_nonlinear_eq'] > 0:
+        constraints_out.append(NonlinearConstraint(constraints_in['c_eq'], np.zeros(constraints_in['m_nonlinear_eq']), np.zeros(constraints_in['m_nonlinear_eq'])))
+    return constraints_out
 
 
 def run_problem(name, expected_x, expected_f, expected_constraints, expected_nf, options=None):
-    problem = load_cutest_problem(name)
-    constraints = get_constraints(problem)
-    bounds = Bounds(problem.lb, problem.ub)
+    fun, x0, lb, ub, constraints_in = load_cutest_problem(name)
+    constraints = get_constraints(constraints_in) if constraints_in is not None else None
+    bounds = Bounds(lb, ub)
     options = options if options is not None else {}
     options['backend'] = 'Python'
-    result = minimize(problem.fun, problem.x0, method='cobyla', constraints=constraints, bounds=bounds, options=options)
+    result = minimize(fun, x0, method='cobyla', constraints=constraints, bounds=bounds, options=options)
     assert np.allclose(result.x, expected_x, atol=1e-15)
-    assert np.isclose(result.f, expected_f, atol=1e-15)
-    assert np.allclose(result.constr, expected_constraints, atol=1e-15)
-    assert result.nf == expected_nf
+    assert np.isclose(result.fun, expected_f, atol=1e-15)
+    assert np.allclose(result.nlconstr, expected_constraints, atol=1e-15)
+    assert result.nfev == expected_nf
 
 
 @pytest.mark.order(2)  # This test takes the second longest.
@@ -368,7 +368,7 @@ def test_polak3():
         7.1375489109225455E+001])
     expected_nf = 3252
     options = {
-        'maxfev' : 271*len(expected_x),
+        'maxfun' : 271*len(expected_x),
         'rhobeg' : 2.71828,
         'rhoend' : 3.14e-4,
     }
