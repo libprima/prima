@@ -56,7 +56,7 @@ class COBYLAResult:
 def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
            xl=None, xu=None, f0=None, nlconstr0=None, rhobeg=None, rhoend=None,
            ftarget=FTARGET_DEFAULT, ctol=CTOL_DEFAULT, cweight=CWEIGHT_DEFAULT,
-           maxfun=None, iprint=IPRINT_DEFAULT, eta1=None, eta2=None,
+           maxfun=None, maxfev=None, iprint=IPRINT_DEFAULT, eta1=None, eta2=None,
            gamma1=GAMMA1_DEFAULT, gamma2=GAMMA2_DEFAULT, maxhist=None, maxfilt=2000,
            callback=None):
     """
@@ -170,7 +170,7 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
       CWEIGHT is the weight that the constraint violation takes in the selection of the
       returned X.
 
-    MAXFUN
+    MAXFUN/MAXFEV
       Input, integer scalar, default: MAXFUN_DIM_DFT*N with MAXFUN_DIM_DFT defined in
       common/consts.py. MAXFUN is the maximal number of calls of CALCFC.
 
@@ -389,8 +389,14 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
         rhoend = max(EPS, min(RHOEND_DEFAULT/RHOBEG_DEFAULT * rhobeg, RHOEND_DEFAULT))
     else:
         rhoend = RHOEND_DEFAULT
-
-    maxfun = maxfun if present(maxfun) else MAXFUN_DIM_DEFAULT * num_vars
+    
+    assert not (present(maxfun) and present(maxfev)), "Only one of maxfun or maxfev should be specified."
+    if present(maxfun):
+        pass
+    elif present(maxfev):
+        maxfun = maxfev
+    else:
+        maxfun = MAXFUN_DIM_DEFAULT * num_vars
 
     if present(eta1):
         eta1 = eta1
