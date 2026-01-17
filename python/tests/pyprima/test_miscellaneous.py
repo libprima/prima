@@ -14,8 +14,7 @@ def test_callback_terminate(minimize_with_debugging, backend_fixture):
     def callback(x, *args):
         return True
     result = minimize_with_debugging(obj, obj.x0, method='cobyla', callback=callback, options={'backend': backend_fixture})
-    # TODO: It seems that calling this with fortran led to nfev == 3??
-    assert result.nfev == 4
+    assert result.nfev == 3
     assert result.status == CALLBACK_TERMINATE
 
 
