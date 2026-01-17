@@ -102,6 +102,11 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
       maxfun, constr, amat, bvec, ctol, f, ftarget, rhobeg, x,
       xhist, fhist, chist, conhist, maxhist)
 
+    if callback:
+        terminate = callback(sim[:, num_vars], fval[num_vars], nf, 0, cval[num_vars], conmat[:, num_vars])
+        if terminate:
+            subinfo = CALLBACK_TERMINATE
+
     # Initialize the filter, including xfilt, ffilt, confilt, cfilt, and nfilt.
     # N.B.: The filter is used only when selecting which iterate to return. It does not
     # interfere with the iterations. COBYLA is NOT a filter method but a trust-region
