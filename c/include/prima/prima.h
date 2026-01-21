@@ -235,6 +235,10 @@ typedef struct {
     // Default: NULL, which means that no callback will be called
     prima_callback_t callback;
 
+    // honour_x0: whether to honour the initial point x0
+    // If set to true, the solver will use the initial point x0 as the starting point even if the trust region reaches the bounds.
+    // If set to false, the solver will potentially ignore the initial point x0 when it is too close to the bound (relative to rhobeg).
+    bool honour_x0;
 } prima_options_t;
 
 

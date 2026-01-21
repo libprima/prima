@@ -53,6 +53,7 @@ prima_rc_t prima_init_options(prima_options_t *const options)
         return PRIMA_NULL_OPTIONS;
 
     memset(options, 0, sizeof(prima_options_t));
+    // by initializing with 0 we already assumes honour_x0 = false
     options->rhobeg = NAN;  // Will be interpreted by Fortran as not present
     options->rhoend = NAN;  // Will be interpreted by Fortran as not present
     options->iprint = PRIMA_MSG_NONE;
@@ -198,7 +199,8 @@ int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, c
              const prima_callback_t callback, int *const info);
 
 int bobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f, const double xl[], const double xu[],
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
+             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, 
+             const bool honour_x0, const prima_callback_t callback, int *const info);
 
 int newuoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
              int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
@@ -231,7 +233,9 @@ prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem
 
         switch (algorithm) {
             case PRIMA_BOBYQA:
-                bobyqa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), problem.xl, problem.xu, &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, options.callback, &info);
+                bobyqa_c(problem.calfun, options.data, problem.n, result->x, &(result->f), problem.xl, problem.xu, 
+                         &(result->nf), options.rhobeg, options.rhoend, options.ftarget, options.maxfun, options.npt, options.iprint, 
+                         options.honour_x0, options.callback, &info);
                 result->cstrv = 0.0;
                 break;
 
