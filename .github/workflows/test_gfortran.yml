@@ -88,27 +88,12 @@ jobs:
         if: runner.os == 'Windows'
         run: $env:Path += ";C:\Program Files\Git\usr\bin;C:\Program Files\Git\bin;C:\ProgramData\Chocolatey\bin"
 
-      - name: Decide the gfortran version to use
-        shell: bash
-        run: |
-          if [[ "${{ matrix.version }}" == "latest" ]]; then
-              export GFORTRAN_VERSION=${{ env.GFORTRAN_VERSION }}
-          else
-              export GFORTRAN_VERSION=${{ matrix.version }}
-              echo "GFORTRAN_VERSION=${GFORTRAN_VERSION}" >> $GITHUB_ENV
-          fi
-          echo "To use gfortran version ${GFORTRAN_VERSION}"
-
       - name: Set up Fortran
         #if: ${{ matrix.os != 'macos-latest' }}
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: ${{ matrix.compiler }}
-          version: ${{ env.GFORTRAN_VERSION }}
-      # - name: Set up Fortran for macOS latest  # As of 20250816, fortran-lang/setup-fortran does not support macos-15
-      #   if: ${{ matrix.os == 'macos-latest' }}
-      #   run: |
-      #     sudo ln -sf $(which gfortran-${{ env.GFORTRAN_VERSION }}) $(dirname $(which gfortran-${{ env.GFORTRAN_VERSION }}))/gfortran
+          version: ${{ matrix.version }}
 
       - name: Check gfortran version
         shell: bash
