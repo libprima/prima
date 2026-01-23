@@ -2526,3 +2526,5 @@ HHmm
 MMdd
 ZAMB
 excinfo
+HNN
+Neurosolver
