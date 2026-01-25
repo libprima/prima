@@ -111,7 +111,7 @@ jobs:
         uses: fortran-lang/setup-fortran@main
         with:
           compiler: gcc
-          version: ${{ env.GFORTRAN_VERSION }}
+          version: latest
       - name: Check gfortran version on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: which gcc && gcc --version && which gfortran && gfortran --version

@@ -117,7 +117,7 @@ jobs:
       - name: Decide gfortran version for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          GFVER=${{ env.GFORTRAN_VERSION }}
+          GFVER=latest
           # MATLAB R2021b- supports gfortran 9-
           MATLAB_VERSION_NUMBER=$(echo "${{ matrix.matlab }}" | sed -e 's/R\([0-9]*\)\([ab]\)/\1/')
           if [[ "${MATLAB_VERSION_NUMBER}" != "latest" && "${MATLAB_VERSION_NUMBER}" -le 2021 ]]; then

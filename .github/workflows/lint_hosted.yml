@@ -94,7 +94,7 @@ jobs:
         id: setup-fortran
         with:
           compiler: gcc
-          version: ${{ env.GFORTRAN_VERSION }}
+          version: latest
 
       - name: Install Intel oneAPI
         run: bash .github/scripts/install_oneapi_linux.sh
