@@ -58,7 +58,7 @@ jobs:
         if: ${{ runner.os == 'macOS' }}
         with:
           compiler: gcc
-          version: 12
+          version: 12  # Zaikun 20260125: 12 is a quite old version already. Why not the latest?
 
       # Copied from https://github.com/scipy/scipy/blob/main/.github/workflows/wheels.yml
       # For rtools, see https://github.com/r-windows/rtools-installer/releases, which has been

@@ -703,7 +703,7 @@ stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d
 
 # Intel ifx
 XFORT := ifx #-stand f$(FS)
-XFORT := $(XFORT) -warn all -debug extended -warn errors -traceback -debug-parameters all #-diag-error-limit 1
+XFORT := $(XFORT) -warn all -debug full -warn errors -traceback -debug-parameters all #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
 # and temporary arrays in the stack storage area. We enable them for small problems to verify that
@@ -718,7 +718,7 @@ ifeq ($(TESTDIM),small)
 else
 	XFORT := $(XFORT) -auto -heap-arrays
 endif
-XFORT := $(XFORT) -fimplicit-none -standard-semantics -assume recursion
+XFORT := $(XFORT) -standard-semantics -assume recursion
 ifeq ($(OSTYPE),LINUX)
 	XFORT := $(XFORT) -Wl,-z,noexecstack
 endif
@@ -726,36 +726,30 @@ endif
 # In the following, `-check all,nouninit` can be changed to `-check all` later, probably with OneAPI 2024.1. See
 # https://community.intel.com/t5/Intel-Fortran-Compiler/ifx-missing-clang-rt-msan-to-link-Fortran-program-in-debug-build/m-p/1533430
 xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
-	FCO := $(XFORT) $(FFLAGSO) -fp-trap=divzero
+	FCO := $(XFORT) $(FFLAGSO)
 xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
-	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -fp-trap=divzero
+	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit
 xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_tst_c xtest_i4_r4_d0_tst_c xtest_i8_r4_d0_tst_c: \
-	FCF := $(XFORT) -fp-trap=divzero $(XFF)
+	FCF := $(XFORT) $(XFF)
 
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
 	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
 	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FCF := $(XFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow $(XFF)
+	FCF := $(XFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags $(XFF)
 
 
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
 	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
 	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow#invalid,underflow,denormal
 	#-no-ftz
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FCF := $(XFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow $(XFF)
+	FCF := $(XFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags $(XFF)
 
 
 # G95
