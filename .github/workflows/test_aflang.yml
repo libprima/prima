@@ -1,4 +1,4 @@
-name: Test Flang in AMD AOCC
+name: Test Flang in AMD AOMP and AOCC
 
 on:
   # Trigger the workflow on push or pull request
@@ -21,7 +21,7 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}
 jobs:
 
   test:
-    name: Run AOCC Flang tests
+    name: Run AOMP and AOCC Flang tests
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     strategy:
@@ -65,6 +65,9 @@ jobs:
       - name: Miscellaneous setup
         run: bash .github/scripts/misc_setup
 
+      - name: Install AOMP
+        run: bash .github/scripts/install_aomp
+
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
 
@@ -81,10 +84,12 @@ jobs:
           IK=i$(( 2**(1 + $(date +%-d) % 3) ))
           echo "IK=${IK}"
           echo "IK=${IK}" >> "$GITHUB_ENV"
+          cd "$ROOT_DIR"/fortran/tests && make mtest_${IK}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/tests && make dtest_${IK}.${{ matrix.solver }}
+
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
-          export EXAMPLE_NUM=1 && make clean && make dtest
-          export EXAMPLE_NUM=2 && make clean && make dtest
+          export EXAMPLE_NUM=1 && make clean && make mtest && make clean && make dtest
+          export EXAMPLE_NUM=2 && make clean && make mtest && make clean && make dtest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v5
