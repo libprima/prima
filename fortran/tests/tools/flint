@@ -14,8 +14,8 @@ CLEAN="N"
 # Decide the list of tests to make.
 # N.B.: () defines an array
 # sunf95 is case sensitive. Put it as the first.
-COMPILER_LIST=(sunf95 gfortran nagfor g95 ifort nvfortran ifx)
-CLIST=(s g n 9 i v x)
+COMPILER_LIST=(sunf95 gfortran amdflang nagfor g95 ifort nvfortran ifx)
+CLIST=(s g m n 9 i v x)
 COMP_LIST=""
 for i in "${!COMPILER_LIST[@]}"; do
     if type "${COMPILER_LIST[$i]}" &> /dev/null ; then
