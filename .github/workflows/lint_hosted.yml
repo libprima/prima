@@ -89,6 +89,9 @@ jobs:
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
 
+      - name: Install AOMP
+        run: bash .github/scripts/install_aomp
+
       - name: Install gfortran
         uses: fortran-lang/setup-fortran@main
         id: setup-fortran
@@ -115,7 +118,7 @@ jobs:
 
       - name: Conduct the test
         run: |
-          type gfortran ifx aflang g95 nvfortran sunf95 flang
+          type gfortran ifx amdflang aflang g95 nvfortran sunf95 flang
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all
 
       - name: Remove the test data

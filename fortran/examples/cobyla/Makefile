@@ -41,6 +41,7 @@ test:
 	$(MAKE) ftest
 	$(MAKE) gtest
 	$(MAKE) itest
+	$(MAKE) mtest
 	$(MAKE) ntest
 	$(MAKE) vtest
 	$(MAKE) xtest
@@ -48,6 +49,9 @@ test:
 
 ####################################################################################################
 # Here are the compilers to test.
+
+# AMD AOMP Flang
+mtest: FC := amdflang -std=f$(FSTD)
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2> /dev/null | sort | tail -n 1)

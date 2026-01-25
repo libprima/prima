@@ -55,6 +55,9 @@ while [[ -n "$1" ]]; do
         -i|--ifort)
             COMP_LIST=" i"
             ;;
+        -m|--aomp)
+            COMP_LIST=" m"
+            ;;
         -n|--nagfor)
             COMP_LIST=" n"
             ;;

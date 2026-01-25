@@ -6,6 +6,7 @@
 # d: AOCC flang
 # f: LLVM flang
 # g: GNU gfortran
+# m: AOMP flang
 # n: NAG nagfor
 # i: Intel ifort
 # r: Arm flang
@@ -13,7 +14,7 @@
 # v: NVIDIA nvfortran
 # x: Intel ifx
 #
-# 2. The following tests are available, where C = 9, a, d, f, g, l, n, i, r, s, v, x, and N = 2, 4, 8:
+# 2. The following tests are available, where C = 9, a, d, f, g, l, m, n, i, r, s, v, x, and N = 2, 4, 8:
 # Ctest: test with compiler C
 # Ctest_c: test with compiler C; compilation only (do not run the binary)
 # Ctest_iN: test with compiler C and integer kind INT(N*8)
@@ -94,6 +95,7 @@ AFF := -O4
 DFF := -O4 -Ofast -ffast-math  # As of AOCC 4.2, -Ofast implies -O3, but it is not clear whether it implies -ffast-math
 FFF := -O3 -ffast-math  # Suggested by flang 20.1.7
 GFF := -Ofast  # -Ofast implies -O3 and -ffast-math
+MFF := -O3 -ffast-math  # Suggested by AOMP 22.0-2 when running `amdflang --help | grep fast`
 NFF := -O4
 RFF := -Ofast -ffast-math # -Ofast implies -O3, but no documentation found about the relation between -Ofast and -ffast-math
 SFF := -fast # -fast implies -O5 and ftrap=common
@@ -171,7 +173,7 @@ CHCKTST := $(TOOLS_DIR)/checktest
 # Classic Flang 17.0 and nvfortran 24.1 do not support REAL128;
 # AOCC 4.2 Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # AOCC 5.0 Flang is buggy concerning `nint` with REAL128.
-TESTS_QP = atest gtest ntest itest stest 9test xtest
+TESTS_QP = atest gtest mtest ntest itest stest 9test xtest
 TESTS_NO_QP = dtest ftest rtest vtest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
 # When listing the tests, we first put the ones that are more likely to raise errors.
@@ -195,7 +197,7 @@ $(foreach TST, $(TESTS), $(eval $(TST): TST_C := $(TST)_c))
 
 # The following tests compile the code but do not run the binary. This is useful if we want to
 # check whether the code can compile.
-TESTS_C_QP = atest_c gtest_c ntest_c itest_c stest_c 9test_c xtest_c
+TESTS_C_QP = atest_c gtest_c mtest_c ntest_c itest_c stest_c 9test_c xtest_c
 TESTS_C_NO_QP = dtest_c ftest_c rtest_c vtest_c
 TESTS_C = $(TESTS_C_QP) $(TESTS_C_NO_QP)
 $(foreach TST, $(TESTS_C_QP), $(eval $(TST): SUBTESTS_C := \
@@ -220,6 +222,7 @@ $(foreach TST, $(TESTS_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 # surely) to be OK, because the only difference in the code is the integer kind. Similar for others.
 TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
 			   gtest_i2 gtest_i4 gtest_i8 \
+			   mtest_i2 mtest_i4 mtest_i8 \
 			   ntest_i2 ntest_i4 ntest_i8 \
 			   itest_i2 itest_i4 itest_i8 \
 			   stest_i2 stest_i4 stest_i8 \
@@ -244,6 +247,7 @@ $(foreach TST, $(TESTS_INT), $(eval $(TST): TST_C := $(TST)_c))
 # check whether the code can compile.
 TESTS_INT_C_QP = atest_i2_c atest_i4_c atest_i8_c \
 				 gtest_i2_c gtest_i4_c gtest_i8_c \
+				 mtest_i2_c mtest_i4_c mtest_i8_c \
 				 ntest_i2_c ntest_i4_c ntest_i8_c \
 				 itest_i2_c itest_i4_c itest_i8_c \
 				 stest_i2_c stest_i4_c stest_i8_c \
@@ -395,6 +399,41 @@ dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d
 	FCG := $(DFORT) $(FFLAGSG) -ffp-exception-behavior=strict
 dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d0_tst_c dtest_i4_r16_d0_tst_c dtest_i8_r16_d0_tst_c: \
 	FCF := $(DFORT) -ffp-exception-behavior=strict $(DFF)
+
+# AMD AOMP Flang
+MFORT := amdflang
+MFORT := $(MFORT) -fimplicit-none -Werror
+ifeq ($(TESTDIM),small)
+	MFORT := $(MFORT) -fstack-arrays
+else
+	MFORT := $(MFORT) -fno-stack-arrays -mmlir -fdynamic-heap-array
+    # See https://github.com/llvm/llvm-project/issues/88344
+endif
+MFORT := $(MFORT) -std=f2018 -pedantic  # As of flang 20.0, only -std=f2018 is supported
+ifeq ($(OSTYPE),LINUX)
+	MFORT := $(MFORT) -Wl,-z,noexecstack
+endif
+
+mtest_i2_r4_d1_tst_c mtest_i4_r4_d1_tst_c mtest_i8_r4_d1_tst_c mtest_i2_r4_d0_tst_c mtest_i4_r4_d0_tst_c mtest_i8_r4_d0_tst_c: \
+	FCO := $(MFORT) $(FFLAGSO)
+mtest_i2_r4_d1_tst_c mtest_i4_r4_d1_tst_c mtest_i8_r4_d1_tst_c mtest_i2_r4_d0_tst_c mtest_i4_r4_d0_tst_c mtest_i8_r4_d0_tst_c: \
+	FCG := $(MFORT) $(FFLAGSG)
+mtest_i2_r4_d1_tst_c mtest_i4_r4_d1_tst_c mtest_i8_r4_d1_tst_c mtest_i2_r4_d0_tst_c mtest_i4_r4_d0_tst_c mtest_i8_r4_d0_tst_c: \
+	FCF := $(MFORT) $(MFF)
+
+mtest_i2_r8_d1_tst_c mtest_i4_r8_d1_tst_c mtest_i8_r8_d1_tst_c mtest_i2_r8_d0_tst_c mtest_i4_r8_d0_tst_c mtest_i8_r8_d0_tst_c: \
+	FCO := $(MFORT) $(FFLAGSO)
+mtest_i2_r8_d1_tst_c mtest_i4_r8_d1_tst_c mtest_i8_r8_d1_tst_c mtest_i2_r8_d0_tst_c mtest_i4_r8_d0_tst_c mtest_i8_r8_d0_tst_c: \
+	FCG := $(MFORT) $(FFLAGSG)
+mtest_i2_r8_d1_tst_c mtest_i4_r8_d1_tst_c mtest_i8_r8_d1_tst_c mtest_i2_r8_d0_tst_c mtest_i4_r8_d0_tst_c mtest_i8_r8_d0_tst_c: \
+	FCF := $(MFORT) $(MFF)
+
+mtest_i2_r16_d1_tst_c mtest_i4_r16_d1_tst_c mtest_i8_r16_d1_tst_c mtest_i2_r16_d0_tst_c mtest_i4_r16_d0_tst_c mtest_i8_r16_d0_tst_c: \
+	FCO := $(MFORT) $(FFLAGSO)
+mtest_i2_r16_d1_tst_c mtest_i4_r16_d1_tst_c mtest_i8_r16_d1_tst_c mtest_i2_r16_d0_tst_c mtest_i4_r16_d0_tst_c mtest_i8_r16_d0_tst_c: \
+	FCG := $(MFORT) $(FFLAGSG)
+mtest_i2_r16_d1_tst_c mtest_i4_r16_d1_tst_c mtest_i8_r16_d1_tst_c mtest_i2_r16_d0_tst_c mtest_i4_r16_d0_tst_c mtest_i8_r16_d0_tst_c: \
+	FCF := $(MFORT) $(MFF)
 
 # LLVM Flang
 # We must define FFORT as follows, because AOCC will also provide "flang", except that it is
@@ -1021,6 +1060,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "ld: warning: -keep_dwarf_unwind is obsolete" \
 	| grep -v "ld: warning: ignoring duplicate libraries:.*libsvml.a" \
 	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
+	| grep -v "\[-Wgcc-install-dir-libstdcxx\]" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"

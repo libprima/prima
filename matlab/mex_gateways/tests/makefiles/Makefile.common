@@ -6,13 +6,14 @@
 # d: AOCC flang
 # f: LLVM flang
 # g: GNU gfortran
+# m: AOMP flang
 # n: NAG nagfor
 # i: Intel ifort
 # s: Oracle sunf95
 # v: NVIDIA nvfortran
 # x: Intel ifx
 #
-# The following tests are available, where C = 9, a, d, f, g, n, i, s, v, x, and N = 2, 4, 8:
+# The following tests are available, where C = 9, a, d, f, g, m, n, i, s, v, x, and N = 2, 4, 8:
 # Ctest: test with compiler C
 # Ctest_iN: test with compiler C and integer kind INT(N*8)
 #
@@ -110,7 +111,7 @@ CHCKTST := $(TOOLS_DIR)/checktest
 # Decide whether to test QP, i.e., REAL128.
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
-TESTS_QP = atest gtest ntest itest stest 9test xtest
+TESTS_QP = atest gtest mtest ntest itest stest 9test xtest
 TESTS_NO_QP = dtest ftest vtest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
 # When listing the tests, we first put the ones that are more likely to raise errors.
@@ -136,6 +137,7 @@ $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
 # surely) to be OK, because the only difference in the code is the integer kind. Similar for others.
 TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
 			   gtest_i2 gtest_i4 gtest_i8 \
+			   mtest_i2 mtest_i4 mtest_i8 \
 			   ntest_i2 ntest_i4 ntest_i8 \
 			   itest_i2 itest_i4 itest_i8 \
 			   stest_i2 stest_i4 stest_i8 \
@@ -250,6 +252,24 @@ dtest_i2_r16_d1_tst dtest_i4_r16_d1_tst dtest_i8_r16_d1_tst dtest_i2_r16_d0_tst 
 	FC1 := $(DFORT) $(FFLAGS1) -ffp-exception-behavior=strict
 dtest_i2_r16_d1_tst dtest_i4_r16_d1_tst dtest_i8_r16_d1_tst dtest_i2_r16_d0_tst dtest_i4_r16_d0_tst dtest_i8_r16_d0_tst: \
 	FC2 := $(DFORT) $(FFLAGS2) -ffp-exception-behavior=strict
+
+# AMD AOMP Flang
+MFORT := amdflang -fimplicit-none -Werror
+
+mtest_i2_r4_d1_tst mtest_i4_r4_d1_tst mtest_i8_r4_d1_tst mtest_i2_r4_d0_tst mtest_i4_r4_d0_tst mtest_i8_r4_d0_tst: \
+	FC1 := $(MFORT) $(FFLAGS1)
+mtest_i2_r4_d1_tst mtest_i4_r4_d1_tst mtest_i8_r4_d1_tst mtest_i2_r4_d0_tst mtest_i4_r4_d0_tst mtest_i8_r4_d0_tst: \
+	FC2 := $(MFORT) $(FFLAGS2)
+
+mtest_i2_r8_d1_tst mtest_i4_r8_d1_tst mtest_i8_r8_d1_tst mtest_i2_r8_d0_tst mtest_i4_r8_d0_tst mtest_i8_r8_d0_tst: \
+	FC1 := $(MFORT) $(FFLAGS1)
+mtest_i2_r8_d1_tst mtest_i4_r8_d1_tst mtest_i8_r8_d1_tst mtest_i2_r8_d0_tst mtest_i4_r8_d0_tst mtest_i8_r8_d0_tst: \
+	FC2 := $(MFORT) $(FFLAGS2)
+
+mtest_i2_r16_d1_tst mtest_i4_r16_d1_tst mtest_i8_r16_d1_tst mtest_i2_r16_d0_tst mtest_i4_r16_d0_tst mtest_i8_r16_d0_tst: \
+	FC1 := $(MFORT) $(FFLAGS1)
+mtest_i2_r16_d1_tst mtest_i4_r16_d1_tst mtest_i8_r16_d1_tst mtest_i2_r16_d0_tst mtest_i4_r16_d0_tst mtest_i8_r16_d0_tst: \
+	FC2 := $(MFORT) $(FFLAGS2)
 
 # LLVM Flang
 FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local /tmp -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
@@ -589,6 +609,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "This intrinsic function in an initialization expression is not standard Fortran 95" \
 	| grep -v "Fortran 95 does not allow type specification in an allocate statement" \
 	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
+	| grep -v "\[-Wgcc-install-dir-libstdcxx\]" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
