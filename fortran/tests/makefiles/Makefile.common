@@ -572,35 +572,31 @@ ifeq ($(TESTDIM),small)
 else
 	IFORT := $(IFORT) -auto -heap-arrays
 endif
-IFORT := $(IFORT) -fimplicit-none -standard-semantics -assume recursion
+IFORT := $(IFORT) -standard-semantics -assume recursion
 ifeq ($(OSTYPE),LINUX)
 	IFORT := $(IFORT) -Wl,-z,noexecstack
 endif
 
 itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
-	FCO := $(IFORT) $(FFLAGSO) -fp-trap=divzero
+	FCO := $(IFORT) $(FFLAGSO)
 itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
-	FCG := $(IFORT) $(FFLAGSG) -check all -fp-trap=divzero
+	FCG := $(IFORT) $(FFLAGSG) -check all
 itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_tst_c itest_i4_r4_d0_tst_c itest_i8_r4_d0_tst_c: \
-	FCF := $(IFORT)  -fp-trap=divzero $(IFF)
+	FCF := $(IFORT) $(IFF)
 
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
 	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow#,invalid,underflow,denormal
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
 	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow#,invalid,underflow,denormal
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
-	FCF := $(IFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags -fp-trap=divzero,overflow $(IFF)
+	FCF := $(IFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags $(IFF)
 
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
 	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow#invalid,underflow,denormal
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
 	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,overflow#,invalid,underflow,denormal
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
-	FCF := $(IFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags -fp-trap=divzero,overflow $(IFF)
+	FCF := $(IFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags $(IFF)
 
 
 # NAG nagfor
