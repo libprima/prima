@@ -73,7 +73,7 @@ but it is a job that must be done.
 PRIMA aims to provide the reference implementation of Powell's methods in modern languages,
 including [**modern** Fortran](https://fortran-lang.org) (F2008 or newer), C/C++, Python, MATLAB,
 Julia, and R. It will be a **faithful** implementation, in the sense that the code will be
-mathematically equivalent to Powell’s, **except for** the
+mathematically equivalent to Powell’s (verified by [differential testing](https://en.wikipedia.org/wiki/Differential_testing)), **except for** the
 [bug fixes](#bug-fixes) and [improvements](#improvements) made intentionally.
 
 The focus is to implement these methods in a **structured** and **modularized** way so that they
@@ -107,7 +107,8 @@ reference implementation, extensive tests are conducted after each and every tin
 using the [CUTEst](https://github.com/ralna/CUTEst) problems via [MatCUTEst](https://github.com/matcutest/matcutest).
 The tests do not only verify the faithfulness of the implementation but also check that **the solvers
 behave properly even if they are invoked with improper inputs or [encounter failures of function
-evaluations](https://github.com/libprima/prima/blob/main/matlab/tests/private/tough.m)**.
+evaluations](https://github.com/libprima/prima/blob/main/matlab/tests/private/tough.m)**
+(essentially [fuzz testing](https://en.wikipedia.org/wiki/Fuzzing)).
 [**Stress tests**](#stress-tests) are also conducted
 periodically to verify that the solvers work correctly without running into errors when applied to
 **excessively large problems**.
@@ -115,8 +116,8 @@ periodically to verify that the solvers work correctly without running into erro
 [The tests](./tests.md) are **automated** by
 [GitHub Actions](https://docs.github.com/en/actions).
 As of August 2023, more than
-45,000 "workflows" have been successfully run by GitHub Actions. Normally, each workflow consists of \~ 5
-([sometimes more than 200](https://github.com/primalib/prima/actions/runs/5763631681))
+45,000 "workflows" have been successfully run by GitHub Actions. Normally, each workflow consists of
+\~ 5 ([sometimes more than 200](https://github.com/primalib/prima/actions/runs/5763631681))
 **randomized** tests,
 each test taking from tens of minutes to several hours (the maximum
 is 6 hours, after which the test will be canceled automatically). In other words,
