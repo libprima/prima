@@ -346,15 +346,14 @@ itest_i2_r4_d1_tst itest_i4_r4_d1_tst itest_i8_r4_d1_tst itest_i2_r4_d0_tst ites
 	FC2 := $(IFORT) $(FFLAGS2) -check all
 
 itest_i2_r8_d1_tst itest_i4_r8_d1_tst itest_i8_r8_d1_tst itest_i2_r8_d0_tst itest_i4_r8_d0_tst itest_i8_r8_d0_tst: \
-	FC1 := $(IFORT) $(FFLAGS1) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	#-no-ftz -fp-model strict
+	FC1 := $(IFORT) $(FFLAGS1) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 itest_i2_r8_d1_tst itest_i4_r8_d1_tst itest_i8_r8_d1_tst itest_i2_r8_d0_tst itest_i4_r8_d0_tst itest_i8_r8_d0_tst: \
-	FC2 := $(IFORT) $(FFLAGS2) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FC2 := $(IFORT) $(FFLAGS2) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 
 itest_i2_r16_d1_tst itest_i4_r16_d1_tst itest_i8_r16_d1_tst itest_i2_r16_d0_tst itest_i4_r16_d0_tst itest_i8_r16_d0_tst: \
-	FC1 := $(IFORT) $(FFLAGS1) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FC1 := $(IFORT) $(FFLAGS1) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 itest_i2_r16_d1_tst itest_i4_r16_d1_tst itest_i8_r16_d1_tst itest_i2_r16_d0_tst itest_i4_r16_d0_tst itest_i8_r16_d0_tst: \
-	FC2 := $(IFORT) $(FFLAGS2) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FC2 := $(IFORT) $(FFLAGS2) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 
 # NAG nagfor
 # In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.

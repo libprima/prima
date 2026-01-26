@@ -585,16 +585,16 @@ itest_i2_r4_d1_tst_c itest_i4_r4_d1_tst_c itest_i8_r4_d1_tst_c itest_i2_r4_d0_ts
 	FCF := $(IFORT) $(IFF)
 
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
-	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
-	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 itest_i2_r8_d1_tst_c itest_i4_r8_d1_tst_c itest_i8_r8_d1_tst_c itest_i2_r8_d0_tst_c itest_i4_r8_d0_tst_c itest_i8_r8_d0_tst_c: \
 	FCF := $(IFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags $(IFF)
 
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
-	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCO := $(IFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
-	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
+	FCG := $(IFORT) $(FFLAGSG) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d0_tst_c itest_i4_r16_d0_tst_c itest_i8_r16_d0_tst_c: \
 	FCF := $(IFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags $(IFF)
 
@@ -768,21 +768,16 @@ xtest_i2_r4_d1_tst_c xtest_i4_r4_d1_tst_c xtest_i8_r4_d1_tst_c xtest_i2_r4_d0_ts
 	FCF := $(XFORT) $(XFF)
 
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	#-no-ftz
+	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
-	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	#-no-ftz
+	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 xtest_i2_r8_d1_tst_c xtest_i4_r8_d1_tst_c xtest_i8_r8_d1_tst_c xtest_i2_r8_d0_tst_c xtest_i4_r8_d0_tst_c xtest_i8_r8_d0_tst_c: \
 	FCF := $(XFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags $(XFF)
 
-
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	#-no-ftz
+	FCO := $(XFORT) $(FFLAGSO) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
-	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	#-no-ftz
+	FCG := $(XFORT) $(FFLAGSG) -check all,nouninit -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d0_tst_c xtest_i4_r16_d0_tst_c xtest_i8_r16_d0_tst_c: \
 	FCF := $(XFORT) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags $(XFF)
 
