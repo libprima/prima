@@ -431,31 +431,23 @@ stest_i2_r16_d1_tst stest_i4_r16_d1_tst stest_i8_r16_d1_tst stest_i2_r16_d0_tst 
 # Intel ifx
 XFORT := ifx
 #XFORT := $(XFORT) -diag-error-limit 1
-XFORT := $(XFORT) -stand f$(FS) -warn all -debug extended -fimplicit-none \
+XFORT := $(XFORT) -stand f$(FS) -warn all -debug full \
 	-traceback -debug-parameters all
 
 xtest_i2_r4_d1_tst xtest_i4_r4_d1_tst xtest_i8_r4_d1_tst xtest_i2_r4_d0_tst xtest_i4_r4_d0_tst xtest_i8_r4_d0_tst: \
-	FC1 := $(XFORT) $(FFLAGS1) -fp-trap=divzero
+	FC1 := $(XFORT) $(FFLAGS1)
 xtest_i2_r4_d1_tst xtest_i4_r4_d1_tst xtest_i8_r4_d1_tst xtest_i2_r4_d0_tst xtest_i4_r4_d0_tst xtest_i8_r4_d0_tst: \
-	FC2 := $(XFORT) $(FFLAGS2) -check all -fp-trap=divzero
+	FC2 := $(XFORT) $(FFLAGS2) -check all
 
 xtest_i2_r8_d1_tst xtest_i4_r8_d1_tst xtest_i8_r8_d1_tst xtest_i2_r8_d0_tst xtest_i4_r8_d0_tst xtest_i8_r8_d0_tst: \
-	FC1 := $(XFORT) $(FFLAGS1) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,invalid,overflow#,underflow,denormal
-	#-no-ftz -fp-model strict
+	FC1 := $(XFORT) $(FFLAGS1) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 xtest_i2_r8_d1_tst xtest_i4_r8_d1_tst xtest_i8_r8_d1_tst xtest_i2_r8_d0_tst xtest_i4_r8_d0_tst xtest_i8_r8_d0_tst: \
-	FC2 := $(XFORT) $(FFLAGS2) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,invalid,overflow#,underflow,denormal
-	#-no-ftz -fp-model strict
+	FC2 := $(XFORT) $(FFLAGS2) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 
 xtest_i2_r16_d1_tst xtest_i4_r16_d1_tst xtest_i8_r16_d1_tst xtest_i2_r16_d0_tst xtest_i4_r16_d0_tst xtest_i8_r16_d0_tst: \
-	FC1 := $(XFORT) $(FFLAGS1) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,invalid,overflow#,underflow,denormal
-	#-no-ftz -fp-model strict
+	FC1 := $(XFORT) $(FFLAGS1) -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 xtest_i2_r16_d1_tst xtest_i4_r16_d1_tst xtest_i8_r16_d1_tst xtest_i2_r16_d0_tst xtest_i4_r16_d0_tst xtest_i8_r16_d0_tst: \
-	FC2 := $(XFORT) $(FFLAGS2) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags \
-	-fp-trap=divzero,invalid,overflow#,underflow,denormal
-	#-no-ftz -fp-model strict
+	FC2 := $(XFORT) $(FFLAGS2) -check all -ftrapuv -fpe0 -fpe-all=0 -assume ieee_fpe_flags
 
 # G95
 # The compilation of MEX gateways will fail if -std is imposed.
