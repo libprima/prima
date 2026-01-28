@@ -82,8 +82,8 @@ jobs:
           cmake --build . --target install
           cmake --build . --target tests
 
-          # As of 20240316, CMake test fails on cobyla with the Classic flang, AOCC flang, and
-          # nvfortran. See https://github.com/libprima/prima/issues/165
+          # As of 20240316, CMake test fails on cobyla with the AOCC flang and nvfortran.
+          # See https://github.com/libprima/prima/issues/165
           if [[ $FC == 'gfortran' ]] ; then
               ctest --output-on-failure -V -E "stress"
           else

@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thu 14 Aug 2025 07:36:47 AM CST
+! Last Modified: Wed 28 Jan 2026 04:15:53 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -654,10 +654,9 @@ if (n <= 0) then ! Of course, N < 0 should never happen.
     return
 end if
 
-! Zaikun 20220527: With the following code, the classic flang 17.0, Huawei Bisheng flang 1.3.3,
-! NVIDIA nvfortran 24.1, and AOCC 4.2 flang, and Arm Fortran Compiler version 23.1 raise a false
-! positive error of out-bound subscripts when invoked with the -Mbounds flag.
-! See https://github.com/flang-compiler/flang/issues/1238
+! Zaikun 20220527: With the following code, Huawei Bisheng flang 2.1.0, Arm Fortran Compiler 23.1,
+! and AOCC 5.1 flang, which raise a false positive error about out-bound subscripts when invoked
+! with the -Mbounds flag. See https://github.com/flang-compiler/flang/issues/1238
 if (istril(A)) then
     do i = 1, n
         x(i) = (b(i) - inprod(A(i, 1:i - 1), x(1:i - 1))) / A(i, i) ! INPROD = 0 if I == 1.
@@ -2223,6 +2222,7 @@ loc = pack(linspace(1_IK, n, n), mask=x)
 
 ! Postconditions
 if (DEBUGGING) then
+    write(*, *) 'DEBUG: In TRUELOC, LOC = ', loc, ', X = ', x, ', N = ', size(x), linspace(1_IK, n, n)
     call assert(all(loc >= 1 .and. loc <= n), '1 <= LOC <= N', srname)
     call assert(size(loc) == count(x), 'SIZE(LOC) == COUNT(X)', srname)
     call assert(all(x(loc)), 'X(LOC) is all TRUE', srname)
@@ -2491,6 +2491,8 @@ if (n >= 1) then ! Indeed, N < 1 cannot happen due to the quick return when N <=
     x(n) = xstop
 end if
 
+write(*, *) 'DEBUG: In LINSPACE_R, XSTART = ', xstart, ', XSTOP = ', xstop, ', N = ', n, ', X = ', x
+
 !====================!
 !  Calculation ends  !
 !====================!
@@ -2523,6 +2525,10 @@ character(len=*), parameter :: srname = 'LINSPACE_I'
 !====================!
 
 x = nint(linspace_r(real(xstart, RP), real(xstop, RP), n), IK)  ! Rounded to the closest integer.
+
+write(*,*) 'DEBUG: In LINSPACE_I - - - ', nint(1.0_RP, IK), nint(2.0_RP, IK), nint([1.0_RP, 2.0_RP], IK)
+
+write(*, *) 'DEBUG: In LINSPACE_I, XSTART = ', xstart, ', XSTOP = ', xstop, ', N = ', n, ', X = ', x
 
 !====================!
 !  Calculation ends  !

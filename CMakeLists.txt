@@ -32,7 +32,7 @@ if (PRIMA_HEAP_ARRAYS)
     endif ()
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NAG")  # nagfor
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -recursive")  # What about stack/heap?
-  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang")  # flang-new
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang")  # LLVM Flang
     # See https://github.com/llvm/llvm-project/issues/88344
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -mmlir -fdynamic-heap-array")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")  # Classic Flang and AOCC Flang

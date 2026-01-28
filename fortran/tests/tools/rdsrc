@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# This script pre-processes the Fortran source code for Classic Flang 17.0, Huawei Bisheng flang
-# 2.1.0, Arm Fortran Compiler 23.1, and AOCC 4.2 flang, which raise a false positive error about
+# This script pre-processes the Fortran source code for Huawei Bisheng flang 2.1.0,
+# Arm Fortran Compiler 23.1, and AOCC 5.1 flang, which raise a false positive error about
 # out-bound subscripts when invoked with the -Mbounds flag.
 # See https://github.com/flang-compiler/flang/issues/1238 and
-# https://forums.developer.nvidia.com/t/bug-in-nvfortran-22-3-false-positive-of-out-bound-subscripts
 
 DIR="$(realpath "$1")"
 LINALG="$DIR/common/linalg.f90"

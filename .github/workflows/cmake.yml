@@ -67,7 +67,7 @@ jobs:
           - os: ubuntu-latest
             toolchain: {compiler: intel, version: '2024.1', cflags: '-Wall -Werror', fflags: '-warn all -debug extended -fimplicit-none -standard-semantics'}
 
-          # What follows contains the toolchains for Windows, including gcc, intel classic, and intel.
+          # What follows contains the toolchains for Windows, including gcc, intel-classic, and intel.
           - os: windows-latest
             toolchain: {compiler: gcc, version: 11, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-Wall -Wextra -Wpedantic -Werror -fimplicit-none -fcheck=all -fstack-check -Wno-function-elimination'}
           - os: windows-latest
@@ -184,7 +184,7 @@ jobs:
       fail-fast: false
       matrix:
         toolchain:
-          # Classic Flang family with -Mchkptr would fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
+          # Flang family with -Mchkptr may fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
           # As of 20240220, aflang with -Mbounds would fail due to the bug at https://github.com/flang-compiler/flang/issues/1238
           - {compiler: nvfortran, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk'}
           - {compiler: flang, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-std=f2018 -pedantic -fimplicit-none -Werror'}

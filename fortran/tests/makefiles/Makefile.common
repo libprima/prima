@@ -92,7 +92,7 @@ endif
 
 # Define the compiler-dependent "fast flags", which will be used when FFLAGS is -fast.
 AFF := -O4
-DFF := -O4 -Ofast -ffast-math  # As of AOCC 4.2, -Ofast implies -O3, but it is not clear whether it implies -ffast-math
+DFF := -O3 -Ofast -ffast-math  # As of AOCC 4.2, -Ofast implies -O3, but it is not clear whether it implies -ffast-math; -O4 and -O3 are equivalent for AOCC 5.1
 FFF := -O3 -ffast-math  # Suggested by flang 20.1.7
 GFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 MFF := -O3 -ffast-math  # Suggested by AOMP 22.0-2 when running `amdflang --help | grep fast`
@@ -170,7 +170,7 @@ CHCKTST := $(TOOLS_DIR)/checktest
 # Define the tests.
 ######################################################################################
 # Decide whether to test QP, i.e., REAL128.
-# Classic Flang 17.0 and nvfortran 24.1 do not support REAL128;
+# nvfortran 26.1 do not support REAL128;
 # AOCC 4.2 Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
 # AOCC 5.0 Flang is buggy concerning `nint` with REAL128.
 TESTS_QP = atest gtest mtest ntest itest stest 9test xtest
@@ -1083,9 +1083,9 @@ source_%: $(SRC_DIRS)
 		-o -name "flint" \
 		-o -name "mlint" \
 		\) -exec rm {} \;  # Cleaning up; important!!!
-	# Classic Flang 17.0, Huawei Bisheng Flang 2.1.0, Arm Fortran Compiler version 23.10, and AOCC
-	# 4.2 are buggy concerning 0-dimensional arrays, and they report false positive out-bound
-	# indices. Thus preprocessing by rdsrc is needed. See
+	# Huawei Bisheng Flang 2.1.0, Arm Fortran Compiler version 23.10, and AOCC 5.1 Flang are buggy
+	# concerning 0-dimensional arrays, and they report false positive out-bound indices. Thus
+	# preprocessing by rdsrc is needed. See
 	# https://github.com/flang-compiler/flang/issues/1238
 	# Check it again when new versions are available. Make a test using
 	# https://github.com/zequipe/test_compiler/blob/master/test_solve.f90
