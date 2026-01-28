@@ -884,7 +884,8 @@ $(TESTS_C) $(TESTS_INT_C):
 			if [[ -x $@_c_$(SUFFIXO) ]] ; then \
 				if command -v execstack >/dev/null 2>&1 ; then \
 					printf "\n===> Check executable stack: " && execstack -q $@_c_$(SUFFIXO) && \
-					printf "\n===> Clear executable stack: " && execstack -c $@_c_$(SUFFIXO) \
+					printf "===> Clear executable stack: " && execstack -c $@_c_$(SUFFIXO) && \
+					printf "\n===> Check executable stack again: " && execstack -q $@_c_$(SUFFIXO) \
 					| tee -a "$(LOG_DIR)/$@.log" ; \
 				fi ; \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
@@ -902,7 +903,8 @@ $(TESTS_C) $(TESTS_INT_C):
 			if [[ -x $@_c_$(SUFFIXG) ]] ; then \
 				if command -v execstack >/dev/null 2>&1 ; then \
 					printf "\n===> Check executable stack: " && execstack -q $@_c_$(SUFFIXG) && \
-					printf "\n===> Clear executable stack: " && execstack -c $@_c_$(SUFFIXG) \
+					printf "===> Clear executable stack: " && execstack -c $@_c_$(SUFFIXG) && \
+					printf "\n===> Check executable stack again: " && execstack -q $@_c_$(SUFFIXG) \
 					| tee -a "$(LOG_DIR)/$@.log" ; \
 				fi ; \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
