@@ -9,20 +9,8 @@ if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     exit 1
 fi
 
-if [[ -f "$POWALG" ]] ; then
-    # nvfortran 25.7.0 raises a false positive error of out-bound index for Anew(:, n+1:n) in
-    # powalg.f90 when the solver is invoked with `-Mbounds -Ox` or `-C -Ox`, where x >= 2.
-    # For example, the following command fails with the error:
-    #
-    # $export TESTDIM=small && export TESTSEED=2533 && export FFLAGS=-fast && make clean && make vtest_i4_r8_d1_tst.lincoa
-    #
-    # See also
-    # https://forums.developer.nvidia.com/t/bug-of-nvfortran-25-7-with-empty-arrays
-    # https://github.com/zequipe/test_compiler/blob/master/test_bd.f90
-    #
-    # The following line removes the code concerned. Re-test the code when nvfortran is updated.
-    STR="Anew"
-    sed -i "/$STR/d" "$POWALG"
-fi
+# Do nothing as of nvfortran 26.1, although bugs still exist:
+# https://forums.developer.nvidia.com/t/a-bug-of-nvfortran-26-1regarding-empry-arrays/358946
+# https://github.com/zequipe/test_compiler/blob/master/test_empty_array.f90
 
 exit 0
