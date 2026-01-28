@@ -285,16 +285,18 @@ else
 	endif
 endif
 
-# Invoke the binary by gdb in the batch mode, so that we get necessary information if it crashes.
-# N.B.: -return-child-return asks gdb to return with the exit code of the binary that it invokes,
-# unless gdb itself terminates with an error. In our situation, it is better not to use this flag,
-# Otherwise, when the binary crashes, `checktest` will not be called due to the error returned by gdb.
-# On GitHub Actions, gdb does not work out of the box due to security restrictions.
+# Invoke the binary by gdb using $(TOOLS_DIR)/run_gdb, which is a wrapper script. It does two
+# things: 1) It runs the binary under gdb in the batch mode and the -return-child-result mode, so
+# that the exit code of the binary is returned as the exit code of gdb. 2) If gdb fails (e.g., the
+# binary crashes), it records the exit code of gdb in a specified file and exits successfully.
+# In this way, the Makefile receipt can continue to call `checktest` to check the log file regardless
+# of the failure. The exit code will be checked after the test by reading the aforementioned file.
+# For more details, see $(TOOLS_DIR)/run_gdb.
 ifeq ($(OSTYPE), MAC)
+	# On GitHub Actions, gdb does not work out of the box due to security restrictions.
 	GDB :=
 else
-	#GDB := gdb -return-child-result -batch -ex run -ex where -ex quit
-	GDB := gdb -batch -ex run -ex where -ex quit
+	GDB := bash $(TOOLS_DIR)/run_gdb
 endif
 
 # Define SEDI.
@@ -890,7 +892,7 @@ $(TESTS_C) $(TESTS_INT_C):
 				fi ; \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXO) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
-				$(GDB) ./$@_c_$(SUFFIXO) 2>&1 \
+				$(GDB) ./$@_c_$(SUFFIXO) $(LOG_DIR)/GDB_EXIT_CODE 2>&1 \
 				| grep -v "Processor does not support trapping of floating-point exceptions" \
 				| grep -v "libthread_db" \
 				| tee -a "$(LOG_DIR)/$@.log" ; \
@@ -909,7 +911,7 @@ $(TESTS_C) $(TESTS_INT_C):
 				fi ; \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXG) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
-				$(GDB) ./$@_c_$(SUFFIXG) 2>&1 \
+				$(GDB) ./$@_c_$(SUFFIXG) $(LOG_DIR)/GDB_EXIT_CODE 2>&1 \
 				| grep -v "Processor does not support trapping of floating-point exceptions" \
 				| grep -v "libthread_db" \
 				| tee -a "$(LOG_DIR)/$@.log" ; \
@@ -922,9 +924,11 @@ $(TESTS_C) $(TESTS_INT_C):
 	@set +o pipefail  # Restore the original pipe setting
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
+	@echo "gdb exit code was: " && cat "$(LOG_DIR)/GDB_EXIT_CODE" && exit $$(cat "$(LOG_DIR)/GDB_EXIT_CODE")
 	@printf "$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n" | tee -a "$(LOG_DIR)/$@.log"
 	@cat "$(LOG_DIR)/$@.log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
-	@rm "$(LOG_DIR)/$@.log" || :
+	@ls "$(LOG_DIR)"
+	@rm -r "$(LOG_DIR)" || :
 	@$(MAKE) cleanmisc
 
 # Make the binary corresponding to %_tst_c, but do not execute it.

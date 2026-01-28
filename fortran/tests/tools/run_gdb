@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# This script runs gdb on a given program ($1) and captures the exit code in a specified file ($2).
+# -return-child-result directs gdb to return the exit code of the program being debugged.
+#
+# N.B.: We record the exit code in the specified file rather than exiting with it directly, so that
+# the Makefile receipt continues to run subsequent tests. The exit code can be checked when needed
+# by reading the contents of the specified file.
+
+echo 0 > "$2"
+
+gdb -return-child-result -batch -ex run -ex where -ex quit "$1" 2>&1 || echo $? > "$2"
+
+exit 0  # Exit successfully anyway.
