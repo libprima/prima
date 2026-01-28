@@ -877,6 +877,7 @@ $(TESTS_C) $(TESTS_INT_C):
 		printf "\n$@_c exists!\n\n" ; \
 	fi
 	@mkdir -p $(LOG_DIR)
+	@echo 0 > "$(LOG_DIR)/$@.GDB_EXIT_CODE"  # Initialize the GDB exit code file, because GDB may not be executed (e.g., test is skipped or on Mac)
 	@if echo $@ | grep -q "atest\|9test" ; then \
 		printf "\n$@ is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 	elif echo $@ | grep -q "_d0" && [[ $(TESTDIM) = "big" ]] ; then \
@@ -892,7 +893,7 @@ $(TESTS_C) $(TESTS_INT_C):
 				fi ; \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXO) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
-				$(GDB) ./$@_c_$(SUFFIXO) $(LOG_DIR)/GDB_EXIT_CODE 2>&1 \
+				$(GDB) ./$@_c_$(SUFFIXO) $(LOG_DIR)/$@.GDB_EXIT_CODE 2>&1 \
 				| grep -v "Processor does not support trapping of floating-point exceptions" \
 				| grep -v "libthread_db" \
 				| tee -a "$(LOG_DIR)/$@.log" ; \
@@ -911,7 +912,7 @@ $(TESTS_C) $(TESTS_INT_C):
 				fi ; \
 				export NVCOMPILER_TERM=trace && set -eu -o pipefail && \
 				printf "\n$@_$(SUFFIXG) starts.\n\n" | tee -a "$(LOG_DIR)/$@.log" && \
-				$(GDB) ./$@_c_$(SUFFIXG) $(LOG_DIR)/GDB_EXIT_CODE 2>&1 \
+				$(GDB) ./$@_c_$(SUFFIXG) $(LOG_DIR)/$@.GDB_EXIT_CODE 2>&1 \
 				| grep -v "Processor does not support trapping of floating-point exceptions" \
 				| grep -v "libthread_db" \
 				| tee -a "$(LOG_DIR)/$@.log" ; \
@@ -924,11 +925,11 @@ $(TESTS_C) $(TESTS_INT_C):
 	@set +o pipefail  # Restore the original pipe setting
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
-	@echo "gdb exit code was: " && cat "$(LOG_DIR)/GDB_EXIT_CODE" && exit $$(cat "$(LOG_DIR)/GDB_EXIT_CODE")
+	@echo "gdb exit code was: " && cat "$(LOG_DIR)/$@.GDB_EXIT_CODE" && exit $$(cat "$(LOG_DIR)/$@.GDB_EXIT_CODE")
 	@printf "$@ ends at $(shell date +%Y.%m.%d_%H.%M.%S).\n" | tee -a "$(LOG_DIR)/$@.log"
 	@cat "$(LOG_DIR)/$@.log" >> "$(LOG_DIR)/$(shell echo $@ | sed "s/_.*//").log"
-	@ls "$(LOG_DIR)"
-	@rm -r "$(LOG_DIR)" || :
+	@rm "$(LOG_DIR)/$@.log" || :
+	@rm "$(LOG_DIR)/$@.GDB_EXIT_CODE" || :
 	@$(MAKE) cleanmisc
 
 # Make the binary corresponding to %_tst_c, but do not execute it.
