@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wed 28 Jan 2026 04:15:53 PM CST
+! Last Modified: Wed 28 Jan 2026 04:43:32 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2222,7 +2222,6 @@ loc = pack(linspace(1_IK, n, n), mask=x)
 
 ! Postconditions
 if (DEBUGGING) then
-    write(*, *) 'DEBUG: In TRUELOC, LOC = ', loc, ', X = ', x, ', N = ', size(x), linspace(1_IK, n, n)
     call assert(all(loc >= 1 .and. loc <= n), '1 <= LOC <= N', srname)
     call assert(size(loc) == count(x), 'SIZE(LOC) == COUNT(X)', srname)
     call assert(all(x(loc)), 'X(LOC) is all TRUE', srname)
@@ -2491,8 +2490,6 @@ if (n >= 1) then ! Indeed, N < 1 cannot happen due to the quick return when N <=
     x(n) = xstop
 end if
 
-write(*, *) 'DEBUG: In LINSPACE_R, XSTART = ', xstart, ', XSTOP = ', xstop, ', N = ', n, ', X = ', x
-
 !====================!
 !  Calculation ends  !
 !====================!
@@ -2525,10 +2522,6 @@ character(len=*), parameter :: srname = 'LINSPACE_I'
 !====================!
 
 x = nint(linspace_r(real(xstart, RP), real(xstop, RP), n), IK)  ! Rounded to the closest integer.
-
-write(*,*) 'DEBUG: In LINSPACE_I - - - ', nint(1.0_RP, IK), nint(2.0_RP, IK), nint([1.0_RP, 2.0_RP], IK)
-
-write(*, *) 'DEBUG: In LINSPACE_I, XSTART = ', xstart, ', XSTOP = ', xstop, ', N = ', n, ', X = ', x
 
 !====================!
 !  Calculation ends  !
