@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wednesday, April 10, 2024 PM09:18:10
+! Last Modified: Thu 29 Jan 2026 12:15:58 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -175,8 +175,8 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! IEEE Standard for Floating-Point Arithmetic (IEEE 754) is respected, particularly if addition and
 ! multiplication are commutative. However, as of 20220408, NAG nagfor does not ensure commutativity
 ! for REAL128. Indeed, Fortran standards do not enforce IEEE 754, so compilers are not guaranteed to
-! respect it. Hence we set SYMTOL_DFT to a nonzero number when PRIMA_RELEASED is 1, although we do not
-! intend to test symmetry in production. We set SYMTOL_DFT in the same way when PRIMA_DEBUGGING is 0.
+! respect it. Hence we set SYMTOL_DFT to a nonzero number when PRIMA_RELEASED is 1 (although we do not
+! intend to test symmetry in production, it may be tested if PRIMA_DEBUGGING is set to 1).
 ! Update 20221226: When gfortran 12 is invoked with aggressive optimization options, it is buggy
 ! with ALL() and ANY(). We set SYMTOL_DFT to REALMAX to signify this case and disable the check.
 ! Update 20221229: ifx 2023.0.0 20221201 cannot ensure symmetry even up to 100*EPS if invoked
@@ -186,15 +186,30 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! Update 20231002: HUAWEI BiSheng Compiler 2.1.0.B010 (flang) cannot ensure symmetry even up to
 ! 1.0E2*EPS if invoked with -Ofast and if the floating-point numbers are in single precision.
 ! This same is observed for arm-linux-compiler-22.1 on Kunpeng.
-#if (defined __GFORTRAN__ || defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
+! Update 20260129: AMD AOMP 26.1 cannot ensure symmetry up to TEN*EPS if invoked with -O3 -fast-math
+! and if the floating-point numbers are in single precision.
+!
+#if (defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64 || defined __GFORTRAN__) && PRIMA_AGGRESSIVE_OPTIONS == 1
+! ifx with single precision and aggressive optimization options, or gfortran with aggressive
+! optimization options
 real(RP), parameter :: SYMTOL_DFT = REALMAX
 #elif (defined __FLANG && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
+! HUAWEI BiSheng Compiler or ARM Compiler with aggressive optimization options and single precision
 real(RP), parameter :: SYMTOL_DFT = max(5.0E3_RP * EPS, TEN**max(-10, -MAXPOW10))
 #elif (defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64)
+! ifx with single precision
 real(RP), parameter :: SYMTOL_DFT = max(5.0E1_RP * EPS, TEN**max(-10, -MAXPOW10))
-#elif (defined __NAG_COMPILER_BUILD && PRIMA_REAL_PRECISION > 64) || (PRIMA_RELEASED == 1) || (PRIMA_DEBUGGING == 0)
+#elif (defined __NAG_COMPILER_BUILD && PRIMA_REAL_PRECISION > 64)
+! NAG Fortran Compiler with quadruple precision
 real(RP), parameter :: SYMTOL_DFT = max(TEN * EPS, TEN**max(-10, -MAXPOW10))
+#elif (PRIMA_RELEASED == 1) && PRIMA_REAL_PRECISION >=  64
+! Double or higher precision in released mode
+real(RP), parameter :: SYMTOL_DFT = max(TEN * EPS, TEN**max(-10, -MAXPOW10))
+#elif (PRIMA_RELEASED == 1)
+! Single or lower precision in released mode
+real(RP), parameter :: SYMTOL_DFT = max(1.0E2_RP * EPS, TEN**max(-10, -MAXPOW10))
 #else
+! Otherwise
 real(RP), parameter :: SYMTOL_DFT = ZERO
 #endif
 
