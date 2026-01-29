@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thu 29 Jan 2026 12:15:58 PM CST
+! Last Modified: Thu 29 Jan 2026 12:25:50 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -186,7 +186,7 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! Update 20231002: HUAWEI BiSheng Compiler 2.1.0.B010 (flang) cannot ensure symmetry even up to
 ! 1.0E2*EPS if invoked with -Ofast and if the floating-point numbers are in single precision.
 ! This same is observed for arm-linux-compiler-22.1 on Kunpeng.
-! Update 20260129: AMD AOMP 26.1 cannot ensure symmetry up to TEN*EPS if invoked with -O3 -fast-math
+! Update 20260129: AMD AOMP 22.0 cannot ensure symmetry up to TEN*EPS if invoked with -O3 -fast-math
 ! and if the floating-point numbers are in single precision.
 !
 #if (defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64 || defined __GFORTRAN__) && PRIMA_AGGRESSIVE_OPTIONS == 1
