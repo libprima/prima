@@ -19,7 +19,7 @@
 SOLVER := $(shell basename $(CURDIR))
 # Define the Fortran standard to follow. We aim to make the code compatible with F2008 and above.
 # Make sure that your compiler supports the selected standard.
-FS ?= 08  # Set FS if it does not have a value.
+FS ?= 18  # Set FS if it does not have a value.
 FSTD := 20$(FS)
 # Default options for all the compilers.
 FFLAGS := -O -g
