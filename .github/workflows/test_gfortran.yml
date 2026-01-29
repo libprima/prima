@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-15-intel, macos-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-15-intel, macos-latest]
         compiler: [gcc]
         version: [13, latest]  # Too expensive to test all versions
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
