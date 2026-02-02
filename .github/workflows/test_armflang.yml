@@ -66,16 +66,16 @@ jobs:
       #   run: bash .github/scripts/misc_setup
 
       - name: Install Arm Fortran compiler
-        #run: ( printf '\n\n\n' ) | bash <(curl -fsSL https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Package/install.sh)
+        run: ( printf '\n\nyes\n' ) | bash <(curl -fsSL https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Package/install.sh)
         #run: curl -fsSL https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Package/install.sh | sudo bash -s -- --accept-license --quiet
-        run: |
-          ACFL_VERS=24.10.1
-          DIST_VERS=Ubuntu-22.04
-          curl -O https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Version_${ACFL_VERS}/arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}_aarch64.tar
-          tar xvf arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}_aarch64.tar
-          cd arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}
-          printf "yes\n" > install.input
-          cat install.input | sudo ./arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}.sh
+        # run: |
+        #   ACFL_VERS=24.10.1
+        #   DIST_VERS=Ubuntu-22.04
+        #   curl -O https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Version_${ACFL_VERS}/arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}_aarch64.tar
+        #   tar xvf arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}_aarch64.tar
+        #   cd arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}
+        #   printf "yes\n" > install.input
+        #   cat install.input | sudo ./arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}.sh
 
       - name: Revise bobyqa/trustregion.f90 to see why `xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1` leads to a SIGFPE
         shell: bash
