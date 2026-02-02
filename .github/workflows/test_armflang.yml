@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04-arm]  ! As of February 2026, Arm Fortran compiler only supports Ubuntu 20.04/22.04
+        os: [ubuntu-22.04-arm]  # As of February 2026, Arm Fortran compiler only supports Ubuntu 22.04
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
