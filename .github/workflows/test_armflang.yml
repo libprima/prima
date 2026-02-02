@@ -68,10 +68,10 @@ jobs:
       - name: Install Arm Fortran compiler
         run: |
           ( printf '\n\n\nyes\n' ) | bash <(curl -fsSL https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Package/install.sh)
-          source /usr/share/Modules/init/bash
-          module use /opt/arm/modulefiles
-          module load acfl
-          module load armpl
+          module use /opt/arm/modulefiles  # Add Arm modulefiles
+          module avail  # List available modules
+          module load acfl  # Load Arm C and Fortran compiler module
+          module load armpl  # Load Arm Performance Libraries module
           which armflang
           armflang --version
           env
