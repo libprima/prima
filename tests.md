@@ -59,6 +59,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
     - [![Test MATLAB](https://github.com/opt4ai/prima/actions/workflows/test_matlab.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab.yml)
     - [![Test MATLAB, Linux](https://github.com/opt4ai/prima/actions/workflows/test_matlab_linux.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_matlab_linux.yml)
+    - [![Test PyPRIMA](https://github.com/opt4ai/prima/actions/workflows/test_pyprima.yml/badge.svg)](https://github.com/opt4ai/prima/actions/workflows/test_pyprima.yml)
 
 - [Tests](https://github.com/opt2ai/prima/actions) at [opt2ai/prima](https://github.com/opt2ai/prima)
 
@@ -72,6 +73,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Stress test on large problems, Fortran](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml/badge.svg)](https://github.com/sprimalib/prima/actions/workflows/stress_test_fortran.yml)
 
 - [Tests](https://github.com/zequipe/prima/actions) at [zequipe/prima](https://github.com/zequipe/prima)
+
     - [![Parallel test, MATLAB](https://github.com/zequipe/prima/actions/workflows/parallel_test_matlab.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/parallel_test_matlab.yml)
     - [![Recursive test, MATLAB](https://github.com/zequipe/prima/actions/workflows/recursive_test_matlab.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/recursive_test_matlab.yml)
     - [![Test Flang](https://github.com/zequipe/prima/actions/workflows/test_flang.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/test_flang.yml)
@@ -83,11 +85,11 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Test RESCUE and IDZ, modernized](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_modernized.yml/badge.svg)](https://github.com/zequipe/prima/actions/workflows/profile_rescue_idz_modernized.yml)
 
 - [Tests](https://github.com/equipez/prima/actions) at [equipez/prima](https://github.com/equipez/prima)
+
     - [![CMake build on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/cmake_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/cmake_pi.yml)
     - [![Test gfortran on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_gfortran_pi64.yml)
     - [![Test Flang on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_flang_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_flang_pi.yml)
-    - [![Test armflang on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_armflang_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_armflang_pi.yml)
-    - [![Test nvfortran on Raspberry Pi](https://github.com/equipez/prima/actions/workflows/test_nvfortran_pi.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_nvfortran_pi.yml)
+    - [![Test Arm Flang](https://github.com/equipez/prima/actions/workflows/test_armflang.yml/badge.svg)](https://github.com/equipez/prima/actions/workflows/test_armflang.yml)
 
 - [Tests](https://github.com/s-prima/prima/actions) at [s-prima/prima](https://github.com/s-prima/prima)
 
