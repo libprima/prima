@@ -28,9 +28,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04-arm]  # As of February 2026, Arm Fortran compiler only supports Ubuntu 22.04
-        solver: [newuoa]#, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O1]#, -O2, -O3, -g, -fast]
-        testdim: [small]#, big]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        fflags: [-O1, -O2, -O3, -g, -fast]
+        testdim: [small, big]
 
     steps:
 
@@ -66,19 +66,7 @@ jobs:
         run: bash .github/scripts/misc_setup
 
       - name: Install Arm Fortran compiler
-        run: |
-          #sudo apt install -y environment-modules
-          ( printf '\n\n\nyes\n' ) | bash <(curl -fsSL https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Package/install.sh)
-          #source /usr/share/modules/init/bash  # Initialize module command
-          source /etc/profile.d/modules.sh
-          module use /opt/arm/modulefiles  # Add Arm modulefiles
-          module avail  # List available modules
-          module load acfl  # Load Arm C and Fortran compiler module
-          module load armpl  # Load Arm Performance Libraries module
-          which armflang
-          armflang --version
-          env
-          env | grep -i 'arm\|flang\|acfl' >> "$GITHUB_ENV"
+        run: bash .github/scripts/install_armflang
 
       - name: Revise bobyqa/trustregion.f90 to see why `xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1` leads to a SIGFPE
         shell: bash
