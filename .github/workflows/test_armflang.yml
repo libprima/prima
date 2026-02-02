@@ -70,7 +70,7 @@ jobs:
           sudo apt install -y environment-modules
           ( printf '\n\n\nyes\n' ) | bash <(curl -fsSL https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Package/install.sh)
           #source /usr/share/modules/init/bash  # Initialize module command
-          source /etc/profile.d/modules.sh
+          #source /etc/profile.d/modules.sh
           module use /opt/arm/modulefiles  # Add Arm modulefiles
           module avail  # List available modules
           module load acfl  # Load Arm C and Fortran compiler module
