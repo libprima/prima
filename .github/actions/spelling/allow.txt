@@ -2534,3 +2534,7 @@ libstdcxx
 MFF
 MFORT
 Urayasu
+acfl
+armpl
+modulefiles
+nyes
