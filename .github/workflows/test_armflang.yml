@@ -34,19 +34,19 @@ jobs:
 
     steps:
 
-      # - name: Run `sudo apt update -y`
-      #   run: sudo apt update -y  # Otherwise, free-disk-space or other actions relying on `apt` may fail
+      - name: Run `sudo apt update -y`
+        run: sudo apt update -y  # Otherwise, free-disk-space or other actions relying on `apt` may fail
 
-      # - name: Free disk space
-      #   uses: jlumbroso/free-disk-space@main
-      #   with:
-      #     # all of these default to true, but feel free to set to "false" if necessary for your workflow
-      #     android: true
-      #     dotnet: true
-      #     haskell: true
-      #     large-packages: true
-      #     docker-images: true
-      #     swap-storage: false  # Important, or the runner may be shut down due to memory starvation.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # all of these default to true, but feel free to set to "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false  # Important, or the runner may be shut down due to memory starvation.
 
       - name: Clone Repository (Latest)
         uses: actions/checkout@v6.0.2
@@ -62,20 +62,20 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
           submodules: recursive
 
-      # - name: Miscellaneous setup
-      #   run: bash .github/scripts/misc_setup
+      - name: Miscellaneous setup
+        run: bash .github/scripts/misc_setup
 
       - name: Install Arm Fortran compiler
-        run: ( printf '\n\n\nyes\n' ) | bash <(curl -fsSL https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Package/install.sh)
-        #run: curl -fsSL https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Package/install.sh | sudo bash -s -- --accept-license --quiet
-        # run: |
-        #   ACFL_VERS=24.10.1
-        #   DIST_VERS=Ubuntu-22.04
-        #   curl -O https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Version_${ACFL_VERS}/arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}_aarch64.tar
-        #   tar xvf arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}_aarch64.tar
-        #   cd arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}
-        #   printf "yes\n" > install.input
-        #   cat install.input | sudo ./arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}.sh
+        run: |
+          ( printf '\n\n\nyes\n' ) | bash <(curl -fsSL https://developer.arm.com/-/cdn-downloads/permalink/Arm-Compiler-for-Linux/Package/install.sh)
+          source /usr/share/Modules/init/bash
+          module use /opt/arm/modulefiles
+          module load acfl
+          module load armpl
+          which armflang
+          armflang --version
+          env
+          env | grep -i 'arm\|flang\|acfl' >> "$GITHUB_ENV"
 
       - name: Revise bobyqa/trustregion.f90 to see why `xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1` leads to a SIGFPE
         shell: bash
