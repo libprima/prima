@@ -75,7 +75,7 @@ jobs:
           tar xvf arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}_aarch64.tar
           cd arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}
           printf "yes\n" > install.input
-          cat install.input | ./arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}.sh
+          cat install.input | sudo ./arm-compiler-for-linux_${ACFL_VERS}_${DIST_VERS}.sh
 
       - name: Revise bobyqa/trustregion.f90 to see why `xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1` leads to a SIGFPE
         shell: bash
