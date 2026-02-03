@@ -53,7 +53,7 @@ test:
 mtest: FC := amdflang -std=f$(FSTD)
 
 # AMD AOCC Flang
-AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2> /dev/null | sort | tail -n 1)
+AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)
 dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # LLVM Flang
@@ -71,11 +71,11 @@ itest: FC := ifort -warn all -stand f$(FS) -diag-disable=10448  # 10448: suppres
 ntest: FC := nagfor -C -f$(FSTD) -fpp -nan -ieee=full  # `-nan -ieee=full` is to accommodate tests with REAL16.
 
 # NVIDIA nvfortran (aka, pgfortran)
-VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2> /dev/null | sort | tail -n 1)
+VFORT := $(shell find -L /opt/nvidia -type f -name nvfortran -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)
 vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
 
 # ARM Flang
-RFORT := $(shell find -L /opt/arm -type f -executable -name armflang -print 2> /dev/null | sort | tail -n 1)
+RFORT := $(shell find -L /opt/arm -type f -name armflang -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)
 rtest: FC := $(RFORT) -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # Intel ifx

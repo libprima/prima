@@ -367,7 +367,7 @@ atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d
 	FCF := $(AFORT) -TENV:simd_zmask=off $(AFF)
 
 # AMD AOCC Flang
-AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
+AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 AFINC := $(shell dirname $$(dirname $(AFLANG) 2>/dev/null) 2>/dev/null)/include
 AFLIB := $(shell dirname $$(dirname $(AFLANG) 2>/dev/null) 2>/dev/null)/lib
 AFLANG := $(AFLANG) -I$(AFINC) -L$(AFLIB)
@@ -376,7 +376,7 @@ ifeq ($(TESTDIM),small)
 	AFLANG := $(AFLANG) -Mstack_arrays
 endif
 # Strangely, with `-Mchkptr`, the compiler may not print the error message of `-Mbounds` anymore.
-DFORT := $(AFLANG) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mrecursive #-Kieee #-Mchkptr
+
 ifeq ($(OSTYPE),LINUX)
 	DFORT := $(DFORT) -Wl,-z,noexecstack
 endif
@@ -440,7 +440,7 @@ mtest_i2_r16_d1_tst_c mtest_i4_r16_d1_tst_c mtest_i8_r16_d1_tst_c mtest_i2_r16_d
 # LLVM Flang
 # We must define FFORT as follows, because AOCC will also provide "flang", except that it is
 # located under /opt/AMD. Similar for ARM Flang.
-FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local ${HOME}/tmp /tmp -type f -name flang -exec test -x {} \; -print | sort | tail -n 1)
+FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local ${HOME}/tmp /tmp -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
 FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
 FFORT := $(FFORT) -I$(FFINC) -L$(FFLIB)
@@ -636,7 +636,7 @@ ntest_i2_r16_d1_tst_c ntest_i4_r16_d1_tst_c ntest_i8_r16_d1_tst_c ntest_i2_r16_d
 	FCF := $(NFORT) -nan -ieee=stop $(NFF)
 
 # NVIDIA nvfortran
-VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2>/dev/null | sort | tail -n 1)
+VFORT := $(shell find -L /opt/nvidia -type f -name nvfortran -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 VFORT := $(VFORT) -Werror
 # For nvfortran, -Mstack_arrays places automatic arrays on the stack. -Mnostack_arrays allocates
 # automatic arrays on the heap. -Mnostack_arrays is the default.
@@ -673,7 +673,7 @@ vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d
 
 
 # ARM Flang
-RFORT := $(shell find -L /opt/arm -type f -executable -name armflang -print 2>/dev/null | sort | tail -n 1)
+RFORT := $(shell find -L /opt/arm -type f -name armflang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 RFORT := $(RFORT) -pedantic-errors -Werror
 ifeq ($(TESTDIM),small)
 	RFORT := $(RFORT) -fstack-arrays

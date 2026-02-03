@@ -27,7 +27,7 @@ if type flang &> /dev/null && ! type "${COMPILER_LIST[$i]}" | grep -q '\/opt\/ar
     COMP_LIST="$COMP_LIST f"
 fi
 # Make dtest if AOCC flang is installed.
-if [[ -n "$(find -L /opt/AMD -type f -executable -name flang -print 2>/dev/null)" ]] ; then
+if [[ -n "$(find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2>/dev/null)" ]] ; then
     COMP_LIST="$COMP_LIST d"
 fi
 
