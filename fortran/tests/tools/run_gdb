@@ -8,6 +8,8 @@
 
 echo 0 > "$2"
 
-gdb -return-child-result -batch -ex run -ex where -ex quit "$1" 2>&1 || echo $? > "$2"
+# `-iex "set auto-load safe-path /"` is used to avoid gdb warnings such as
+# File "XXX" auto-loading has been declined by your `auto-load safe-path' set to "YYY"
+gdb -return-child-result -batch -iex "set auto-load safe-path /"  -ex run -ex where -ex quit "$1" 2>&1 || echo $? > "$2"
 
 exit 0  # Exit successfully anyway.
