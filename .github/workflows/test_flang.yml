@@ -113,7 +113,7 @@ jobs:
         uses: actions/upload-artifact@v6
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.solver }}-${{ env.IK }}-${{ matrix.fflags }}-${{ matrix.testdim }}
+          name: ${{ matrix.os }}-${{ matrix.solver }}-${{ env.IK }}-${{ matrix.fflags }}-${{ matrix.testdim }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
