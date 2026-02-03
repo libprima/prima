@@ -445,6 +445,7 @@ FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
 FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
 FFORT := $(FFORT) -I$(FFINC) -L$(FFLIB)
 FFORT := $(FFORT) -fimplicit-none -Werror
+
 ifeq ($(TESTDIM),small)
 	FFORT := $(FFORT) -fstack-arrays
 else
@@ -454,6 +455,10 @@ endif
 FFORT := $(FFORT) -std=f2018 -pedantic  # As of flang 20.0, only -std=f2018 is supported
 ifeq ($(OSTYPE),LINUX)
 	FFORT := $(FFORT) -Wl,-z,noexecstack
+endif
+ifeq ($(OSTYPE), MAC)
+	SDKROOT := $(shell /usr/bin/xcrun --show-sdk-path -sdk macosx)
+	FFORT := $(FFORT) -lSystem -L$(SDKROOT)/usr/lib
 endif
 
 ftest_i2_r4_d1_tst_c ftest_i4_r4_d1_tst_c ftest_i8_r4_d1_tst_c ftest_i2_r4_d0_tst_c ftest_i4_r4_d0_tst_c ftest_i8_r4_d0_tst_c: \
@@ -1059,6 +1064,8 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "ld: warning: ignoring duplicate libraries:.*libsvml.a" \
 	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
 	| grep -v "\[-Wgcc-install-dir-libstdcxx\]" \
+	| grep -v "ld: warning: ignoring duplicate libraries: '-lSystem'" \
+	| grep -v "ld: warning: reexported library with install name" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
