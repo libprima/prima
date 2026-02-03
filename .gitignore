@@ -235,3 +235,6 @@ _version.txt
 
 # MathWorks files
 fintrf.h
+
+# Mac OS X debug symbols
+*.dSYM/

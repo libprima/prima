@@ -57,7 +57,12 @@ AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -prin
 dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # LLVM Flang
-ftest: FC := flang -std=f$(FSTD)
+FFORT := flang
+ifeq ($(shell uname -s),Darwin)
+	SDKROOT := $(shell /usr/bin/xcrun --show-sdk-path -sdk macosx)
+	FFORT := $(FFORT) -lSystem -L$(SDKROOT)/usr/lib
+endif
+ftest: FC := $(FFORT) -std=f$(FSTD)
 
 # GNU gfortran: due to `error stop` and `backtrace`, we must either compile wit no `-std` or
 # use `-std=f20xy -fall-intrinsics` with xy >= 18.
