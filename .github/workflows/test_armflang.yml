@@ -66,7 +66,8 @@ jobs:
         run: bash .github/scripts/misc_setup
 
       - name: Install Arm Fortran compiler
-        run: bash .github/scripts/install_armflang || { echo "Warning: Arm Fortran compiler installation failed! The test will be skipped." >&2; }
+        run: |
+          bash .github/scripts/install_armflang || { echo "Warning: Arm Fortran compiler installation failed! The test will be skipped." >&2; }
         # Exit code 0 even if the installation fails. The test will be skipped later.
 
       - name: Revise bobyqa/trustregion.f90 to see why `xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1` leads to a SIGFPE
