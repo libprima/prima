@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
@@ -38,9 +38,11 @@ jobs:
     steps:
 
       - name: Run `sudo apt update -y`
+        if: startsWith(matrix.os, 'ubuntu')
         run: sudo apt update -y  # Otherwise, free-disk-space or other actions relying on `apt` may fail
 
       - name: Free disk space
+        if: startsWith(matrix.os, 'ubuntu')
         uses: jlumbroso/free-disk-space@main
         with:
           # all of these default to true, but feel free to set to "false" if necessary for your workflow
