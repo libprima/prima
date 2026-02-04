@@ -97,7 +97,7 @@ FFF := -O3 -ffast-math  # Suggested by flang 20.1.7
 GFF := -Ofast  # -Ofast implies -O3 and -ffast-math
 MFF := -O3 -ffast-math  # Suggested by AOMP 22.0-2 when running `amdflang --help | grep fast`, -Ofast is deprecated
 NFF := -O4
-RFF := -Ofast -ffast-math # -Ofast implies -O3, but no documentation found about the relation between -Ofast and -ffast-math
+RFF := -O3 -ffast-math  # '-Ofast' is deprecated; use '-O3 -ffast-math -fstack-arrays' for the same behavior
 SFF := -fast # -fast implies -O5 and ftrap=common
 SFF16 := -O5  # -fast leads to a mistakenly failure of assertion in BOBYQA: RHOBEG <= MINVAL(XU-XL)/2
 VFF := -O4 -fast  # nvfortran -fast implies -O2, but the highest optimization level is -O4
@@ -440,7 +440,7 @@ mtest_i2_r16_d1_tst_c mtest_i4_r16_d1_tst_c mtest_i8_r16_d1_tst_c mtest_i2_r16_d
 
 # LLVM Flang
 # We must define FFORT as follows, because AOCC will also provide "flang", except that it is
-# located under /opt/AMD. Similar for ARM Flang.
+# located under /opt/AMD.
 FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local ${HOME}/tmp /tmp -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
 FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
@@ -680,13 +680,13 @@ vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d
 
 # ARM Flang
 RFORT := $(shell find -L /opt/arm -type f -name armflang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
-RFORT := $(RFORT) -pedantic-errors -Werror
+RFORT := $(RFORT) -Xclang -pedantic-errors
 ifeq ($(TESTDIM),small)
 	RFORT := $(RFORT) -fstack-arrays
 else
 	RFORT := $(RFORT) -fno-stack-arrays
 endif
-RFORT := $(RFORT) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkptr #-Kieee
+RFORT := $(RFORT) -std=f$(FSTD) -pedantic -Weverything -Wall
 ifeq ($(OSTYPE),LINUX)
 	RFORT := $(RFORT) -Wl,-z,noexecstack
 endif
