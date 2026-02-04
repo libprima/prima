@@ -233,7 +233,7 @@ atest_i2_r16_d1_tst atest_i4_r16_d1_tst atest_i8_r16_d1_tst atest_i2_r16_d0_tst 
 	FC2 := $(AFORT) $(FFLAGS2) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
-AFLANG := $(shell find -L /opt/AMD -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
+AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 AFLANG := $(AFLANG) -pedantic-errors -Werror
 # Strangely, with `-Mchkptr`, the compiler may not print the error message of `-Mbounds` anymore.
 DFORT := $(AFLANG) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Kieee #-Mchkptr
@@ -272,7 +272,7 @@ mtest_i2_r16_d1_tst mtest_i4_r16_d1_tst mtest_i8_r16_d1_tst mtest_i2_r16_d0_tst 
 	FC2 := $(MFORT) $(FFLAGS2)
 
 # LLVM Flang
-FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local /tmp -type f -executable -name flang -print 2>/dev/null | sort | tail -n 1)
+FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local ${HOME}/tmp /tmp -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
 FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
 FFORT := $(FFORT) -fimplicit-none -Werror
@@ -382,7 +382,7 @@ ntest_i2_r16_d1_tst ntest_i4_r16_d1_tst ntest_i8_r16_d1_tst ntest_i2_r16_d0_tst 
 	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=stop
 
 # NVIDIA nvfortran (aka, pgfortran)
-VFORT := $(shell find -L /opt/nvidia -type f -executable -name nvfortran -print 2>/dev/null | sort | tail -n 1)
+VFORT := $(shell find -L /opt/nvidia -type f -name nvfortran -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 VFORT := $(VFORT) #-Werror  # -Werror will lead to failures due to nonstandard use of data type length specifier in the MEX API.
 VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
 
