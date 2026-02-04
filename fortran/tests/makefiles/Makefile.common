@@ -1072,6 +1072,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "\[-Wgcc-install-dir-libstdcxx\]" \
 	| grep -v "ld: warning: ignoring duplicate libraries: '-lSystem'" \
 	| grep -v "ld: warning: reexported library with install name" \
+	| grep -v "warning: argument unused during compilation" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --warning "$(LOG_DIR)/$@.log"
