@@ -2539,3 +2539,7 @@ armpl
 modulefiles
 nyes
 iex
+atfl
+gsed
+SDKROOT
+xcrun
