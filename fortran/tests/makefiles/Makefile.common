@@ -680,7 +680,6 @@ vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d
 
 # ARM Flang
 RFORT := $(shell find -L /opt/arm -type f -name armflang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
-RFORT := $(RFORT) -Xclang -pedantic-errors
 ifeq ($(TESTDIM),small)
 	RFORT := $(RFORT) -fstack-arrays
 else
