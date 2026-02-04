@@ -11,10 +11,6 @@ if [[ "$(uname)" = "Darwin" ]] ; then
 else
     SEDI="sed -i"
 fi
-echo "-----------------"
-echo "uname=$(uname)"
-echo "SEDI=$SEDI"
-echo "-----------------"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
