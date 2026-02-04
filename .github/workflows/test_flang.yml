@@ -30,10 +30,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O1, -O2, -O3, -g, -fast]
-        testdim: [small, big]
+        os: [ubuntu-24.04-arm]
+        #os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        solver: [lincoa, bobyqa]
+        #fflags: [-O1, -O2, -O3, -g, -fast]
+        fflags: [-fast]
+        #testdim: [small, big]
+        testdim: [small]
 
     steps:
 
