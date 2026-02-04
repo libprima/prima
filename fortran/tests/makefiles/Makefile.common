@@ -685,7 +685,7 @@ ifeq ($(TESTDIM),small)
 else
 	RFORT := $(RFORT) -fno-stack-arrays
 endif
-RFORT := $(RFORT) -std=f2018 -pedantic -Weverything -Wall  # As of 21.1, only f2018 is supported.
+RFORT := $(RFORT) -std=f2018 -pedantic -Wall  # As of 21.1, only f2018 is supported.
 ifeq ($(OSTYPE),LINUX)
 	RFORT := $(RFORT) -Wl,-z,noexecstack
 endif
