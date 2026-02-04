@@ -78,10 +78,6 @@ jobs:
       - name: Revise bobyqa/trustregion.f90 to see why `xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1` leads to a SIGFPE
         shell: bash
         run: |
-          if [[ $(uname) = 'Darwin' ]]; then  # macOS uses BSD sed, which does not understand \s or \n
-              brew install gnu-sed
-              SEDI="gsed -i"
-          fi
           cd fortran/bobyqa || exit 42
           $SEDI "s|xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1|write(*,*) '========> su = ', su, 'xopt = ', xopt, 'gopt = ', gopt\nxbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1|"  trustregion.f90
           cat trustregion.f90
