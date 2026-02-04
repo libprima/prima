@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wed 04 Feb 2026 06:11:48 AM CET
+! Last Modified: Wed 04 Feb 2026 07:27:34 AM CET
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -196,7 +196,7 @@ real(RP), parameter :: SYMTOL_DFT = REALMAX
 #elif defined __FLANG && PRIMA_REAL_PRECISION < 64 && PRIMA_AGGRESSIVE_OPTIONS == 1
 ! HUAWEI BiSheng Compiler or ARM Compiler with aggressive optimization options and single precision
 real(RP), parameter :: SYMTOL_DFT = max(5.0E3_RP * EPS, TEN**max(-10, -MAXPOW10))
-#elif defined __llvm__ && PRIMA_REAL_PRECISION < 64 && PRIMA_AGGRESSIVE_OPTIONS == 1
+#elif defined __flang__ && PRIMA_REAL_PRECISION < 64 && PRIMA_AGGRESSIVE_OPTIONS == 1
 ! LLVM Flang with aggressive optimization options and single precision
 real(RP), parameter :: SYMTOL_DFT = max(5.0E2_RP * EPS, TEN**max(-10, -MAXPOW10))
 #elif defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64
