@@ -102,6 +102,10 @@ jobs:
       - name: Revise string.f90, so that we know what is happening if assertion fails
         shell: bash
         run: |
+          if [[ $(uname) = 'Darwin' ]]; then  # macOS uses BSD sed, which does not understand \s or \n
+              brew install gnu-sed
+              SEDI="gsed -i"
+          fi
           cd fortran/common || exit 42
           $SEDI "s|\(call assert(abs(x - str2real(s)) <= abs(x) \* 10.0\*\*(-ndgt_loc), 'STR2REAL(S) == X', srname)\)|if (.not. abs(x - str2real(s)) <= abs(x) * 10.0**(-ndgt_loc)) then\nwrite(*,*) '====> x = ', x, 's = ', s, 'sx = ', str2real(s)\nerror stop\nelse\n\1\nend if|" string.f90
           cat string.f90
@@ -109,6 +113,10 @@ jobs:
       - name: Revise linalg.f90 regarding a postcondition of p_norm, so that we know what is happening if it fails
         shell: bash
         run: |
+          if [[ $(uname) = 'Darwin' ]]; then  # macOS uses BSD sed, which does not understand \s or \n
+              brew install gnu-sed
+              SEDI="gsed -i"
+          fi
           cd fortran/common || exit 42
           $SEDI "s|'Y >= 0 unless X contains NaN'|'Y >= 0 unless X contains NaN'\&\n\&\/\/num2str(y)\/\/num2str(sum(abs(x)))\/\/num2str(int(is_nan(sum(abs(x)))))\/\/num2str(x)|" linalg.f90
           $SEDI "s|function p_norm(x, p) result(y)|function p_norm(x, p) result(y)\nuse, non_intrinsic :: string_mod, only : num2str|" linalg.f90
