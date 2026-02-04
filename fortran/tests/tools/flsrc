@@ -6,11 +6,15 @@ LINALG="$DIR/common/linalg.f90"
 GET_INTRISIC_LINALG="$DIR/common/get_intrinsic_linalg"
 INTRINSIC_LINALG="$DIR/common/intrinsic_linalg.f90"
 
-if [[ "$(uname)" == "Darwin" ]] ; then
+if [[ "$(uname)" = "Darwin" ]] ; then
     SEDI="sed -i ''"
 else
     SEDI="sed -i"
 fi
+echo "-----------------"
+echo "uname=$(uname)"
+echo "SEDI=$SEDI"
+echo "-----------------"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"

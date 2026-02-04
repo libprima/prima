@@ -30,7 +30,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04-arm]
+        #os: [ubuntu-24.04-arm]
+        os: [macos-latest]
         #os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
         #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         solver: [lincoa, bobyqa]
