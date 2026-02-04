@@ -26,7 +26,7 @@ WARNINGS="$(grep -i "warning\|Remark\|Questionable\|attention\|F[0-9]*-W\|F[0-9]
     | grep -vi "Assertion fails: SUM(VLAG(1:NPT)) == 1" \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
 
-ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|segmentation\|fault\|illegal\|Subscript out of range\|F[0-9]*-S\|F[0-9]*-F\|F[0-9]*-E\|Could\ not\ resolve\|not\ defined\|Cannot connect to licence server (error 113)" "$LOGFILE" \
+ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|segmentation\|fault\|illegal\|Subscript out of range\|F[0-9]*-S\|F[0-9]*-F\|F[0-9]*-E\|Could\ not\ resolve\|not\ defined\|command not found\|Cannot connect to licence server (error 113)" "$LOGFILE" \
     | grep -vi "default" \
     | grep -vi "[0-9]\s*error" \
     | grep -vi "[0-9a-z]bad\|bad[0-9a-z]" \
