@@ -8,7 +8,7 @@ module consts_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wed 04 Feb 2026 06:04:01 AM CET
+! Last Modified: Wed 04 Feb 2026 06:11:48 AM CET
 !--------------------------------------------------------------------------------------------------!
 
 !--------------------------------------------------------------------------------------------------!
@@ -193,22 +193,22 @@ real(RP), parameter :: BOUNDMAX = QUART * REALMAX
 ! ifx with single precision and aggressive optimization options, or gfortran with aggressive
 ! optimization options
 real(RP), parameter :: SYMTOL_DFT = REALMAX
-#elif (defined __FLANG && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
+#elif defined __FLANG && PRIMA_REAL_PRECISION < 64 && PRIMA_AGGRESSIVE_OPTIONS == 1
 ! HUAWEI BiSheng Compiler or ARM Compiler with aggressive optimization options and single precision
 real(RP), parameter :: SYMTOL_DFT = max(5.0E3_RP * EPS, TEN**max(-10, -MAXPOW10))
-#elif (defined __llvm__ && PRIMA_REAL_PRECISION < 64) && PRIMA_AGGRESSIVE_OPTIONS == 1
+#elif defined __llvm__ && PRIMA_REAL_PRECISION < 64 && PRIMA_AGGRESSIVE_OPTIONS == 1
 ! LLVM Flang with aggressive optimization options and single precision
 real(RP), parameter :: SYMTOL_DFT = max(5.0E2_RP * EPS, TEN**max(-10, -MAXPOW10))
-#elif (defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64)
+#elif defined __INTEL_COMPILER && PRIMA_REAL_PRECISION < 64
 ! ifx with single precision
 real(RP), parameter :: SYMTOL_DFT = max(5.0E1_RP * EPS, TEN**max(-10, -MAXPOW10))
-#elif (defined __NAG_COMPILER_BUILD && PRIMA_REAL_PRECISION > 64)
+#elif defined __NAG_COMPILER_BUILD && PRIMA_REAL_PRECISION > 64
 ! NAG Fortran Compiler with quadruple precision
 real(RP), parameter :: SYMTOL_DFT = max(TEN * EPS, TEN**max(-10, -MAXPOW10))
-#elif (PRIMA_RELEASED == 1) && PRIMA_REAL_PRECISION >=  64
+#elif PRIMA_RELEASED == 1 && PRIMA_REAL_PRECISION >=  64
 ! Double or higher precision in released mode
 real(RP), parameter :: SYMTOL_DFT = max(TEN * EPS, TEN**max(-10, -MAXPOW10))
-#elif (PRIMA_RELEASED == 1)
+#elif PRIMA_RELEASED == 1
 ! Single or lower precision in released mode
 real(RP), parameter :: SYMTOL_DFT = max(1.0E2_RP * EPS, TEN**max(-10, -MAXPOW10))
 #else
