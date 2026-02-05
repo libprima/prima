@@ -43,9 +43,6 @@ skip = [
   # I do not see a way to install a 32-bit compiler with the setup-fortran action,
   # so we will just build 64-bit wheels on windows.
   "*-win32", 
-  # Disable building PyPy wheels on all platforms. If there is interest in supporting PyPy
-  # we can look into it.
-  "pp*",
   # Disable musllinux for the moment. It successfully built but there was an error when testing
   "*musllinux*",
   # SciPy does not provide binaries for 32-bit Python on Linux starting from 3.10.
