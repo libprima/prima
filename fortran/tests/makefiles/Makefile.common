@@ -651,7 +651,7 @@ RFORT := $(shell find -L /opt/arm -type f -name armflang -exec test -x {} \; -pr
 ifeq ($(TESTDIM),small)
 	RFORT := $(RFORT) -fstack-arrays
 else
-	RFORT := $(RFORT) -fno-stack-arrays
+	RFORT := $(RFORT) -fno-stack-arrays -mmlir -fdynamic-heap-array
 endif
 RFORT := $(RFORT) -std=f2018 -pedantic -Wall  # As of 21.1, only f2018 is supported.
 ifeq ($(OSTYPE),LINUX)
