@@ -28,11 +28,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        solver: [lincoa]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
-        #testdim: [small, big]
-        testdim: [small]
+        testdim: [small, big]
 
     steps:
 
