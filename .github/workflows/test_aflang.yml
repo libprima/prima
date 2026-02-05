@@ -28,9 +28,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        solver: [lincoa]
         fflags: [-O1, -O2, -O3, -g, -fast]
-        testdim: [small, big]
+        #testdim: [small, big]
+        testdim: [small]
 
     steps:
 
@@ -76,6 +78,12 @@ jobs:
           cd fortran/tests
           $SEDI 's|::\s*bign\s*=.*$|:: bign = 200_IK|' test_newuoa.f90
           $SEDI 's|::\s*bign\s*=.*$|:: bign = 200_IK|' test_lincoa.f90
+
+      - name: Revise getact.f90 to see why assertions fail
+        run: |
+          cd fortran/lincoa
+          $SEDI "s|call assert(inprod(psd, psd) <=|write(*,*) 'psd = ', psd, 'g = ', g, 'psd*g = ', inprod(psd, g), 'psd^2 = ', inprod(psd, psd), 'gg = ', gg\ncall assert(inprod(psd, psd) <=|" getact.f90
+          cat getact.f90
 
       - name: Conduct the test
         run: |
