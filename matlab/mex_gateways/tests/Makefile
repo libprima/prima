@@ -2,7 +2,6 @@
 # as possible.
 #
 # The following compilers are tested:
-# a: Absoft af95
 # d: AOCC flang
 # f: LLVM flang
 # g: GNU gfortran
@@ -12,7 +11,7 @@
 # v: NVIDIA nvfortran
 # x: Intel ifx
 #
-# The following tests are available, where C = a, d, f, g, n, i, s, v, x, and N = 2, 4, 8:
+# The following tests are available, where C = d, f, g, n, i, s, v, x, and N = 2, 4, 8:
 # Ctest.S: test solver S with compiler X
 # Ctest.S_c: test solver S with compiler X; compilation only (do not run the binary)
 # Ctest_iN: test solver S with compiler X and integer kind INT(N*8)

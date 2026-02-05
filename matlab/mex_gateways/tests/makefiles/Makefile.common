@@ -2,7 +2,6 @@
 #
 # The following compilers are tested:
 # 9: G95
-# a: Absoft af95
 # d: AOCC flang
 # f: LLVM flang
 # g: GNU gfortran
@@ -13,7 +12,7 @@
 # v: NVIDIA nvfortran
 # x: Intel ifx
 #
-# The following tests are available, where C = 9, a, d, f, g, m, n, i, s, v, x, and N = 2, 4, 8:
+# The following tests are available, where C = 9, d, f, g, m, n, i, s, v, x, and N = 2, 4, 8:
 # Ctest: test with compiler C
 # Ctest_iN: test with compiler C and integer kind INT(N*8)
 #
@@ -111,7 +110,7 @@ CHCKTST := $(TOOLS_DIR)/checktest
 # Decide whether to test QP, i.e., REAL128.
 # Flang and nvfortran do not support REAL128;
 # AOCC Flang complains about a symbol lookup error: undefined symbol: "fort_rnumq_i8";
-TESTS_QP = atest gtest mtest ntest itest stest 9test xtest
+TESTS_QP = gtest mtest ntest itest stest 9test xtest
 TESTS_NO_QP = dtest ftest vtest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
 # When listing the tests, we first put the ones that are more likely to raise errors.
@@ -135,8 +134,7 @@ $(foreach TST, $(TESTS_NO_QP), $(eval $(TST): SUBTESTS := \
 # The tests with ifort, ifx, etc are slow due to the extensive runtime checks. To save time, we
 # define the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not
 # surely) to be OK, because the only difference in the code is the integer kind. Similar for others.
-TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
-			   gtest_i2 gtest_i4 gtest_i8 \
+TESTS_INT_QP = gtest_i2 gtest_i4 gtest_i8 \
 			   mtest_i2 mtest_i4 mtest_i8 \
 			   ntest_i2 ntest_i4 ntest_i8 \
 			   itest_i2 itest_i4 itest_i8 \
@@ -204,33 +202,6 @@ endif
 # Depending on the compiler, some FPEs are ignored for the tests with r4 (single-precision real),
 # e.g., over/underflow.
 ####################################################################################################
-
-# Absoft af95
-# For Debian-based systems, -no-pie is needed; for other systems, this option may not work.
-AFORT :=
-ifneq ("$(wildcard /etc/debian_version)","")
-	AFORT = af95 -no-pie
-else
-	AFORT = af95
-endif
-AFORT := $(AFORT) -m1 -en -et -Rb -Rc -Rs -Rp
-
-atest_i2_r4_d1_tst atest_i4_r4_d1_tst atest_i8_r4_d1_tst atest_i2_r4_d0_tst atest_i4_r4_d0_tst atest_i8_r4_d0_tst: \
-	FC1 := $(AFORT) $(FFLAGS1) -TENV:simd_zmask=off
-atest_i2_r4_d1_tst atest_i4_r4_d1_tst atest_i8_r4_d1_tst atest_i2_r4_d0_tst atest_i4_r4_d0_tst atest_i8_r4_d0_tst: \
-	FC2 := $(AFORT) $(FFLAGS2) -TENV:simd_zmask=off
-
-atest_i2_r8_d1_tst atest_i4_r8_d1_tst atest_i8_r8_d1_tst atest_i2_r8_d0_tst atest_i4_r8_d0_tst atest_i8_r8_d0_tst: \
-	FC1 := $(AFORT) $(FFLAGS1) \
-	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
-atest_i2_r8_d1_tst atest_i4_r8_d1_tst atest_i8_r8_d1_tst atest_i2_r8_d0_tst atest_i4_r8_d0_tst atest_i8_r8_d0_tst: \
-	FC2 := $(AFORT) $(FFLAGS2) \
-	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
-
-atest_i2_r16_d1_tst atest_i4_r16_d1_tst atest_i8_r16_d1_tst atest_i2_r16_d0_tst atest_i4_r16_d0_tst atest_i8_r16_d0_tst: \
-	FC1 := $(AFORT) $(FFLAGS1) -TENV:simd_zmask=off
-atest_i2_r16_d1_tst atest_i4_r16_d1_tst atest_i8_r16_d1_tst atest_i2_r16_d0_tst atest_i4_r16_d0_tst atest_i8_r16_d0_tst: \
-	FC2 := $(AFORT) $(FFLAGS2) -TENV:simd_zmask=off
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
@@ -381,7 +352,7 @@ ntest_i2_r16_d1_tst ntest_i4_r16_d1_tst ntest_i8_r16_d1_tst ntest_i2_r16_d0_tst 
 ntest_i2_r16_d1_tst ntest_i4_r16_d1_tst ntest_i8_r16_d1_tst ntest_i2_r16_d0_tst ntest_i4_r16_d0_tst ntest_i8_r16_d0_tst: \
 	FC2 := $(NFORT) $(FFLAGS2) -nan -ieee=stop
 
-# NVIDIA nvfortran (aka, pgfortran)
+# NVIDIA nvfortran
 VFORT := $(shell find -L /opt/nvidia -type f -name nvfortran -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 VFORT := $(VFORT) #-Werror  # -Werror will lead to failures due to nonstandard use of data type length specifier in the MEX API.
 VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk -Mchkptr
@@ -503,8 +474,6 @@ $(TESTS) $(TESTS_INT):
 	@($(FC1) $(EXTRA_FLAGS) -c $(SRC) && $(FC2) $(EXTRA_FLAGS) -c $(SRC)) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
 	| grep -v "Using 'dlopen' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking" \
-	| grep -v "Absoft ANSI 1610:" \
-	| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
 	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
 	| grep -v "NAG Fortran Compiler Release [0-9]*.* Build [0-9]*" \
 	| grep -v "Questionable: ./lincoa/geometry.f90, line [0-9]*: Variable RSTAT set but never referenced" \
@@ -629,9 +598,6 @@ source_%: $(SRC_DIRS)
 	fi
 	@if echo $@ | grep -q "9test"; then \
 		bash $(TOOLS_DIR)/9src ./ ; \
-	fi
-	@if echo $@ | grep -q "atest\|9test"; then \
-		bash $(TOOLS_DIR)/a9src ./ ; \
 	fi
 	@if echo $@ | grep -q "stest\|9test"; then \
 		bash $(TOOLS_DIR)/s9src ./ ; \

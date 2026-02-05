@@ -129,7 +129,7 @@
 
 /* Is quad precision available on this platform (compiler, hardware ...)? */
 /* Note:
- * 1. Not all platforms support REAL*16. For example, pgfortran 19 does not.
+ * 1. Not all platforms support REAL*16.
  * 2. It is not guaranteed that REAL*16 has a wider range than REAL*8. For
  *    example, REAL*16 of nagfor 7.0 has a range of 291, while REAL*8
  *    has a range of 307.

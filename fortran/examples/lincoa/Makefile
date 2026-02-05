@@ -75,7 +75,7 @@ itest: FC := ifort -warn all -stand f$(FS) -diag-disable=10448  # 10448: suppres
 #ntest: FC := nagfor -C -f$(FSTD) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.
 ntest: FC := nagfor -C -f$(FSTD) -fpp -nan -ieee=full  # `-nan -ieee=full` is to accommodate tests with REAL16.
 
-# NVIDIA nvfortran (aka, pgfortran)
+# NVIDIA nvfortran
 VFORT := $(shell find -L /opt/nvidia -type f -name nvfortran -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)
 #vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard  # As of nvfortran 22.2-0, `-C` leads to a false positive of out of boundary subscript.
 vtest: FC := $(VFORT) -Wall -Wextra -Mstandard

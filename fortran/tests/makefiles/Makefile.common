@@ -2,7 +2,6 @@
 #
 # 1.  The following compilers are tested:
 # 9: G95 (compilation only; no compilation of test_*.f90 and other testing code, which contains F03 constructs unsupported by G95)
-# a: Absoft af95 (compilation only; the compiler is buggy and not maintained anymore)
 # d: AOCC flang
 # f: LLVM flang
 # g: GNU gfortran
@@ -14,7 +13,7 @@
 # v: NVIDIA nvfortran
 # x: Intel ifx
 #
-# 2. The following tests are available, where C = 9, a, d, f, g, l, m, n, i, r, s, v, x, and N = 2, 4, 8:
+# 2. The following tests are available, where C = 9, d, f, g, l, m, n, i, r, s, v, x, and N = 2, 4, 8:
 # Ctest: test with compiler C
 # Ctest_c: test with compiler C; compilation only (do not run the binary)
 # Ctest_iN: test with compiler C and integer kind INT(N*8)
@@ -174,7 +173,7 @@ CHCKTST := $(TOOLS_DIR)/checktest
 # AOCC 5.1 Flang is buggy concerning `nint` with REAL128 (https://github.com/zequipe/test_compiler/blob/master/test_nint.f90)
 # LLVM Flang 21.1.0 does not support REAL128.
 # nvfortran 26.1 do not support REAL128;
-TESTS_QP = atest gtest mtest ntest itest stest 9test xtest
+TESTS_QP = gtest mtest ntest itest stest 9test xtest
 TESTS_NO_QP = dtest ftest rtest vtest
 TESTS = $(TESTS_QP) $(TESTS_NO_QP)
 # When listing the tests, we first put the ones that are more likely to raise errors.
@@ -198,7 +197,7 @@ $(foreach TST, $(TESTS), $(eval $(TST): TST_C := $(TST)_c))
 
 # The following tests compile the code but do not run the binary. This is useful if we want to
 # check whether the code can compile.
-TESTS_C_QP = atest_c gtest_c mtest_c ntest_c itest_c stest_c 9test_c xtest_c
+TESTS_C_QP = gtest_c mtest_c ntest_c itest_c stest_c 9test_c xtest_c
 TESTS_C_NO_QP = dtest_c ftest_c rtest_c vtest_c
 TESTS_C = $(TESTS_C_QP) $(TESTS_C_NO_QP)
 $(foreach TST, $(TESTS_C_QP), $(eval $(TST): SUBTESTS_C := \
@@ -221,8 +220,7 @@ $(foreach TST, $(TESTS_C_NO_QP), $(eval $(TST): SUBTESTS_C := \
 # The tests with ifort, ifx, etc are slow due to the extensive runtime checks. To save time, we
 # define the following tests. If itest_i2 succeeds, then itest_i4 and itest_i8 are likely (but not
 # surely) to be OK, because the only difference in the code is the integer kind. Similar for others.
-TESTS_INT_QP = atest_i2 atest_i4 atest_i8 \
-			   gtest_i2 gtest_i4 gtest_i8 \
+TESTS_INT_QP = gtest_i2 gtest_i4 gtest_i8 \
 			   mtest_i2 mtest_i4 mtest_i8 \
 			   ntest_i2 ntest_i4 ntest_i8 \
 			   itest_i2 itest_i4 itest_i8 \
@@ -246,8 +244,7 @@ $(foreach TST, $(TESTS_INT), $(eval $(TST): TST_C := $(TST)_c))
 
 # The following tests compile the code but do not run the binary. This is useful if we want to
 # check whether the code can compile.
-TESTS_INT_C_QP = atest_i2_c atest_i4_c atest_i8_c \
-				 gtest_i2_c gtest_i4_c gtest_i8_c \
+TESTS_INT_C_QP = gtest_i2_c gtest_i4_c gtest_i8_c \
 				 mtest_i2_c mtest_i4_c mtest_i8_c \
 				 ntest_i2_c ntest_i4_c ntest_i8_c \
 				 itest_i2_c itest_i4_c itest_i8_c \
@@ -337,35 +334,6 @@ endif
 # 3) Depending on the compiler, some FPEs are ignored for the tests with r4 (single-precision real),
 # e.g., over/underflow.
 ####################################################################################################
-
-# Absoft af95
-# N.B.: According to Absoft support: With the Absoft compiler, automatic arrays are always allocated
-# on the stack. There is no option to move the allocation to the heap.
-AFORT := af95 -m1 -en -et -Rb -Rc -Rs -Rp -OPT:Olimit=6204
-
-atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
-	FCO := $(AFORT) $(FFLAGSO) -TENV:simd_zmask=off
-atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
-	FCG := $(AFORT) $(FFLAGSG) -TENV:simd_zmask=off
-atest_i2_r4_d1_tst_c atest_i4_r4_d1_tst_c atest_i8_r4_d1_tst_c atest_i2_r4_d0_tst_c atest_i4_r4_d0_tst_c atest_i8_r4_d0_tst_c: \
-	FCF := $(AFORT) -TENV:simd_zmask=off $(AFF)
-
-atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
-	FCO := $(AFORT) $(FFLAGSO) \
-	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
-atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
-	FCG := $(AFORT) $(FFLAGSG) \
-	-TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off #-TENV:simd_dmask=off -TENV:simd_umask=off
-atest_i2_r8_d1_tst_c atest_i4_r8_d1_tst_c atest_i8_r8_d1_tst_c atest_i2_r8_d0_tst_c atest_i4_r8_d0_tst_c atest_i8_r8_d0_tst_c: \
-	FCF := $(AFORT) -TENV:simd_zmask=off -TENV:simd_omask=off -TENV:simd_imask=off $(AFF)
-	#-TENV:simd_dmask=off -TENV:simd_umask=off
-
-atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
-	FCO := $(AFORT) $(FFLAGSO) -TENV:simd_zmask=off
-atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
-	FCG := $(AFORT) $(FFLAGSG) -TENV:simd_zmask=off
-atest_i2_r16_d1_tst_c atest_i4_r16_d1_tst_c atest_i8_r16_d1_tst_c atest_i2_r16_d0_tst_c atest_i4_r16_d0_tst_c atest_i8_r16_d0_tst_c: \
-	FCF := $(AFORT) -TENV:simd_zmask=off $(AFF)
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
@@ -889,7 +857,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	fi
 	@mkdir -p $(LOG_DIR)
 	@echo 0 > "$(LOG_DIR)/$@.GDB_EXIT_CODE"  # Initialize the GDB exit code file, because GDB may not be executed (e.g., test is skipped or on Mac)
-	@if echo $@ | grep -q "atest\|9test" ; then \
+	@if echo $@ | grep -q "9test" ; then \
 		printf "\n$@ is skipped!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
 	elif echo $@ | grep -q "_d0" && [[ $(TESTDIM) = "big" ]] ; then \
 		printf "\n$@ is skipped since we are testing a BIG problem!\n\n" | tee -a "$(LOG_DIR)/$@.log" ; \
@@ -1005,8 +973,6 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "WARNING --  When --chk x is specified, it must be used to compile all source files of a program" \
 	| grep -v "0 Errors, 0 Warnings" \
 	| grep -v "Encountered 0 errors, 0 warnings, [0-9]* information.* in file" \
-	| grep -v "Absoft Pro Fortran.*: 0 Errors, 0 Warnings, 0 Other messages," \
-	| grep -v "Absoft ANSI 1610:" \
 	| grep -v "after the END INTERFACE keywords is only legal in Fortran 95 and beyond" \
 	| grep -v "Extension.*Stop-code is not constant" \
 	| grep -v "Option warning: Due to MacOS/Silicon limitations, this may not work reliably" \
@@ -1028,8 +994,6 @@ $(TESTS_C) $(TESTS_INT_C):
 	| grep -v "Fortran requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions" \
 	| grep -v "Fortran 90 requires all intrinsic procedure actual arguments to be type integer or character for restricted expressions" \
 	| grep -v "Intrinsics which return a data type other than integer are not allowed in specification expressions" \
-	| grep -v "Absoft ANSI 274:" \
-	| grep -v "Absoft ANSI 1392:" \
 	| grep -v "remark #5415: Feature not yet implemented" \
 	| grep -v "interpolation error" \
 	| grep -v "In file ./common/evaluate.f90:134" \
@@ -1130,9 +1094,6 @@ source_%: $(SRC_DIRS)
 	fi
 	@if echo $@ | grep -q "9test"; then \
 		bash $(TOOLS_DIR)/9src ./ ; \
-	fi
-	@if echo $@ | grep -q "atest\|9test"; then \
-		bash $(TOOLS_DIR)/a9src ./ ; \
 	fi
 	@printf "Done.\n"
 

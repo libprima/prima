@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # This script pre-processes the Fortran source code for g95
 # It does not support REAL32, REAL64, REAL128 in ISO_FORTRAN_ENV.
+# It does not recognize the `back` keyword in `min/maxloc`, which is available since F2008.
+# It does not support allocatable characters (variable length strings), which is F2003.
+# It does not support `error stop code`, which is F2003.
 
 DIR="$(realpath "$1")"
 CONSTSF90="consts.F90"
@@ -18,6 +21,25 @@ NEWUOB="$DIR/newuoa/newuob.f90"
 BOBYQB="$DIR/bobyqa/bobyqb.f90"
 LINCOB="$DIR/lincoa/lincob.f90"
 COBYLB="$DIR/cobyla/cobylb.f90"
+GETACTF90="getact.f90"
+GETACT="$DIR/lincoa/$GETACTF90"
+PREPROCF90="preproc.f90"
+PREPROC="$DIR/common/$PREPROCF90"
+LINALGF90="linalg.f90"
+LINALG="$DIR/common/$LINALGF90"
+CMN_FPRINTF90="fprint.f90"
+CMN_FPRINT="$DIR/common/$CMN_FPRINTF90"
+MEX_FPRINTF90="fprint.F90"
+MEX_FPRINT="$DIR/common/$MEX_FPRINTF90"
+DEBUGF90="debug.F90"
+DEBUG="$DIR/common/$DEBUGF90"
+NOISEF90="noise.f90"
+NOISE="$DIR/testsuite/$NOISEF90"
+FMXAPIF90="fmxapi.F90"
+FMXAPI="$DIR/$FMXAPIF90"
+MESSAGEF90="message.f90"
+MESSAGE="$DIR/common/$MESSAGEF90"
+
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -83,6 +105,62 @@ for FILE in "$NEWUOB" "$UOBYQB" "$BOBYQB" ; do
 done
 if [[ -f "$LINCOB" ]]; then
    sed -i "s|terminate=terminate)|[0.0_RP], terminate)|g" "$LINCOB"
+fi
+
+
+if [[ -f "$GETACT" ]] ; then
+    sed -i "s/,\s*back\s*=\s*\.true\.//" "$GETACT"
+fi
+
+for FILE in "$PREPROC" "$LINALG" "$CMN_FPRINT" "$MEX_FPRINT" "$DEBUG" "$NOISE" "$FMXAPI" ; do
+    if [[ -f "$FILE" ]] ; then
+        sed -i "s/character(len=:), allocatable/character(len=1024)/" "$FILE"
+        sed -i "/character(len=\*), parameter :: newline/d" "$FILE"
+        sed -i "s|newline|achar(10)|g" "$FILE"
+    fi
+done
+
+if [[ -f "$STRING" ]] ; then
+    sed -i "s/character(len=:), allocatable/character(len=1024)/" "$STRING"
+    sed -i "/LEN(S) <= MAX_NUM_STR_LEN/d" "$STRING"
+    sed -i "s/write (str, sformat) x/write(*,*) sformat; write (str, *) x/" "$STRING"
+    sed -i "/character(len=\*), parameter :: newline/d" "$STRING"
+    sed -i "s|newline|achar(10)|g" "$STRING"
+fi
+
+if [[ -f "$MEMORY" ]] ; then
+    sed -i "s/character(len=:), allocatable/character(len=1024)/" "$MEMORY"
+    sed -i "/allocate (character/d" "$MEMORY"
+    sed -i "/call validate(allocated(x), 'X is allocated', srname)/d" "$MEMORY"
+    sed -i "s/integer :: alloc_status/integer :: alloc_status = 0/" "$MEMORY"
+fi
+
+# message.f90 does not work due to the changes to string.f90, especially to real2str_vector.
+(cd "$DIR" && grep -R 'call .*msg' | sed 's|:.*$||' | grep -v 'debug.F90\|fmxapi.F90' | xargs sed -i "s|call .*msg.*$|write(*,*) solver|" && cd - || exit 1) > /dev/null
+(cd "$DIR" && grep -R 'use.*message_mod' | sed 's|:.*$||' | xargs sed -i "/use.*message_mod/d" && cd - || exit 1) > /dev/null
+printf "module message_mod \n end module message_mod" > "$MESSAGE"
+
+if [[ -f "$DEBUG" ]] ; then
+    sed -i "s|^\s*error stop.*$|stop|" "$DEBUG"
+fi
+
+for SOL in cobyla uobyqa newuoa bobyqa lincoa ; do
+    FILE="$DIR/test_$SOL.f90"
+    if [[ -f $FILE ]] ; then
+        sed -i "s|character(len=:), allocatable|character(len=1024)|g" "$FILE"
+        sed -i "/safealloc(testdim.*$/d" "$FILE"
+    fi
+done
+
+if [[ -d "$DIR"/lincoa ]] ; then
+    for FILE in "$DIR"/lincoa/* ; do
+        if [[ -f "$FILE" ]] ; then
+            sed -i "s|count(xl > -REALMAX)|size(xl)|" "$FILE"
+            sed -i "s|count(xu < REALMAX)|size(xu)|" "$FILE"
+        fi
+    done
+    sed -i -e '/amat = reshape(shape=shape(amat)/,+3d' "$DIR"/lincoa/lincoa.f90
+    sed -i '/idmat/d' "$DIR"/lincoa/lincoa.f90
 fi
 
 exit 0
