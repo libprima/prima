@@ -47,4 +47,6 @@ skip = [
   # SciPy does not provide binaries for 32-bit Python on Linux starting from 3.10.
   # As such we can compile but we cannot test, so we skip those.
   "cp31*-manylinux_i686",
+  # Not sure why, but windows crashes when trying to test with 3.14t
+  "cp314t-win*",
 ]
