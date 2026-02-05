@@ -68,13 +68,13 @@ jobs:
       - name: Install Arm Toolchain for Linux
         run: bash .github/scripts/install_atfl
 
-      - name: Revise lincoa/lincob.f90 to see why `call safealloc(ixl, int(count(xl > -BOUNDMAX), IK))` leads to a SIGFAULT
-        shell: bash
-        run: |
-          cd fortran/lincoa || exit 42
-          $SEDI "s|call safealloc(ixl, int(count(xl > -BOUNDMAX), IK))|write(*,*) '======> xl = ', xl, 'BOUNDMAX = ', BOUNDMAX, 'size(ixl) = ', count(xl > -BOUNDMAX), 'int(size(ixl)) = ', int(count(xl > -BOUNDMAX), IK)\ncall safealloc(ixl, int(count(xl > -BOUNDMAX), IK))|"  lincob.f90
-          $SEDI "s|call safealloc(ixu, int(count(xu < BOUNDMAX), IK))|write(*,*) '======> xu = ', xu, 'BOUNDMAX = ', BOUNDMAX, 'size(ixu) = ', count(xu < BOUNDMAX), 'int(size(ixu)) = ', int(count(xu < BOUNDMAX), IK)\ncall safealloc(ixu, int(count(xu < BOUNDMAX), IK))|"  lincob.f90
-          cat lincob.f90
+      # - name: Revise lincoa/lincob.f90 to see why `call safealloc(ixl, int(count(xl > -BOUNDMAX), IK))` leads to a SIGSEGV
+      #   shell: bash
+      #   run: |
+      #     cd fortran/lincoa || exit 42
+      #     $SEDI "s|call safealloc(ixl, int(count(xl > -BOUNDMAX), IK))|write(*,*) '======> xl = ', xl, 'BOUNDMAX = ', BOUNDMAX, 'size(ixl) = ', count(xl > -BOUNDMAX), 'int(size(ixl)) = ', int(count(xl > -BOUNDMAX), IK)\ncall safealloc(ixl, int(count(xl > -BOUNDMAX), IK))|"  lincob.f90
+      #     $SEDI "s|call safealloc(ixu, int(count(xu < BOUNDMAX), IK))|write(*,*) '======> xu = ', xu, 'BOUNDMAX = ', BOUNDMAX, 'size(ixu) = ', count(xu < BOUNDMAX), 'int(size(ixu)) = ', int(count(xu < BOUNDMAX), IK)\ncall safealloc(ixu, int(count(xu < BOUNDMAX), IK))|"  lincob.f90
+      #     cat lincob.f90
 
       - name: Revise bobyqa/trustregion.f90 to see why `xbdi(trueloc(xopt >= su .and. gopt <= 0)) = 1` leads to a SIGFPE
         shell: bash
