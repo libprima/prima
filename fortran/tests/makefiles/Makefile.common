@@ -2,15 +2,15 @@
 #
 # 1.  The following compilers are tested:
 # 9: G95 (compilation only; no compilation of test_*.f90 and other testing code, which contains F03 constructs unsupported by G95)
-# d: AOCC flang
+# d: AOCC flang (based on Classic Flang)
 # f: LLVM flang
 # g: GNU gfortran
-# m: AOMP flang
+# m: AOMP flang (based on LLVM Flang)
 # n: NAG nagfor
 # i: Intel ifort
-# r: Arm flang
+# r: Arm flang (based on LLVM Flang)
 # s: Oracle sunf95
-# v: NVIDIA nvfortran
+# v: NVIDIA nvfortran (based on Classic Flang)
 # x: Intel ifx
 #
 # 2. The following tests are available, where C = 9, d, f, g, l, m, n, i, r, s, v, x, and N = 2, 4, 8:
