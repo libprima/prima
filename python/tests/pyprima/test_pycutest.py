@@ -1,6 +1,13 @@
 import pytest
 # This exists mainly for those CI tests in which cutest/pycutest are not installed.
-pytest.importorskip("pycutest", exc_type=ImportError)
+import os
+import sys
+pytestmark = [
+    pytest.mark.skipif(os.getenv('SKBUILD_CMAKE_BUILD_TYPE') != "Debug",
+        reason="CUTEST tests must be run against Fortran compiled in Debug mode"),
+    pytest.mark.skipif(sys.platform not in ['linux', 'darwin'],
+        reason="pycutest is not supported on Windows")
+]
 
 from .load_cutest_problem import load_cutest_problem
 import prima

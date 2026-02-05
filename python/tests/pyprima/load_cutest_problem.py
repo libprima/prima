@@ -1,6 +1,4 @@
 import numpy as np
-from contextlib import redirect_stdout, redirect_stderr
-import os
 
 
 def load_cutest_problem(problem_name):
@@ -121,9 +119,7 @@ def load_cutest_problem(problem_name):
     cutest_problem = None
     print(f'Loading CUTEst problem {problem_name}.')
     try:
-        with open(os.devnull, 'w') as devnull:
-            with redirect_stdout(devnull), redirect_stderr(devnull):
-                cutest_problem = pycutest.import_problem(problem_name)
+        cutest_problem = pycutest.import_problem(problem_name)
     except Exception as err:
         print(f'Failed to load CUTEst problem {problem_name}: {err}')
 
