@@ -1104,9 +1104,8 @@ source_%: $(SRC_DIRS)
 		-o -name "flint" \
 		-o -name "mlint" \
 		\) -exec rm {} \;  # Cleaning up; important!!!
-	# Huawei Bisheng Flang 2.1.0, Arm Fortran Compiler version 23.10, and AOCC 5.1 Flang are buggy
-	# concerning 0-dimensional arrays, and they report false positive out-bound indices. Thus
-	# preprocessing by rdsrc is needed. See
+	# Huawei Bisheng Flang 2.1.0 and AOCC 5.1 Flang are buggy concerning 0-dimensional arrays, and
+	# they report false positive out-bound indices. Thus preprocessing by dsrc is needed. See
 	# https://github.com/flang-compiler/flang/issues/1238
 	# Check it again when new versions are available. Make a test using
 	# https://github.com/zequipe/test_compiler/blob/master/test_solve.f90
@@ -1120,8 +1119,11 @@ source_%: $(SRC_DIRS)
 	@if echo $@ | grep -q "vtest" && echo $(FFLAGS) | grep -q "fast"; then \
 		bash $(TOOLS_DIR)/vsrc ./ ; \
 	fi
-	@if echo $@ | grep -q "rtest\|dtest"; then \
-		bash $(TOOLS_DIR)/rdsrc ./ ; \
+	@if echo $@ | grep -q "rtest"; then \
+		bash $(TOOLS_DIR)/rsrc ./ ; \
+	fi
+	@if echo $@ | grep -q "dtest"; then \
+		bash $(TOOLS_DIR)/dsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "stest"; then \
 		bash $(TOOLS_DIR)/sunsrc ./ ; \

@@ -2,13 +2,12 @@
 # This script pre-processes the Fortran source code for Huawei Bisheng Flang 2.1.0,
 # Arm Fortran Compiler 23.1, and AOCC 5.1 Flang, which raise a false positive error about
 # out-bound subscripts when invoked with the -Mbounds flag.
-# See https://github.com/flang-compiler/flang/issues/1238 and
+# See https://github.com/flang-compiler/flang/issues/1238
 
 DIR="$(realpath "$1")"
 LINALG="$DIR/common/linalg.f90"
 POWALG="$DIR/common/powalg.f90"
 LINGEO="$DIR/lincoa/geometry.f90"
-INF="$DIR/common/inf.F90"
 
 if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     printf "\n%s is not a testing directory.\n\nExit.\n\n" "$DIR"
@@ -42,13 +41,6 @@ if [[ -f "$LINGEO" ]] ; then
     OLDSTR="pglag = matprod(qfac(:, nact + 1:n), matprod(glag, qfac(:, nact + 1:n)))"
     NEWSTR="pglag = matmul(qfac(:, nact + 1:n), matmul(glag, qfac(:, nact + 1:n)))"
     sed -i "s|$OLDSTR|$NEWSTR|g" "$LINGEO"
-fi
-
-if [[ -f "$INF" ]] ; then
-    OLDSTR="y = (x <= huge_value(x) \.and\. x >= -huge_value(x))"
-    NEWSTR="y = .true. ; "
-    sed -i "s|$OLDSTR|$NEWSTR|g" "$INF"
-    cat "$INF"
 fi
 
 exit 0
