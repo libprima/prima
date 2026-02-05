@@ -14,9 +14,12 @@ dynamic = ["version"]
 # we will support any versions below that for which our tests pass without modification.
 requires-python = ">= 3.10"
 
+[dependency-groups]
+dev = [ "poethepoet", "pycutest", "pytest", "pytest-cov", "pytest-order", "coverage"]
+
 [tool.scikit-build]
 cmake.args = ["-G Ninja", "-DBUILD_SHARED_LIBS=OFF", "-DPRIMA_ENABLE_PYTHON=ON"]
-cmake.verbose = true
+build.verbose = true
 logging.level = "INFO"
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = [".git-archival.txt"]
@@ -25,16 +28,24 @@ install.components = ["Prima_Python_C_Extension"]
 [tool.setuptools_scm]  # Section required
 write_to = "_version.txt"
 
+[tool.uv]
+cache-keys = [{file = "fortran/**"}, {file="c/**"}, {file="python/_prima.cpp"}, {file="pyproject.toml"}, {file="**/CMakeLists.txt"}]
+
+[tool.poe.tasks]
+coverage = {shell = "coverage run --branch --source=prima,$(git rev-parse --show-toplevel) -m pytest -s python/tests && coverage html -d prima_htmlcov"}
+
 [tool.cibuildwheel]
 build-verbosity = 3
-test-command = "coverage run --branch --source=prima,{project} -m pytest -s {project}/python/tests && coverage html -d {project}/prima_htmlcov"
-test-requires = ["pytest", "coverage", "packaging"]
-# We need scipy and pdfo (which depends on scipy) for compatibility tests.
-# scipy is not available on all platforms we support, so we try to install it
-# if posssible, otherwise we skip it. The test will skip itself if it cannot
-# import scipy. "--only-binary" ensure we do not try to build scipy from
-# source (which requires special setup we have no intention of doing).
-before-test = "pip install --only-binary :all: scipy pdfo || true"
+test-command = "python -m pytest -s {project}/python/tests"
+test-requires = ["pytest", "packaging"]
+before-test = [
+  # We need scipy and pdfo (which depends on scipy) for compatibility tests.
+  # scipy is not available on all platforms we support, so we try to install it
+  # if posssible, otherwise we skip it. The test will skip itself if it cannot
+  # import scipy. "--only-binary" ensure we do not try to build scipy from
+  # source (which requires special setup we have no intention of doing).
+  "pip install --only-binary :all: scipy pdfo || true",
+]
 skip = [
   # On windows we get a complaint from CMake:
   # "CMake Error at python/pybind11/tools/FindPythonLibsNew.cmake:191 (message):
@@ -42,7 +53,8 @@ skip = [
   # I do not see a way to install a 32-bit compiler with the setup-fortran action,
   # so we will just build 64-bit wheels on windows.
   "*-win32", 
-  # Disable musllinux for the moment. It successfully built but there was an error when testing
+  # Disable musllinux for the moment. It successfully built but there was an error when testing.
+  # The error might be resolved by gfortran v14 -ftrampoline-impl=heap
   "*musllinux*",
   # SciPy does not provide binaries for 32-bit Python on Linux starting from 3.10.
   # As such we can compile but we cannot test, so we skip those.
