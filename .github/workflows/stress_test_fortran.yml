@@ -45,9 +45,9 @@ jobs:
 
     steps:
 
-      - name: Run `sudo apt update -y`
+      - name: Run `sudo apt update`
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo apt update -y  # Otherwise, free-disk-space or other actions relying on `apt` may fail
+        run: sudo apt update || true  # Otherwise, free-disk-space or other actions relying on `apt` may fail
 
       - name: Free disk space
         if: startsWith(matrix.os, 'ubuntu')
