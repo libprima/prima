@@ -3,8 +3,8 @@
 
 DIR="$(realpath "$1")"
 LINALG="$DIR/common/linalg.f90"
-GET_INTRISIC_LINALG="$DIR/common/get_intrinsic_linalg"
-INTRINSIC_LINALG="$DIR/common/intrinsic_linalg.f90"
+#GET_INTRISIC_LINALG="$DIR/common/get_intrinsic_linalg"
+#INTRINSIC_LINALG="$DIR/common/intrinsic_linalg.f90"
 
 if [[ "$(uname)" = "Darwin" ]] ; then
     SEDI="sed -i ''"

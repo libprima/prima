@@ -5,8 +5,6 @@ DIR="$(realpath "$1")"
 LINALG="$DIR/common/linalg.f90"
 #GET_INTRISIC_LINALG="$DIR/common/get_intrinsic_linalg"
 #INTRINSIC_LINALG="$DIR/common/intrinsic_linalg.f90"
-#LINCOB="$DIR/lincoa/lincob.f90"
-#INF="$DIR/common/inf.F90"
 
 if [[ "$(uname)" = "Darwin" ]] ; then
     SEDI="sed -i ''"
@@ -34,22 +32,5 @@ if [[ -f "$LINALG" ]] ; then
     #     mv "$INTRINSIC_LINALG" "$LINALG"
     # fi
 fi
-
-# if [[ -f "$LINCOB" ]] ; then
-#     # A bogus segfault is triggered in line 222 of lincob.f90 when testing ABS(IPRINT) <= 3.
-#     STR="call assert(abs(iprint) <= 3"
-#     $SEDI "/$STR/d" "$LINCOB"
-#     # A bogus segfault is triggered in line 233 of lincob.f90 when testing ALL(IS_FINITE(X)).
-#     STR="call assert(all(is_finite(x))"
-#     $SEDI "/$STR/d" "$LINCOB"
-# fi
-
-# A bogus segfault is triggered in line 233 of lincob.f90 when testing ALL(IS_FINITE(X)).
-# if [[ -f "$INF" ]] ; then
-#     OLDSTR="y = (x <= huge_value(x) \.and\. x >= -huge_value(x))"
-#     NEWSTR="y = .true. ; "
-#     sed -i "s|$OLDSTR|$NEWSTR|g" "$INF"
-#     cat "$INF"
-# fi
 
 exit 0
