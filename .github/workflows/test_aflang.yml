@@ -82,7 +82,7 @@ jobs:
       - name: Revise getact.f90 to see why assertions fail
         run: |
           cd fortran/lincoa
-          $SEDI "s|call assert(inprod(psd, psd) <=|write(*,*) 'psd = ', psd, 'g = ', g, 'psd*g = ', inprod(psd, g), 'psd^2 = ', inprod(psd, psd), 'gg = ', gg\ncall assert(inprod(psd, psd) <=|" getact.f90
+          $SEDI "s|call assert(inprod(psd, psd) <=|write(*,*) '====> psd = ', psd, 'g = ', g, 'psd*g = ', inprod(psd, g), 'psd^2 = ', inprod(psd, psd), 'gg = ', gg\ncall assert(inprod(psd, psd) <=|" getact.f90
           cat getact.f90
 
       - name: Conduct the test
