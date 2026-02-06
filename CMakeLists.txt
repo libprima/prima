@@ -9,6 +9,12 @@ option (BUILD_SHARED_LIBS "shared/static" ON)
 include (GNUInstallDirs)
 
 # the compiler enables an executable stack because of nested functions and this is fine
+# Zaikun 20260206: Is this still fined and needed? See commit 5e5e8716e709c4e534ccc1a916a15b7f89676ed3
+# executable stacks are not allowed by glibc 2.4+; see
+# https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines,
+# https://github.com/JuliaLang/julia/issues/57250, https://forums.gentoo.org/viewtopic-p-8866168.html
+# We should probably do the opposite: use `-Wl,-z,noexecstack` to pass the `-z noexecstack` option
+# to the linker and tells the linker to set the "stack is not executable" attribute in the output file.
 if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.18)
   include (CheckLinkerFlag)
   check_linker_flag (Fortran "-Wl,--no-warn-execstack" HAVE_WARN_EXECSTACK)
@@ -20,6 +26,7 @@ endif ()
 # slower (does not matter for DFO applications) but can avoid memory errors on large problems.
 # 2. We require the compilers to compile the solvers so that they can be called recursively.
 # See https://fortran-lang.discourse.group/t/frecursive-assume-recursion-and-recursion-thread-safety
+# 3. Zaikun 20260206: Is the ID for ARM Flang correct? What about the AMD AOMP Flang?
 option (PRIMA_HEAP_ARRAYS "allocate arrays on heap" ON)
 if (PRIMA_HEAP_ARRAYS)
   if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")  # gfortran
@@ -37,8 +44,10 @@ if (PRIMA_HEAP_ARRAYS)
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -mmlir -fdynamic-heap-array")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")  # Classic Flang and AOCC Flang
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mrecursive")
-  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "ARMClang")  # ARM Flang
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -Mrecursive")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "ARMClang")  # ARM Flang (Zaikun 20260206: is the ID correct?)
+    # N.B.: `-mmlir -fdynamic-heap-array` is needed; see
+    # https://github.com/libprima/prima/commit/6e0963c210129273964aa6ea822fc52bd4736974
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -mmlir -fdynamic-heap-array")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")  # nvfortran
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mnostack_arrays -Mrecursive")
   endif ()
