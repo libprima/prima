@@ -24,7 +24,7 @@ If ever a segmentation fault occurs, check whether the above flags are used in t
 
 N.B.: For LLVM Flang and relatives, `-mmlir -fdynamic-heap-array` is needed as of LLVM 21.1.8. See
 https://github.com/llvm/llvm-project/issues/88344
-https://github.com/zequipe/sigsegv_armflang
+https://github.com/zequipe/flang_heap_arrays
 
 1. See the Makefiles for how to compile the examples.
 
