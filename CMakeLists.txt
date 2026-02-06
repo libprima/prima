@@ -26,7 +26,9 @@ endif ()
 # slower (does not matter for DFO applications) but can avoid memory errors on large problems.
 # 2. We require the compilers to compile the solvers so that they can be called recursively.
 # See https://fortran-lang.discourse.group/t/frecursive-assume-recursion-and-recursion-thread-safety
-# 3. Zaikun 20260206: Is the ID for ARM Flang correct? What about the AMD AOMP Flang?
+# 3. Zaikun 20260206: Is the ID for ARM Flang correct? What about the AMD AOMP Flang? See
+# https://github.com/arm/arm-toolchain/issues/717
+# https://github.com/ROCm/aomp/issues/1931
 option (PRIMA_HEAP_ARRAYS "allocate arrays on heap" ON)
 if (PRIMA_HEAP_ARRAYS)
   if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")  # gfortran
@@ -42,14 +44,14 @@ if (PRIMA_HEAP_ARRAYS)
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang")  # LLVM Flang
     # See https://github.com/llvm/llvm-project/issues/88344
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -mmlir -fdynamic-heap-array")
-  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")  # Classic Flang and AOCC Flang
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mrecursive")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "ARMClang")  # ARM Flang (Zaikun 20260206: is the ID correct?)
     # N.B.: `-mmlir -fdynamic-heap-array` is needed; see
     # https://github.com/libprima/prima/commit/6e0963c210129273964aa6ea822fc52bd4736974
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -mmlir -fdynamic-heap-array")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")  # nvfortran
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mnostack_arrays -Mrecursive")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")  # Classic Flang and AOCC Flang
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mrecursive")
   endif ()
 endif ()
 
