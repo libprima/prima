@@ -47,19 +47,16 @@ jobs:
 
 
       - name: Set the MACOSX_DEPLOYMENT_TARGET
+        # https://cibuildwheel.pypa.io/en/stable/faq/#macos-library-dependencies-do-not-satisfy-target-macos
         if: ${{ runner.os == 'macOS' }}
         run: |
           MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | cut -d'.' -f 1)
           echo "MACOSX_DEPLOYMENT_TARGET is $MACOSX_DEPLOYMENT_TARGET"
           echo "MACOSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET" >> $GITHUB_ENV
 
-
-      - name: Set up Fortran
+      - name: Set up Fortran on MacOS
         uses: fortran-lang/setup-fortran@main
         if: ${{ runner.os == 'macOS' }}
-        with:
-          compiler: gcc
-          version: 12  # Zaikun 20260125: 12 is a quite old version already. Why not the latest?
 
       # Copied from https://github.com/scipy/scipy/blob/main/.github/workflows/wheels.yml
       # For rtools, see https://github.com/r-windows/rtools-installer/releases, which has been

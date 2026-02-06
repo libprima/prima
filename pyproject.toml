@@ -54,7 +54,8 @@ skip = [
   # so we will just build 64-bit wheels on windows.
   "*-win32", 
   # Disable musllinux for the moment. It successfully built but there was an error when testing.
-  # The error might be resolved by gfortran v14 -ftrampoline-impl=heap
+  # The error should be resolved by gfortran v14 -ftrampoline-impl=heap, but this isn't working,
+  # it just changes the error from segfault to aborted.
   "*musllinux*",
   # SciPy does not provide binaries for 32-bit Python on Linux starting from 3.10.
   # As such we can compile but we cannot test, so we skip those.
