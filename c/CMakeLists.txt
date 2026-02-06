@@ -14,6 +14,7 @@ target_include_directories (primac PUBLIC
 target_link_libraries (primac PUBLIC primaf) # must be PUBLIC for precision macros
 if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 14 )
   target_compile_options (primac PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-ftrampoline-impl=heap>)
+  target_link_libraries(primac PRIVATE gcc_eh)
 else ()
   message(WARNING "C interface will be compiled with an executable stack. You may need to disable\
                    some security protections to allow programs with an executable stack to run.")  
