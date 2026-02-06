@@ -3,6 +3,29 @@ implementation of Powell's derivative-free optimization solvers.
 
 N.B.:
 
+0. In real applications, if the dimension of the problem is big (e.g., more than 100), then
+compilers should be instructed to compile PRIMA with the automatic arrays allocated on the heap.
+Otherwise, those arrays may be allocated on the stack, which may lead to stack overflow. Since
+PRIMA is designed to solve problems with expensive function evaluations, we do not worry about
+the performance of heap arrays.
+
+The compiler flags for heap arrays are as follows:
+- AMD AOCC Flang: -fno-stack-arrays
+- AMD AOMP Flang: -fno-stack-arrays -mmlir -fdynamic-heap-array
+- Arm Fortran Compiler: -fno-stack-arrays -mmlir -fdynamic-heap-array
+- LLVM Flang: -fno-stack-arrays -mmlir -fdynamic-heap-array
+- GNU gfortran: -fno-stack-arrays
+- Intel ifx: -heap-arrays
+- Intel ifort: -heap-arrays
+- NAG Fortran Compiler: NO (unknown)
+- NVIDIA nvfortran: -Mnostack_arrays
+
+If ever a segmentation fault occurs, check whether the above flags are used in the compilation.
+
+N.B.: For LLVM Flang and relatives, `-mmlir -fdynamic-heap-array` is needed as of LLVM 21.1.8. See
+https://github.com/llvm/llvm-project/issues/88344
+https://github.com/zequipe/sigsegv_armflang
+
 1. See the Makefiles for how to compile the examples.
 
 2. The first example in every folder, example_1, uses the same objective function:

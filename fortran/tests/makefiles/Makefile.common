@@ -343,6 +343,8 @@ AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -prin
 AFLANG := $(AFLANG) -pedantic-errors -Werror
 ifeq ($(TESTDIM),small)
 	AFLANG := $(AFLANG) -Mstack_arrays
+else
+	AFLANG := $(AFLANG) -fno-stack-arrays  # -Mnostack_arrays is not recognized by AOCC 5.1
 endif
 # Strangely, with `-Mchkptr`, the compiler may not print the error message of `-Mbounds` anymore.
 DFORT := $(AFLANG) -std=f$(FSTD) -pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mrecursive #-Kieee #-Mchkptr
@@ -646,7 +648,7 @@ vtest_i2_r16_d1_tst_c vtest_i4_r16_d1_tst_c vtest_i8_r16_d1_tst_c vtest_i2_r16_d
 	FCF := $(VFORT) -Ktrap=divz,ovf,inv $(VFF)
 
 
-# ARM Flang
+# Arm Flang
 RFORT := $(shell find -L /opt/arm -type f -name armflang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 ifeq ($(TESTDIM),small)
 	RFORT := $(RFORT) -fstack-arrays
