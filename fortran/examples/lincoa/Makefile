@@ -64,7 +64,7 @@ ifeq ($(shell uname -s),Darwin)
 endif
 ftest: FC := $(FFORT) -std=f$(FSTD)
 
-# GNU gfortran: due to `error stop` and `backtrace`, we must either compile wit no `-std` or
+# GNU gfortran: due to `error stop` and `backtrace`, we must either compile with no `-std` or
 # use `-std=f20xy -fall-intrinsics` with xy >= 18.
 gtest: FC := gfortran -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
 

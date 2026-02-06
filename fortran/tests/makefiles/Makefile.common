@@ -337,9 +337,9 @@ endif
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
-AFINC := $(shell dirname $$(dirname $(AFLANG) 2>/dev/null) 2>/dev/null)/include
-AFLIB := $(shell dirname $$(dirname $(AFLANG) 2>/dev/null) 2>/dev/null)/lib
-AFLANG := $(AFLANG) -I$(AFINC) -L$(AFLIB)
+#AFINC := $(shell dirname $$(dirname $(AFLANG) 2>/dev/null) 2>/dev/null)/include
+#AFLIB := $(shell dirname $$(dirname $(AFLANG) 2>/dev/null) 2>/dev/null)/lib
+#AFLANG := $(AFLANG) -I$(AFINC) -L$(AFLIB)
 AFLANG := $(AFLANG) -pedantic-errors -Werror
 ifeq ($(TESTDIM),small)
 	AFLANG := $(AFLANG) -Mstack_arrays
@@ -410,9 +410,9 @@ mtest_i2_r16_d1_tst_c mtest_i4_r16_d1_tst_c mtest_i8_r16_d1_tst_c mtest_i2_r16_d
 # We must define FFORT as follows, because AOCC will also provide "flang", except that it is
 # located under /opt/AMD.
 FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local ${HOME}/tmp /tmp -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
-FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
-FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
-FFORT := $(FFORT) -I$(FFINC) -L$(FFLIB)
+#FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
+#FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
+#FFORT := $(FFORT) -I$(FFINC) -L$(FFLIB)
 FFORT := $(FFORT) -fimplicit-none -Werror
 
 ifeq ($(TESTDIM),small)
@@ -577,10 +577,10 @@ itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d
 
 # NAG nagfor
 # In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
-# It is necessary to use "-I $(TESTSUITE_DIR)"; otherwise, the INCLUDE lines in the test suite will not work.
+# It is necessary to use "-I$(TESTSUITE_DIR)"; otherwise, the INCLUDE lines in the test suite will not work.
 NFORT := nagfor
 NFORT := $(NFORT) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.
-NFORT := $(NFORT) -I $(TESTSUITE_DIR)
+NFORT := $(NFORT) -I$(TESTSUITE_DIR)
 NFORT := $(NFORT) -colour=error:red,warn:magenta,info:cyan
 NFORT := $(NFORT) -f$(FSTD) -recursive -info -gline -u -C -C=alias -C=dangling -C=intovf -C=undefined -kind=unique \
 	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
