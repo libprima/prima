@@ -109,7 +109,7 @@ jobs:
       # known as aflang.
       - name: Install Flang
         if: ${{ matrix.compiler == 'f' }}
-        run: bash .github/scripts/install_flang
+        run: bash .github/scripts/install_llvm
 
       - name: Conduct the test
         run: |
