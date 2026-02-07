@@ -374,7 +374,7 @@ dtest_i2_r16_d1_tst_c dtest_i4_r16_d1_tst_c dtest_i8_r16_d1_tst_c dtest_i2_r16_d
 	FCF := $(DFORT) -ffp-exception-behavior=strict $(DFF)
 
 # AMD AOMP Flang
-MFORT := amdflang
+MFORT := $(shell command -v amdflang)
 MFORT := $(MFORT) -fimplicit-none -Werror
 ifeq ($(TESTDIM),small)
 	MFORT := $(MFORT) -fstack-arrays
@@ -409,13 +409,9 @@ mtest_i2_r16_d1_tst_c mtest_i4_r16_d1_tst_c mtest_i8_r16_d1_tst_c mtest_i2_r16_d
 	FCF := $(MFORT) $(MFF)
 
 # LLVM Flang
-# We must define FFORT as follows, because AOCC will also provide "flang", except that it is
-# located under /opt/AMD.
-#FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local ${HOME}/tmp /tmp -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
-#FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
-#FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
-#FFORT := $(FFORT) -I$(FFINC) -L$(FFLIB)
-FFORT := $(shell command -v flang) -fimplicit-none -Werror
+# Note that AOMP and AOCC will also provide "flang". Make sure the correct one is being called.
+FFORT := $(shell command -v flang)
+FFORT := $(FFORT) -fimplicit-none -Werror
 
 ifeq ($(TESTDIM),small)
 	FFORT := $(FFORT) -fstack-arrays
@@ -464,7 +460,7 @@ ftest_i2_r16_d1_tst_c ftest_i4_r16_d1_tst_c ftest_i8_r16_d1_tst_c ftest_i2_r16_d
 # with a leading 0 are interpreted as octal (base-8) numbers within double brackets.
 # see https://stackoverflow.com/questions/24777597/value-too-great-for-base-error-token-is-08
 #GFORT := gfortran -pg  # Compile for profiling with the gprof profiler. Does not work with macOS on GitHub Actions due to missing gcrt1.o
-GFORT := gfortran
+GFORT := $(shell command -v gfortran)
 GFSTD := $(shell  [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 8 ]] && ([ $(FS) -lt 18 ] && echo -std=f2018 || echo -std=f20$(FS)) || echo "")
 # 1. gfortran 7 raises a false positive warning regarding "maybe-uninitialized" of allocatable arrays.
 # See https://stackoverflow.com/questions/56261880/fortran-re-allocation-on-assignment-and-gfortran-warnings
@@ -536,7 +532,7 @@ gtest_i2_r16_d1_tst_c gtest_i4_r16_d1_tst_c gtest_i8_r16_d1_tst_c gtest_i2_r16_d
 # noold_ldout_format, noold_ldout_zero, noold_maxminloc, noold_unit_star, noold_xor,
 # protect_parens, realloc_lhs1, recursion, std_intent_in, std_minus0_rounding1, std_mod_proc_name,
 # and std_value1.
-IFORT := ifort #-stand f$(FS)
+IFORT := $(shell command -v ifort)
 IFORT := $(IFORT) -diag-disable=10448  # Ignore the warning about the deprecation of ifort
 IFORT := $(IFORT) -warn all -debug extended -warn errors -traceback -debug-parameters all #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
@@ -580,7 +576,7 @@ itest_i2_r16_d1_tst_c itest_i4_r16_d1_tst_c itest_i8_r16_d1_tst_c itest_i2_r16_d
 # NAG nagfor
 # In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
 # It is necessary to use "-I$(TESTSUITE_DIR)"; otherwise, the INCLUDE lines in the test suite will not work.
-NFORT := nagfor
+NFORT := $(shell command -v nagfor)
 NFORT := $(NFORT) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.
 NFORT := $(NFORT) -I$(TESTSUITE_DIR)
 NFORT := $(NFORT) -colour=error:red,warn:magenta,info:cyan
@@ -683,7 +679,7 @@ rtest_i2_r16_d1_tst_c rtest_i4_r16_d1_tst_c rtest_i8_r16_d1_tst_c rtest_i2_r16_d
 
 
 # Oracle sunf95
-SFORT := sunf95
+SFORT := $(shell command -v sunf95)
 ifeq ($(TESTDIM),small)
 	SFORT := $(SFORT) -stackvar  # Force all automatic arrays to be on the stack to test whether stack overflow can occur
 endif
@@ -714,7 +710,7 @@ stest_i2_r16_d1_tst_c stest_i4_r16_d1_tst_c stest_i8_r16_d1_tst_c stest_i2_r16_d
 	FCF := $(SFORT) -fnonstd $(SFF16) -ftrap=overflow,division
 
 # Intel ifx
-XFORT := ifx #-stand f$(FS)
+XFORT := $(shell command -v ifx)  #-stand f$(FS)
 XFORT := $(XFORT) -warn all -debug full -warn errors -traceback -debug-parameters all #-diag-error-limit 1
 # `-auto` causes all local, non-SAVEd variables to be allocated to the run-time stack.
 # `-no-heap-arrays`, which is the default for `ifort`, causes the compiler puts automatic arrays
@@ -760,8 +756,8 @@ xtest_i2_r16_d1_tst_c xtest_i4_r16_d1_tst_c xtest_i8_r16_d1_tst_c xtest_i2_r16_d
 
 
 # G95
+9FORT := $(shell command -v g95)
 # G95 supports f2003, but not higher.
-9FORT := g95
 9FORT := $(9FORT) -std=f2003 -pedantic -Wall -Wextra \
 	-Werror=100,113,115,137,146,147,159,163 \
 	-Wimplicit-none -Wline-truncation -Wprecision-loss -Wunused-module-vars -Wunused-vars -Wunset-vars \

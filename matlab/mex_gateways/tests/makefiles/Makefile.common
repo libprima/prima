@@ -225,7 +225,8 @@ dtest_i2_r16_d1_tst dtest_i4_r16_d1_tst dtest_i8_r16_d1_tst dtest_i2_r16_d0_tst 
 	FC2 := $(DFORT) $(FFLAGS2) -ffp-exception-behavior=strict
 
 # AMD AOMP Flang
-MFORT := amdflang -fimplicit-none -Werror
+MFORT := $(shell command -v amdflang)
+MFORT := $(MFORT) -fimplicit-none -Werror
 
 mtest_i2_r4_d1_tst mtest_i4_r4_d1_tst mtest_i8_r4_d1_tst mtest_i2_r4_d0_tst mtest_i4_r4_d0_tst mtest_i8_r4_d0_tst: \
 	FC1 := $(MFORT) $(FFLAGS1)
@@ -243,9 +244,7 @@ mtest_i2_r16_d1_tst mtest_i4_r16_d1_tst mtest_i8_r16_d1_tst mtest_i2_r16_d0_tst 
 	FC2 := $(MFORT) $(FFLAGS2)
 
 # LLVM Flang
-FFORT := $(shell find -L /usr/bin /usr/local/bin ${HOME}/local ${HOME}/.local ${HOME}/tmp /tmp -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
-FFINC := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/include
-FFLIB := $(shell dirname $$(dirname $(FFORT) 2>/dev/null) 2>/dev/null)/lib
+FFORT := $(shell command -v flang)
 FFORT := $(FFORT) -fimplicit-none -Werror
 # -std or -pedantic does not work due to the non-standard code in the MEX API provided by MathWorks
 #FFORT := $(FFORT) -std=f2018 -pedantic
@@ -269,7 +268,7 @@ ftest_i2_r16_d1_tst ftest_i4_r16_d1_tst ftest_i8_r16_d1_tst ftest_i2_r16_d0_tst 
 # In the debug mode, our code includes the BACKTRACE function if the compiler is gfortran. This
 # makes the code not standard-conforming. So -std=f$(FSTD) is excluded for the following options.
 # As of 2022, -Wextra implies -Wcompare-reals, -Wunused-parameter, and -Wdo-subscript.
-GFORT := gfortran
+GFORT := $(shell command -v gfortran)
 GFORT := $(GFORT) -Wall -Wextra -pedantic -fmax-errors=1 -Wampersand -Wconversion  -Wuninitialized \
 	-Wmaybe-uninitialized -Wsurprising -Waliasing  -Wimplicit-interface -Wimplicit-procedure \
 	-Wintrinsics-std -Wunderflow -Wuse-without-only -Wunused-parameter \
@@ -305,7 +304,7 @@ gtest_i2_r16_d1_tst gtest_i4_r16_d1_tst gtest_i8_r16_d1_tst gtest_i2_r16_d0_tst 
 #  We impose -assume norecursion, because -standard-semantics will enable -assume recursion, which
 #  will cause a warning; due to -warn errors, the compilation will abort. See
 #  https://www.intel.com/content/www/us/en/develop/documentation/fortran-compiler-oneapi-dev-guide-and-reference/top/language-reference/a-to-z-reference/q-to-r/recursive-and-non-recursive.html
-IFORT := ifort
+IFORT := $(shell command -v ifort)
 #IFORT := $(IFORT) -diag-error-limit 1
 IFORT := $(IFORT) -diag-disable=10448  # Ignore the warning about the deprecation of ifort
 IFORT := $(IFORT) -stand f95 -standard-semantics -assume norecursion -warn all -debug extended \
@@ -329,7 +328,7 @@ itest_i2_r16_d1_tst itest_i4_r16_d1_tst itest_i8_r16_d1_tst itest_i2_r16_d0_tst 
 # NAG nagfor
 # In massive tests, we skip the useful -mtrace option (print memory allocation trace), as its output is enormous.
 # It is necessary to use "-I $(TESTSUITE_DIR)"; otherwise, the INCLUDE lines in the test suite will not work.
-NFORT := nagfor
+NFORT := $(shell command -v nagfor)
 NFORT := $(NFORT) -colour=error:red,warn:magenta,info:cyan
 NFORT := $(NFORT) -f$(FSTD) -info -gline -u -C -C=alias -C=dangling -C=intovf -kind=unique \
 	-Warn=constant_coindexing -Warn=subnormal #-Warn=allocation
@@ -373,7 +372,7 @@ vtest_i2_r16_d1_tst vtest_i4_r16_d1_tst vtest_i8_r16_d1_tst vtest_i2_r16_d0_tst 
 	FC2 := $(VFORT) $(FFLAGS2) -Kieee -Ktrap=divz,ovf,inv#,unf,denorm
 
 # Oracle sunf95
-SFORT := sunf95
+SFORT := $(shell command -v sunf95)
 SFORT := $(SFORT) -w3 -u -U -ansi -xcheck=%all -C
 
 stest_i2_r4_d1_tst stest_i4_r4_d1_tst stest_i8_r4_d1_tst stest_i2_r4_d0_tst stest_i4_r4_d0_tst stest_i8_r4_d0_tst: \
@@ -392,7 +391,7 @@ stest_i2_r16_d1_tst stest_i4_r16_d1_tst stest_i8_r16_d1_tst stest_i2_r16_d0_tst 
 	FC2 := $(SFORT) $(FFLAGS2) -fnonstd -ftrap=overflow,division,invalid#,underflow
 
 # Intel ifx
-XFORT := ifx
+XFORT := $(shell command -v ifx)
 #XFORT := $(XFORT) -diag-error-limit 1
 XFORT := $(XFORT) -stand f$(FS) -warn all -debug full -traceback -debug-parameters all
 
@@ -413,7 +412,7 @@ xtest_i2_r16_d1_tst xtest_i4_r16_d1_tst xtest_i8_r16_d1_tst xtest_i2_r16_d0_tst 
 
 # G95
 # The compilation of MEX gateways will fail if -std is imposed.
-9FORT := g95
+9FORT := $(shell command -v g95)
 9FORT := $(9FORT) -pedantic -Wall -Wextra \
 	-Werror=100,113,115,137,146,147,159,163 \
 	-Wimplicit-none -Wline-truncation -Wprecision-loss -Wunused-module-vars -Wunused-vars -Wunset-vars \
