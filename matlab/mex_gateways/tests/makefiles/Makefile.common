@@ -471,6 +471,10 @@ $(TESTS) $(TESTS_INT):
 	$(eval RP := $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//")))
 	$(eval QPAVLB := $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16))
 	$(eval EXTRA_FLAGS := -DPRIMA_DEBUGGING=$(DBG) -DPRIMA_INTEGER_KIND=$(IK) -DPRIMA_REAL_PRECISION=$(RP) -DPRIMA_QP_AVAILABLE=$(QPAVLB))
+	$(eval FC := $(shell cut -d' ' -f1 <<< "$(FC1)"))
+	@echo "Compiler: $(FC)"
+	@$(FC) --version 2>&1 | grep -v "\-\-version\|usage" || true  # Print the compiler version, but do not fail if the compiler does not support `--version`
+	@echo ""
 	($(FC1) $(EXTRA_FLAGS) -c $(SRC) && $(FC2) $(EXTRA_FLAGS) -c $(SRC)) 2>&1 \
 	| grep -v "^[[:blank:]]*$$" \
 	| grep -v "Using 'dlopen' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking" \
