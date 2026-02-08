@@ -244,7 +244,8 @@ mtest_i2_r16_d1_tst mtest_i4_r16_d1_tst mtest_i8_r16_d1_tst mtest_i2_r16_d0_tst 
 	FC2 := $(MFORT) $(FFLAGS2)
 
 # LLVM Flang
-FFORT := $(shell command -v flang)
+# Note that AOMP and AOCC will also provide "flang". Make sure the correct one is being called.
+FFORT := $(shell find -L /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 FFORT := $(FFORT) -fimplicit-none -Werror
 # -std or -pedantic does not work due to the non-standard code in the MEX API provided by MathWorks
 #FFORT := $(FFORT) -std=f2018 -pedantic

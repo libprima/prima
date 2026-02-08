@@ -410,7 +410,7 @@ mtest_i2_r16_d1_tst_c mtest_i4_r16_d1_tst_c mtest_i8_r16_d1_tst_c mtest_i2_r16_d
 
 # LLVM Flang
 # Note that AOMP and AOCC will also provide "flang". Make sure the correct one is being called.
-FFORT := $(shell command -v flang)
+FFORT := $(shell find -L /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 FFORT := $(FFORT) -fimplicit-none -Werror
 
 ifeq ($(TESTDIM),small)

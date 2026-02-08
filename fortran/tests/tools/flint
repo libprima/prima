@@ -22,8 +22,8 @@ for i in "${!COMPILER_LIST[@]}"; do
         COMP_LIST="$COMP_LIST ${CLIST[$i]}"
     fi
 done
-# Do not make ftest if flang is provided by ARM or AMD; rtest and dtest should be made instead.
-if type flang &> /dev/null && ! type "${COMPILER_LIST[$i]}" | grep -q '\/opt\/arm\|\/opt\/AMD' ; then
+# Do not make ftest if flang is provided by ARM, AMD, or AOMP; rtest, dtest, or mtest should be made instead.
+if type flang &> /dev/null && ! type "${COMPILER_LIST[$i]}" | grep -iq '\/opt\/arm\|\/opt\/AMD\|aomp' ; then
     COMP_LIST="$COMP_LIST f"
 fi
 # Make dtest if AOCC flang is installed.
