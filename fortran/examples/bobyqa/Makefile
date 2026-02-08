@@ -50,7 +50,8 @@ test:
 # Here are the compilers to test.
 
 # AMD AOMP Flang
-mtest: FC := amdflang -std=f$(FSTD)
+MFORT := $(shell command -v amdflang)
+mtest: FC := $(MFORT) -std=f$(FSTD)
 
 # AMD AOCC Flang
 AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)
@@ -69,23 +70,29 @@ ftest: FC := $(FFORT) -std=f$(FSTD)
 
 # GNU gfortran: due to `error stop` and `backtrace`, we must either compile with no `-std` or
 # use `-std=f20xy -fall-intrinsics` with xy >= 18.
-gtest: FC := gfortran -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
+GFORT := $(shell command -v gfortran)
+gtest: FC := $(GFORT) -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
 
 # Intel ifort
-itest: FC := ifort -warn all -stand f$(FS) -diag-disable=10448  # 10448: suppress the warning about deprecation of ifort.
+IFORT := $(shell command -v ifort)
+itest: FC := $(IFORT) -warn all -stand f$(FS) -diag-disable=10448  # 10448: suppress the warning about deprecation of ifort.
 
 # NAG nagfor
-#ntest: FC := nagfor -C -f$(FSTD) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.
-ntest: FC := nagfor -C -f$(FSTD) -fpp -nan -ieee=full  # `-nan -ieee=full` is to accommodate tests with REAL16.
+NFORT := $(shell command -v nagfor)
+#ntest: FC := $(NFORT) -C -f$(FSTD) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.
+ntest: FC := $(NFORT) -C -f$(FSTD) -fpp -nan -ieee=full  # `-nan -ieee=full` is to accommodate tests with REAL16.
 
 # NVIDIA nvfortran
-vtest: FC := nvfortran -C -Wall -Wextra -Mstandard
+VFORT := $(shell command -v nvfortran)
+vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
 
 # Arm Flang
-rtest: FC := armflang -Wall -std=f$(FSTD)
+RFORT := $(shell command -v armflang)
+rtest: FC := $(RFORT) -Wall -std=f$(FSTD)
 
 # Intel ifx
-xtest: FC := ifx -warn all -stand f$(FS)
+XFORT := $(shell command -v ifx)
+xtest: FC := $(XFORT) -warn all -stand f$(FS)
 
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
