@@ -112,8 +112,6 @@ jobs:
       - name: Install Oracle sunf95
         run: bash .github/scripts/install_sunf95
 
-      # Install Flang after AOCC, to make sure that flang is this one, while AOCC flang will be
-      # known as aflang.
       - name: Install Flang
         run: bash .github/scripts/install_llvm
 
