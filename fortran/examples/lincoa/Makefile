@@ -57,7 +57,10 @@ AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -prin
 dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # LLVM Flang
-FFORT := flang
+# Note that AOMP and AOCC also provide "flang". We define FFORT as follows to make sure the correct
+# one is being called. Otherwise, flang may be resolved to the one provided by AOMP or AOCC, which
+# did happen in our tests.
+FFORT := $(shell find -L /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
 ifeq ($(shell uname -s),Darwin)
 	SDKROOT := $(shell /usr/bin/xcrun --show-sdk-path -sdk macosx)
 	FFORT := $(FFORT) -lSystem -L$(SDKROOT)/usr/lib
@@ -76,13 +79,10 @@ itest: FC := ifort -warn all -stand f$(FS) -diag-disable=10448  # 10448: suppres
 ntest: FC := nagfor -C -f$(FSTD) -fpp -nan -ieee=full  # `-nan -ieee=full` is to accommodate tests with REAL16.
 
 # NVIDIA nvfortran
-VFORT := $(shell find -L /opt/nvidia -type f -name nvfortran -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)
-#vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard  # As of nvfortran 22.2-0, `-C` leads to a false positive of out of boundary subscript.
-vtest: FC := $(VFORT) -Wall -Wextra -Mstandard
+vtest: FC := nvfortran -C -Wall -Wextra -Mstandard
 
 # Arm Flang
-RFORT := $(shell find -L /opt/arm -type f -name armflang -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)
-rtest: FC := $(RFORT) -Wall -std=f$(FSTD)
+rtest: FC := armflang -Wall -std=f$(FSTD)
 
 # Intel ifx
 xtest: FC := ifx -warn all -stand f$(FS)
