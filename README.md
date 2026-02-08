@@ -345,7 +345,8 @@ support from the optimization community and beyond.
 **Thank you for help, known or unknown to me, explicit or implicit, without which I would not have survived.**
 
 The development of PRIMA would have been a mission impossible without the groundwork laid by the [PDFO](https://www.pdfo.net)
-package of [Tom M. Ragonneau](https://ragonneau.github.io) and Zaikun Zhang.
+package of [Tom M. Ragonneau](https://ragonneau.github.io) and Zaikun Zhang
+(even though PRIMA is a completely different project from PDFO and Tom did not have time to work on PRIMA).
 PDFO is Chapter 3 of Ragonneau's [thesis](https://theses.lib.polyu.edu.hk/handle/200/12294) co-supervised by Zaikun Zhang
 and Professor [Xiaojun Chen](https://www.polyu.edu.hk/ama/staff/xjchen/ChenXJ.htm),
 with financial support from the [Hong Kong Ph.D. Fellowship Scheme](https://cerg1.ugc.edu.hk/hkpfs/index.html) (ref. PF18-24698).
