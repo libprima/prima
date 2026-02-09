@@ -51,7 +51,7 @@ if (PRIMA_HEAP_ARRAYS)
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC")  # nvfortran
     set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mnostack_arrays -Mrecursive")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Flang")  # Classic Flang and AOCC Flang
-    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Mrecursive")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-stack-arrays -Mrecursive")
   endif ()
 endif ()
 
