@@ -91,7 +91,12 @@ jobs:
         run: bash .github/scripts/install_aocc
 
       - name: Install AOMP
-        run: bash .github/scripts/install_aomp 20 600  # Retry up to 20 times with a delay of 600 seconds (10 minutes) between retries, to avoid transient network issues.
+        # Retry up to 10 times with a delay of 600 seconds (10 minutes) between retries, to avoid
+        # transient network issues. If the installation still fails after all retries, we let it
+        # fail silently and continue with the test. This is fine since there are many tests with
+        # other compilers, and since the AOMP compiler is tested in test_aflang.html. If we try too
+        # many times, there may not be enough time left for the test to run anyway!
+        run: bash .github/scripts/install_aomp 10 600 || true
 
       - name: Install gfortran
         uses: fortran-lang/setup-fortran@main
@@ -116,8 +121,12 @@ jobs:
         run: bash .github/scripts/install_llvm
 
       - name: Conduct the test
+        # Check the compilers before the test. We continue with the test even if some compilers
+        # are not found successfully due to unsuccessful installation that were let unresolved in
+        # the previous steps, e.g., installation of AOMP. This is fine since there are many tests
+        # with other compilers, and since there is a dedicated workflow to test each compiler.
         run: |
-          type gfortran ifx amdflang aflang g95 nvfortran sunf95 flang
+          type gfortran ifx amdflang aflang g95 nvfortran sunf95 flang || true
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all
 
       - name: Remove the test data
