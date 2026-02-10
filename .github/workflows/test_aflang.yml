@@ -66,7 +66,7 @@ jobs:
         run: bash .github/scripts/misc_setup
 
       - name: Install AOMP
-        run: bash .github/scripts/install_aomp 20 600  # Retry up to 20 times with a delay of 600 seconds (10 minutes) between retries, to avoid transient network issues.
+        run: bash .github/scripts/install_aomp 20 600  # Retry up to 20 times with a delay of 600 seconds between retries, to avoid transient network issues.
 
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
