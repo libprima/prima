@@ -8,7 +8,7 @@ module initialize_uobyqa_mod
 !
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Saturday, March 16, 2024 PM04:50:24
+! Last Modified: Tue 10 Feb 2026 02:01:01 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -314,7 +314,7 @@ do k = 2_IK * n + 2_IK, npt
 end do
 
 if (present(info)) then
-    if (is_nan(sum(abs(pq)))) then
+    if (any(is_nan(pq))) then
         info = NAN_INF_MODEL
     else
         info = INFO_DFT
@@ -439,7 +439,7 @@ do k = 2_IK * n + 2_IK, npt
 end do
 
 if (present(info)) then
-    if (is_nan(sum(abs(pl)))) then
+    if (any(is_nan(pl))) then
         info = NAN_INF_MODEL
     else
         info = INFO_DFT

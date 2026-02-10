@@ -10,7 +10,7 @@ module initialize_lincoa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sat 16 Aug 2025 11:03:05 PM CST
+! Last Modified: Tue 10 Feb 2026 02:01:59 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -393,7 +393,7 @@ end if
 idz = 1
 
 if (present(info)) then
-    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    if (any(is_nan(bmat)) + any(is_nan(zmat))) then
         info = NAN_INF_MODEL
     else
         info = INFO_DFT

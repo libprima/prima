@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wed 28 Jan 2026 04:43:32 PM CST
+! Last Modified: Tue 10 Feb 2026 01:53:52 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1369,7 +1369,7 @@ n = int(size(A, 2), kind(n))
 is_orth = .true.
 if (n > size(A, 1)) then
     is_orth = .false.
-elseif (is_nan(sum(abs(A)))) then
+elseif (any(is_nan(A))) then
     is_orth = .false.
 elseif (ORTHTOL_DFT < REALMAX) then
     is_orth = all(abs(matprod(transpose(A), A) - eye(n)) <= max(tol_loc, tol_loc * maxval(abs(A))))
@@ -1930,8 +1930,8 @@ end if
 !====================!
 
 if (DEBUGGING) then
-    call assert(y >= 0 .or. is_nan(sum(abs(x))), 'Y >= 0 unless X contains NaN', srname)
-    call assert(y > 0 .or. is_nan(sum(abs(x))) .or. all(abs(x) <= 0), 'Y > 0 unless X contains NaN or is zero', srname)
+    call assert(y >= 0 .or. any(is_nan(x)), 'Y >= 0 unless X contains NaN', srname)
+    call assert(y > 0 .or. any(is_nan(x)) .or. all(abs(x) <= 0), 'Y > 0 unless X contains NaN or is zero', srname)
     call assert(is_nan(y) .eqv. any(is_nan(x)), 'Y is NaN if and only if X contains NaN', srname)
 end if
 

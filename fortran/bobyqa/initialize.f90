@@ -8,7 +8,7 @@ module initialize_bobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Sat 16 Aug 2025 11:02:33 PM CST
+! Last Modified: Tue 10 Feb 2026 01:53:25 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -414,7 +414,7 @@ end if
 pq = ZERO
 
 if (present(info)) then
-    if (is_nan(sum(abs(gopt)) + sum(abs(hq)))) then
+    if (any(is_nan(gopt)) .or. any(is_nan(hq))) then
         info = NAN_INF_MODEL
     else
         info = INFO_DFT
@@ -530,7 +530,7 @@ do k = ndiag + 1_IK, npt - n - 1_IK
 end do
 
 if (present(info)) then
-    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
         info = NAN_INF_MODEL
     else
         info = INFO_DFT

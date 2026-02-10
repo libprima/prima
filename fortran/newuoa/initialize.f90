@@ -8,7 +8,7 @@ module initialize_newuoa_mod
 !
 ! Dedicated to the late Professor M. J. D. Powell FRS (1936--2015).
 !
-! Last Modified: Sat 16 Aug 2025 11:02:19 PM CST
+! Last Modified: Tue 10 Feb 2026 01:56:05 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -366,7 +366,7 @@ end if
 pq = ZERO
 
 if (present(info)) then
-    if (is_nan(sum(abs(gopt)) + sum(abs(hq)))) then
+    if (any(is_nan(gopt)) .or. any(is_nan(hq))) then
         info = NAN_INF_MODEL
     else
         info = INFO_DFT
@@ -491,7 +491,7 @@ end if
 idz = 1
 
 if (present(info)) then
-    if (is_nan(sum(abs(bmat)) + sum(abs(zmat)))) then
+    if (any(is_nan(bmat)) .or. any(is_nan(zmat))) then
         info = NAN_INF_MODEL
     else
         info = INFO_DFT
