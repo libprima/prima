@@ -88,6 +88,16 @@ jobs:
           $SEDI 's|maxtr = huge(maxtr) - 1_IK|maxtr = ${{ github.event.inputs.maxtr }}|' *.f90
           grep 'maxtr = ' *.f90
 
+      - name: Revise linalg.f90 to see why "Y >= 0 unless X contains NaN" fails
+        run: |
+          if [[ $(uname) = 'Darwin' ]]; then  # macOS uses BSD sed, which does not understand \s or \n
+              brew install gnu-sed
+              SEDI="gsed -i"
+          fi
+          cd fortran/common/
+          $SEDI "s|\(^\s*\)\(call assert(\)\(y >= 0 .or. any(is_nan(x))\)\(.*$\)|\1if (.not. (\3)) then\n\1\1write(*,*) '====> x = ', x, 'y = ', y\n\1\1error stop\n\1end if\n\1\2\3\4|" linalg.f90
+          cat linalg.f90
+
       - name: Revise string.f90
         run: |
           if [[ $(uname) = 'Darwin' ]]; then  # macOS uses BSD sed, which does not understand \s or \n
