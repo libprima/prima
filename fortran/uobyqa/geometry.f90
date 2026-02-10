@@ -8,7 +8,7 @@ module geometry_uobyqa_mod
 !
 ! Started: February 2022
 !
-! Last Modified: Tue 10 Feb 2026 02:07:32 PM CET
+! Last Modified: Tue 10 Feb 2026 02:43:25 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -291,7 +291,7 @@ else ! GG is 0 or NaN due to rounding errors. Set DCAUCHY to a displacement from
 end if
 
 ! Return if H or G contains NaN or H is zero. Powell's code does not do this.
-if (any(is_nan(h)) + any(is_nan(g)) .or. all(abs(h) <= 0)) then
+if (any(is_nan(h)) .or. any(is_nan(g)) .or. all(abs(h) <= 0)) then
     d = dcauchy
     return
 end if
