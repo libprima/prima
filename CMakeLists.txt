@@ -24,6 +24,18 @@ endif ()
 # 0. See https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html for compiler IDs.
 # 1. We require the compilers to allocate arrays on the heap instead of the stack, which is
 # slower (does not matter for DFO applications) but can avoid memory errors on large problems.
+# The compiler flags for heap arrays are as follows:
+# - AMD AOCC Flang: -fno-stack-arrays
+# - AMD AOMP Flang: -fno-stack-arrays -mmlir -fdynamic-heap-array (-fno-stack-arrays insufficient as of AMOP 22.0)
+# - Arm Fortran Compiler: -fno-stack-arrays -mmlir -fdynamic-heap-array (-fno-stack-arrays insufficient as of ATfL 21.1)
+# - LLVM Flang: -fno-stack-arrays -mmlir -fdynamic-heap-array (-fno-stack-arrays insufficient as of LLVM 21.1.8)
+# - GNU gfortran: -fno-stack-arrays
+# - Intel ifx: -heap-arrays
+# - Intel ifort: -heap-arrays
+# - NVIDIA nvfortran: -Mnostack_arrays
+# - NAG Fortran Compiler: Not needed. According to the NAG support, "the behaviour of nagfor is for
+#   small fixed-size arrays to go on the stack, and for variable-size arrays and fixed-size arrays to
+#   go on the heap".
 # 2. We require the compilers to compile the solvers so that they can be called recursively.
 # See https://fortran-lang.discourse.group/t/frecursive-assume-recursion-and-recursion-thread-safety
 # 3. Zaikun 20260206: Is the ID for ARM Flang correct? What about the AMD AOMP Flang? See

@@ -3,11 +3,11 @@ implementation of Powell's derivative-free optimization solvers.
 
 N.B.:
 
-0. In real applications, if the dimension of the problem is big (e.g., more than 100), then
-compilers should be instructed to compile PRIMA with the automatic arrays allocated on the heap.
-Otherwise, those arrays may be allocated on the stack, which may lead to stack overflow. Since
-PRIMA is designed to solve problems with expensive function evaluations, we do not worry about
-the performance of heap arrays.
+0. In production, if the dimension of the problem is big (e.g., more than 100), then compilers
+should be instructed to compile PRIMA with the automatic arrays allocated on the heap. Otherwise,
+those arrays may be allocated on the stack, which may lead to stack overflow. Since PRIMA is
+designed to solve problems with expensive function evaluations, we do not worry about the
+performance of heap arrays.
 
 The compiler flags for heap arrays are as follows:
 - AMD AOCC Flang: -fno-stack-arrays
@@ -17,8 +17,10 @@ The compiler flags for heap arrays are as follows:
 - GNU gfortran: -fno-stack-arrays
 - Intel ifx: -heap-arrays
 - Intel ifort: -heap-arrays
-- NAG Fortran Compiler: NO (unknown)
 - NVIDIA nvfortran: -Mnostack_arrays
+- NAG Fortran Compiler: Not needed. According to the NAG support, "the behaviour of nagfor is for
+  small fixed-size arrays to go on the stack, and for variable-size arrays and fixed-size arrays to
+  go on the heap".
 
 If ever a segmentation fault occurs, check whether the above flags are used in the compilation.
 
@@ -47,8 +49,8 @@ compliant with Fortran 2008 and above.
 - GNU gfortran 14.2
 - Intel ifx 2025.3
 - Intel ifort 2021.11.1
-- NAG Fortran Compiler Release 7.2(Shin-Urayasu) Build 7231
 - NVIDIA nvfortran 26.1
+- NAG Fortran Compiler Release 7.2(Shin-Urayasu) Build 7231
 The following discontinued compilers are not supported: Absoft af95, g95, Oracle sunf95.
 
 Coded by Zaikun ZHANG (www.zhangzk.net).
