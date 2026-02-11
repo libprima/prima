@@ -95,7 +95,7 @@ jobs:
               SEDI="gsed -i"
           fi
           cd fortran/common/
-          $SEDI "s|\(^\s*\)\(call assert(\)\(y >= 0 .or. any(is_nan(x))\)\(.*$\)|\1if (.not. (\3)) then\n\1\1write(*,*) '====> x = ', x, 'y = ', y\n\1\1error stop\n\1end if\n\1\2\3\4|" linalg.f90
+          $SEDI "s|\(^\s*\)\(call assert(\)\(y >= 0 .or. any(is_nan(x))\)\(.*$\)|\1if (.not. (\3)) then\n\1\1write(*,*) '====> x = ', x, 'y = ', y, 'p = ', p_loc, 'scaling = ', scaling, 'sumx2 = ', sum(x**2), 'sqrt(sumx2) = ', sqrt(sum(x**2))\n\1\1error stop\n\1end if\n\1\2\3\4|" linalg.f90
           cat linalg.f90
 
       - name: Revise string.f90
