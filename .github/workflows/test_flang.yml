@@ -30,14 +30,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
-        # solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        # fflags: [-O1, -O2, -O3, -g, -fast]
-        # testdim: [small, big]
-        os: [macos-latest]
-        solver: [lincoa]
-        fflags: [-fast]
-        testdim: [small]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        fflags: [-O1, -O2, -O3, -g, -fast]
+        testdim: [small, big]
 
     steps:
 
@@ -119,8 +115,7 @@ jobs:
         run: |
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
-          #IK=i$(( 2**(1 + $(date +%-d) % 3) ))
-          IK=i$(( 2**($(date +%-d) % 3) ))
+          IK=i$(( 2**(1 + $(date +%-d) % 3) ))
           echo "IK=${IK}"
           echo "IK=${IK}" >> "$GITHUB_ENV"
           cd "$ROOT_DIR"/fortran/tests && make ftest_${IK}.${{ matrix.solver }}
