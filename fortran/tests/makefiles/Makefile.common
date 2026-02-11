@@ -1081,14 +1081,11 @@ source_%: $(SRC_DIRS)
 	@if echo $@ | grep -q "gtest" && echo $(FFLAGS) | grep -q "fast"; then \
 		bash $(TOOLS_DIR)/gsrc ./ ; \
 	fi
-	@if echo $@ | grep -q "ftest"; then \
+	@if echo $@ | grep -q "ftest\|mtest\|rtest"; then \
 		bash $(TOOLS_DIR)/flsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "vtest" && echo $(FFLAGS) | grep -q "fast"; then \
 		bash $(TOOLS_DIR)/vsrc ./ ; \
-	fi
-	@if echo $@ | grep -q "rtest"; then \
-		bash $(TOOLS_DIR)/rsrc ./ ; \
 	fi
 	@if echo $@ | grep -q "dtest"; then \
 		bash $(TOOLS_DIR)/dsrc ./ ; \
