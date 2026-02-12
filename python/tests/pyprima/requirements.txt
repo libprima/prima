@@ -1,5 +1,0 @@
-numpy
-pycutest
-pytest
-pytest-cov
-pytest-order
