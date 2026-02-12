@@ -2546,3 +2546,10 @@ xcrun
 dsrc
 ncall
 ccc
+AMOP
+ATf
+emax
+emin
+scalmax
+scalmin
+sumx

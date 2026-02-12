@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thu 12 Feb 2026 04:02:55 PM CET
+! Last Modified: Thu 12 Feb 2026 05:30:33 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -2031,6 +2031,8 @@ character(len=*), parameter :: srname = 'NAMED_NORM_MAT'
 !====================!
 ! Calculation starts !
 !====================!
+
+! N.B.: Ideally, we should also do a scaling similar to that in P_NORM to avoid over/underflow.
 
 if (size(x, 1) * size(x, 2) == 0) then
     y = ZERO

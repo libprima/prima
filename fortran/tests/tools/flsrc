@@ -23,9 +23,10 @@ if [[ -f "$LINALG" ]] ; then
     STR="Y is NaN if and only if X contains NaN"
     $SEDI "/$STR/d" "$LINALG"
 
-    # See https://github.com/llvm/llvm-project/issues/180957
-    STR="Y >= 0 unless X contains NaN"
-    $SEDI "/$STR/d" "$LINALG"
+    # The following should have been fixed by commit 399df3ae055566c3f6133118ebab6fdcc16cebb5
+    # # See https://github.com/llvm/llvm-project/issues/180957
+    # STR="Y >= 0 unless X contains NaN"
+    # $SEDI "/$STR/d" "$LINALG"
 
     # # With flang 20.1.8, matprod in linalg.f90 often fails to compute matrix multiplications
     # # correctly, generating garbage values (NaN or numbers that are nearly zero). No idea why.
