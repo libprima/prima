@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Tue 10 Feb 2026 01:53:52 PM CET
+! Last Modified: Thu 12 Feb 2026 04:02:55 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1863,7 +1863,7 @@ function p_norm(x, p) result(y)
 !--------------------------------------------------------------------------------------------------!
 ! This function calculates the P-norm of a vector X.
 !--------------------------------------------------------------------------------------------------!
-use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, ZERO, DEBUGGING
+use, non_intrinsic :: consts_mod, only : RP, ONE, TWO, ZERO, REALMIN, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert, validate
 use, non_intrinsic :: infnan_mod, only : is_finite, is_posinf, is_nan
 implicit none
@@ -1875,8 +1875,11 @@ real(RP), intent(in), optional :: p
 real(RP) :: y
 ! Local variables
 character(len=*), parameter :: srname = 'P_NORM'
+real(RP) :: maxabs
 real(RP) :: p_loc
 real(RP) :: scaling
+real(RP) :: scalmax
+real(RP) :: scalmin
 
 ! Preconditions
 if (present(p)) then
@@ -1895,7 +1898,27 @@ end if
 
 ! If SIZE(X) = 0, then MAXVAL(ABS(X)) = -HUGE(X); since we handle such a case individually,
 ! it is OK to write MAXVAL(ABS(X)) below, but we append 0 for robustness.
-scaling = maxval([abs(x), ZERO])
+maxabs = maxval([abs(x), ZERO])
+! To avoid over/underflow, we scale X by SCALING defined as follows when it is necessary.
+! We make sure SCALMIN >= MAX(REALMIN, 1/REALMAX) and SCALMAX <= MIN(REALMAX, 1/REALMIN), or we
+! may encounter over/underflow when dividing by SCALING, and even NaN if the compiler decides to
+! evaluate 1/SCALING first, which did happen with `flang -ffast-math` on REAL32 with LLVM flang 21.
+!
+! Given a numeric model for floating-point numbers,
+! REALMIN = TINY(ZERO) = 2^{emin-1} and REALMAX = HUGE(ZERO) = (1 - b^{-p}) * b^{emax} >= b^{emax-1},
+! where b = RADIX(ZERO) >= 2 is the base, p = DIGITS(ZERO) >= 1 is the number of significant digits
+! in base b, and emin = MINEXPONENT(ZERO), emax = MAXEXPONENT(ZERO) are the min, max exponents.
+! N.B.: IEEE 754 specifies emax and requires that emin = 1 - emax for the "Binary interchange
+! floating-point formats" binary32, binary64, and binary128 (see Sec. 3.3 of IEEE Std 754-2019).
+! However, the mathematical definition of [emin, emax] in Fortran standards indeed corresponds to
+! that of [emin + 1, emax + 1] in IEEE 754. In addition, Fortran compilers may not implement REAL32,
+! REAL64, and REAL128 corresponding to binary32, binary64, and binary128. For instance,
+! nagfor 7 has p = 106, emin = -968 and emax = 1023 for REAL128, while
+! IEEE 754 has p = 113, emin = -16382, and emax = 16383 for binary128. See
+! https://fortran-lang.discourse.group/t/ieee-754-binary-interchange-floating-point-formats-versus-iso-fortran-env-real-kinds/
+scalmin = real(radix(ZERO), RP)**max(minexponent(ZERO) - 1, 1 - maxexponent(ZERO))
+scalmax = real(radix(ZERO), RP)**min(maxexponent(ZERO) - 1, 1 - minexponent(ZERO))
+scaling = min(max(maxabs, scalmin), scalmax)
 
 if (size(x) == 0) then
     y = ZERO
@@ -1904,22 +1927,22 @@ elseif (p_loc <= 0) then
 elseif (.not. all(is_finite(x))) then
     ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
     y = sum(abs(x))
-elseif (scaling <= 0) then
+elseif (maxabs <= 0) then
     y = ZERO
 else
     if (is_posinf(p_loc)) then
-        y = scaling
+        y = maxabs
     elseif (.not. present(p) .or. abs(p_loc - TWO) <= 0) then
         ! N.B.: We may use the intrinsic NORM2. Here, we use the following naive implementation to
         ! get full control on the computation in a way similar to MATPROD and INPROD.
         y = sqrt(sum(x**2))
         ! The following code handles over/underflow naively.
-        if ((is_posinf(y) .and. is_finite(scaling)) .or. (y <= 0 .and. scaling > 0)) then
+        if ((is_posinf(y) .and. is_finite(maxabs)) .or. (y <= 0 .and. maxabs > 0)) then
             y = scaling * sqrt(sum((x / scaling)**2))
         end if
     else
         y = sum(abs(x)**p_loc)**(ONE / p_loc)
-        if ((is_posinf(y) .and. is_finite(scaling)) .or. (y <= 0 .and. scaling > 0)) then
+        if ((is_posinf(y) .and. is_finite(maxabs)) .or. (y <= 0 .and. maxabs > 0)) then
             y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
         end if
     end if
@@ -1931,8 +1954,9 @@ end if
 
 if (DEBUGGING) then
     call assert(y >= 0 .or. any(is_nan(x)), 'Y >= 0 unless X contains NaN', srname)
-    call assert(y > 0 .or. any(is_nan(x)) .or. all(abs(x) <= 0), 'Y > 0 unless X contains NaN or is zero', srname)
     call assert(is_nan(y) .eqv. any(is_nan(x)), 'Y is NaN if and only if X contains NaN', srname)
+    ! Even with scaling, Y may still be 0 if all entries of X are zero or subnormal.
+    call assert(y > 0 .or. any(is_nan(x)) .or. all(abs(x) < REALMIN), 'Y > 0 unless X contains NaN or all its entries are below REALMIN', srname)
 end if
 
 end function p_norm
