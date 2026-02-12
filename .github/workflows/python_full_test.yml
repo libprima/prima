@@ -24,6 +24,11 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-latest, windows-2022, windows-latest, macos-15-intel, macos-latest]
 
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
     steps:
       - name: Clone Repository (Latest)
         uses: actions/checkout@v6.0.2
@@ -114,3 +119,13 @@ jobs:
         with:
           name: coverage-report-${{ matrix.os }}
           path: ./prima_htmlcov
+
+      - uses: actions/upload-pages-artifact@v3
+        # TODO: Switch this to main once it's merged
+        if: matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/consolidate2'
+        with:
+          path: ./prima_htmlcov
+
+      - uses: actions/deploy-pages@v4
+        # TODO: Switch this to main once it's merged
+        if: matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/consolidate2'
