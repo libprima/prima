@@ -1956,7 +1956,8 @@ if (DEBUGGING) then
     call assert(y >= 0 .or. any(is_nan(x)), 'Y >= 0 unless X contains NaN', srname)
     call assert(is_nan(y) .eqv. any(is_nan(x)), 'Y is NaN if and only if X contains NaN', srname)
     ! Even with scaling, Y may still be 0 if all entries of X are zero or subnormal.
-    call assert(y > 0 .or. any(is_nan(x)) .or. all(abs(x) < REALMIN), 'Y > 0 unless X contains NaN or all its entries are below REALMIN', srname)
+    call assert(y > 0 .or. any(is_nan(x)) .or. all(abs(x) < REALMIN), &
+        & 'Y > 0 unless X contains NaN or all its entries are below REALMIN', srname)
 end if
 
 end function p_norm
