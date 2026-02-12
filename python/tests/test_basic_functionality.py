@@ -74,3 +74,9 @@ def test_unconstrained_problem_with_any_algorithm(method):
     res = minimize(fun, x0, method=method)
     assert fun.result_point_and_value_are_optimal(res)
     assert res.method == method.lower()
+
+
+def test_invalid_backend():
+    x0 = [0, 0]
+    with pytest.raises(ValueError, match="Backend must be either 'Fortran' or 'Python', not 'InvalidBackend'"):
+        minimize(fun, x0, options={'backend': 'InvalidBackend'})
