@@ -21,25 +21,20 @@ if (NOT _IMPORT_NUMPY EQUAL 0)
 endif ()
 
 
-pybind11_add_module(_prima _prima.cpp)
-target_include_directories(_prima PRIVATE ${CMAKE_SOURCE_DIR}/c/include)
-target_link_libraries(_prima PRIVATE primac primaf)
-target_compile_definitions(_prima PRIVATE VERSION_INFO=${PRIMA_VERSION})
+pybind11_add_module(pybindings pybindings.cpp)
+target_include_directories(pybindings PRIVATE ${CMAKE_SOURCE_DIR}/c/include)
+target_link_libraries(pybindings PRIVATE primac primaf)
+target_compile_definitions(pybindings PRIVATE VERSION_INFO=${PRIMA_VERSION})
 
 # This section is cribbed from scipy/meson.build
 if(WIN32 AND (CMAKE_C_COMPILER_ID MATCHES "GNU"))
   message(STATUS "MinGW detected, adding compiler and linker flags")
-  target_link_options(_prima PUBLIC -lucrt -static)
-  target_compile_options(_prima PUBLIC $<$<COMPILE_LANGUAGE:C>:-mlong-double-64 -D__USE_MINGW_ANSI_STDIO=1>)
-  target_compile_options(_prima PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-D__USE_MINGW_ANSI_STDIO=1>)
+  target_link_options(pybindings PUBLIC -lucrt -static)
+  target_compile_options(pybindings PUBLIC $<$<COMPILE_LANGUAGE:C>:-mlong-double-64 -D__USE_MINGW_ANSI_STDIO=1>)
+  target_compile_options(pybindings PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-D__USE_MINGW_ANSI_STDIO=1>)
 endif()
 
-install (TARGETS _prima DESTINATION prima/ COMPONENT Prima_Python_C_Extension)
-# The following are not added to the component because scikit-build-core automatically
-# detects files in python/<package_name> and adds them to the wheel. These commands
-# are here in case one is building via cmake directly and not via scikit-build-core
-file(GLOB SUPPORTING_PY_FILES "${CMAKE_CURRENT_SOURCE_DIR}/prima/*.py")
-install (FILES ${SUPPORTING_PY_FILES} DESTINATION prima)
+install (TARGETS pybindings DESTINATION prima/backends/ COMPONENT Prima_Python_C_Extension)
 
 # We test the example files in CMake but not the test files. Those are tested by the Python
 # build system (specifically cibuildwheel).

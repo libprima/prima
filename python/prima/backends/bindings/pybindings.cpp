@@ -79,7 +79,7 @@ prima_algorithm_t pystr_method_to_algorithm(const pybind11::str& method_) {
   else { throw std::invalid_argument("Expected method to be one of BOBYQA, COBYLA, LINCOA, NEWUOA, or UOBYQA"); }
 }
 
-PYBIND11_MODULE(_prima, m) {
+PYBIND11_MODULE(pybindings, m) {
 #ifdef VERSION_INFO
     #define STRINGIFY(x) #x
     #define MACRO_STRINGIFY(x) STRINGIFY(x)
