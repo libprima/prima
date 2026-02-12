@@ -40,9 +40,10 @@ def set_comparing():
     # This is a hack to force these tests to use manual math instead of optimized
     # numpy or other routines. This will ensure we get the same results as compared
     # to Fortran when compiled in debug mode.
-    prima.pyprima.common.linalg.USE_NAIVE_MATH = True
+    import prima.backends.pyprima.common.linalg
+    prima.backends.pyprima.common.linalg.USE_NAIVE_MATH = True
     yield
-    prima.pyprima.common.linalg.USE_NAIVE_MATH = False
+    prima.backends.pyprima.common.linalg.USE_NAIVE_MATH = False
 
 
 def get_constraints(constraints_in):

@@ -181,7 +181,7 @@ if (PRIMA_ENABLE_PYTHON)
     message(WARNING "Compiling Python bindings with compilers other than GNU has not been tested and no support is planned at this time")
   endif()
   enable_language(CXX)
-  add_subdirectory(python)
+  add_subdirectory(python/prima/backends/bindings/)
 endif ()
 
 install(

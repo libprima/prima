@@ -29,7 +29,7 @@ install.components = ["Prima_Python_C_Extension"]
 write_to = "_version.txt"
 
 [tool.uv]
-cache-keys = [{file = "fortran/**"}, {file="c/**"}, {file="python/_prima.cpp"}, {file="pyproject.toml"}, {file="**/CMakeLists.txt"}]
+cache-keys = [{file = "fortran/**"}, {file="c/**"}, {file="python/prima/backends/bindings/**"}, {file="pyproject.toml"}, {file="**/CMakeLists.txt"}]
 
 [tool.poe.tasks]
 coverage = {shell = "coverage run --branch --source=prima,$(git rev-parse --show-toplevel) -m pytest -s python/tests && coverage html -d prima_htmlcov"}

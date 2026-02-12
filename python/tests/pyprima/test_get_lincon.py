@@ -1,5 +1,5 @@
-from prima.pyprima.cobyla.cobyla import get_lincon
-from prima.pyprima.common.consts import BOUNDMAX
+from prima.backends.pyprima.cobyla.cobyla import get_lincon
+from prima.backends.pyprima.common.consts import BOUNDMAX
 import numpy as np
 
 def test_get_lincon():

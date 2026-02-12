@@ -11,7 +11,6 @@ import numpy as np
 from ._common import _project
 from ._common import get_arrays_tol
 from .infos import FIXED_SUCCESS
-from .pyprima.cobyla.cobyla import cobyla
 from warnings import warn
 
 # TODO: Set __version__ without going to the bindings
@@ -457,7 +456,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         options['backend'] = 'Fortran'
 
     if options['backend'].lower() == 'fortran':
-        from ._prima import minimize as _minimize
+        from .backends.pybindings import minimize as _minimize
         if m_nlcon > 0:
             options['f0'] = f0
             options['nlconstr0'] = nlconstr0
@@ -489,6 +488,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
             method = result.method,
         )
     elif options['backend'].lower() == "python":
+        from .backends.pyprima.cobyla.cobyla import cobyla
         def calcfc(x):
             f = fun(x, *args)
             if nonlinear_constraint_function is not None:
