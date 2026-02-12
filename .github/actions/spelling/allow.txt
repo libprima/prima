@@ -2553,3 +2553,7 @@ emin
 scalmax
 scalmin
 sumx
+cebb
+ebab
+fdcc
+sumxs
