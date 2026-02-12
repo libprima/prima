@@ -5,5 +5,5 @@
 	path = .development
     url = https://github.com/libprima/prima_development
 [submodule "python/pybind11"]
-	path = python/pybind11
+	path = python/prima/backends/bindings/pybind11
 	url = https://github.com/pybind/pybind11

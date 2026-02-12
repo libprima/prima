@@ -1,5 +1,5 @@
 from prima import minimize, NonlinearConstraint
-from prima.pyprima.common.infos import CALLBACK_TERMINATE, SMALL_TR_RADIUS
+from prima.backends.pyprima.common.infos import CALLBACK_TERMINATE, SMALL_TR_RADIUS
 import numpy as np
 import os
 import pytest

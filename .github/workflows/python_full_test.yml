@@ -39,10 +39,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0  # Get tags for use with git describe
 
-      - name: Checkout pybind11 submodule
-        run: git submodule update --init python/pybind11
-
-
       - name: Set the MACOSX_DEPLOYMENT_TARGET
         # https://cibuildwheel.pypa.io/en/stable/faq/#macos-library-dependencies-do-not-satisfy-target-macos
         if: ${{ runner.os == 'macOS' }}
