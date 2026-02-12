@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thu 12 Feb 2026 05:30:33 PM CET
+! Last Modified: Thu 12 Feb 2026 08:42:22 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1923,7 +1923,10 @@ scaling = min(max(maxabs, scalmin), scalmax)
 if (size(x) == 0) then
     y = ZERO
 elseif (p_loc <= 0) then
-    y = real(count(abs(x) > 0), kind(y))
+    ! We could have defined Y = REAL(COUNT(ABS(X) > 0), KIND(Y)), but that would render Y = 0 when
+    ! X is all NaN. We prefer Y = 0 iff X is all zero. The following defines Y to the number of
+    ! nonzero entries of X, even if some of them are NaN.
+    y = real(count(.not. abs(x) <= 0), kind(y))
 elseif (.not. all(is_finite(x))) then
     ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
     y = sum(abs(x))
