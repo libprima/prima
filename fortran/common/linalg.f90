@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Thu 12 Feb 2026 08:42:22 PM CET
+! Last Modified: Thu 12 Feb 2026 09:37:58 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1905,16 +1905,16 @@ maxabs = maxval([abs(x), ZERO])
 ! evaluate 1/SCALING first, which did happen with `flang -ffast-math` on REAL32 with LLVM flang 21.
 !
 ! Given a numeric model for floating-point numbers,
-! REALMIN = TINY(ZERO) = 2^{emin-1} and REALMAX = HUGE(ZERO) = (1 - b^{-p}) * b^{emax} >= b^{emax-1},
-! where b = RADIX(ZERO) >= 2 is the base, p = DIGITS(ZERO) >= 1 is the number of significant digits
+! REALMIN = TINY(ZERO) = 2^{emin-1} and REALMAX = HUGE(ZERO) = (1 - b^{-d}) * b^{emax} >= b^{emax-1},
+! where b = RADIX(ZERO) >= 2 is the base, d = DIGITS(ZERO) >= 1 is the number of significant digits
 ! in base b, and emin = MINEXPONENT(ZERO), emax = MAXEXPONENT(ZERO) are the min, max exponents.
 ! N.B.: IEEE 754 specifies emax and requires that emin = 1 - emax for the "Binary interchange
 ! floating-point formats" binary32, binary64, and binary128 (see Sec. 3.3 of IEEE Std 754-2019).
 ! However, the mathematical definition of [emin, emax] in Fortran standards indeed corresponds to
 ! that of [emin + 1, emax + 1] in IEEE 754. In addition, Fortran compilers may not implement REAL32,
 ! REAL64, and REAL128 corresponding to binary32, binary64, and binary128. For instance,
-! nagfor 7 has p = 106, emin = -968 and emax = 1023 for REAL128, while
-! IEEE 754 has p = 113, emin = -16382, and emax = 16383 for binary128. See
+! nagfor 7 has d = 106, emin = -968 and emax = 1023 for REAL128, while
+! IEEE 754 has d = 113, emin = -16382, and emax = 16383 for binary128. See
 ! https://fortran-lang.discourse.group/t/ieee-754-binary-interchange-floating-point-formats-versus-iso-fortran-env-real-kinds/
 scalmin = real(radix(ZERO), RP)**max(minexponent(ZERO) - 1, 1 - maxexponent(ZERO))
 scalmax = real(radix(ZERO), RP)**min(maxexponent(ZERO) - 1, 1 - minexponent(ZERO))
@@ -1922,30 +1922,32 @@ scaling = min(max(maxabs, scalmin), scalmax)
 
 if (size(x) == 0) then
     y = ZERO
-elseif (p_loc <= 0) then
-    ! We could have defined Y = REAL(COUNT(ABS(X) > 0), KIND(Y)), but that would render Y = 0 when
-    ! X is all NaN. We prefer Y = 0 iff X is all zero. The following defines Y to the number of
-    ! nonzero entries of X, even if some of them are NaN.
-    y = real(count(.not. abs(x) <= 0), kind(y))
+elseif (p_loc <= 0 .and. .not. any(is_nan(x))) then
+    y = real(count(abs(x) > 0), kind(y))
 elseif (.not. all(is_finite(x))) then
-    ! If X contains NaN, then Y is NaN. Otherwise, Y is Inf when X contains +/-Inf.
+    ! If X contains NaN, then Y is NaN; Otherwise, Y is Inf when X contains +/-Inf unless P = 0.
     y = sum(abs(x))
 elseif (maxabs <= 0) then
+    ! If MAXABS is zero, then Y is zero. Note that we do this only when X does not contain NaN.
+    ! Otherwise, MAXABS = 0 does not necessarily guarantee that X is all zero.
     y = ZERO
-else
+else  ! Now P > 0 and X is a finite-valued nonzero vector, as we have handled the other cases above.
     if (is_posinf(p_loc)) then
         y = maxabs
-    elseif (.not. present(p) .or. abs(p_loc - TWO) <= 0) then
+    elseif (abs(p_loc - ONE) <= 0) then
+        y = sum(abs(x))
+    elseif (abs(p_loc - TWO) <= 0) then
         ! N.B.: We may use the intrinsic NORM2. Here, we use the following naive implementation to
         ! get full control on the computation in a way similar to MATPROD and INPROD.
         y = sqrt(sum(x**2))
         ! The following code handles over/underflow naively.
-        if ((is_posinf(y) .and. is_finite(maxabs)) .or. (y <= 0 .and. maxabs > 0)) then
+        if (is_posinf(y) .or. y <= 0) then
             y = scaling * sqrt(sum((x / scaling)**2))
         end if
     else
         y = sum(abs(x)**p_loc)**(ONE / p_loc)
-        if ((is_posinf(y) .and. is_finite(maxabs)) .or. (y <= 0 .and. maxabs > 0)) then
+        ! The following code handles over/underflow naively.
+        if (is_posinf(y) .or. y <= 0) then
             y = scaling * sum(abs(x / scaling)**p_loc)**(ONE / p_loc)
         end if
     end if
