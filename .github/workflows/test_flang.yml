@@ -57,14 +57,17 @@ jobs:
         uses: actions/checkout@v6.0.2
         if: github.event.inputs.git-ref == ''
         with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+
           submodules: recursive
+        #   ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+        # As of 260213, checkout with ssh fails on Windows arm runners due to "UNPROTECTED PRIVATE KEY FILE"
       - name: Clone Repository (Custom Ref)
         uses: actions/checkout@v6.0.2
         if: github.event.inputs.git-ref != ''
         with:
           ref: ${{ github.event.inputs.git-ref }}
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+        #   ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+        # As of 260213, checkout with ssh fails on Windows arm runners due to "UNPROTECTED PRIVATE KEY FILE"
           submodules: recursive
 
       - name: Miscellaneous setup
@@ -159,6 +162,7 @@ jobs:
 
       - name: Remove the test data
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
+        shell: bash  # Important; otherwise, `rm -rf` will not work on Windows.
         run: rm -rf ${{ env.TEST_DIR }}
 
 
