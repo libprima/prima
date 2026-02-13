@@ -61,12 +61,12 @@ dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD) -Mstandard
 # Note that AOMP and AOCC also provide "flang". We define FFORT as follows to make sure the correct
 # one is being called. Otherwise, flang may be resolved to the one provided by AOMP or AOCC, which
 # did happen in our tests.
-FFORT := $(shell find -L /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
+FFORT := "$(shell find -L /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar /c/Program\ Files/LLVM -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)"
 ifeq ($(shell uname -s),Darwin)
 	SDKROOT := $(shell /usr/bin/xcrun --show-sdk-path -sdk macosx)
 	FFORT := $(FFORT) -lSystem -L$(SDKROOT)/usr/lib
 endif
-ftest: FC := $(FFORT) -std=f$(FSTD)
+ftest: FC := "$(FFORT)" -std=f$(FSTD)
 
 # GNU gfortran: due to `error stop` and `backtrace`, we must either compile with no `-std` or
 # use `-std=f20xy -fall-intrinsics` with xy >= 18.
