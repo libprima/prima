@@ -74,7 +74,7 @@ jobs:
       - name: Install LLVM Flang
         shell: bash
         run: |
-          bash ./install_llvm \
+          bash .github/scripts/install_llvm \
             || { echo "Warning: LLVM Flang installation failed!!" >&2; exit 0; }
 
       - name: Revise maxtr
