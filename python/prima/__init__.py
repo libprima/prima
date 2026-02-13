@@ -12,8 +12,7 @@ from ._common import _project
 from ._common import get_arrays_tol
 from .infos import FIXED_SUCCESS
 from warnings import warn
-
-# TODO: Set __version__ without going to the bindings
+from ._version import version as __version__
 
 class PRIMAMessage(Enum):
     # See prima_message_t in prima.h

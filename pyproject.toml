@@ -22,11 +22,11 @@ cmake.args = ["-G Ninja", "-DBUILD_SHARED_LIBS=OFF", "-DPRIMA_ENABLE_PYTHON=ON"]
 build.verbose = true
 logging.level = "INFO"
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = [".git-archival.txt"]
+sdist.include = ["python/prima/_version.py"]
 install.components = ["Prima_Python_C_Extension"]
 
 [tool.setuptools_scm]  # Section required
-write_to = "_version.txt"
+version_file = "python/prima/_version.py"
 
 [tool.uv]
 cache-keys = [{file = "fortran/**"}, {file="c/**"}, {file="python/prima/backends/bindings/**"}, {file="pyproject.toml"}, {file="**/CMakeLists.txt"}]
