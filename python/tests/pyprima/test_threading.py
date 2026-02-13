@@ -47,7 +47,8 @@ def test_threading():
     problems = [problem1, problem2, problem3, problem4]
 
     def run_problem(problem):
-        return minimize(options={'backend': 'Python'}, **problem)
+        # Limit to 100 fev so that the test runs quickly.
+        return minimize(options={'backend': 'Python', 'maxfun': 100}, **problem)
 
     single_threaded_results = [run_problem(problem) for problem in problems]
 

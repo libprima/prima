@@ -17,7 +17,7 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}
 
 jobs:
   run_all_tests:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build and run coverage on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
