@@ -70,7 +70,7 @@ endif
 ifeq ($(OS),Windows_NT)
 	FFORT := $(shell command -v flang)
 endif
-ftest: FC := $(FFORT) -std=f$(FSTD)
+ftest: FC := "$(FFORT)" -std=f$(FSTD)
 
 # GNU gfortran: due to `error stop` and `backtrace`, we must either compile with no `-std` or
 # use `-std=f20xy -fall-intrinsics` with xy >= 18.
