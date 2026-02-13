@@ -59,8 +59,7 @@ def get_constraints(constraints_in):
     return constraints_out
 
 
-@pytest.mark.parametrize("name", [#'TENBARS1', 'ERRINBAR',
-                                  'PALMER2C', 'PALMER3B',
+@pytest.mark.parametrize("name", ['PALMER2C', 'PALMER3B',
                                   'HS103', 'CRESC4', 'MGH10LS', 'TFI3',
                                   'BIGGS3', 'BIGGS6', 'DEGENLPB', 'HS102',
                                   'MISRA1ALS', 'POLAK3'])
