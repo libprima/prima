@@ -39,7 +39,7 @@ module linalg_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Fri 13 Feb 2026 09:40:11 AM CET
+! Last Modified: Fri 13 Feb 2026 05:11:41 PM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -1936,7 +1936,7 @@ else  ! Now P > 0 and X is a finite-valued nonzero vector, as we have handled th
         ! REAL64, and REAL128 according to binary32, binary64, and binary128. For instance,
         ! nagfor 7 has d = 106, emin = -968 and emax = 1023 for REAL128, while
         ! IEEE 754 has d = 113, emin = -16382, and emax = 16383 for binary128. See
-        ! https://fortran-lang.discourse.group/t/ieee-754-binary-interchange-floating-point-formats-versus-iso-fortran-env-real-kinds
+        ! http://fortran-lang.discourse.group/t/ieee-754-binary-interchange-floating-point-formats-versus-iso-fortran-env-real-kinds
 
         y = sqrt(sum(x**2))
         ! The following code handles over/underflow naively.

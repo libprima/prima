@@ -5,16 +5,28 @@
 #
 # Started: July 2020
 #
-# Last Modified: September 13, 2021
+# Last Modified: February 13, 2026
 #
 # N.B.:
 # The .F90 and .f90 files will be compiled in the enumeration order of the .o files. The order
 # matters, because the compilation of each .o file depends on the .o files (and the corresponding
 # .mod files) preceding it.
 
+
 .PHONY: test clean
 
-####################################################################################################
+# All the tests
+test:
+	$(MAKE) dtest
+	$(MAKE) ftest
+	$(MAKE) gtest
+	$(MAKE) itest
+	$(MAKE) mtest
+	$(MAKE) ntest
+	$(MAKE) vtest
+	$(MAKE) xtest
+	$(MAKE) rtest
+
 # Variables
 SOLVER := $(shell basename $(CURDIR))
 # Define the Fortran standard to follow. We aim to make the code compatible with F2008 and above.
@@ -33,66 +45,9 @@ SOLVER_SRC := ../../$(SOLVER)
 EXAMPLE_NUM ?= 1
 EXAMPLE_SRC := $(SOLVER)_example_$(EXAMPLE_NUM).f90
 
-####################################################################################################
-# All the tests
-test:
-	$(MAKE) dtest
-	$(MAKE) ftest
-	$(MAKE) gtest
-	$(MAKE) itest
-	$(MAKE) mtest
-	$(MAKE) ntest
-	$(MAKE) vtest
-	$(MAKE) xtest
-	$(MAKE) rtest
+# Include the common Makefile defining the compilers and their options.
+include ../Makefile.common
 
-####################################################################################################
-# Here are the compilers to test.
-
-# AMD AOMP Flang
-MFORT := $(shell command -v amdflang)
-mtest: FC := $(MFORT) -std=f$(FSTD)
-
-# AMD AOCC Flang
-AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)
-dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD) -Mstandard
-
-# LLVM Flang
-# Note that AOMP and AOCC also provide "flang". We define FFORT as follows to make sure the correct
-# one is being called. Otherwise, flang may be resolved to the one provided by AOMP or AOCC, which
-# did happen in our tests.
-FFORT := $(shell find -L /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
-ifeq ($(shell uname -s),Darwin)
-	SDKROOT := $(shell /usr/bin/xcrun --show-sdk-path -sdk macosx)
-	FFORT := $(FFORT) -lSystem -L$(SDKROOT)/usr/lib
-endif
-ftest: FC := $(FFORT) -std=f$(FSTD)
-
-# GNU gfortran: due to `error stop` and `backtrace`, we must either compile with no `-std` or
-# use `-std=f20xy -fall-intrinsics` with xy >= 18.
-GFORT := $(shell command -v gfortran)
-gtest: FC := $(GFORT) -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
-
-# Intel ifort
-IFORT := $(shell command -v ifort)
-itest: FC := $(IFORT) -warn all -stand f$(FS) -diag-disable=10448  # 10448: suppress the warning about deprecation of ifort.
-
-# NAG nagfor
-NFORT := $(shell command -v nagfor)
-#ntest: FC := $(NFORT) -C -f$(FSTD) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.
-ntest: FC := $(NFORT) -C -f$(FSTD) -fpp -nan -ieee=full  # `-nan -ieee=full` is to accommodate tests with REAL16.
-
-# NVIDIA nvfortran
-VFORT := $(shell command -v nvfortran)
-vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
-
-# Arm Flang
-RFORT := $(shell command -v armflang)
-rtest: FC := $(RFORT) -Wall -std=f$(FSTD)
-
-# Intel ifx
-XFORT := $(shell command -v ifx)
-xtest: FC := $(XFORT) -warn all -stand f$(FS)
 
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test

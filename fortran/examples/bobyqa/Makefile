@@ -48,6 +48,7 @@ EXAMPLE_SRC := $(SOLVER)_example_$(EXAMPLE_NUM).f90
 # Include the common Makefile defining the compilers and their options.
 include ../Makefile.common
 
+
 ####################################################################################################
 # Compile the binary needed for a compiler-specific test
 %test: $(EXAMPLE_SRC) \

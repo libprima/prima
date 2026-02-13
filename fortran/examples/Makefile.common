@@ -1,20 +1,23 @@
 # This Makefile is intended to be included in the Makefiles of the solvers. It defines the compilers
 # to test and their options.
+#
+# N.B.: Do not miss the quotes around the command substitution for the compilers. This is to ensure
+# that the path is resolved correctly if it contains spaces (very often on Windows).
 
 
 # AMD AOMP Flang
-MFORT := $(shell command -v amdflang)
+MFORT := "$(shell command -v amdflang)"
 mtest: FC := $(MFORT) -std=f$(FSTD)
 
 # AMD AOCC Flang
-AFLANG := $(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)
-dtest: FC := $(AFLANG) -Wall -Wextra -std=f$(FSTD) -Mstandard
+DFORT := "$(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)"
+dtest: FC := $(DFORT) -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # LLVM Flang
 # Note that AOMP and AOCC also provide "flang". We define FFORT as follows to make sure the correct
 # one is being called. Otherwise, flang may be resolved to the one provided by AOMP or AOCC, which
 # did happen in our tests.
-FFORT := $(shell find -L /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)
+FFORT := "$(shell find -L /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)"
 # On Windows, the above command will fail to find flang and we set FFORT manually.
 ifeq ($(OS),Windows_NT)
 	FFORT := "$(shell command -v flang)"
@@ -27,26 +30,26 @@ ftest: FC := $(FFORT) -std=f$(FSTD)
 
 # GNU gfortran: due to `error stop` and `backtrace`, we must either compile with no `-std` or
 # use `-std=f20xy -fall-intrinsics` with xy >= 18.
-GFORT := $(shell command -v gfortran)
+GFORT := "$(shell command -v gfortran)"
 gtest: FC := $(GFORT) -Wall -Wextra -Wno-function-elimination -std=f$(FSTD) -fall-intrinsics
 
 # Intel ifort
-IFORT := $(shell command -v ifort)
+IFORT := "$(shell command -v ifort)"
 itest: FC := $(IFORT) -warn all -stand f$(FS) -diag-disable=10448  # 10448: suppress the warning about deprecation of ifort.
 
 # NAG nagfor
-NFORT := $(shell command -v nagfor)
+NFORT := "$(shell command -v nagfor)"
 #ntest: FC := $(NFORT) -C -f$(FSTD) -fpp  # As of nagfor 7.1, -fpp is needed on macOS and Windows, but not on Linux.
 ntest: FC := $(NFORT) -C -f$(FSTD) -fpp -nan -ieee=full  # `-nan -ieee=full` is to accommodate tests with REAL16.
 
 # NVIDIA nvfortran
-VFORT := $(shell command -v nvfortran)
+VFORT := "$(shell command -v nvfortran)"
 vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
 
 # Arm Flang
-RFORT := $(shell command -v armflang)
+RFORT := "$(shell command -v armflang)"
 rtest: FC := $(RFORT) -Wall -std=f$(FSTD)
 
 # Intel ifx
-XFORT := $(shell command -v ifx)
+XFORT := "$(shell command -v ifx)"
 xtest: FC := $(XFORT) -warn all -stand f$(FS)
