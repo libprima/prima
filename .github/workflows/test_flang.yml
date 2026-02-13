@@ -1,4 +1,4 @@
-name: Test Flang
+name: Test LLVM Flang
 
 on:
   # Trigger the workflow on push or pull request
@@ -24,13 +24,13 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}
 jobs:
 
   test:
-    name: Run Flang tests
+    name: Run LLVM Flang tests
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel, windows-latest, windows-11-arm]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
@@ -68,10 +68,14 @@ jobs:
           submodules: recursive
 
       - name: Miscellaneous setup
+        shell: bash
         run: bash .github/scripts/misc_setup
 
-      - name: Install Flang
-        run: bash .github/scripts/install_llvm
+      - name: Install LLVM Flang
+        shell: bash
+        run: |
+          bash ./install_llvm \
+            || { echo "Warning: LLVM Flang installation failed!!" >&2; exit 0; }
 
       - name: Revise maxtr
         # This is to see whether "GitHub Actions xx lost communication with the server" was caused
@@ -82,6 +86,7 @@ jobs:
         # update 20250816: First, server shutdown is observed on LINCOA/BOBYQA small tests with IK = i4.
         # Is this the same issue as before? Second, in the current workflow (and many others), the
         # definition of IK changes daily. If this issue is related to IK, it will not be observed every day.
+        shell: bash
         if: ${{ github.event.inputs.maxtr != '' }}
         run: |
           cd fortran/${{ matrix.solver }}
@@ -89,6 +94,7 @@ jobs:
           grep 'maxtr = ' *.f90
 
       - name: Revise linalg.f90 to see why "Y >= 0 unless X contains NaN" fails
+        shell: bash
         run: |
           if [[ $(uname) = 'Darwin' ]]; then  # macOS uses BSD sed, which does not understand \s or \n
               brew install gnu-sed
@@ -99,6 +105,7 @@ jobs:
           cat linalg.f90
 
       - name: Revise string.f90
+        shell: bash
         run: |
           if [[ $(uname) = 'Darwin' ]]; then  # macOS uses BSD sed, which does not understand \s or \n
               brew install gnu-sed
@@ -112,7 +119,27 @@ jobs:
           cat string.f90
 
       - name: Conduct the test
+        shell: bash
         run: |
+          ##########################################################################################
+          # Skip the test on windows-latest if flang is not found and LLVM version is less than 22,
+          # as LLVM 21 installed by choco on windows-latest does not include flang. See
+          # https://github.com/llvm/llvm-project/issues/181348
+          if [[ "${{ matrix.os }}" == windows-latest ]] ; then
+            echo "We are on ${{ matrix.os }}. LLVM installed by choco may not provide flang."
+            # Infer the version of LLVM from llvm-ar. We should have used `llvm-config --version`,
+            # but it is not available on windows-latest after LLVM 21.1.8 is installed with choco.
+            LLVM_VERSION=$(llvm-ar --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | cut -d. -f1)
+            echo "LLVM version inferred from llvm-ar: $LLVM_VERSION"
+            FLANG_PATH=$(command -v flang 2>/dev/null || echo "NOT_FOUND")
+            echo "Flang path: $FLANG_PATH"
+            if [[ "$LLVM_VERSION" -lt 22 && "$FLANG_PATH" == "NOT_FOUND" ]] ; then
+              echo "Warning: flang not found!! Skipping the test." >&2
+              exit 0
+            fi
+          fi
+          ##########################################################################################
+
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
           IK=i$(( 2**(1 + $(date +%-d) % 3) ))
