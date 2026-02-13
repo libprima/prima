@@ -148,7 +148,17 @@ jobs:
           IK=i$(( 2**(1 + $(date +%-d) % 3) ))
           echo "IK=${IK}"
           echo "IK=${IK}" >> "$GITHUB_ENV"
-          cd "$ROOT_DIR"/fortran/tests && make ftest_${IK}.${{ matrix.solver }}
+
+          # 20260213: We skip the linting and extensive test on Windows due to the following
+          # reasons. The examples will still be tested on Windows.
+          # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
+          # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
+          # Nevertheless, we should still define IK etc., as they will be used when defining the
+          # artifact names.
+          if [[ "$RUNNER_OS" != "Windows" ]] ; then
+            cd "$ROOT_DIR"/fortran/tests && make ftest_${IK}.${{ matrix.solver }}
+          fi
+
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
           export EXAMPLE_NUM=1 && make clean && make ftest
           export EXAMPLE_NUM=2 && make clean && make ftest
