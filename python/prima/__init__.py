@@ -488,6 +488,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         )
     elif options['backend'].lower() == "python":
         from .backends.pyprima.cobyla.cobyla import cobyla
+        from .backends.pyprima.common.infos import SMALL_TR_RADIUS
         def calcfc(x):
             f = fun(x, *args)
             if nonlinear_constraint_function is not None:
@@ -513,7 +514,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
         )
         result = OptimizeResult(
             x = result.x,
-            success = result.info == 0,  # TODO: No magic numbers
+            success = result.info == SMALL_TR_RADIUS,
             status = result.info,
             # message = result.message,
             fun = result.f,
