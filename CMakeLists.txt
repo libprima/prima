@@ -149,9 +149,10 @@ if(NOT GIT_EXECUTABLE OR NOT IS_REPO)
   # on macports which downloads the bundle from github (which uses git archive) and
   # so the version number should be in .git-archival.txt.
   # Alternatively it might mean that we're building the Python bindings, in which case
-  # the version is output in _version.txt. I know, it's complicated. I don't make the rules.
-  if(EXISTS _version.txt)
-    file(STRINGS _version.txt PRIMA_VERSION)
+  # the version is output in _version.py.
+  if(EXISTS python/prima/_version.py)
+    file(STRINGS python/prima/_version.py _version_line REGEX "^__version__")
+    string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+[^ '\"]*" PRIMA_VERSION "${_version_line}")
   else()
     file(STRINGS .git-archival.txt PRIMA_VERSION)
     if(PRIMA_VERSION MATCHES "describe")

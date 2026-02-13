@@ -80,14 +80,6 @@ prima_algorithm_t pystr_method_to_algorithm(const pybind11::str& method_) {
 }
 
 PYBIND11_MODULE(pybindings, m) {
-#ifdef VERSION_INFO
-    #define STRINGIFY(x) #x
-    #define MACRO_STRINGIFY(x) STRINGIFY(x)
-    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
-#else
-    m.attr("__version__") = "dev";
-#endif
-
     py::class_<PRIMAResult>(m, "PRIMAResult")
       .def_readwrite("x", &PRIMAResult::x)
       .def_readwrite("success", &PRIMAResult::success)
