@@ -15,7 +15,7 @@ dynamic = ["version"]
 requires-python = ">= 3.10"
 
 [dependency-groups]
-dev = [ "poethepoet", "pycutest", "pytest", "pytest-cov", "pytest-order", "coverage"]
+dev = [ "poethepoet", "pycutest", "pytest", "pytest-cov"]
 
 [tool.scikit-build]
 cmake.args = ["-G Ninja", "-DBUILD_SHARED_LIBS=OFF", "-DPRIMA_ENABLE_PYTHON=ON"]
@@ -32,11 +32,11 @@ version_file = "python/prima/_version.py"
 cache-keys = [{file = "fortran/**"}, {file="c/**"}, {file="python/prima/backends/bindings/**"}, {file="pyproject.toml"}, {file="**/CMakeLists.txt"}]
 
 [tool.poe.tasks]
-coverage = {shell = "coverage run --branch --source=prima,$(git rev-parse --show-toplevel) -m pytest -s python/tests && coverage html -d prima_htmlcov"}
+coverage = {shell = "pytest -s --cov=. --cov-branch --cov-report html:prima_htmlcov --durations=20 python/tests"}
 
 [tool.cibuildwheel]
 build-verbosity = 3
-test-command = "python -m pytest -s {project}/python/tests"
+test-command = "python -m pytest -s --durations=20 {project}/python/tests"
 test-requires = ["pytest", "packaging"]
 before-test = [
   # We need scipy and pdfo (which depends on scipy) for compatibility tests.
