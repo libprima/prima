@@ -99,6 +99,24 @@ jobs:
           cd fortran/tests/makefiles || exit 42
           $SEDI 's|\$(TST)_.*r16_d[0,1]_tst||g' Makefile.common && cat Makefile.common
 
+      - name: Revise test_bobyqa.f90, test_lincoa.f90, and test_cobyla.f90 so that we know what is happening if assertion fails
+        shell: bash
+        run: |
+          if [[ $(uname) = 'Darwin' ]]; then  # macOS uses BSD sed, which does not understand \s or \n
+              brew install gnu-sed
+              SEDI="gsed -i"
+          fi
+          cd fortran/tests || exit 42
+
+          $SEDI "s|\(\s*\)\(call.*X == X_UNC.*\)|\1if (.not. (all(abs(x - x_unc) <= 0) .and. (abs(f - f_unc) <= 0 .or. (is_neginf(f) .and. is_neginf(f_unc))))) then\n\1write(*,*) 'probname = ', strip(prob%probname), 'n = ', n,  'x0 = ', x0\n\1write(*,*) 'npt = ', npt, 'rhobeg = ', rhobeg, 'rhoend = ', rhoend\n\1write(*,*) 'maxfun = ', maxfun, 'maxhist = ', maxhist, 'ftarget = ', ftarget, 'iprint = ', iprint\n\1write(*,*) 'f, x = ', f, x\n\1write(*,*) 'f_unc, x_unc = ', f_unc, x_unc\n\1write(*,*) 'fhist = ', fhist\n\1write(*,*) 'xhist = ', xhist\n\1write(*,*) 'fhist_unc = ', fhist_unc\n\1write(*,*) 'xhist_unc = ', xhist_unc\n\1error stop\n\1else\n\1write(*,*) '>>> X == X_UNC and F == F_UNC <<< probname = ', strip(prob%probname), ', irand = ', irand\n\1end if\n\1\2|" test_bobyqa.f90
+          cat test_bobyqa.f90
+
+          $SEDI "s|\(\s*\)\(call.*X == X_ALT.*\)|\1if (.not. (all(abs(x - x_alt) <= 0) .and. (abs(f - f_alt) <= 0 .or. (is_neginf(f) .and. is_neginf(f_alt))))) then\n\1write(*,*) 'probname = ', strip(prob%probname), 'n = ', n,  'x0 = ', x0\n\1write(*,*) 'npt = ', npt, 'rhobeg = ', rhobeg, 'rhoend = ', rhoend\n\1write(*,*) 'maxfun = ', maxfun, 'maxhist = ', maxhist, 'ftarget = ', ftarget, 'iprint = ', iprint\n\1write(*,*) 'f, x = ', f, x\n\1write(*,*) 'f_alt, x_alt = ', f_alt, x_alt\n\1write(*,*) 'fhist = ', fhist\n\1write(*,*) 'xhist = ', xhist\n\1write(*,*) 'fhist_alt = ', fhist_alt\n\1write(*,*) 'xhist_alt = ', xhist_alt\n\1error stop\n\1else\n\1write(*,*) '>>> X == X_ALT and F == F_ALT <<< probname = ', strip(prob%probname), ', irand = ', irand\n\1end if\n\1\2|" test_lincoa.f90
+          cat test_lincoa.f90
+
+          $SEDI "s|\(\s*\)\(call.*X == X_ALT.*\)|\1if (.not. (all(abs(x - x_alt) <= 0) .and. (abs(f - f_alt) <= 0 .or. (is_neginf(f) .and. is_neginf(f_alt))))) then\n\1write(*,*) 'probname = ', strip(prob%probname), 'n = ', n,  'x0 = ', x0\n\1write(*,*) 'rhobeg = ', rhobeg, 'rhoend = ', rhoend\n\1write(*,*) 'maxfun = ', maxfun, 'maxhist = ', maxhist, 'ftarget = ', ftarget, 'iprint = ', iprint\n\1write(*,*) 'f, x = ', f, x\n\1write(*,*) 'f_alt, x_alt = ', f_alt, x_alt\n\1write(*,*) 'fhist = ', fhist\n\1write(*,*) 'xhist = ', xhist\n\1write(*,*) 'fhist_alt = ', fhist_alt\n\1write(*,*) 'xhist_alt = ', xhist_alt\n\1error stop\n\1else\n\1write(*,*) '>>> X == X_ALT and F == F_ALT <<< probname = ', strip(prob%probname), ', irand = ', irand\n\1end if\n\1\2|" test_cobyla.f90
+          cat test_cobyla.f90
+
       - name: Revise string.f90, so that we know what is happening if assertion fails
         shell: bash
         run: |

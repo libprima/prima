@@ -57,7 +57,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Mon 25 Aug 2025 12:05:06 PM CST
+! Last Modified: Sat 14 Feb 2026 10:14:52 AM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -120,10 +120,12 @@ real(RP) :: ftarget
 real(RP) :: rhobeg
 real(RP) :: rhoend
 real(RP), allocatable :: fhist(:)
+real(RP), allocatable :: fhist_unc(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: x0(:)
 real(RP), allocatable :: x_unc(:)
 real(RP), allocatable :: xhist(:, :)
+real(RP), allocatable :: xhist_unc(:, :)
 real(RP), allocatable :: xl(:)
 real(RP), allocatable :: xu(:)
 type(PROB_T) :: prob
@@ -271,7 +273,7 @@ else
                 call safealloc(x_unc, n)
                 x_unc = x0
                 call bobyqa(noisy_calfun, x_unc, f_unc, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
-                    & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, iprint=iprint)
+                    & maxhist=maxhist, fhist=fhist_unc, xhist=xhist_unc, ftarget=ftarget, iprint=iprint)
                 call validate(all(abs(x - x_unc) <= 0), 'X == X_UNC', srname)
                 call validate(abs(f - f_unc) <= 0 .or. (is_neginf(f) .and. is_neginf(f_unc)), 'F == F_UNC', srname)
             end if

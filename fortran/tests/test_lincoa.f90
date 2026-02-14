@@ -83,7 +83,7 @@ module test_solver_mod
 !
 ! Started: September 2021
 !
-! Last Modified: Mon 25 Aug 2025 12:06:29 PM CST
+! Last Modified: Sat 14 Feb 2026 10:48:51 AM CET
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -157,10 +157,12 @@ real(RP), allocatable :: Aeq(:, :)
 real(RP), allocatable :: beq(:)
 real(RP), allocatable :: chist(:)
 real(RP), allocatable :: fhist(:)
+real(RP), allocatable :: fhist_alt(:)
 real(RP), allocatable :: x(:)
 real(RP), allocatable :: x0(:)
 real(RP), allocatable :: x_alt(:)
 real(RP), allocatable :: xhist(:, :)
+real(RP), allocatable :: xhist_alt(:, :)
 real(RP), allocatable :: xl(:)
 real(RP), allocatable :: xu(:)
 type(PROB_T) :: prob
@@ -361,8 +363,8 @@ else
                 call safealloc(x_alt, n)
                 x_alt = x0
                 call lincoa(noisy_calfun, x_alt, f_alt, xl=xl, xu=xu, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
-                    & maxhist=maxhist, fhist=fhist, xhist=xhist, chist=chist, ctol=ctol, ftarget=ftarget, maxfilt=maxfilt, &
-                    & iprint=iprint)
+                    & maxhist=maxhist, fhist=fhist_alt, xhist=xhist_alt, ctol=ctol, ftarget=ftarget, &
+                    & maxfilt=maxfilt, iprint=iprint)
                 call validate(all(abs(x - x_alt) <= 0), 'X == X_ALT', srname)
                 call validate(abs(f - f_alt) <= 0 .or. (is_neginf(f) .and. is_neginf(f_alt)), 'F == F_ALT', srname)
             end if
@@ -371,7 +373,7 @@ else
                 call safealloc(x_alt, n)
                 x_alt = x0
                 call lincoa(noisy_calfun, x_alt, f_alt, npt=npt, rhobeg=rhobeg, rhoend=rhoend, maxfun=maxfun, &
-                    & maxhist=maxhist, fhist=fhist, xhist=xhist, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
+                    & maxhist=maxhist, fhist=fhist_alt, xhist=xhist_alt, ftarget=ftarget, maxfilt=maxfilt, iprint=iprint)
                 call validate(all(abs(x - x_alt) <= 0), 'X == X_ALT', srname)
                 call validate(abs(f - f_alt) <= 0 .or. (is_neginf(f) .and. is_neginf(f_alt)), 'F == F_ALT', srname)
             end if
