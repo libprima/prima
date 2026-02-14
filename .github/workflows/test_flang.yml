@@ -149,12 +149,13 @@ jobs:
           echo "IK=${IK}"
           echo "IK=${IK}" >> "$GITHUB_ENV"
 
-          # 20260213: We skip the linting and extensive test on Windows due to the following
-          # reasons. The examples will still be tested on Windows.
-          # 1. Windows does not support the symlink of linux, and hence mlint and flint do not work.
+          # 20260213: We skip the extensive test on Windows due to the following reasons. The
+          # examples will still be tested on Windows.
+          # 0. It is quite difficult to debug on Windows. We choose to develop and debug the code on
+          # Linux and macOS, and only run a quick test on Windows to see whether it works at all.
+          # 1. Windows does not support the symlink of Linux. Makefile will fail when copying source files.
           # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
-          # Nevertheless, we should still define IK etc., as they will be used when defining the
-          # artifact names.
+          # Nevertheless, we should still define IK etc., as they will be used when defining the artifact names.
           if [[ "$RUNNER_OS" != "Windows" ]] ; then
             cd "$ROOT_DIR"/fortran/tests && make ftest_${IK}.${{ matrix.solver }}
           fi
