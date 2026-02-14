@@ -27,15 +27,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-15-intel, macos-latest]
-        # compiler: [gcc]
-        # version: [13, latest]  # Too expensive to test all versions
-        # solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        os: [macos-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-15-intel, macos-latest]
         compiler: [gcc]
-        version: [latest]  # Too expensive to test all versions
-        solver: [cobyla, lincoa, bobyqa]
-        testdim: [small]
+        version: [13, latest]  # Too expensive to test all versions
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        testdim: [small, big]
 
     steps:
 
@@ -151,7 +147,6 @@ jobs:
         # may lead to errors due to parallel making. To avoid this, we make gtest_c first.
         run: |
           IK=i$(( 2**(1 + $(date +%-d) % 3) ))
-          IK=i4
           echo "IK=${IK}"
           echo "IK=${IK}" >> "$GITHUB_ENV"
           # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
@@ -160,7 +155,6 @@ jobs:
           FFLAGS=-O$(($(date +%-d) % 5))
           FFLAGS=${FFLAGS/O0/g}
           FFLAGS=${FFLAGS/O4/fast}
-          FFLAGS=-O3
           export FFLAGS
           echo "FFLAGS=$FFLAGS"
           echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
