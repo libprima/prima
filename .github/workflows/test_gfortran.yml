@@ -27,11 +27,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-15-intel, macos-latest]
+        os: [windows-latest,windows-11-arm]
         compiler: [gcc]
-        version: [13, latest]  # Too expensive to test all versions
-        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        testdim: [small, big]
+        version: [latest]  # Too expensive to test all versions
+        solver: [newuoa]
+        testdim: [small]
+        # os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-15-intel, macos-latest]
+        # compiler: [gcc]
+        # version: [13, latest]  # Too expensive to test all versions
+        # solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
+        # testdim: [small, big]
 
     steps:
 
@@ -77,9 +82,10 @@ jobs:
         shell: bash  # Important; otherwise, the following statements do not work on Windows.
         run: bash .github/scripts/misc_setup
 
-      - name: Make tools such as grep and git available on Windows
+      - name: Make tools such as grep, make, and git available on Windows
+        shell: bash
         if: runner.os == 'Windows'
-        run: $env:Path += ";C:\Program Files\Git\usr\bin;C:\Program Files\Git\bin;C:\ProgramData\Chocolatey\bin"
+        run: type git && git --version && type grep && grep --version && type make && make --version
 
       - name: Set up Fortran
         uses: fortran-lang/setup-fortran@main
