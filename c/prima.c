@@ -187,32 +187,6 @@ const char *prima_get_rc_string(const prima_rc_t rc)
     }
 }
 
-
-// Functions implemented in Fortran (*_c.f90)
-int cobyla_c(const int m_nlcon, const prima_objcon_t calcfc, const void *data, const int n, double x[], double *const f, double *const cstrv, double nlconstr[],
-             const int m_ineq, const double Aineq[], const double bineq[],
-             const int m_eq, const double Aeq[], const double beq[],
-             const double xl[], const double xu[],
-             const double f0, const double nlconstr0[],
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const double ctol,
-             const prima_callback_t callback, int *const info);
-
-int bobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f, const double xl[], const double xu[],
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
-
-int newuoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const prima_callback_t callback, int *const info);
-
-int uobyqa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int iprint, const prima_callback_t callback, int *const info);
-
-int lincoa_c(prima_obj_t calfun, const void *data, const int n, double x[], double *const f,
-             double *const cstrv, const int m_ineq, const double Aineq[], const double bineq[],
-             const int m_eq, const double Aeq[], const double beq[], const double xl[], const double xu[],
-             int *const nf, const double rhobeg, const double rhoend, const double ftarget, const int maxfun, const int npt, const int iprint, const double ctol,
-             const prima_callback_t callback, int *const info);
-
-
 // The function that does the minimization using a PRIMA solver
 prima_rc_t prima_minimize(const prima_algorithm_t algorithm, const prima_problem_t problem, const prima_options_t options, prima_result_t *const result)
 {
