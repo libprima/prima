@@ -66,7 +66,12 @@ jobs:
         run: bash .github/scripts/misc_setup
 
       - name: Install AOMP
-        run: bash .github/scripts/install_aomp 20 600  # Retry up to 20 times with a delay of 600 seconds between retries, to avoid transient network issues.
+        run: |
+          # Retry in case of failure due to transient network issues. If it fails and the date is
+          # not divisible by 3, then we keep going and skip the AOMP test. This is to decrease the
+          # chance of workflow failure due to transient network issues, while still testing AOMP regularly.
+          bash .github/scripts/install_aomp 8 1800 || [[ $(( $(date +%-d) % 3 )) -ne 0 ]]
+          type amdflang || echo "WARNING!!! amdflang does not work after AOMP installation, which probably failed!!!" 2>&1
 
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
@@ -91,12 +96,21 @@ jobs:
           IK=i$(( 2**(1 + $(date +%-d) % 3) ))
           echo "IK=${IK}"
           echo "IK=${IK}" >> "$GITHUB_ENV"
-          cd "$ROOT_DIR"/fortran/tests && make mtest_${IK}.${{ matrix.solver }}
-          cd "$ROOT_DIR"/fortran/tests && make dtest_${IK}.${{ matrix.solver }}
 
+          if type amdflang ; then
+            cd "$ROOT_DIR"/fortran/tests && make mtest_${IK}.${{ matrix.solver }}
+            cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
+            export EXAMPLE_NUM=1 && make clean && make mtest
+            export EXAMPLE_NUM=2 && make clean && make mtest
+          else
+            echo "WARNING!!! amdflang does not work after AOMP installation, which probably failed!!!" 2>&1
+            echo "WARNING!!! mtest is skipped because amdflang is not available!!!" 2>& 1
+          fi
+
+          cd "$ROOT_DIR"/fortran/tests && make dtest_${IK}.${{ matrix.solver }}
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
-          export EXAMPLE_NUM=1 && make clean && make mtest && make clean && make dtest
-          export EXAMPLE_NUM=2 && make clean && make mtest && make clean && make dtest
+          export EXAMPLE_NUM=1 && make clean && make dtest
+          export EXAMPLE_NUM=2 && make clean && make dtest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v6

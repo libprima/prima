@@ -91,12 +91,12 @@ jobs:
         run: bash .github/scripts/install_aocc
 
       - name: Install AOMP
-        # Retry up to 10 times with a delay of 600 seconds between retries, to avoid transient
-        # network issues. If the installation still fails after all retries, we let it fail silently
-        # and continue with the test. This is fine since there are many tests with other compilers,
-        # and since the AOMP compiler is tested in test_aflang.html. If we try too many times, there
-        # may not be enough time left for the test to run anyway!
-        run: bash .github/scripts/install_aomp 10 600 || true
+        # Retry in case of failure due to transient network issues. If the installation still fails
+        # after all retries, we let it fail silently and continue with the test. This is fine since
+        # there are many tests with other compilers, and since the AOMP compiler is tested in
+        # test_aflang.html. If we try too many times, there may not be enough time left for the test
+        # to run anyway!
+        run: bash .github/scripts/install_aomp 3 1800 || true
 
       - name: Install gfortran
         uses: fortran-lang/setup-fortran@main
