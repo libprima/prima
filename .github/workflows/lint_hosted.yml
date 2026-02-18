@@ -133,7 +133,7 @@ jobs:
           type gfortran && gfortran --version || true
           type ifx && ifx --version || true
           type nvfortran && nvfortran --version || true
-          type sunf95 && sunf95 --version || true
+          type sunf95 && sunf95 -V || true
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all
 
       - name: Remove the test data
