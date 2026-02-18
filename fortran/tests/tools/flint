@@ -64,7 +64,7 @@ while [[ -n "$1" ]]; do
         -f|--flang)
             COMP_LIST=" f"
             ;;
-        -d|--aflang)
+        -d|--aoccflang)
             COMP_LIST=" d"
             ;;
         -x|--ifx)

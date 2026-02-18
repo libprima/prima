@@ -185,10 +185,10 @@ jobs:
       matrix:
         toolchain:
           # Flang family with -Mchkptr may fail. See https://forums.developer.nvidia.com/t/bug-in-nvfortran-with-mchkptr-for-unallocated-optional-arguments/223220
-          # As of 20240220, aflang with -Mbounds would fail due to the bug at https://github.com/flang-compiler/flang/issues/1238
+          # As of 20240220, aoccflang with -Mbounds would fail due to the bug at https://github.com/flang-compiler/flang/issues/1238
           - {compiler: nvfortran, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-C -Wall -Wextra -Minform=warn -Mstandard -Mbounds -Mchkstk'}
           - {compiler: flang, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-std=f2018 -pedantic -fimplicit-none -Werror'}
-          - {compiler: aflang, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard'}
+          - {compiler: aoccflang, cflags: '-Wall -Wextra -Wpedantic -Werror', fflags: '-pedantic -Weverything -Wall -Wextra -Minform=warn -Mstandard'}
 
     steps:
 
@@ -210,7 +210,7 @@ jobs:
         run: bash .github/scripts/misc_setup
 
       - name: Install AOCC
-        if: ${{ matrix.toolchain.compiler == 'aflang' }}
+        if: ${{ matrix.toolchain.compiler == 'aoccflang' }}
         run: bash .github/scripts/install_aocc
 
       - name: Install nvfortran
@@ -218,7 +218,7 @@ jobs:
         run: bash .github/scripts/install_nvfortran
 
       # Install Flang after AOCC, to make sure that flang is this one, while AOCC flang will be
-      # known as aflang.
+      # known as aoccflang.
       - name: Install Flang
         if: ${{ matrix.toolchain.compiler == 'flang' }}
         run: bash .github/scripts/install_llvm

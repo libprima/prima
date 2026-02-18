@@ -106,7 +106,7 @@ jobs:
         run: bash .github/scripts/install_sunf95
 
       # Install Flang after AOCC, to make sure that flang is this one, while AOCC flang will be
-      # known as aflang.
+      # known as aoccflang.
       - name: Install Flang
         if: ${{ matrix.compiler == 'f' }}
         run: bash .github/scripts/install_llvm

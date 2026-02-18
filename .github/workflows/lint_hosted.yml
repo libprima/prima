@@ -126,7 +126,14 @@ jobs:
         # the previous steps, e.g., installation of AOMP. This is fine since there are many tests
         # with other compilers, and since there is a dedicated workflow to test each compiler.
         run: |
-          type gfortran ifx amdflang aflang g95 nvfortran sunf95 flang || true
+          type aoccflang && aoccflang --version || true  # AOCC Flang, known as "aoccflang" after install_aocc, to be distinguished from LLVM Flang
+          type amdflang && amdflang --version || true
+          type flang && flang --version || true
+          type g95 && g95 --version || true
+          type gfortran && gfortran --version || true
+          type ifx && ifx --version || true
+          type nvfortran && nvfortran --version || true
+          type sunf95 && sunf95 --version || true
           cd "$ROOT_DIR"/fortran/${{ matrix.solver }} && bash ./${{ matrix.linter }} --all
 
       - name: Remove the test data
