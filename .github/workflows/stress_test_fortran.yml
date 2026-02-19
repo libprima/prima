@@ -25,22 +25,56 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        compiler: [g, v, s, f, x, d]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
+        compiler: [g, v, s, f, x, d, m, r]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [large]
         exclude:
           - compiler: s  # BOBYQA fails stest for unknown reason
             solver: bobyqa
-        include:
-          - os: macos-15-intel
-            compiler: [g]
-            solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-            testdim: [large]
+
+          # Do not test r (ATfL) on ubuntu-latest, as it is available only on ubuntu arm.
+          - os: ubuntu-latest
+            compiler: r
+
+          # Test only g, v, f, r on ubuntu arm, as other compilers are not available
+          - os: ubuntu-24.04-arm
+            compiler: s
+          - os: ubuntu-24.04-arm
+            compiler: x
+          - os: ubuntu-24.04-arm
+            compiler: d
+          - os: ubuntu-24.04-arm
+            compiler: m
+
+          # Test only g and f on macOS, as other compilers are not available
           - os: macos-latest
-            compiler: [g]
-            solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-            testdim: [large]
+            compiler: v
+          - os: macos-latest
+            compiler: s
+          - os: macos-latest
+            compiler: x
+          - os: macos-latest
+            compiler: d
+          - os: macos-latest
+            compiler: m
+          - os: macos-latest
+            compiler: r
+          - os: macos-15-intel
+            compiler: v
+          - os: macos-15-intel
+            compiler: s
+          - os: macos-15-intel
+            compiler: x
+          - os: macos-15-intel
+            compiler: d
+          - os: macos-15-intel
+            compiler: m
+          - os: macos-15-intel
+            compiler: r
+
+
+
 
     steps:
 
