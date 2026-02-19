@@ -160,7 +160,7 @@ jobs:
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
         uses: equipez/success-on-timeout@v1
         with:
-          time: 1m
+          time: 5h
           command: |
             cd "$ROOT_DIR"/fortran/tests
             export TESTDIM=${{ matrix.testdim }}
