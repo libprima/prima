@@ -33,6 +33,30 @@ jobs:
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [small, big]
 
+        # With FFLAGS=-O3, the following combinations encounter failures of assertion on X == X_UNC/ALT
+        # when testing
+        # bobyqa: gtest_i4_r8_d1_tst, chebquad
+        # lincoa: gtest_i4_r8_d1_tst, chebquad
+        # cobyla: gtest_i4_r8_d1_tst, trigssqs
+        # See
+        # https://github.com/libprima/prima/issues/268
+        # https://github.com/s-prima/prima/actions/runs/22023414613
+        # This should be investigated and fixed when we have a macOS with M* chip at hand.
+        # It is reproducible on zMS.
+        exclude:
+          - os: macos-latest
+            testdim: small
+            version: latest
+            solver: bobyqa
+          - os: macos-latest
+            testdim: small
+            version: latest
+            solver: lincoa
+          - os: macos-latest
+            testdim: small
+            version: latest
+            solver: cobyla
+
     steps:
 
       - name: Set http.postBuffer and core.compression
