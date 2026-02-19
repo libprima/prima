@@ -113,28 +113,28 @@ jobs:
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
         uses: equipez/success-on-timeout@v1
         with:
-        time: 10s
-        command: |
-          cd "$ROOT_DIR"/fortran/tests
-          export TESTDIM=${{ matrix.testdim }}
-          RK=$((2**($(date +%-d) % 3 + 2)))
-          if [[ $RK==16 && dfrv == *${{ matrix.compiler }}* ]] ; then
-              echo "r16 test is skipped for compiler " ${{ matrix.compiler }}
-              echo "Test r8 instead"
-              RK=8
-          fi
-          echo "RK = " $RK
-          # Sleep for R seconds, with R being a random integer between 1 and 20, to simulate the
-          # test running time. The actual test command is commented out for now, as it may take
-          # a long time to run and may cause the workflow to be canceled due to overtime.
-          R=$((RANDOM % 20 + 1))
-          echo "Simulating the test running time by sleeping for $R seconds..."
-          sleep $R
-          # Use modulo(R, 2) as the exit code, to simulate the test passing or failing randomly.
-          EXIT_CODE=$((R % 2))
-          echo "Exiting with code $EXIT_CODE..."
-          exit $EXIT_CODE
-          #make ${{ matrix.compiler }}test_i2_r${RK}_d1_tst.${{ matrix.solver }}
+          time: 10s
+          command: |
+            cd "$ROOT_DIR"/fortran/tests
+            export TESTDIM=${{ matrix.testdim }}
+            RK=$((2**($(date +%-d) % 3 + 2)))
+            if [[ $RK==16 && dfrv == *${{ matrix.compiler }}* ]] ; then
+                echo "r16 test is skipped for compiler " ${{ matrix.compiler }}
+                echo "Test r8 instead"
+                RK=8
+            fi
+            echo "RK = " $RK
+            # Sleep for R seconds, with R being a random integer between 1 and 20, to simulate the
+            # test running time. The actual test command is commented out for now, as it may take
+            # a long time to run and may cause the workflow to be canceled due to overtime.
+            R=$((RANDOM % 20 + 1))
+            echo "Simulating the test running time by sleeping for $R seconds..."
+            sleep $R
+            # Use modulo(R, 2) as the exit code, to simulate the test passing or failing randomly.
+            EXIT_CODE=$((R % 2))
+            echo "Exiting with code $EXIT_CODE..."
+            exit $EXIT_CODE
+            #make ${{ matrix.compiler }}test_i2_r${RK}_d1_tst.${{ matrix.solver }}
 
       - name: Store artifacts
         uses: actions/upload-artifact@v6
