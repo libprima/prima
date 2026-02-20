@@ -61,6 +61,7 @@ jobs:
           submodules: recursive
 
       - name: Lint the actions
+        if: runner.os == 'Linux'
         uses: devops-actions/actionlint@v0.1.10
         with:
           shellcheck_opts: '-e SC1090 -e SC2015 -e SC2016 -e SC2028 -e SC2035 -e SC2046 -e SC2086 -e SC2155 -e SC2193'
