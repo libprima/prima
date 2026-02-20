@@ -51,6 +51,11 @@ jobs:
         # As of 231227, checkout with ssh fails frequently on Windows runners.
           submodules: recursive
 
+      - name: Lint the actions
+        uses: devops-actions/actionlint@v0.1.10
+        with:
+          shellcheck_opts: '-e SC1090 -e SC2015 -e SC2016 -e SC2028 -e SC2035 -e SC2046 -e SC2086 -e SC2155 -e SC2193'
+
       - name: Conduct the test  # We do not use matlab-actions/run-command, which is not supported on macOS ARM64 as of 20240119
         run: |
             if [[ -n '${{ inputs.precision }}' ]] ; then
