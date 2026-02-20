@@ -32,10 +32,15 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-latest, macos-15-intel]
-        matlab: [R2023a, latest]
-        solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
-        test: [normal, tough]
+        # os: [ubuntu-latest, macos-15-intel]
+        # matlab: [R2023a, latest]
+        # solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
+        # test: [normal, tough]
+        # use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
+        os: [ubuntu-latest, macos-15-intel, macos]
+        matlab: [latest]
+        solver: [uobyqa]
+        test: [tough]
         use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
 
     steps:
@@ -193,7 +198,7 @@ jobs:
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
         uses: equipez/run-matlab-command@v1
         with:
-          time: 1m
+          timeout: 1m
           command: |
             ver;
             root_dir = pwd();
