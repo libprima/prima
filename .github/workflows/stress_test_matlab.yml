@@ -187,9 +187,9 @@ jobs:
           cat compile.m
 
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
-        uses: equipez/run-matlab-command@v1
+        uses: equipez/run-matlab-command@v2
         with:
-          timeout: 5h
+          timelimit: 5h
           command: |
             ver;
             root_dir = pwd();

@@ -164,9 +164,9 @@ jobs:
         run: bash .github/scripts/install_llvm
 
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
-        uses: equipez/success-on-timeout@v1
+        uses: equipez/run-bash-command@v2
         with:
-          time: 5h
+          timelimit: 5h
           command: |
             cd "$ROOT_DIR"/fortran/tests
             export TESTDIM=${{ matrix.testdim }}
