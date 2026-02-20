@@ -191,7 +191,7 @@ jobs:
         run: bash .github/scripts/install_run_matlab_command
 
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
-        uses: equipez/run-matlab-command
+        uses: equipez/run-matlab-command@v1
         with:
           time: 1m
           command: |
