@@ -191,11 +191,10 @@ jobs:
         run: bash .github/scripts/install_run_matlab_command
 
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
-        uses: equipez/success-on-timeout@v1
+        uses: equipez/run-matlab-command
         with:
-          time: 5h
+          time: 1m
           command: |
-            cat <<'EOF' > run_test.m
             ver;
             root_dir = pwd();
             cd(fullfile(root_dir, 'matlab/tests'));
@@ -210,8 +209,3 @@ jobs:
                 options.precision = 'date';
             end
             stress('${{ matrix.solver }}', options);
-            EOF
-
-            cat run_test.m
-
-            run-matlab-command "run('run_test.m');"  # See https://github.com/matlab-actions/run-command/issues/53
