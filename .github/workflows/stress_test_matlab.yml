@@ -32,7 +32,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-latest, macos-15-intel, windows-latest]
+        os: [ubuntu-latest, macos-latest, macos-15-intel]
         matlab: [R2023a, latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
         test: [normal, tough]
@@ -184,10 +184,21 @@ jobs:
       - name: Get run-matlab-command. See https://github.com/matlab-actions/run-command/issues/53
         shell: bash
         run: |
-          wget -O /usr/local/bin/run-matlab-command https://ssd.mathworks.com/supportfiles/ci/run-matlab-command/v2/glnxa64/run-matlab-command
-          chmod +x /usr/local/bin/run-matlab-command
+          if [[ "$RUNNER_OS" == "Linux" ]] ; then
+            OSCODE=glnxa64
+          elif [[ "$RUNNER_OS" == "macOS" && "$(uname -m)" == "x86_64" ]] ; then
+            OSCODE=maci64
+          elif [[ "$RUNNER_OS" == "macOS" && "$(uname -m)" == "arm64" ]] ; then
+            OSCODE=maca64
+          else
+            echo "Unsupported OS: $RUNNER_OS with architecture $(uname -m)"
+            exit 1
+          fi
+          wget -O run-matlab-command https://ssd.mathworks.com/supportfiles/ci/run-matlab-command/v2/"${OSCODE}"/run-matlab-command
+          chmod +x run-matlab-command
 
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
+        shell: bash
         uses: equipez/success-on-timeout@v1
         with:
           time: 1m
@@ -211,4 +222,4 @@ jobs:
 
             cat run_test.m
 
-            run-matlab-command "run('run_test.m');"  # See https://github.com/matlab-actions/run-command/issues/53
+            ./run-matlab-command "run('run_test.m');"  # See https://github.com/matlab-actions/run-command/issues/53
