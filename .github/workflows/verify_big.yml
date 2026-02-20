@@ -162,9 +162,10 @@ jobs:
           $SEDI "s|\(if\s*~support_internal_procedures\)|verLessThan('matlab', '25.1'), verLessThan('matlab', '25.2'), compiler_manufacturer,  compiler_options, support_internal_procedures\n\1|" compile.m
           cat compile.m
 
-      - name: Conduct the test
-        uses: matlab-actions/run-command@v2.4.0
+      - name: Conduct the test; treat timeout as SUCCESS (exit 0)
+        uses: equipez/run-matlab-command@v2
         with:
+          timelimit: 5h
           command: |
             ver;
             root_dir = pwd();
@@ -208,20 +209,3 @@ jobs:
             /tmp/${{ matrix.solver }}_verify_prima/*prob_end*
             /tmp/${{ matrix.solver }}_verify_prima/*stuck*
             /tmp/${{ matrix.solver }}_verify_prima/fort.*
-
-  # The following job check whether the tests were successful or cancelled due to timeout.
-  # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.
-  check_success_timeout:
-    runs-on: ubuntu-latest
-    if: ${{ !cancelled() }}
-    needs: test
-    steps:
-      - name: Clone the GitHub actions scripts
-        uses: actions/checkout@v6.0.2
-        with:
-          repository: equipez/github_actions_scripts
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
-          path: scripts
-
-      - name: Check whether the tests were successful or cancelled due to timeout
-        run: bash scripts/check_success_timeout ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
