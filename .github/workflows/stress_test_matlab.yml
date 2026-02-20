@@ -198,7 +198,6 @@ jobs:
           chmod +x run-matlab-command
 
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
-        shell: bash
         uses: equipez/success-on-timeout@v1
         with:
           time: 1m
