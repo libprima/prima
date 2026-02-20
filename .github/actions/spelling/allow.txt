@@ -2558,3 +2558,4 @@ ebab
 fdcc
 sumxs
 aoccflang
+actionlint
