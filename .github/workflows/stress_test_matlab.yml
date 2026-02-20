@@ -20,6 +20,9 @@ on:
         description: Test Precision (Optional)
         required: false
 
+env:
+  MLM_LICENSE_TOKEN: ${{ secrets.MATLAB_BATCH_LICENSING_TOKEN }}
+
 # Show the git ref in the workflow name if it is invoked manually.
 run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0} , seed {1}, precision {2}', inputs.git-ref, inputs.random-seed, inputs.precision) || '' }}
 
