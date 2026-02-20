@@ -37,7 +37,7 @@ jobs:
         # solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
         # test: [normal, tough]
         # use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
-        os: [ubuntu-latest, macos-15-intel, macos]
+        os: [ubuntu-latest, macos-15-intel, macos-latest]
         matlab: [latest]
         solver: [uobyqa]
         test: [tough]
@@ -190,10 +190,6 @@ jobs:
           $SEDI 's|\(compiler_options\s*=\s*.*\);|\1 |' compile.m
           $SEDI "s|\(if\s*~support_internal_procedures\)|verLessThan('matlab', '25.1'), verLessThan('matlab', '25.2'), compiler_manufacturer,  compiler_options, support_internal_procedures\n\1|" compile.m
           cat compile.m
-
-      - name: Install run-matlab-command  # See https://github.com/matlab-actions/run-command/issues/53
-        shell: bash
-        run: bash .github/scripts/install_run_matlab_command
 
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
         uses: equipez/run-matlab-command@v1
