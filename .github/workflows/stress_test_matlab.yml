@@ -180,7 +180,7 @@ jobs:
           $SEDI "s|\(if\s*~support_internal_procedures\)|verLessThan('matlab', '25.1'), verLessThan('matlab', '25.2'), compiler_manufacturer,  compiler_options, support_internal_procedures\n\1|" compile.m
           cat compile.m
 
-      - name: Get run-matlab-command.  # See https://github.com/matlab-actions/run-command/issues/53
+      - name: Install run-matlab-command  # See https://github.com/matlab-actions/run-command/issues/53
         shell: bash
         run: bash .github/scripts/install_run_matlab_command
 
