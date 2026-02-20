@@ -98,6 +98,7 @@ jobs:
 
 
       - name: Set up MATLAB with optimization toolbox
+        if: ${{ matrix.with_optim_toolbox == 'yes' }}
         uses: matlab-actions/setup-matlab@v2.6.1
         with:
           release: ${{ matrix.matlab }}
