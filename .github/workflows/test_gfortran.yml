@@ -100,7 +100,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: devops-actions/actionlint@v0.1.10
         with:
-          shellcheck_opts: '-e SC1090 -e SC2015 -e SC2016 -e SC2028 -e SC2035 -e SC2046 -e SC2086 -e SC2155 -e SC2193'
+          shellcheck_opts: '-e SC1090 -e SC2015 -e SC2028 -e SC2035 -e SC2046 -e SC2086 -e SC2193'
 
       - name: Miscellaneous setup
         shell: bash  # Important; otherwise, the following statements do not work on Windows.
@@ -122,7 +122,7 @@ jobs:
         shell: bash
         run: |
           cd fortran/tests/makefiles || exit 42
-          $SEDI 's|\$(TST)_.*r16_d[0,1]_tst||g' Makefile.common && cat Makefile.common
+          $SEDI "s|\$(TST)_.*r16_d[0,1]_tst||g" Makefile.common && cat Makefile.common
 
       - name: Revise test_bobyqa.f90, test_lincoa.f90, and test_cobyla.f90 so that we know what is happening if assertion fails
         shell: bash

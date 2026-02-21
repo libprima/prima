@@ -68,7 +68,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: devops-actions/actionlint@v0.1.10
         with:
-          shellcheck_opts: '-e SC1090 -e SC2015 -e SC2016 -e SC2028 -e SC2035 -e SC2046 -e SC2086 -e SC2155 -e SC2193'
+          shellcheck_opts: '-e SC1090 -e SC2015 -e SC2028 -e SC2035 -e SC2046 -e SC2086 -e SC2193'
 
       - name: Miscellaneous setup
         run: bash .github/scripts/misc_setup
@@ -81,7 +81,7 @@ jobs:
         shell: bash
         run: |
           cd fortran/tests/makefiles || exit 42
-          $SEDI 's|\$(TST)_.*r16_d[0,1]_tst||g' Makefile.common && cat Makefile.common
+          $SEDI "s|\$(TST)_.*r16_d[0,1]_tst||g" Makefile.common && cat Makefile.common
 
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
         uses: equipez/run-bash-command@v2

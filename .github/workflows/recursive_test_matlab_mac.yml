@@ -59,7 +59,7 @@ jobs:
         if: runner.os == 'Linux'
         uses: devops-actions/actionlint@v0.1.10
         with:
-          shellcheck_opts: '-e SC1090 -e SC2015 -e SC2016 -e SC2028 -e SC2035 -e SC2046 -e SC2086 -e SC2155 -e SC2193'
+          shellcheck_opts: '-e SC1090 -e SC2015 -e SC2028 -e SC2035 -e SC2046 -e SC2086 -e SC2193'
 
       - name: Conduct the test  # We do not use matlab-actions/run-command, which is not supported on macOS ARM64 as of 20240119
         run: ${{ env.MATLAB }} -nojvm -batch "ver; root_dir = pwd(); cd(fullfile(root_dir, 'matlab/tests')); recursive('${{ matrix.solver }}'); copy_crash_dump_files(root_dir, true);"
