@@ -105,21 +105,3 @@ jobs:
           else
               ctest --output-on-failure -V -R stress -E cobyla
           fi
-
-
-  # The following job check whether the tests were successful or cancelled due to timeout.
-  # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.
-  check_success_timeout:
-    runs-on: ubuntu-latest
-    if: ${{ !cancelled() }}
-    needs: cmake
-    steps:
-      - name: Clone the GitHub actions scripts
-        uses: actions/checkout@v6.0.2
-        with:
-          repository: equipez/github_actions_scripts
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
-          path: scripts
-
-      - name: Check whether the tests were successful or cancelled due to timeout
-        run: bash scripts/check_success_timeout_big_test ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
