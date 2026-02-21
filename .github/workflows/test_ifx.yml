@@ -23,7 +23,6 @@ jobs:
   test:
     name: Run ifx tests
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -84,44 +83,38 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: bash .github/scripts/install_oneapi_macos.sh
 
-      - name: Revise bign
-        shell: bash  # N.B.: We must use bash and use [[:space:]] instead of \s for compatibility with macOS.
-        run: |
-          cd fortran/tests || exit 42
-          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_bobyqa.f90
-          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 150_IK|' test_lincoa.f90
-          cat test_bobyqa.f90 test_lincoa.f90
+      - name: Conduct the test; treat timeout as SUCCESS (exit 0)
+        uses: equipez/run-bash-command@v2
+        with:
+          timelimit: 330m
+          command: |
+            export FFLAGS=${{ matrix.fflags }}
+            export TESTDIM=${{ matrix.testdim }}
+            IK=i$(( 2**(1 + $(date +%-d) % 3) ))
+            echo "IK=${IK}"
+            echo "IK=${IK}" >> "$GITHUB_ENV"
+            cd "$ROOT_DIR"/fortran/tests
+            if [[ "${{ matrix.solver }}" == "cobyla" || "${{ matrix.testdim }}" == "big" ]]; then
+                $SEDI 's|::[[:space:]]*NRAND_DFT[[:space:]]*=.*$|:: NRAND_DFT = 1|g' testsuite/param.f90  # Number of random tests when the dimension is small
+                RP=r$(( 2**(2 + $(date +%-d) % 2) ))
+                echo "RP=${RP}"
 
-      - name: Conduct the test
-        shell: bash
-        run: |
-          export FFLAGS=${{ matrix.fflags }}
-          export TESTDIM=${{ matrix.testdim }}
-          IK=i$(( 2**(1 + $(date +%-d) % 3) ))
-          echo "IK=${IK}"
-          echo "IK=${IK}" >> "$GITHUB_ENV"
-          cd "$ROOT_DIR"/fortran/tests
-          if [[ "${{ matrix.solver }}" == "cobyla" || "${{ matrix.testdim }}" == "big" ]]; then
-              $SEDI 's|::[[:space:]]*NRAND_DFT[[:space:]]*=.*$|:: NRAND_DFT = 1|g' testsuite/param.f90  # Number of random tests when the dimension is small
-              RP=r$(( 2**(2 + $(date +%-d) % 2) ))
-              echo "RP=${RP}"
+                TEST_SOLVERF90="test_cobyla.f90"
+                if [[ "$RP" == "r8" && -f "$TEST_SOLVERF90" ]] ; then
+                    echo "Modifying $TEST_SOLVERF90 to skip the recursive tests."
+                    sed -i '/Test recursive call/,/^end module test_solver_mod/d' "$TEST_SOLVERF90" || exit 1
+                    echo -e "end if\nend subroutine test_solver\nend module test_solver_mod" >> $TEST_SOLVERF90
+                    echo "Done."
+                    cat "$TEST_SOLVERF90"
+                fi
 
-              TEST_SOLVERF90="test_cobyla.f90"
-              if [[ "$RP" == "r8" && -f "$TEST_SOLVERF90" ]] ; then
-                  echo "Modifying $TEST_SOLVERF90 to skip the recursive tests."
-                  sed -i '/Test recursive call/,/^end module test_solver_mod/d' "$TEST_SOLVERF90" || exit 1
-                  echo -e "end if\nend subroutine test_solver\nend module test_solver_mod" >> $TEST_SOLVERF90
-                  echo "Done."
-                  cat "$TEST_SOLVERF90"
-              fi
-
-              make xtest_${IK}_${RP}_d1_tst.${{ matrix.solver }}
-          else
-              make xtest_${IK}.${{ matrix.solver }}
-          fi
-          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
-          export EXAMPLE_NUM=1 && make clean && make xtest
-          export EXAMPLE_NUM=2 && make clean && make xtest
+                make xtest_${IK}_${RP}_d1_tst.${{ matrix.solver }}
+            else
+                make xtest_${IK}.${{ matrix.solver }}
+            fi
+            cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
+            export EXAMPLE_NUM=1 && make clean && make xtest
+            export EXAMPLE_NUM=2 && make clean && make xtest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v6
@@ -133,20 +126,3 @@ jobs:
       - name: Remove the test data
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         run: rm -rf ${{ env.TEST_DIR }}
-
-  # The following job check whether the tests were successful or cancelled due to timeout.
-  # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.
-  check_success_timeout:
-    runs-on: ubuntu-latest
-    if: ${{ !cancelled() }}
-    needs: test
-    steps:
-      - name: Clone the GitHub actions scripts
-        uses: actions/checkout@v6.0.2
-        with:
-          repository: equipez/github_actions_scripts
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
-          path: scripts
-
-      - name: Check whether the tests were successful or cancelled due to timeout
-        run: bash scripts/check_success_timeout_big_test ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}

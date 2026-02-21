@@ -190,7 +190,7 @@ jobs:
             export EXAMPLE_NUM=1 && make clean && make gtest
             export EXAMPLE_NUM=2 && make clean && make gtest
 
-      - name: Conduct the test
+      - name: Conduct the test on Windows
         if: runner.os == 'Windows'
         shell: bash  # Important; otherwise, `<` will not work on Windows.
         run: |

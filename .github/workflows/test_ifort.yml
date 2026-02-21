@@ -23,7 +23,6 @@ jobs:
   test:
     name: Run ifort tests
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -90,14 +89,6 @@ jobs:
           cd fortran/tests/makefiles || exit 42
           $SEDI 's|\$(TST)_.*r16_d[0,1]_tst||g' Makefile.common && cat Makefile.common
 
-      - name: Revise bign
-        shell: bash  # N.B.: We must use bash and use [[:space:]] instead of \s for compatibility with macOS.
-        run: |
-          cd fortran/tests || exit 42
-          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_newuoa.f90
-          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 180_IK|' test_bobyqa.f90
-          $SEDI 's|::[[:space:]]*bign[[:space:]]*=.*$|:: bign = 200_IK|' test_lincoa.f90
-
       - name: Revise cobyla/trustregion.f90 to see what is wrong with ubuntu-latest, i8, cobyla, -O3, small
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.solver == 'cobyla' && matrix.testdim == 'small' }}
         shell: bash
@@ -110,20 +101,22 @@ jobs:
           $SEDI 's|\(vmultc = max(ZERO, (ONE - frac) \* vmultc + frac \* vmultd)\)|\1;write(\*,\*) 557, vmultc|' trustregion.f90
           cat trustregion.f90
 
-      - name: Conduct the test
-        shell: bash
-        run: |
-          FFLAGS=-O$(($(date +%-d) % 5)) && FFLAGS=${FFLAGS/O0/g} && FFLAGS=${FFLAGS/O4/fast} && export FFLAGS
-          echo "FFLAGS=$FFLAGS"
-          echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
-          IK=i$(( 2**(1 + $(date +%-d) % 3) ))
-          echo "IK=${IK}"
-          echo "IK=${IK}" >> "$GITHUB_ENV"
-          export TESTDIM=${{ matrix.testdim }}
-          cd "$ROOT_DIR"/fortran/tests && make itest_${IK}.${{ matrix.solver }}
-          cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
-          export EXAMPLE_NUM=1 && make clean && make itest
-          export EXAMPLE_NUM=2 && make clean && make itest
+      - name: Conduct the test; treat timeout as SUCCESS (exit 0)
+        uses: equipez/run-bash-command@v2
+        with:
+          timelimit: 330m
+          command: |
+            FFLAGS=-O$(($(date +%-d) % 5)) && FFLAGS=${FFLAGS/O0/g} && FFLAGS=${FFLAGS/O4/fast} && export FFLAGS
+            echo "FFLAGS=$FFLAGS"
+            echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
+            IK=i$(( 2**(1 + $(date +%-d) % 3) ))
+            echo "IK=${IK}"
+            echo "IK=${IK}" >> "$GITHUB_ENV"
+            export TESTDIM=${{ matrix.testdim }}
+            cd "$ROOT_DIR"/fortran/tests && make itest_${IK}.${{ matrix.solver }}
+            cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
+            export EXAMPLE_NUM=1 && make clean && make itest
+            export EXAMPLE_NUM=2 && make clean && make itest
 
       - name: Store artifacts
         uses: actions/upload-artifact@v6
@@ -135,20 +128,3 @@ jobs:
       - name: Remove the test data
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         run: rm -rf ${{ env.TEST_DIR }}
-
-  # The following job check whether the tests were successful or cancelled due to timeout.
-  # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.
-  check_success_timeout:
-    runs-on: ubuntu-latest
-    if: ${{ !cancelled() }}
-    needs: test
-    steps:
-      - name: Clone the GitHub actions scripts
-        uses: actions/checkout@v6.0.2
-        with:
-          repository: equipez/github_actions_scripts
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
-          path: scripts
-
-      - name: Check whether the tests were successful or cancelled due to timeout
-        run: bash scripts/check_success_timeout_big_test ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}
