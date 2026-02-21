@@ -2,8 +2,8 @@ task:
 
   # Perform the task only if the folders or files specified below are changed
   # See https://cirrus-ci.org/guide/writing-tasks/#conditional-task-execution
-  # skip: the task will be created / triggered, but its execution will be skipped, and it will be marked as successful.
-  #skip: "!changesInclude('.cirrus.yml', 'fortran/**', 'c/**', 'python/**')"
+  ## skip: the task will be created / triggered, but its execution will be skipped, and it will be marked as successful.
+  ##skip: "!changesInclude('.cirrus.yml', 'fortran/**', 'c/**', 'python/**')"
   # only_if: the task will not be created / triggered.
   only_if: "changesInclude('.cirrus.yml', 'fortran/**', 'c/**', 'python/**')"
 
@@ -26,6 +26,14 @@ task:
       arm_container:
         image: fedora:latest
 
+    - name: AMD64 Alpine
+      container:
+        image: alpine:latest
+
+    - name: ARM64 Alpine
+      arm_container:
+        image: alpine:latest
+
     - name: AMD64 FreeBSD
       freebsd_instance:
         image_family: freebsd-14-0
@@ -38,14 +46,6 @@ task:
     #   freebsd_instance:
     #     image_family: freebsd-14-0
     #     architecture: arm64
-
-    - name: AMD64 Alpine
-      container:
-        image: alpine:latest
-
-    - name: ARM64 Alpine
-      arm_container:
-        image: alpine:latest
 
 
   dependencies_script: |
