@@ -189,7 +189,7 @@ jobs:
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
         uses: equipez/run-matlab-command@v2
         with:
-          timelimit: 5h
+          timelimit: 330m
           command: |
             ver;
             root_dir = pwd();

@@ -23,7 +23,6 @@ jobs:
   test:
     name: Run gfortran tests
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -166,12 +165,43 @@ jobs:
           $SEDI "s|function p_norm(x, p) result(y)|function p_norm(x, p) result(y)\nuse, non_intrinsic :: string_mod, only : num2str|" linalg.f90
           cat linalg.f90
 
+      - name: Conduct the test; treat timeout as SUCCESS (exit 0)
+        if: runner.os != 'Windows'
+        uses: equipez/run-bash-command@v2
+        with:
+          timelimit: 330m
+          command: |
+            IK=i$(( 2**(1 + $(date +%-d) % 3) ))
+            echo "IK=${IK}"
+            echo "IK=${IK}" >> "$GITHUB_ENV"
+            # Use $(( )) rather than $(expr ). See https://unix.stackexchange.com/questions/63166/bash-e-exits-when-let-or-expr-evaluates-to-0
+            export TESTDIM=${{ matrix.testdim }}
+            echo "TESTDIM=$TESTDIM" >> "$GITHUB_ENV"
+            FFLAGS=-O$(($(date +%-d) % 5))
+            FFLAGS=${FFLAGS/O0/g}
+            FFLAGS=${FFLAGS/O4/fast}
+            export FFLAGS
+            echo "FFLAGS=$FFLAGS"
+            echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
+
+            cd "$ROOT_DIR"/fortran/tests && make gtest_${IK}_c.${{ matrix.solver }} && make gtest_${IK}.${{ matrix.solver }}
+
+            cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
+            export EXAMPLE_NUM=1 && make clean && make gtest
+            export EXAMPLE_NUM=2 && make clean && make gtest
+
       - name: Conduct the test
+        if: runner.os == 'Windows'
         shell: bash  # Important; otherwise, `<` will not work on Windows.
-        # Not sure whether the Makefile has bugs, but on Windows the making of gtest always invokes
-        # the making of gtest_c twice even if the former is up to date after the first making. It
-        # may lead to errors due to parallel making. To avoid this, we make gtest_c first.
         run: |
+          # 20260213: We skip the extensive test on Windows due to the following reasons. The
+          # examples will still be tested on Windows.
+          # 0. It is quite difficult to debug on Windows. We choose to develop and debug the code on
+          # Linux and macOS, and only run a quick test on Windows to see whether it works at all.
+          # 1. Windows does not support the symlink of Linux. Makefile will fail when copying source files.
+          # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
+          # Nevertheless, we should still define IK etc., as they will be used when defining the artifact names.
+
           IK=i$(( 2**(1 + $(date +%-d) % 3) ))
           echo "IK=${IK}"
           echo "IK=${IK}" >> "$GITHUB_ENV"
@@ -184,17 +214,6 @@ jobs:
           export FFLAGS
           echo "FFLAGS=$FFLAGS"
           echo "FFLAGS=$FFLAGS" >> "$GITHUB_ENV"
-
-          # 20260213: We skip the extensive test on Windows due to the following reasons. The
-          # examples will still be tested on Windows.
-          # 0. It is quite difficult to debug on Windows. We choose to develop and debug the code on
-          # Linux and macOS, and only run a quick test on Windows to see whether it works at all.
-          # 1. Windows does not support the symlink of Linux. Makefile will fail when copying source files.
-          # 2. Makefile.common does not work on Windows for the moment due to quotation marks.
-          # Nevertheless, we should still define IK etc., as they will be used when defining the artifact names.
-          if [[ "$RUNNER_OS" != "Windows" ]] ; then
-              cd "$ROOT_DIR"/fortran/tests && make gtest_${IK}_c.${{ matrix.solver }} && make gtest_${IK}.${{ matrix.solver }}
-          fi
 
           cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
           export EXAMPLE_NUM=1 && make clean && make gtest
@@ -213,19 +232,3 @@ jobs:
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         shell: bash  # Important; otherwise, `rm -rf` will not work on Windows.
         run: rm -rf ${{ env.TEST_DIR }}
-
-  # The following job check whether the tests were successful or cancelled due to timeout.
-  # N.B.: Remember to specify `continue-on-error: true` for the job of the tests.
-  check_success_timeout:
-    runs-on: ubuntu-latest
-    if: ${{ !cancelled() }}
-    needs: test
-    steps:
-      - name: Clone the GitHub actions scripts
-        uses: actions/checkout@v6.0.2
-        with:
-          repository: equipez/github_actions_scripts
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
-          path: scripts
-      - name: Check whether the tests were successful or cancelled due to timeout
-        run: bash scripts/check_success_timeout ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} ${{ github.run_id }}

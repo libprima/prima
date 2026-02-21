@@ -166,7 +166,7 @@ jobs:
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
         uses: equipez/run-bash-command@v2
         with:
-          timelimit: 5h
+          timelimit: 330m
           command: |
             cd "$ROOT_DIR"/fortran/tests
             export TESTDIM=${{ matrix.testdim }}
