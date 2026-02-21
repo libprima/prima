@@ -187,8 +187,9 @@ jobs:
 
 
       - name: Conduct the test
-        uses: matlab-actions/run-command@v2.4.0
+        uses: equipez/run-matlab-command@v2
         with:
+          timelimit: 330m
           command: |
             blacklist = {};
             blacklist = [blacklist, {'HYDCAR6LS', 'JENSMP', 'METHANL8LS', 'MEXHAT', 'TOINTQOR'}];  % uobyqa

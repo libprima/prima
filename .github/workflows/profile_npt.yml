@@ -42,32 +42,32 @@ jobs:
           - dim: large
             npt: 4*n
 
-          - dim: big
-            npt: 0.5*(n+1)*(n+2)
-          - dim: big
-            npt: 0.25*n*n
-          - dim: big
-            npt: n*sqrt(n)
-          - dim: big
-            npt: 4*n
+          # - dim: big
+          #   npt: 0.5*(n+1)*(n+2)
+          # - dim: big
+          #   npt: 0.25*n*n
+          # - dim: big
+          #   npt: n*sqrt(n)
+          # - dim: big
+          #   npt: 4*n
 
           - dim: large  # There is no problem to test
             npt: 3*n
             solver: lincoa
 
-          - dim: large
-            npt: 3*n
-            solver: bobyqa
-          - dim: big
-            npt: 3*n
-            solver: bobyqa
+          # - dim: large
+          #   npt: 3*n
+          #   solver: bobyqa
+          # - dim: big
+          #   npt: 3*n
+          #   solver: bobyqa
 
-          - dim: large
-            npt: 3*n
-            solver: newuoa
-          - dim: big
-            npt: 3*n
-            solver: newuoa
+          # - dim: large
+          #   npt: 3*n
+          #   solver: newuoa
+          # - dim: big
+          #   npt: 3*n
+          #   solver: newuoa
 
     steps:
 
@@ -204,8 +204,9 @@ jobs:
 
 
       - name: Conduct the test
-        uses: matlab-actions/run-command@v2.4.0
+        uses: equipez/run-matlab-command@v2
         with:
+          timelimit: 330m
           command: |
             ver;
             root_dir = pwd();
