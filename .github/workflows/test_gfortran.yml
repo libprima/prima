@@ -165,7 +165,7 @@ jobs:
           $SEDI "s|function p_norm(x, p) result(y)|function p_norm(x, p) result(y)\nuse, non_intrinsic :: string_mod, only : num2str|" linalg.f90
           cat linalg.f90
 
-      - name: Conduct the test; treat timeout as SUCCESS (exit 0). Only for Windows.
+      - name: Conduct the test; treat timeout as SUCCESS (exit 0). Only for non-Windows.
         if: runner.os != 'Windows'
         uses: equipez/run-bash-command@v2
         with:
