@@ -10,6 +10,10 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![CMake build](https://github.com/libprima/prima/actions/workflows/cmake.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake.yml)
     - [![Build Python wheels](https://github.com/libprima/prima/actions/workflows/build_python.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/build_python.yml)
     - [![Compile MEX](https://github.com/libprima/prima/actions/workflows/compile_mex.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/compile_mex.yml)
+    - [![Lint the workflows](https://github.com/libprima/prima/actions/workflows/actionlint.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/actionlint.yml)
+    - [![Check Spelling](https://github.com/libprima/prima/actions/workflows/spelling.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/spelling.yml)
+    - [![Cirrus tests](https://api.cirrus-ci.com/github/libprima/prima.svg)](https://cirrus-ci.com/github/libprima/prima)
+
 
 <!--     - [![CMake build, nagfor](https://github.com/libprima/prima/actions/workflows/cmake_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake_nagfor.yml) -->
 <!--     - [![CMake build, macOS ARM64, nagfor](https://github.com/libprima/prima/actions/workflows/cmake_mac_nagfor.yml/badge.svg)](https://github.com/libprima/prima/actions/workflows/cmake_mac_nagfor.yml) -->
