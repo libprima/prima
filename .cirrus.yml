@@ -105,8 +105,9 @@ task:
     cd $ROOT_DIR/fortran/tests
 
     # Decide the solver to test by $(date + %N)
-    # The 10# prefix tells bash to interpret the number as base 10, regardless of leading zeros.
-    SOLVER_NUM=$((10#$(date +%N) % 5))
+    NS=$(date +%N)
+    NS=${NS#"${NS%%[!0]*}"}  # Strip leading zeros, or the shell will interpret the number as octal and fail if it contains digits 8 or 9.
+    SOLVER_NUM=$((${NS:-0} % 5))  # Use 0 if completely empty
     if [ $SOLVER_NUM -eq 0 ] ; then
         SOLVER=uobyqa
     elif [ $SOLVER_NUM -eq 1 ] ; then
@@ -121,13 +122,15 @@ task:
     echo $SOLVER_NUM $SOLVER
 
     # Decide the integer kind to test by $(date +%N)
-    # The 10# prefix tells bash to interpret the number as base 10, regardless of leading zeros.
-    IK=$((2**(10#$(date +%N) % 3 + 1)))
+    NS=$(date +%N)
+    NS=${NS#"${NS%%[!0]*}"}  # Strip leading zeros, or the shell will interpret the number as octal and fail if it contains digits 8 or 9.
+    IK=$((2**((${NS:-0} % 3) + 1)))  # Use 0 if completely empty
     echo $IK
 
     # Decide the real kind to test by $(date +%N)
-    # The 10# prefix tells bash to interpret the number as base 10, regardless of leading zeros.
-    RK=$((2**(10#$(date +%N) % 3 + 2)))
+    NS=$(date +%N)
+    NS=${NS#"${NS%%[!0]*}"}  # Strip leading zeros, or the shell will interpret the number as octal and fail if it contains digits 8 or 9.
+    RK=$((2**((${NS:-0} % 3) + 2)))  # Use 0 if completely empty
     echo $RK
 
     $MK clean && $MK gtest_i${IK}_r${RK}_d1_tst.$SOLVER
