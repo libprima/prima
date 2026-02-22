@@ -90,6 +90,9 @@ task:
         echo "WARNING: CMake test is skipped on FreeBSD." >&2
         echo "The current CMake test is with gcc only; should test FreeBSD with Clang/LLVM." >&2
         exit 0
+    elif grep -qi "alpine" /etc/os-release ; then
+        # Set stack size to 8MB (value is in kilobytes). The default on Alpine is small.
+        ulimit -s 8192
     fi
 
     ROOT_DIR=$(git rev-parse --show-toplevel)
