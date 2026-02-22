@@ -62,7 +62,7 @@ task:
     elif grep -qi "fedora" /etc/os-release ; then
         dnf upgrade -y && dnf install -y gcc git make cmake gfortran gdb libasan libubsan
     elif grep -qi "alpine" /etc/os-release ; then
-        apk update && apk upgrade && apk add musl-dev gcc git make cmake gfortran gdb
+        apk update && apk upgrade && apk add musl-dev gcc git make cmake gfortran gdb bash
     else
         apt update && apt upgrade -y && apt install -y gcc git make cmake gfortran gdb
     fi
@@ -83,6 +83,12 @@ task:
 
 
   cmake_test_script: |
+    if [ "$(uname)" == "FreeBSD" ] ; then
+        echo "WARNING: CMake test is skipped on FreeBSD." >&2
+        echo "The current CMake test is with gcc only; should test FreeBSD with Clang/LLVM." >&2
+        exit 0
+    fi
+
     ROOT_DIR=$(git rev-parse --show-toplevel)
     cd $ROOT_DIR
 
