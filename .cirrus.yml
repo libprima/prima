@@ -36,7 +36,8 @@ task:
 
     - name: AMD64 FreeBSD
       freebsd_instance:
-        image_family: freebsd-16-0-snap
+        #image_family: freebsd-16-0-snap  # INVALID_ARGUMENT: Snap images are not supported due to boot stability.
+        image_family: freebsd-15-0-amd64-ufs
         architecture: amd64
 
     # The following seems not available as of 20240409. See
