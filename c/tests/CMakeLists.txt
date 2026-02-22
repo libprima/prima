@@ -21,18 +21,18 @@ macro (prima_add_c_test_multi name)
   # Within CI, we'd like to run with gdb so that if there's a segfault the logs will have a stacktrace we can use to investigate.
   # Of course this can be run locally as well if you define CI in your environment.
   if(NOT APPLE AND UNIX AND DEFINED ENV{CI})  # Apple security policy will not allow running gdb in CI
-    add_test(NAME bobyqa_${name}_c_with_gdb COMMAND gdb  -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${name}_c_exe bobyqa)
-    add_test(NAME cobyla_${name}_c_with_gdb COMMAND gdb  -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${name}_c_exe cobyla)
-    add_test(NAME lincoa_${name}_c_with_gdb COMMAND gdb  -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${name}_c_exe lincoa)
-    add_test(NAME newuoa_${name}_c_with_gdb COMMAND gdb  -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${name}_c_exe newuoa)
-    add_test(NAME uobyqa_${name}_c_with_gdb COMMAND gdb  -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${name}_c_exe uobyqa)
+    add_test(NAME bobyqa_${name}_c_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${name}_c_exe bobyqa)
+    add_test(NAME cobyla_${name}_c_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${name}_c_exe cobyla)
+    add_test(NAME lincoa_${name}_c_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${name}_c_exe lincoa)
+    add_test(NAME newuoa_${name}_c_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${name}_c_exe newuoa)
+    add_test(NAME uobyqa_${name}_c_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${name}_c_exe uobyqa)
   elseif(WIN32 AND DEFINED ENV{CI})
     # For Windows we need to provide the full path to the executable since it is installed to a different directory
-    add_test(NAME bobyqa_${name}_c_with_gdb COMMAND gdb  -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/${name}_c_exe.exe bobyqa)
-    add_test(NAME cobyla_${name}_c_with_gdb COMMAND gdb  -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/${name}_c_exe.exe cobyla)
-    add_test(NAME lincoa_${name}_c_with_gdb COMMAND gdb  -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/${name}_c_exe.exe lincoa)
-    add_test(NAME newuoa_${name}_c_with_gdb COMMAND gdb  -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/${name}_c_exe.exe newuoa)
-    add_test(NAME uobyqa_${name}_c_with_gdb COMMAND gdb  -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/${name}_c_exe.exe uobyqa)
+    add_test(NAME bobyqa_${name}_c_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/${name}_c_exe.exe bobyqa)
+    add_test(NAME cobyla_${name}_c_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/${name}_c_exe.exe cobyla)
+    add_test(NAME lincoa_${name}_c_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/${name}_c_exe.exe lincoa)
+    add_test(NAME newuoa_${name}_c_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/${name}_c_exe.exe newuoa)
+    add_test(NAME uobyqa_${name}_c_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb --args ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/${name}_c_exe.exe uobyqa)
   endif()
 
 endmacro ()

@@ -123,10 +123,10 @@ macro (prima_add_f_test name number)
   # Within CI, we'd like to run with gdb so that if there's a segfault the logs will have a stacktrace we can use to investigate.
   # Of course this can be run locally as well if you define CI in your environment.
   if(NOT APPLE AND UNIX AND DEFINED ENV{CI})  # Apple security policy will not allow running gdb in CI
-    add_test (NAME example_${name}_fortran_${number}_with_gdb COMMAND gdb -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb example_${name}_fortran_${number}_exe)
+    add_test (NAME example_${name}_fortran_${number}_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb example_${name}_fortran_${number}_exe)
   elseif(WIN32 AND DEFINED ENV{CI})
     # For Windows we need to provide the full path to the executable since it is installed to a different directory
-    add_test (NAME example_${name}_fortran_${number}_with_gdb COMMAND gdb -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/example_${name}_fortran_${number}_exe.exe)
+    add_test (NAME example_${name}_fortran_${number}_with_gdb COMMAND gdb -return-child-result -batch --command=${CMAKE_BINARY_DIR}/cmdfile.gdb ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/example_${name}_fortran_${number}_exe.exe)
   endif()
 
   add_dependencies(examples example_${name}_fortran_${number}_exe)
