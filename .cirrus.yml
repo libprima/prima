@@ -96,7 +96,7 @@ task:
     uname -a
     cat /etc/os-release || true
 
-    if [ "$(uname)" == "FreeBSD" ] ; then
+    if [[ "$(uname)" == FreeBSD ]] ; then
         pkg update && pkg upgrade -y && pkg install -y bash gcc git cmake devel/gmake devel/gdb
         echo "MK=gmake" >> $CIRRUS_ENV
     elif grep -qi "fedora" /etc/os-release ; then
@@ -124,12 +124,12 @@ task:
 
   cmake_test_script: |
 
-    if [ "$(uname)" == "FreeBSD" ] ; then
+    if [[ "$(uname)" == FreeBSD ]] ; then
         echo "WARNING: CMake test is skipped on FreeBSD." >&2
         echo "The current CMake test is with gcc only; should test FreeBSD with Clang/LLVM." >&2
         exit 0
-    elif grep -qi "alpine" /etc/os-release ; then
-        echo "WARNING: CMake test is skipped on Alpine." >&2
+    elif [[ "$(arch)" == x86_64 ]] && grep -qi "alpine" /etc/os-release ; then
+        echo "WARNING: CMake test is skipped on AMD64 Alpine." >&2
         echo "The current CMake test fails on AMD64 Alpine; should investigate the issue and fix it." >&2
         exit 0
     fi
@@ -160,13 +160,13 @@ task:
     NS=$(date +%N)
     NS=${NS#"${NS%%[!0]*}"}  # Strip leading zeros, or the shell will interpret the number as octal and fail if it contains digits 8 or 9.
     SOLVER_NUM=$((${NS:-0} % 5))  # Use 0 if completely empty
-    if [ $SOLVER_NUM -eq 0 ] ; then
+    if [[ $SOLVER_NUM -eq 0 ]] ; then
         SOLVER=uobyqa
-    elif [ $SOLVER_NUM -eq 1 ] ; then
+    elif [[ $SOLVER_NUM -eq 1 ]] ; then
         SOLVER=newuoa
-    elif [ $SOLVER_NUM -eq 2 ] ; then
+    elif [[ $SOLVER_NUM -eq 2 ]] ; then
         SOLVER=bobyqa
-    elif [ $SOLVER_NUM -eq 3 ] ; then
+    elif [[ $SOLVER_NUM -eq 3 ]] ; then
         SOLVER=lincoa
     else
         SOLVER=cobyla
