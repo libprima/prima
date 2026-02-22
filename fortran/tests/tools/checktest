@@ -11,6 +11,7 @@ fi
 LOGFILE="$2"
 
 WARNINGS="$(grep -i "warning\|Remark\|Questionable\|attention\|F[0-9]*-W\|F[0-9]*-I" "$LOGFILE" \
+    | grep -vi "Fortran runtime warning: IEEE.*exception not supported" \
     | grep -vi "WARNING --  When --chk x is specified" \
     | grep -vi "[0-9]\s*warning" \
     | grep -vi "in __debug_mod_MOD_warning" \
@@ -20,13 +21,14 @@ WARNINGS="$(grep -i "warning\|Remark\|Questionable\|attention\|F[0-9]*-W\|F[0-9]
     | grep -vi "circle\.f90(36): remark #7712: This variable has not been used\.\s*\[ANGLE\]" \
     | grep -vi "warningid\|warningmsg" \
     | grep -vi "Warning: SAVEHIST: Assertion fails: XHIST" \
-    | grep -vi "Warning: TRSTEP: Assertion fails: D is initialized." \
+    | grep -vi "Warning: TRSTEP: Assertion fails: D is initialized" \
 	| grep -vi "Warning: UOBYQA: \|Warning: NEWUOA: \|Warning: BOBYQA: \|Warning: LINCOA: \|Warning: COBYLA: " \
     | grep -vi "maybe due to overflow, or the input is not an integer" \
     | grep -vi "Assertion fails: SUM(VLAG(1:NPT)) == 1" \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
 
 ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|segmentation\|fault\|illegal\|Subscript out of range\|F[0-9]*-S\|F[0-9]*-F\|F[0-9]*-E\|Could\ not\ resolve\|not\ defined\|command not found\|Cannot connect to licence server (error 113)" "$LOGFILE" \
+    | grep -vi "Fortran runtime warning: IEEE.*exception not supported" \
     | grep -vi "default" \
     | grep -vi "[0-9]\s*error" \
     | grep -vi "[0-9a-z]bad\|bad[0-9a-z]" \
@@ -51,7 +53,7 @@ ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|se
     | grep -vi "berr\|erres" \
     | grep -vi "violation = " \
     | grep -vi "int violation" \
-    | grep -vi "Warning: TRSTEP: Assertion fails: D is initialized." \
+    | grep -vi "Warning: TRSTEP: Assertion fails: D is initialized" \
 	| grep -vi "Warning: UOBYQA: Invalid\|Warning: NEWUOA: Invalid\|Warning: BOBYQA: Invalid\|Warning: LINCOA: Invalid\|Warning: COBYLA: Invalid" \
     | grep -vi "maybe due to overflow, or the input is not an integer" \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
