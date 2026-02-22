@@ -106,7 +106,7 @@ file(WRITE ${CMAKE_BINARY_DIR}/cmdfile.gdb "init-if-undefined $_exitcode = 0
 run
 set language c
 if $_exitcode != 0
-  where
+  bt full
 end
 quit $_exitcode
 ")

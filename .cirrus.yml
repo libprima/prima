@@ -65,7 +65,7 @@ task:
     elif grep -qi "fedora" /etc/os-release ; then
         dnf upgrade -y && dnf install -y gcc git make cmake gfortran gdb libasan libubsan
     elif grep -qi "alpine" /etc/os-release ; then
-        apk update && apk upgrade && apk add musl-dev gcc git make cmake gfortran gdb bash
+        apk update && apk upgrade && apk add musl-dev gcc git make cmake gfortran gdb bash musl-dbg
     else
         apt update && apt upgrade -y && apt install -y gcc git make cmake gfortran gdb
     fi
