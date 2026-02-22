@@ -45,7 +45,7 @@ task:
   ## skip: the task will be created / triggered, but its execution will be skipped, and it will be marked as successful.
   ##skip: "!changesInclude('.cirrus.yml', 'fortran/**', 'c/**', 'python/**')"
   # only_if: the task will not be created / triggered.
-  only_if: "changesInclude('.cirrus.yml', 'fortran/**', 'c/**', 'python/**')"
+  only_if: "changesInclude('.cirrus.yml', 'CMakeLists.txt', 'fortran/**', 'c/**', 'python/**')"
 
   timeout_in: 120m  # There is a hard limit of 2 hours for free tasks.
 
