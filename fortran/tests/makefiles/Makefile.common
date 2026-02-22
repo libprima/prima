@@ -286,6 +286,9 @@ else
 	ifeq ($(UNAME_S),FreeBSD)
 		OSTYPE := FREEBSD
 	endif
+	ifneq ($(shell grep -qi "alpine" /etc/os-release 2>/dev/null || echo ""),)
+		OSTYPE := ALPINE
+	endif
 endif
 
 # Invoke the binary by gdb using $(TOOLS_DIR)/run_gdb, which is a wrapper script. It does two
@@ -498,7 +501,7 @@ else
 	GFORT := $(GFORT) -fno-stack-arrays -fstack-check
 endif
 # -fsanitize=leak,address does not work with gdb.
-FSAN := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 && $(OSTYPE) != 'MAC' && $(OSTYPE) != 'FREEBSD' ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
+FSAN := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 && $(OSTYPE) != 'MAC' && $(OSTYPE) != 'FREEBSD' && $(OSTYPE) != 'ALPINE' ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
 GFORT := $(GFORT) $(GFSTD) -fall-intrinsics -frecursive \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion \
 	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
