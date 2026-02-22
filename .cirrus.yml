@@ -1,5 +1,8 @@
 task:
 
+  name: "Cirrus tests"
+  trigger_type: manual
+
   # Perform the task only if the folders or files specified below are changed
   # See https://cirrus-ci.org/guide/writing-tasks/#conditional-task-execution
   ## skip: the task will be created / triggered, but its execution will be skipped, and it will be marked as successful.

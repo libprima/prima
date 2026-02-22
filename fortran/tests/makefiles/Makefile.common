@@ -501,7 +501,7 @@ else
 	GFORT := $(GFORT) -fno-stack-arrays -fstack-check
 endif
 # -fsanitize=leak,address does not work with gdb.
-FSAN := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 && $(OSTYPE) != 'MAC' && $(OSTYPE) != 'FREEBSD' && $(OSTYPE) != 'ALPINE' ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
+FSAN := $(shell if [[ $$(($(GFORT) -dumpversion 2>/dev/null || echo 0) | sed 's|\..*||') -gt 9 && $(OSTYPE) == 'LINUX' ]] ; then echo "-fsanitize=undefined"; else echo ""; fi)
 GFORT := $(GFORT) $(GFSTD) -fall-intrinsics -frecursive \
 	-Wall -Wextra -Wpedantic -pedantic -Wampersand -Wconversion \
 	-Wsurprising -Waliasing -Wimplicit-interface -Wimplicit-procedure -Wintrinsics-std -Wunderflow \
@@ -937,6 +937,7 @@ $(TESTS_C) $(TESTS_INT_C):
 	$(eval EXTRA_FLAGS := $(shell if [[ -z "$(TESTSEED)" ]] ; then echo "$(EXTRA_FLAGS)"; else echo "$(EXTRA_FLAGS) -DPRIMA_TESTSEED=$(TESTSEED)"; fi))
 	$(eval SRC := $(shell if echo $@ | grep -q "9test"; then echo $(SRC_NO_TEST) ; else echo $(SRC) ; fi))
 	$(eval FC := $(shell cut -d' ' -f1 <<< "$(FCO)"))
+	@echo "=====> OSTYPE = " $(OSTYPE)
 	@echo "Compiler: $(FC)"
 	@$(FC) --version 2>&1 | grep -v "\-\-version\|usage" || true  # Print the compiler version, but do not fail if the compiler does not support `--version`
 	@echo ""
