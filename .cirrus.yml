@@ -36,7 +36,7 @@ task:
 
     - name: AMD64 FreeBSD
       freebsd_instance:
-        image_family: freebsd-14-0
+        image_family: freebsd-16-0-snap
         architecture: amd64
 
     # The following seems not available as of 20240409. See
@@ -47,9 +47,7 @@ task:
     #     image_family: freebsd-14-0
     #     architecture: arm64
 
-
   dependencies_script: |
-    set -x
     set -euo pipefail
 
     echo "MK=make" >> $CIRRUS_ENV
@@ -90,8 +88,7 @@ task:
     export CC=gcc
     CFLAGS="-Wall -Wextra -Wpedantic -Werror"
     export FC=gfortran
-    #export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination -Wno-trampolines'
-    export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -frecursive -fcheck=all -fstack-check -Wno-function-elimination'
+    export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -ftrampoline-impl=heap -frecursive -fcheck=all -fstack-check -Wno-function-elimination'
 
     $FC --version
     $CC --version
@@ -108,7 +105,8 @@ task:
     cd $ROOT_DIR/fortran/tests
 
     # Decide the solver to test by $(date + %N)
-    SOLVER_NUM=$(($(date +%N) % 5))
+    # The 10# prefix tells bash to interpret the number as base 10, regardless of leading zeros.
+    SOLVER_NUM=$((10#$(date +%N) % 5))
     if [ $SOLVER_NUM -eq 0 ] ; then
         SOLVER=uobyqa
     elif [ $SOLVER_NUM -eq 1 ] ; then
@@ -123,11 +121,13 @@ task:
     echo $SOLVER_NUM $SOLVER
 
     # Decide the integer kind to test by $(date +%N)
-    IK=$((2**($(date +%N) % 3 + 1)))
+    # The 10# prefix tells bash to interpret the number as base 10, regardless of leading zeros.
+    IK=$((2**(10#$(date +%N) % 3 + 1)))
     echo $IK
 
     # Decide the real kind to test by $(date +%N)
-    RK=$((2**($(date +%N) % 3 + 2)))
+    # The 10# prefix tells bash to interpret the number as base 10, regardless of leading zeros.
+    RK=$((2**(10#$(date +%N) % 3 + 2)))
     echo $RK
 
     $MK clean && $MK gtest_i${IK}_r${RK}_d1_tst.$SOLVER

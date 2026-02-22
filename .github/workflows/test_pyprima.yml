@@ -25,11 +25,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
 
-      - name: Lint the actions
-        if: runner.os == 'Linux'
-        uses: devops-actions/actionlint@v0.1.10
-        with:
-          shellcheck_opts: '-e SC1090 -e SC2015 -e SC2028 -e SC2035 -e SC2046 -e SC2086 -e SC2193'
 
       - name: Setup Python
         uses: actions/setup-python@v6

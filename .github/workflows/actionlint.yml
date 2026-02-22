@@ -1,0 +1,42 @@
+name: Lint the workflows
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+
+jobs:
+
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v6.0.2
+
+    - name: actionlint
+      id: actionlint  #optional, id required only when outputs are used in the workflow steps later
+      uses: raven-actions/actionlint@v2
+      with:
+        matcher: false  # optional
+        cache: false  # optional
+        fail-on-error: false  # optional
+        files: ".github/workflows/*.yml"
+        flags: "-ignore SC1090 -ignore SC2015 -ignore SC2028 -ignore SC2035 -ignore SC2046 -ignore SC2086 -ignore SC2155 -ignore SC2193 -ignore SC2242"
+
+    - name: actionlint Summary
+      if: ${{ steps.actionlint.outputs.exit-code != 0 }}  # example usage, do echo only when actionlint action failed
+      run: |
+        echo "Used actionlint version ${{ steps.actionlint.outputs.version-semver }}"
+        echo "Used actionlint release ${{ steps.actionlint.outputs.version-tag }}"
+        echo "actionlint ended with ${{ steps.actionlint.outputs.exit-code }} exit code"
+        echo "actionlint ended because '${{ steps.actionlint.outputs.exit-message }}'"
+        echo "actionlint found ${{ steps.actionlint.outputs.total-errors }} errors"
+        echo "actionlint checked ${{ steps.actionlint.outputs.total-files }} files"
+        echo "actionlint cache used: ${{ steps.actionlint.outputs.cache-hit }}"
+        exit ${{ steps.actionlint.outputs.exit-code }}

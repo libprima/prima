@@ -45,11 +45,6 @@ jobs:
       - name: Checkout pybind11 submodule
         run: git submodule update --init python/pybind11
 
-      - name: Lint the actions
-        if: runner.os == 'Linux'
-        uses: devops-actions/actionlint@v0.1.10
-        with:
-          shellcheck_opts: '-e SC1090 -e SC2015 -e SC2028 -e SC2035 -e SC2046 -e SC2086 -e SC2193'
 
       - name: Set the MACOSX_DEPLOYMENT_TARGET
         if: ${{ runner.os == 'macOS' }}
