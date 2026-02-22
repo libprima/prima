@@ -27,19 +27,19 @@ WARNINGS="$(grep -i "warning\|Remark\|Questionable\|attention\|F[0-9]*-W\|F[0-9]
     | grep -vi "Assertion fails: SUM(VLAG(1:NPT)) == 1" \
     | grep -vi "invalid maxfun\|invalid maxhist\|invalid npt\|invalid rhobeg\|invalid rhoend\|invalid ftarget\|invalid ctol\|invalid maxfilt\|errstop")"
 
-ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|segmentation\|fault\|illegal\|Subscript out of range\|F[0-9]*-S\|F[0-9]*-F\|F[0-9]*-E\|Could\ not\ resolve\|not\ defined\|command not found\|Cannot connect to licence server (error 113)" "$LOGFILE" \
+ERRORS="$(grep -i "error\|fail\|violation\|exception\|invalid\|bad\|overflow\|segmentation\|fault\|illegal\|Subscript out of range\|F[0-9]*-S\|F[0-9]*-F\|F[0-9]*-E\|Could not resolve\|not defined\|command not found\|Cannot connect to licence server (error 113)" "$LOGFILE" \
     | grep -vi "Fortran runtime warning: IEEE.*exception not supported" \
     | grep -vi "default" \
     | grep -vi "[0-9]\s*error" \
     | grep -vi "[0-9a-z]bad\|bad[0-9a-z]" \
     | grep -vi "[0-9a-z]fail" \
     | grep -vi "Warning: .*: Failed to open file .*_output" \
-    | grep -vi "Warning:\ Floating\ overflow\ occurred" \
-    | grep -vi "Warning:\ Floating\ underflow\ occurred" \
+    | grep -vi "Warning: Floating overflow occurred" \
+    | grep -vi "Warning: Floating underflow occurred" \
     | grep -vi "because rounding errors are" \
     | grep -vi "precaution against overflow" \
     | grep -vi "precaution against rounding error" \
-    | grep -vi "Warning:\ Floating\ invalid\ operation\ occurred" \
+    | grep -vi "Warning: Floating invalid operation occurred" \
     | grep -vi "Processor does not support trapping of floating-point exceptions" \
     | grep -vi "Warning: SAVEHIST: Assertion fails: XHIST" \
     | grep -vi "Assertion fails: Q interpolates FVAL at XPT" \

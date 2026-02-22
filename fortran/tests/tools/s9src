@@ -22,7 +22,7 @@ else
 fi
 
 # Replace the line starting with "mwPointer :: $FPTR" by "external :: $CBFUN".
-sed -i "s/^\s*mwPointer\s*::\s*$FPTR/external\ ::\ $CBFUN/" "$MEXF"
+sed -i "s/^\s*mwPointer\s*::\s*$FPTR/external :: $CBFUN/" "$MEXF"
 
 # Remove the line starting with "$FPTR = ".
 sed -i "/^\s*$FPTR\s*=/d" "$MEXF"
