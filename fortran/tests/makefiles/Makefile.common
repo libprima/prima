@@ -45,7 +45,7 @@
 
 #$(VERBOSE).SILENT:  # Order make to work quietly. Not desirable in this case.
 
-SHELL = /usr/bin/env bash
+SHELL = /usr/bin/env bash  # Without this, the Makefile will not work as it contains bash-specific commands.
 
 ####################################################################################################
 # Variables
