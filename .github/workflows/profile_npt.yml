@@ -33,6 +33,9 @@ jobs:
         competitor: [classical, default]
         use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
         exclude:
+
+          # In the following cases, there is no problem to test due to the blacklist.
+
           - dim: large
             npt: 0.5*(n+1)*(n+2)
           - dim: large
@@ -41,33 +44,40 @@ jobs:
             npt: n*sqrt(n)
           - dim: large
             npt: 4*n
-
-          # - dim: big
-          #   npt: 0.5*(n+1)*(n+2)
-          # - dim: big
-          #   npt: 0.25*n*n
-          # - dim: big
-          #   npt: n*sqrt(n)
-          # - dim: big
-          #   npt: 4*n
-
-          - dim: large  # There is no problem to test
+          - dim: large
             npt: 3*n
-            solver: lincoa
 
-          # - dim: large
-          #   npt: 3*n
-          #   solver: bobyqa
-          # - dim: big
-          #   npt: 3*n
-          #   solver: bobyqa
+          - dim: big
+            npt: 0.5*(n+1)*(n+2)
+            solver: newuoa
+          - dim: big
+            npt: 0.25*n*n
+            solver: newuoa
+          - dim: big
+            npt: n*sqrt(n)
+            solver: newuoa
+          - dim: big
+            npt: 4*n
+            solver: newuoa
+          - dim: big
+            npt: 3*n
+            solver: newuoa
 
-          # - dim: large
-          #   npt: 3*n
-          #   solver: newuoa
-          # - dim: big
-          #   npt: 3*n
-          #   solver: newuoa
+          - dim: big
+            npt: 0.5*(n+1)*(n+2)
+            solver: bobyqa
+          - dim: big
+            npt: 0.25*n*n
+            solver: bobyqa
+          - dim: big
+            npt: n*sqrt(n)
+            solver: bobyqa
+          - dim: big
+            npt: 4*n
+            solver: bobyqa
+          - dim: big
+            npt: 3*n
+            solver: bobyqa
 
     steps:
 
