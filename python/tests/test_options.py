@@ -67,7 +67,6 @@ def test_ftarget():
 
 
 @pytest.mark.skipif(platform.system() == "Windows", reason="Windows outputs some strange characters, probably \\r\\n")
-@pytest.mark.skipif(platform.system() == "Darwin" and platform.machine() == "x86_64", reason="Mac intel doesn't print a trailing 0 for 2 values, and it's easier to skip it than fix it")
 def test_iprint(capfd, backend_fixture):
     x0 = [0.0] * 2
     nlc = NLC(lambda x: np.array([x[0], x[1]]), lb=[-np.inf]*2, ub=[10]*2)
@@ -87,13 +86,11 @@ The corresponding X is:  {fmt(res.x[0])}   {fmt(res.x[1])}
 The constraint value is: {fmt(res.nlconstr[0])}  {fmt(res.nlconstr[1])}
 '''
     elif backend_fixture == "Python":
-        fmt = lambda x: np.format_float_scientific(x, precision=15, unique=False, exp_digits=2)
         assert outerr.out == f'''Return from COBYLA because the trust region radius reaches its lower bound.
-Number of function values = {res.nfev}   Least value of F = {fmt(res.fun).lower()}   Constraint violation = 0.0
-The corresponding X is: [{res.x[0]:.8f} {res.x[1]:.8f}]
-The constraint value is: [{res.nlconstr[0]:.8f} {res.nlconstr[1]:.8f}]
-
-''' # TODO: Why is there an extra newline here?
+Number of function values = {res.nfev}   Least value of F = {res.fun:.16e}   Constraint violation = 0.0000000000000000e+00
+The corresponding X is: [{res.x[0]:.16e} {res.x[1]:.16e}]
+The constraint value is: [{res.nlconstr[0]:.16e} {res.nlconstr[1]:.16e}]
+'''
     assert outerr.err == ''
 
 
