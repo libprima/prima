@@ -72,7 +72,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
     num_vars = np.size(x)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert abs(iprint) <= 3
         assert num_constraints >= m_lcon and m_lcon >= 0
         assert num_vars >= 1
@@ -132,7 +132,7 @@ def cobylb(calcfc, iprint, maxfilt, maxfun, amat, bvec, ctol, cweight, eta1, eta
         # print a return message according to IPRINT.
         retmsg(solver, info, iprint, nf, f, x, cstrv, constr)
         # Postconditions
-        if DEBUGGING:
+        if DEBUGGING[0]:
             assert nf <= maxfun
             assert np.size(x) == num_vars and not any(np.isnan(x))
             assert not (np.isnan(f) or np.isposinf(f))
@@ -599,7 +599,7 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
     num_vars = np.size(sim, 0)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert num_constraints >= 0
         assert num_vars >= 1
         assert cpen > 0
@@ -680,7 +680,7 @@ def getcpen(amat, bvec, conmat, cpen, cval, delta, fval, rho, sim, simi):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert cpen >= cpen and cpen > 0
         assert preref + cpen * prerec > 0 or info == DAMAGING_ROUNDING or \
             not (prerec >= 0 and np.maximum(prerec, preref) > 0) or not np.isfinite(preref)
@@ -695,7 +695,7 @@ def fcratio(conmat, fval):
     '''
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert np.size(fval) >= 1
         assert np.size(conmat, 1) == np.size(fval)
 
@@ -721,7 +721,7 @@ def fcratio(conmat, fval):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert r >= 0
 
     return r

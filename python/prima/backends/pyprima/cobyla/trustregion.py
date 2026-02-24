@@ -63,7 +63,7 @@ def trstlp(A, b, delta, g):
     num_vars = A.shape[0]
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert num_vars >= 1
         assert num_constraints >= 0
         assert np.size(g) == num_vars
@@ -106,12 +106,13 @@ def trstlp(A, b, delta, g):
     # ================
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert all(np.isfinite(d))
         # Due to rounding, it may happen that ||D|| > DELTA, but ||D|| > 2*DELTA is highly improbable.
         assert np.linalg.norm(d) <= 2 * delta
 
     return d
+
 
 def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
     '''
@@ -133,7 +134,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
     num_vars = np.size(A, 0)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert num_vars >= 1
         assert stage == 1 or stage == 2
         assert (mcon >= 0 and stage == 1) or (mcon >= 1 and stage == 2)
@@ -196,7 +197,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
     # this, we set the maximal number of iterations to maxiter, and terminate if Inf/NaN occurs in d.
     maxiter = np.minimum(10000, 100*max(num_constraints, num_vars))
     for iter in range(maxiter):
-        if DEBUGGING:
+        if DEBUGGING[0]:
             assert all(vmultc >= 0)
         if stage == 1:
             optnew = cviol
@@ -428,7 +429,7 @@ def trstlp_sub(iact: npt.NDArray, nact: int, stage, A, b, delta, d, vmultc, z):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert np.size(iact) == mcon
         assert np.size(vmultc) == mcon
         assert all(vmultc >= 0)
@@ -447,7 +448,7 @@ def trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio):
     '''
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert delta_in >= dnorm > 0
         assert 0 <= eta1 <= eta2 < 1
         assert 0 < gamma1 < 1 < gamma2
@@ -487,6 +488,6 @@ def trrad(delta_in, dnorm, eta1, eta2, gamma1, gamma2, ratio):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert delta > 0
     return delta

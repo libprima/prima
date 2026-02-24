@@ -32,7 +32,7 @@ def setdrop_tr(ximproved, d, delta, rho, sim, simi):
     num_vars = np.size(sim, 0)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert num_vars >= 1
         assert np.size(d) == num_vars and all(np.isfinite(d))
         assert delta >= rho and rho > 0
@@ -150,7 +150,7 @@ def setdrop_tr(ximproved, d, delta, rho, sim, simi):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert jdrop is None or (0 <= jdrop < num_vars + 1)
         assert jdrop <= num_vars or ximproved
         assert jdrop >= 0 or not ximproved
@@ -174,7 +174,7 @@ def geostep(jdrop, amat, bvec, conmat, cpen, cval, delbar, fval, simi):
     num_vars = np.size(simi, 0)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert num_constraints >= m_lcon >= 0
         assert num_vars >= 1
         assert delbar > 0
@@ -218,7 +218,7 @@ def geostep(jdrop, amat, bvec, conmat, cpen, cval, delbar, fval, simi):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert np.size(d) == num_vars and all(np.isfinite(d))
         # In theory, ||S|| == DELBAR, which may be false due to rounding, but not too far.
         # It is crucial to ensure that the geometry step is nonzero, which holds in theory.

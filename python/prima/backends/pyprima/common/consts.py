@@ -9,9 +9,10 @@ Python translation by Nickolai Belakovski.
 '''
 
 import numpy as np
-import os
 
-DEBUGGING = bool(os.getenv('PRIMA_DEBUGGING'))
+# This needs to be an array so that we can modify it in the test harness while
+# tests are running. As a simple variable it gets captured at import time.
+DEBUGGING = [False]
 
 REALMIN = np.finfo(float).tiny
 REALMAX = np.finfo(float).max

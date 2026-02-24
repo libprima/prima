@@ -11,10 +11,10 @@ obj.x0 = np.array([5, 5])
 obj.optimal = np.array([1, 2.5])
 
 
-def test_callback_terminate(minimize_with_debugging, backend_fixture):
+def test_callback_terminate(pyprima_turn_on_debugging, backend_fixture):
     def callback(x, *args):
         return True
-    result = minimize_with_debugging(obj, obj.x0, method='cobyla', callback=callback, options={'backend': backend_fixture})
+    result = minimize(obj, obj.x0, method='cobyla', callback=callback, options={'backend': backend_fixture})
     assert result.nfev == 3
     assert result.status == CALLBACK_TERMINATE
 
