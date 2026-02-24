@@ -96,30 +96,32 @@ def retmsg(solver, info, iprint, nf, f, x, cstrv=None, constr=None):
     # Decide the return message.
     ret_message = get_info_string(solver, info)
 
+    arr2str = lambda data: np.array2string(np.asanyarray(data), formatter={'float_kind': lambda x: f"{x:.16e}"})
+
     if np.size(x) <= 2:
-        x_message = f'\nThe corresponding X is: {x}'  # Printed in one line
+        x_message = f'\nThe corresponding X is: {arr2str(x)}'  # Printed in one line
     else:
-        x_message = f'\nThe corresponding X is:\n{x}'
+        x_message = f'\nThe corresponding X is:\n{arr2str(x)}'
 
     if is_constrained:
         nf_message = (f'\nNumber of function values = {nf}{spaces}'
-            f'Least value of F = {f}{spaces}Constraint violation = {cstrv_loc}')
+            f'Least value of F = {f:.16e}{spaces}Constraint violation = {cstrv_loc:.16e}')
     else:
-        nf_message = f'\nNumber of function values = {nf}{spaces}Least value of F = {f}'
+        nf_message = f'\nNumber of function values = {nf}{spaces}Least value of F = {f:.16e}'
 
     if is_constrained and present(constr):
         if np.size(constr) <= 2:
-            constr_message = f'\nThe constraint value is: {constr}'  # Printed in one line
+            constr_message = f'\nThe constraint value is: {arr2str(constr)}'  # Printed in one line
         else:
-            constr_message = f'\nThe constraint value is:\n{constr}'
+            constr_message = f'\nThe constraint value is:\n{arr2str(constr)}'
     else:
         constr_message = ''
 
     # Print the message.
     if abs(iprint) >= 2:
-        message = f'\n{ret_message}{nf_message}{x_message}{constr_message}\n'
+        message = f'\n{ret_message}{nf_message}{x_message}{constr_message}'
     else:
-        message = f'{ret_message}{nf_message}{x_message}{constr_message}\n'
+        message = f'{ret_message}{nf_message}{x_message}{constr_message}'
     if len(fname) > 0:
         with open(fname, 'a') as f: f.write(message)
     else:
