@@ -37,7 +37,7 @@ def initxfc(calcfc, iprint, maxfun, constr0, amat, bvec, ctol, f0, ftarget, rhob
     num_vars = np.size(x0)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert num_constraints >= 0, f'M >= 0 {srname}'
         assert num_vars >= 1, f'N >= 1 {srname}'
         assert abs(iprint) <= 3, f'IPRINT is 0, 1, -1, 2, -2, 3, or -3 {srname}'
@@ -125,7 +125,7 @@ def initxfc(calcfc, iprint, maxfun, constr0, amat, bvec, ctol, f0, ftarget, rhob
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert nf <= maxfun, f'NF <= MAXFUN {srname}'
         assert evaluated.size == num_vars + 1, f'EVALUATED.size == Num_vars + 1 {srname}'
         # assert chist.size == maxchist, f'CHIST.size == MAXCHIST {srname}'
@@ -164,7 +164,7 @@ def initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, cfilt, confilt, 
     maxfilt = len(ffilt)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert num_constraints >= 0
         assert num_vars >= 1
         assert maxfilt >= 1
@@ -200,7 +200,7 @@ def initfilt(conmat, ctol, cweight, cval, fval, sim, evaluated, cfilt, confilt, 
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert nfilt <= maxfilt
         assert np.size(confilt, 0) == num_constraints and np.size(confilt, 1) == maxfilt
         assert not (np.isnan(confilt[:, :nfilt]) | np.isneginf(confilt[:, :nfilt])).any()

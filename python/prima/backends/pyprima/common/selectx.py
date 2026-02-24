@@ -26,7 +26,7 @@ def isbetter(f1: float, c1: float, f2: float, c2: float, ctol: float) -> bool:
     '''
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert not any(np.isnan([f1, c1]) | np.isposinf([f2, c2]))
         assert not any(np.isnan([f2, c2]) | np.isposinf([f2, c2]))
         assert c1 >= 0 and c2 >= 0
@@ -55,7 +55,7 @@ def isbetter(f1: float, c1: float, f2: float, c2: float, ctol: float) -> bool:
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert not (is_better and f1 >= f2 and c1 >= c2)
         assert is_better or not (f1 <= f2 and c1 < c2)
         assert is_better or not (f1 < f2 and c1 <= c2)
@@ -87,7 +87,7 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
     maxfilt = len(ffilt)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         # Check the size of X.
         assert num_vars >= 1
         # Check CWEIGHT and CTOL
@@ -183,7 +183,7 @@ def savefilt(cstrv, ctol, cweight, f, x, nfilt, cfilt, ffilt, xfilt, constr=None
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         # Check NFILT and the sizes of XFILT, FFILT, CFILT.
         assert nfilt >= 1 and nfilt <= maxfilt
         assert np.size(xfilt, 0) == num_vars and np.size(xfilt, 1) == maxfilt
@@ -219,7 +219,7 @@ def selectx(fhist: npt.NDArray, chist: npt.NDArray, cweight: float, ctol: float)
     nhist = len(fhist)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert nhist >= 1
         assert np.size(chist) == nhist
         assert not any(np.isnan(fhist) | np.isposinf(fhist))
@@ -289,7 +289,7 @@ def selectx(fhist: npt.NDArray, chist: npt.NDArray, cweight: float, ctol: float)
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert kopt >= 0 and kopt < nhist
         assert not any([isbetter(fhisti, chisti, fhist[kopt], chist[kopt], ctol) for fhisti, chisti in zip(fhist[:nhist], chist[:nhist])])
 

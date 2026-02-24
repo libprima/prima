@@ -296,7 +296,7 @@ def cobyla(calcfc, m_nlcon, x, Aineq=None, bineq=None, Aeq=None, beq=None,
     num_vars = len(x)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert m_nlcon >= 0, f'{srname} M_NLCON >= 0'
         assert num_vars >= 1, f'{srname} N >= 1'
 
@@ -516,7 +516,7 @@ def get_lincon(Aeq=None, Aineq=None, beq=None, bineq=None, xl=None, xu=None):
         return None, None
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert Aineq is None or Aineq.shape == (len(bineq), num_vars)
         assert Aeq is None or Aeq.shape == (len(beq), num_vars)
         assert (xl is None or xu is None) or len(xl) == len(xu) == num_vars
@@ -561,7 +561,7 @@ def get_lincon(Aeq=None, Aineq=None, beq=None, bineq=None, xl=None, xu=None):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert (amat is None and bvec is None) or amat.shape == (len(bvec), num_vars)
 
     return amat, bvec

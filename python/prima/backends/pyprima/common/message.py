@@ -65,7 +65,7 @@ def retmsg(solver, info, iprint, nf, f, x, cstrv=None, constr=None):
         NO_SPACE_BETWEEN_BOUNDS, ZERO_LINEAR_CONSTRAINT, CALLBACK_TERMINATE]
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert info in valid_exit_codes
 
     #====================#

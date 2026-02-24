@@ -17,7 +17,7 @@ def redrat(ared, pred, rshrink):
     '''
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert rshrink >= 0
 
     #====================#
@@ -49,6 +49,6 @@ def redrat(ared, pred, rshrink):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert not np.isnan(ratio)
     return ratio

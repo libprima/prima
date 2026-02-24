@@ -65,7 +65,7 @@ def qradd_Rdiag(c, Q, Rdiag, n):
     if n - 1 >= 0 and n - 1 < m:  # n >= m should not happen unless the input is wrong
         Rdiag[n - 1] = cq[n - 1]
 
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert nsave <= n <= min(nsave + 1, m)
         assert n <= len(Rdiag) <= m
         assert Q.shape == (m, m)
