@@ -110,10 +110,7 @@ jobs:
       - name: Build wheel, run tests, and capture coverage
         shell: bash
         run: |
-          uv --verbose run poe coverage
-        env:
-          SKBUILD_CMAKE_BUILD_TYPE: Debug
-
+          make -C python coverage-html
 
       - uses: actions/upload-artifact@v6
         with:
