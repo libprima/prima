@@ -66,7 +66,6 @@ def test_ftarget():
     assert not fun.result_point_and_value_are_optimal(res)
 
 
-@pytest.mark.skipif(platform.system() == "Windows", reason="Windows outputs some strange characters, probably \\r\\n")
 def test_iprint(capfd, backend_fixture):
     x0 = [0.0] * 2
     nlc = NLC(lambda x: np.array([x[0], x[1]]), lb=[-np.inf]*2, ub=[10]*2)
@@ -84,13 +83,14 @@ Return from COBYLA because the trust region radius reaches its lower bound.
 Number of function values = {res.nfev}   Least value of F =  {fmt(res.fun)}   Constraint violation =  0.0000000000000000E+000
 The corresponding X is:  {fmt(res.x[0])}   {fmt(res.x[1])}
 The constraint value is: {fmt(res.nlconstr[0])}  {fmt(res.nlconstr[1])}
-'''
+'''.replace('\n', '\r\n' if platform.system() == "Windows" else '\n')
     elif backend_fixture == "Python":
         assert outerr.out == f'''Return from COBYLA because the trust region radius reaches its lower bound.
 Number of function values = {res.nfev}   Least value of F = {res.fun:.16e}   Constraint violation = 0.0000000000000000e+00
 The corresponding X is: [{res.x[0]:.16e} {res.x[1]:.16e}]
 The constraint value is: [{res.nlconstr[0]:.16e} {res.nlconstr[1]:.16e}]
 '''
+    # Note that the Python backend does not require the \r\n conversion.
     assert outerr.err == ''
 
 
