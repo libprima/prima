@@ -80,6 +80,14 @@ prima_algorithm_t pystr_method_to_algorithm(const pybind11::str& method_) {
 }
 
 PYBIND11_MODULE(pybindings, m) {
+#ifdef CMAKE_BUILD_TYPE
+    #define STRINGIFY(x) #x
+    #define MACRO_STRINGIFY(x) STRINGIFY(x)
+    m.attr("__cmake_build_type__") = MACRO_STRINGIFY(CMAKE_BUILD_TYPE);
+#else
+    m.attr("__cmake_build_type__") = "unknown";
+#endif
+
     py::class_<PRIMAResult>(m, "PRIMAResult")
       .def_readwrite("x", &PRIMAResult::x)
       .def_readwrite("success", &PRIMAResult::success)
