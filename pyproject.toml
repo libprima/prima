@@ -15,7 +15,7 @@ dynamic = ["version"]
 requires-python = ">= 3.10"
 
 [dependency-groups]
-dev = [ "poethepoet", "pycutest", "pytest", "pytest-cov"]
+dev = [ "pycutest", "pytest", "pytest-cov"]
 
 [tool.scikit-build]
 cmake.args = ["-G Ninja", "-DBUILD_SHARED_LIBS=OFF", "-DPRIMA_ENABLE_PYTHON=ON"]
@@ -30,9 +30,6 @@ version_file = "python/prima/_version.py"
 
 [tool.uv]
 cache-keys = [{file = "fortran/**"}, {file="c/**"}, {file="python/prima/backends/bindings/**"}, {file="pyproject.toml"}, {file="**/CMakeLists.txt"}]
-
-[tool.poe.tasks]
-coverage = {shell = "pytest -s --cov=. --cov-branch --cov-report html:prima_htmlcov --durations=20 python/tests"}
 
 [tool.cibuildwheel]
 build-verbosity = 3
