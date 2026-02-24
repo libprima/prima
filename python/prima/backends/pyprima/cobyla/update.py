@@ -27,7 +27,7 @@ def updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi):
     num_vars = np.size(sim, 0)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert num_constraints >= 0
         assert num_vars >= 1
         assert jdrop >= 0 and jdrop <= num_vars + 1
@@ -98,7 +98,7 @@ def updatexfc(jdrop, constr, cpen, cstrv, d, f, conmat, cval, fval, sim, simi):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert np.size(conmat, 0) == num_constraints and np.size(conmat, 1) == num_vars + 1
         assert not (np.isnan(conmat) | np.isneginf(conmat)).any()
         assert np.size(cval) == num_vars + 1 and not any(cval < 0 | np.isnan(cval) | np.isposinf(cval))
@@ -122,7 +122,7 @@ def findpole(cpen, cval, fval):
     num_vars = np.size(fval) - 1
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert cpen > 0
         assert np.size(cval) == num_vars + 1 and not any(cval < 0 | np.isnan(cval) | np.isposinf(cval))
         assert np.size(fval) == num_vars + 1 and not any(np.isnan(fval) | np.isposinf(fval))
@@ -148,7 +148,7 @@ def findpole(cpen, cval, fval):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert jopt >= 0 and jopt < num_vars + 1
         assert jopt == num_vars or phi[jopt] < phi[num_vars] or (phi[jopt] <= phi[num_vars] and cval[jopt] < cval[num_vars])
     return jopt
@@ -188,7 +188,7 @@ def updatepole(cpen, conmat, cval, fval, sim, simi):
     num_vars = sim.shape[0]
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert num_constraints >= 0
         assert num_vars >= 1
         assert cpen > 0
@@ -272,7 +272,7 @@ def updatepole(cpen, conmat, cval, fval, sim, simi):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert findpole(cpen, cval, fval) == num_vars or info == DAMAGING_ROUNDING
         assert np.size(conmat, 0) == num_constraints and np.size(conmat, 1) == num_vars + 1
         assert not (np.isnan(conmat) | np.isneginf(conmat)).any()

@@ -57,7 +57,7 @@ def evaluate(calcfc, x, m_nlcon, amat, bvec):
     m_lcon = len(bvec) if bvec is not None else 0
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         # X should not contain NaN if the initial X does not contain NaN and the
         # subroutines generating # trust-region/geometry steps work properly so that
         # they never produce a step containing NaN/Inf.
@@ -90,7 +90,7 @@ def evaluate(calcfc, x, m_nlcon, amat, bvec):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         # With X not containing NaN, and with the moderated extreme barrier, F cannot
         # be NaN/+Inf, and CONSTR cannot be NaN/-Inf.
         assert not (np.isnan(f) or np.isposinf(f))

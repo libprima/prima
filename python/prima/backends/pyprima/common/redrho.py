@@ -20,7 +20,7 @@ def redrho(rho_in, rhoend):
     '''
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert rho_in > rhoend > 0
 
     #====================#
@@ -41,7 +41,7 @@ def redrho(rho_in, rhoend):
     #==================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert rho_in > rho >= rhoend
 
     return rho

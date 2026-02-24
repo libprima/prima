@@ -25,7 +25,7 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
     This subroutine preprocesses the inputs. It does nothing to the inputs that are valid.
     '''
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert num_vars >= 1
         if present(num_constraints):
             assert num_constraints >= 0
@@ -253,7 +253,7 @@ def preproc(solver, num_vars, iprint, maxfun, maxhist, ftarget, rhobeg, rhoend,
     #====================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert abs(iprint) <= 3
         assert maxhist >= 0 and maxhist <= maxfun
         if present(npt):

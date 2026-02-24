@@ -245,7 +245,7 @@ def planerot(x):
     '''
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert len(x) == 2, "x must be a 2-vector"
 
     # ==================
@@ -309,7 +309,7 @@ def planerot(x):
     #====================#
 
     # Postconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert G.shape == (2,2)
         assert np.all(np.isfinite(G))
         assert abs(G[0, 0] - G[1, 1]) + abs(G[0, 1] + G[1, 0]) <= 0
@@ -353,7 +353,7 @@ def isinv(A, B, tol=None):
     n = np.size(A, 0)
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         assert np.size(A, 0) == np.size(A, 1)
         assert np.size(B, 0) == np.size(B, 1)
         assert np.size(A, 0) == np.size(B, 0)
@@ -380,7 +380,7 @@ def isorth(A, tol=None):
     '''
 
     # Preconditions
-    if DEBUGGING:
+    if DEBUGGING[0]:
         if present(tol):
             assert tol >= 0
 

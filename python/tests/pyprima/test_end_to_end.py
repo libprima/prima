@@ -13,10 +13,10 @@ def test_end_to_end_bounds(backend_fixture):
     assert np.allclose(result.x, np.array([1, 10]), atol=1e-3)
 
 
-def test_end_to_end_linear_constraints(minimize_with_debugging, backend_fixture):
+def test_end_to_end_linear_constraints(pyprima_turn_on_debugging, backend_fixture):
     # x1 + x2 = 5
     A = np.array([[1, 1]])
     b = np.array([5])
-    result = minimize_with_debugging(obj, obj.x0, method='cobyla', constraints=[LinearConstraint(A, b, b)], options={'backend': backend_fixture})
+    result = minimize(obj, obj.x0, method='cobyla', constraints=[LinearConstraint(A, b, b)], options={'backend': backend_fixture})
     assert np.allclose(result.x, np.array([1.75, 3.25]), atol=1e-3)
     assert np.allclose(A @ result.x, b, atol=1e-3)
