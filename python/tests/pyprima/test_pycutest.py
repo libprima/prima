@@ -1,16 +1,14 @@
 import pytest
-# This exists mainly for those CI tests in which cutest/pycutest are not installed.
-import os
 import sys
+from prima.backends.pybindings import __cmake_build_type__
 pytestmark = [
-    pytest.mark.skipif(os.getenv('SKBUILD_CMAKE_BUILD_TYPE') != "Debug",
+    pytest.mark.skipif(__cmake_build_type__ != "Debug",
         reason="CUTEST tests must be run against Fortran compiled in Debug mode"),
     pytest.mark.skipif(sys.platform not in ['linux', 'darwin'],
         reason="pycutest is not supported on Windows")
 ]
 
 from .load_cutest_problem import load_cutest_problem
-import prima
 from prima import minimize, Bounds, LinearConstraint, NonlinearConstraint
 import numpy as np
 
@@ -32,6 +30,12 @@ discovery the input values were copied being allowing getcpen to continue.
 
 POLAK3, with the given options, provides coverage for the code to take an inverse of a
 nontriangular matrix (via updatexfc)
+
+MARATOS covers the case of having nonlinear equality constraints. This is needed for
+coverage of load_cutest_problem.
+
+HS44NEW covers the case of linear inequality constraints with a lower bound and no
+upper bound. This is needed for coverage of load_cutest_problem.
 '''
 
 
@@ -59,10 +63,12 @@ def get_constraints(constraints_in):
     return constraints_out
 
 
-@pytest.mark.parametrize("name", ['PALMER2C', 'PALMER3B',
-                                  'HS103', 'CRESC4', 'MGH10LS', 'TFI3',
-                                  'BIGGS3', 'BIGGS6', 'DEGENLPB', 'HS102',
-                                  'MISRA1ALS', 'POLAK3'])
+# Tests are roughly ordered from those that take the longest to those that take the
+# least amount of time, but this is not particularly important and may change on
+# different architectures.
+@pytest.mark.parametrize("name", ['POLAK3', 'HS103', 'PALMER2C', 'DEGENLPB', 'BIGGS6',
+                                  'MARATOS', 'PALMER3B', 'CRESC4', 'MGH10LS', 'TFI3',
+                                  'BIGGS3', 'HS102', 'MISRA1ALS', 'HS44NEW'])
 def test_cutest(name):
     fun, x0, lb, ub, constraints_in = load_cutest_problem(name)
     constraints = get_constraints(constraints_in) if constraints_in is not None else None

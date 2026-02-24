@@ -61,7 +61,7 @@ def test_provide_bounds_alone_and_select_BOBYQA():
     assert res.method == "bobyqa"
 
 
-def test_not_providing_bounds_linear_constraints_or_nonlinear_constraints():
+def test_unconstrained():
     x0 = [0, 0]
     res = minimize(fun, x0)
     assert fun.result_point_and_value_are_optimal(res)
@@ -69,7 +69,7 @@ def test_not_providing_bounds_linear_constraints_or_nonlinear_constraints():
 
 
 @pytest.mark.parametrize("method", ["newuoa", "uobyqa", "bobyqa", "lincoa", "cobyla"])
-def test_unconstrained_problem_with_any_algorithm(method):
+def test_unconstrained_and_select_any_algorithm(method):
     x0 = [0, 0]
     res = minimize(fun, x0, method=method)
     assert fun.result_point_and_value_are_optimal(res)

@@ -24,6 +24,7 @@ endif ()
 pybind11_add_module(pybindings pybindings.cpp)
 target_include_directories(pybindings PRIVATE ${CMAKE_SOURCE_DIR}/c/include)
 target_link_libraries(pybindings PRIVATE primac primaf)
+target_compile_definitions(pybindings PRIVATE CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 
 # This section is cribbed from scipy/meson.build
 if(WIN32 AND (CMAKE_C_COMPILER_ID MATCHES "GNU"))
