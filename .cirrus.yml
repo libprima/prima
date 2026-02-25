@@ -98,12 +98,12 @@ task:
 
     if [ "$(uname)" = FreeBSD ] ; then
         pkg update && pkg upgrade -y && pkg install -y bash gcc git cmake devel/gmake devel/gdb llvm-devel
-        find / -name flang
+        echo "MK=gmake" >> $CIRRUS_ENV
+
         export PATH=/usr/local/llvm-devel/bin:$PATH
         echo "PATH=$PATH" >> $CIRRUS_ENV
         type clang && clang --version
         type flang && flang --version
-        echo "MK=gmake" >> $CIRRUS_ENV
     elif grep -qi "fedora" /etc/os-release ; then
         dnf upgrade -y && dnf install -y gcc git make cmake gfortran gdb libasan libubsan
     elif grep -qi "alpine" /etc/os-release ; then
@@ -124,6 +124,10 @@ task:
         cd $ROOT_DIR/fortran/examples/$SOLVER
         export EXAMPLE_NUM=1 && $MK gtest
         export EXAMPLE_NUM=2 && $MK gtest
+        if type flang &> /dev/null ; then
+            export EXAMPLE_NUM=1 && $MK ftest
+            export EXAMPLE_NUM=2 && $MK ftest
+        fi
     done
 
 
@@ -191,6 +195,8 @@ task:
     echo $RK
 
     $MK clean && $MK gtest_i${IK}_r${RK}_d1_tst.$SOLVER
-
+    if type flang &> /dev/null ; then
+        $MK clean && $MK ftest_i${IK}_r${RK}_d1_tst.$SOLVER
+    fi
 
   on_failure:
