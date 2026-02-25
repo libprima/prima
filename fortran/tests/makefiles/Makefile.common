@@ -419,9 +419,9 @@ mtest_i2_r16_d1_tst_c mtest_i4_r16_d1_tst_c mtest_i8_r16_d1_tst_c mtest_i2_r16_d
 # Note that AOMP and AOCC also provide "flang". We define FFORT as follows to make sure the correct
 # one is being called. Otherwise, flang may be resolved to the one provided by AOMP or AOCC, which
 # did happen in our tests.
-FFORT := "$(shell find -L /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)"
-# On Windows, the above command will fail to find flang and we set FFORT manually.
-ifeq ($(OS),Windows_NT)
+FFORT := "$(shell find -L /usr/local/llvm* /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)"
+# If the above command fail to find flang (it happens on Windows), we try setting FFORT manually.
+ifeq ($(FFORT),)
 	FFORT := "$(shell command -v flang)"
 endif
 FFORT := $(FFORT) -fimplicit-none -Werror
