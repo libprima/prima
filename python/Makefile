@@ -11,3 +11,9 @@ test-no-cmake:
 coverage-html: test test-no-cmake
 	uvx coverage combine --append
 	uvx coverage html -d $$(git rev-parse --show-toplevel)/prima_htmlcov
+
+test-quick:
+	uv run pytest -s --cov=. --cov-branch --durations=20 --ignore=tests/pyprima/test_pycutest.py tests
+
+coverage-quick: test-quick
+	uvx coverage html -d $$(git rev-parse --show-toplevel)/prima_htmlcov
