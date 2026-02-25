@@ -9,7 +9,7 @@ option (BUILD_SHARED_LIBS "shared/static" ON)
 include (GNUInstallDirs)
 
 # the compiler enables an executable stack because of nested functions and this is fine
-# Zaikun 20260206: Is this still fined and needed? See commit 5e5e8716e709c4e534ccc1a916a15b7f89676ed3
+# Zaikun 20260206: Is this still fine and needed? See commit 5e5e8716e709c4e534ccc1a916a15b7f89676ed3
 # executable stacks are not allowed by glibc 2.4+; see
 # https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines,
 # https://github.com/JuliaLang/julia/issues/57250, https://forums.gentoo.org/viewtopic-p-8866168.html
