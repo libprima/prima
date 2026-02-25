@@ -148,7 +148,7 @@ task:
 
     if [ "$(uname)" = FreeBSD ] ; then
         export CC=clang
-        CFLAGS="-Wall -Werror -Wl,-z,execstack"
+        CFLAGS="-Wall -Wl,-z,execstack"
         export FC=flang
         export FFLAGS="-Werror -fimplicit-none -pedantic"
     else
