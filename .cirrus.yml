@@ -148,12 +148,13 @@ task:
 
     if [ "$(uname)" = FreeBSD ] ; then
         export CC=clang
-        CFLAGS="-Wall -Wl,-z,execstack"
+        export CFLAGS="-Wall -Werror"
         export FC=flang
         export FFLAGS="-Werror -fimplicit-none -pedantic"
+        export LDFLAGS="-z execstack"
     else
         export CC=gcc
-        CFLAGS="-Wall -Wextra -Wpedantic -Werror"
+        export CFLAGS="-Wall -Wextra -Wpedantic -Werror"
         export FC=gfortran
         export FFLAGS="-Wall -Wextra -Wpedantic -Werror -fimplicit-none -ftrampoline-impl=heap -frecursive -fcheck=all -fstack-check -Wno-function-elimination"
     fi
