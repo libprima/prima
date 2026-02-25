@@ -421,7 +421,7 @@ mtest_i2_r16_d1_tst_c mtest_i4_r16_d1_tst_c mtest_i8_r16_d1_tst_c mtest_i2_r16_d
 # did happen in our tests.
 FFORT := "$(shell find -L /usr/local/llvm* /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)"
 # If the above command fail to find flang (it happens on Windows), we try setting FFORT manually.
-ifeq ($(FFORT),)
+ifeq ($(FFORT),"")  # The quotation marks are necessary
 	FFORT := "$(shell command -v flang)"
 endif
 FFORT := $(FFORT) -fimplicit-none -Werror
