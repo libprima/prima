@@ -151,7 +151,7 @@ task:
         export CFLAGS="-Wall -Werror"
         export FC=flang
         export FFLAGS="-Werror -fimplicit-none -pedantic"
-        export LDFLAGS="-z execstack"
+        export LDFLAGS="-Wl,-z,execstack"
     else
         export CC=gcc
         export CFLAGS="-Wall -Wextra -Wpedantic -Werror"
