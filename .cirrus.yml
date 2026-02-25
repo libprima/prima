@@ -133,11 +133,7 @@ task:
 
   cmake_test_script: |
 
-    if [ "$(uname)" = FreeBSD ] ; then
-        echo "WARNING: CMake test is skipped on FreeBSD." >&2
-        echo "The current CMake test is with gcc only; should test FreeBSD with Clang/LLVM." >&2
-        #exit 0
-    elif [ "$(uname -m)" = x86_64 ] && grep -qi "alpine" /etc/os-release ; then
+    if [ "$(uname -m)" = x86_64 ] && grep -qi "alpine" /etc/os-release ; then
         echo "WARNING: CMake test is skipped on AMD64 Alpine." >&2
         echo "The current CMake test fails on AMD64 Alpine; should investigate the issue and fix it." >&2
         exit 0
@@ -151,12 +147,14 @@ task:
         export CFLAGS="-Wall -Werror"
         export FC=flang
         export FFLAGS="-Werror -fimplicit-none -pedantic"
-        export LDFLAGS="-Wl,-z,execstack"
+        #export LDFLAGS="-Wl,-z,execstack"
+        export LDFLAGS="-Wl,-z,noexecstack"
     else
         export CC=gcc
         export CFLAGS="-Wall -Wextra -Wpedantic -Werror"
         export FC=gfortran
         export FFLAGS="-Wall -Wextra -Wpedantic -Werror -fimplicit-none -ftrampoline-impl=heap -frecursive -fcheck=all -fstack-check -Wno-function-elimination"
+        export LDFLAGS="-Wl,-z,noexecstack"
     fi
 
     $FC --version
