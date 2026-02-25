@@ -97,7 +97,9 @@ task:
     cat /etc/os-release || true
 
     if [ "$(uname)" = FreeBSD ] ; then
-        pkg update && pkg upgrade -y && pkg install -y bash gcc git cmake devel/gmake devel/gdb
+        pkg update && pkg upgrade -y && pkg install -y bash gcc git cmake devel/gmake devel/gdb llvm-devel
+        type clang && clang --version
+        type flang && flang --version
         echo "MK=gmake" >> $CIRRUS_ENV
     elif grep -qi "fedora" /etc/os-release ; then
         dnf upgrade -y && dnf install -y gcc git make cmake gfortran gdb libasan libubsan
