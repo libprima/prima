@@ -136,7 +136,7 @@ task:
     if [ "$(uname)" = FreeBSD ] ; then
         echo "WARNING: CMake test is skipped on FreeBSD." >&2
         echo "The current CMake test is with gcc only; should test FreeBSD with Clang/LLVM." >&2
-        exit 0
+        #exit 0
     elif [ "$(uname -m)" = x86_64 ] && grep -qi "alpine" /etc/os-release ; then
         echo "WARNING: CMake test is skipped on AMD64 Alpine." >&2
         echo "The current CMake test fails on AMD64 Alpine; should investigate the issue and fix it." >&2
@@ -146,10 +146,17 @@ task:
     ROOT_DIR=$(git rev-parse --show-toplevel)
     cd $ROOT_DIR
 
-    export CC=gcc
-    CFLAGS="-Wall -Wextra -Wpedantic -Werror"
-    export FC=gfortran
-    export FFLAGS='-Wall -Wextra -Wpedantic -Werror -fimplicit-none -ftrampoline-impl=heap -frecursive -fcheck=all -fstack-check -Wno-function-elimination'
+    if [ "$(uname)" = FreeBSD ] ; then
+        export CC=clang
+        CFLAGS="-Wall -Werror"
+        export FC=flang
+        export FFLAGS="-Werror -fimplicit-none -pedantic"
+    else
+        export CC=gcc
+        CFLAGS="-Wall -Wextra -Wpedantic -Werror"
+        export FC=gfortran
+        export FFLAGS="-Wall -Wextra -Wpedantic -Werror -fimplicit-none -ftrampoline-impl=heap -frecursive -fcheck=all -fstack-check -Wno-function-elimination"
+    fi
 
     $FC --version
     $CC --version
