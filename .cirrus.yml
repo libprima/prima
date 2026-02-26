@@ -10,12 +10,12 @@ task:
   #
   # - The tests pass on AMD64 FreeBSD. For cmake_test_script with LLVM 22, the following is needed
   #      export LDFLAGS="-Wl,-z,execstack"
-  #   Otherswise, the error message is like
+  #   Otherwise, the error message is like
   #   "ld: error: CMakeFiles/primac.dir/uobyqa_c.f90.o: requires an executable stack, but -z execstack is not specified"
   #   In contrast, cmake_test_script passes on Linux with gcc with
   #      export LDFLAGS="-Wl,-z,noexecstack"
   #   if FFLAGS contains --ftrampoline-impl=heap.
-  #   This means that executable stack is not generated on Linux with gcc, but is generated on FreeBSD with LLVM. Why?
+  #   This means that an executable stack is not generated on Linux with gcc, but is generated on FreeBSD with LLVM. Why?
   #
   # - cmake_test_script fails on AMD64 Alpine when testing example_SOLVER_c and SOLVER_data_c.
   # The error message is like
