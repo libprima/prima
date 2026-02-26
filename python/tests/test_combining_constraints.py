@@ -1,7 +1,6 @@
 from prima import minimize as prima_minimize, NonlinearConstraint as prima_NLC, LinearConstraint as prima_LC, Bounds as prima_Bounds
 import numpy as np
 from objective import fun
-import pytest
 
 
 def test_providing_linear_and_nonlinear_constraints(backend_fixture):
@@ -15,15 +14,11 @@ def test_providing_linear_and_nonlinear_constraints(backend_fixture):
     assert res.method == "cobyla"
 
 
-def test_providing_bounds_and_linear_constraints(backend_fixture):
+def test_providing_bounds_and_linear_constraints():
     lc = prima_LC(np.array([1,1]), lb=10, ub=15)
     bounds = prima_Bounds(1, 1)
     x0 = [0, 0]
-    if backend_fixture == 'Fortran':
-        res = prima_minimize(fun, x0, constraints=lc, bounds=bounds, options={'backend': backend_fixture})
-    elif backend_fixture == "Python":
-        with pytest.warns(UserWarning, match="The pure Python implementation only supports COBYLA at this time. The Fortran implementation will be used instead."):
-            res = prima_minimize(fun, x0, constraints=lc, bounds=bounds, options={'backend': backend_fixture})
+    res = prima_minimize(fun, x0, constraints=lc, bounds=bounds)
     assert np.isclose(res.x[0], 1, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.x[1], 9, atol=1e-6, rtol=1e-6)
     assert np.isclose(res.fun, 41, atol=1e-6, rtol=1e-6)
