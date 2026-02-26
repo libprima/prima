@@ -15,6 +15,7 @@ include (GNUInstallDirs)
 # https://github.com/JuliaLang/julia/issues/57250, https://forums.gentoo.org/viewtopic-p-8866168.html
 # We should probably do the opposite: use `-Wl,-z,noexecstack` to pass the `-z noexecstack` option
 # to the linker and tells the linker to set the "stack is not executable" attribute in the output file.
+# Zaikun 20260226: See https://github.com/libprima/prima/issues/275#issuecomment-3963552883
 if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.18)
   include (CheckLinkerFlag)
   check_linker_flag (Fortran "-Wl,--no-warn-execstack" HAVE_WARN_EXECSTACK)
