@@ -99,7 +99,7 @@ jobs:
       - name: Conduct the test; treat timeout as SUCCESS (exit 0)
         uses: equipez/run-bash-command@v2
         with:
-          timelimit: 330m
+          timelimit: 320m
           command: |
             FFLAGS=-O$(($(date +%-d) % 5)) && FFLAGS=${FFLAGS/O0/g} && FFLAGS=${FFLAGS/O4/fast} && export FFLAGS
             echo "FFLAGS=$FFLAGS"

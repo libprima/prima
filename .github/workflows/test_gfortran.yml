@@ -164,7 +164,7 @@ jobs:
         if: runner.os != 'Windows'
         uses: equipez/run-bash-command@v2
         with:
-          timelimit: 330m
+          timelimit: 320m
           command: |
             IK=i$(( 2**(1 + $(date +%-d) % 3) ))
             echo "IK=${IK}"

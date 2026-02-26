@@ -170,7 +170,7 @@ jobs:
       - name: Conduct the test
         uses: equipez/run-matlab-command@v2
         with:
-          timelimit: 330m
+          timelimit: 320m
           command: |
             ver;
             root_dir = pwd();
