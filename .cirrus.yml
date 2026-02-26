@@ -8,26 +8,14 @@ task:
   #
   # - All tests pass on Debian and Fedora, including both AMD64 and ARM64.
   #
-  # - cmake_test_script fails on AMD64 FreeBSD with
-  # ```
-  # cmake --build . --target tests
-  # [ 57%] Built target primaf
-  # [ 65%] Built target primac
-  # [ 66%] Building C object c/tests/CMakeFiles/data_c_exe.dir/data.c.o
-  # [ 67%] Linking C executable data_c_exe
-  # /usr/local/bin/ld: ../libprimac.so: undefined reference to `__gcc_nested_func_ptr_created'
-  # /usr/local/bin/ld: ../libprimac.so: undefined reference to `__gcc_nested_func_ptr_deleted'
-  # ```
-  # This is probably because "Compiling with -ftrampoline-impl=heap generate calls to
-  # __gcc_nested_func_ptr_created and __gcc_nested_func_ptr_deleted in order to allocate and
-  # deallocate trampoline space on the executable heap. These functions are implemented in libgcc,
-  # and will only be provided on specific targets: x86_64 Darwin, x86_64 and aarch64 Linux."
-  # (extracted from gcc 16.0.1 documentation https://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html#index-ftrampoline-impl)
-  # In other words, these functions are not available on FreeBSD. Note that the default compiler on
-  # FreeBSD is Clang/LLVM, so we should test FreeBSD with Clang/LLVM instead of gcc, which has been
-  # deprecated on FreeBSD since version 10. See
-  # https://www.phoronix.com/news/MTE4NDQ
-  # https://unix.stackexchange.com/questions/49906/why-is-freebsd-deprecating-gcc-in-favor-of-clang-llvm.
+  # - The tests pass on AMD64 FreeBSD. For cmake_test_script with LLVM 22, the following is needed
+  #      export LDFLAGS="-Wl,-z,execstack"
+  #   Otherswise, the error message is like
+  #   "ld: error: CMakeFiles/primac.dir/uobyqa_c.f90.o: requires an executable stack, but -z execstack is not specified"
+  #   In contrast, cmake_test_script passes on Linux with gcc with
+  #      export LDFLAGS="-Wl,-z,noexecstack"
+  #   if FFLAGS contains --ftrampoline-impl=heap.
+  #   This means that executable stack is not generated on Linux with gcc, but is generated on FreeBSD with LLVM. Why?
   #
   # - cmake_test_script fails on AMD64 Alpine when testing example_SOLVER_c and SOLVER_data_c.
   # The error message is like
@@ -143,18 +131,19 @@ task:
     cd $ROOT_DIR
 
     if [ "$(uname)" = FreeBSD ] ; then
+        # See https://github.com/libprima/prima/issues/275 for why we use clang and flang on FreeBSD,
+        # and gcc and gfortran on Linux.
         export CC=clang
         export CFLAGS="-Wall -Werror"
         export FC=flang
         export FFLAGS="-Werror -fimplicit-none -pedantic"
-        #export LDFLAGS="-Wl,-z,execstack"
-        export LDFLAGS="-Wl,-z,noexecstack"
+        export LDFLAGS="-Wl,-z,execstack"  # Executable stack is necessary. This is needed as of LLVM 22
     else
         export CC=gcc
         export CFLAGS="-Wall -Wextra -Wpedantic -Werror"
         export FC=gfortran
         export FFLAGS="-Wall -Wextra -Wpedantic -Werror -fimplicit-none -ftrampoline-impl=heap -frecursive -fcheck=all -fstack-check -Wno-function-elimination"
-        export LDFLAGS="-Wl,-z,noexecstack"
+        export LDFLAGS="-Wl,-z,noexecstack"  # No executable stack is needed. This is possible with gcc 14+
     fi
 
     $FC --version
