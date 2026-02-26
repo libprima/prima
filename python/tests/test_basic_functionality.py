@@ -4,7 +4,7 @@ import pytest
 from objective import fun
 
 
-def test_provide_nonlinear_constraints_alone(backend_fixture):
+def test_provide_nonlinear_constraints_alone(pyprima_turn_on_debugging, backend_fixture):
     nlc = NLC(lambda x: np.array([x[0]**2, x[1]**2]), lb=[25]*2, ub=[100]*2)
     x0 = [0, 0]
     res = minimize(fun, x0, constraints=nlc, options={'backend': backend_fixture})
@@ -80,3 +80,10 @@ def test_invalid_backend():
     x0 = [0, 0]
     with pytest.raises(ValueError, match="Backend must be either 'Fortran' or 'Python', not 'InvalidBackend'"):
         minimize(fun, x0, options={'backend': 'InvalidBackend'})
+
+
+def test_select_algorithm_not_provided_by_python_implementation():
+    x0 = [0, 0]
+    with pytest.warns(UserWarning, match="The pure Python implementation only supports COBYLA at this time. The Fortran implementation will be used instead."):
+        res = minimize(fun, x0, method='newuoa', options={'backend': 'Python'})
+        assert fun.result_point_and_value_are_optimal(res)

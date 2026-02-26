@@ -489,8 +489,19 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
     elif options['backend'].lower() == "python":
         from .backends.pyprima.cobyla.cobyla import cobyla
         from .backends.pyprima.common.infos import SMALL_TR_RADIUS
+        if x0_is_scalar:
+            x0 = np.array([x0])
+        if args and x0_is_scalar:
+            original_fun = fun
+            fun = lambda x: original_fun(x[0], args)
+        elif args:
+            original_fun = fun
+            fun = lambda x: original_fun(x, args)
+        elif x0_is_scalar:
+            original_fun = fun
+            fun = lambda x: original_fun(x[0])
         def calcfc(x):
-            f = fun(x, *args)
+            f = fun(x)
             if nonlinear_constraint_function is not None:
                 nlconstr = nonlinear_constraint_function(x)
             else:
@@ -512,6 +523,8 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
             callback=callback,
             **options
         )
+        if x0_is_scalar:
+            result.x = result.x[0]
         result = OptimizeResult(
             x = result.x,
             success = result.info == SMALL_TR_RADIUS,
