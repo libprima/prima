@@ -175,7 +175,7 @@ jobs:
             make ${{ matrix.compiler }}test_i2_r${RK}_d1_tst.${{ matrix.solver }}
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
           name: ${{ matrix.os }}-${{ matrix.solver }}-${{ matrix.compiler }}-${{ matrix.testdim }}

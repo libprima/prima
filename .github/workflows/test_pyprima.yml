@@ -46,7 +46,7 @@ jobs:
 
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         id: artifact-coverage
         with:
           name: coverage-html-${{ matrix.os }}
