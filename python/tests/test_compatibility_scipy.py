@@ -10,6 +10,7 @@ def test_prima():
     test_providing_bounds_and_linear_and_nonlinear_constraints(minimize, NLC, LC, Bounds)
 
 
+@pytest.mark.skip(reason="Need scipy to get latest PRIMA which correctly updates constraints with fixed bounds")
 def test_scipy():
     scipy = pytest.importorskip("scipy")
     if version.parse(scipy.__version__) < version.parse("1.11.0"):

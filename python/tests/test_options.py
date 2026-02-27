@@ -1,8 +1,9 @@
 from prima import minimize, LinearConstraint as LC, NonlinearConstraint as NLC, PRIMAMessage
+from prima.backends.pyprima.common.infos import CALLBACK_TERMINATE
 from objective import fun
 import numpy as np
 import pytest
-from sys import platform
+import platform
 
 
 def fun_with_star_args(x, *args):
@@ -13,82 +14,104 @@ def fun_with_regular_args(x, args):
     return fun(x) + args[0]
 
 
-def test_normal_function():
+def test_normal_function(backend_fixture):
     x0 = [0.0] * 2
-    res = minimize(fun, x0)
+    method = 'COBYLA' if backend_fixture == 'Python' else None
+    res = minimize(fun, x0, method=method, options={'backend': backend_fixture})
     assert fun.result_point_and_value_are_optimal(res)
 
 
-def test_function_with_star_args():
+def test_function_with_star_args(backend_fixture):
     x0 = np.array([0.0] * 2)
     myargs = (5,)
-    res = minimize(fun_with_star_args, x0, args=myargs)
+    method = 'COBYLA' if backend_fixture == 'Python' else None
+    res = minimize(fun_with_star_args, x0, args=myargs, method=method, options={'backend': backend_fixture})
     assert fun.result_point_is_optimal(res)
     assert np.isclose(res.fun, fun.optimal_f + myargs[0], rtol=1e-6)
 
 
-def test_function_with_regular_args():
+def test_function_with_regular_args(backend_fixture):
     x0 = np.array([0.0] * 2)
     myargs = (6,)
-    res = minimize(fun_with_regular_args, x0, args=myargs)
+    method = 'COBYLA' if backend_fixture == 'Python' else None
+    res = minimize(fun_with_regular_args, x0, args=myargs, method=method, options={'backend': backend_fixture})
     assert fun.result_point_is_optimal(res)
     assert np.isclose(res.fun, fun.optimal_f + myargs[0], rtol=1e-6)
 
 
-def test_callback():
+def test_callback(backend_fixture):
     x0 = [0.0] * 2
     nlc = NLC(lambda x: np.array([x[0], x[1]]), lb=[-np.inf]*2, ub=[10]*2)
     callback_called = False
     def callback(x, f, nf, tr, cstrv, nlconstr):
         nonlocal callback_called  # this makes sure we reference the variable in the parent scope
         callback_called = True
-    res = minimize(fun, x0, method="COBYLA", constraints=nlc, callback=callback)
+    res = minimize(fun, x0, method="COBYLA", constraints=nlc, callback=callback, options={'backend': backend_fixture})
     assert callback_called
     assert fun.result_point_and_value_are_optimal(res)
 
 
-def test_callback_early_termination():
+@pytest.mark.parametrize("callback_return_immediately", [True, False])
+def test_callback_early_termination(backend_fixture, callback_return_immediately):
     x0 = [0.0] * 2
     def callback(x, *args):
+        if callback_return_immediately:
+            return True
         if x[0] > 1:
             return True
-    res = minimize(fun, x0, callback=callback)
+    # Force the use of COBYLA so that we get the same number of function evaluations
+    res = minimize(fun, x0, callback=callback, method='cobyla',
+        options={'backend': backend_fixture})
     # Assert that the results are not optimal since we terminated early
     assert not fun.result_point_and_value_are_optimal(res)
+    assert res.nfev == 3 if callback_return_immediately else 4
+    assert res.status == CALLBACK_TERMINATE
 
 
-def test_ftarget():
+
+def test_ftarget(backend_fixture):
     x0 = [0.0] * 2
-    options = {'ftarget': 20}
-    res = minimize(fun, x0, options=options)
+    options = {'ftarget': 20, 'backend': backend_fixture}
+    method = 'COBYLA' if backend_fixture == 'Python' else None
+    res = minimize(fun, x0, method=method, options=options)
     # Assert that the results are not optimal since we're stopping
     # at ftarget=20 instead of the natural minimum of 0.
     assert not fun.result_point_and_value_are_optimal(res)
 
 
-@pytest.mark.skipif(platform == "win32", reason="Windows outputs some strange characters, probably \\r\\n")
-def test_iprint(capfd):
+def test_iprint(capfd, backend_fixture):
     x0 = [0.0] * 2
-    options = {'iprint': PRIMAMessage.EXIT}
-    res = minimize(fun, x0, options=options)
+    nlc = NLC(lambda x: np.array([x[0], x[1]]), lb=[-np.inf]*2, ub=[10]*2)
+    options = {'iprint': PRIMAMessage.EXIT.value, 'backend': backend_fixture}
+    res = minimize(fun, x0, options=options, constraints=nlc)
     assert fun.result_point_and_value_are_optimal(res)
     outerr = capfd.readouterr()
     # In order to account for some machines (i.e. 32bit machines we test on) providing
     # slightly different values, we use this formatting function to get the numbers in
     # the right format, whatever they may be.
     fmt = lambda x: np.format_float_scientific(x, precision=16, unique=False, exp_digits=3).upper()
-    assert outerr.out == f'''
-Return from NEWUOA because the trust region radius reaches its lower bound.
-Number of function values = {res.nfev}   Least value of F =  {fmt(res.fun)}
+    if backend_fixture == 'Fortran':
+        assert outerr.out == f'''
+Return from COBYLA because the trust region radius reaches its lower bound.
+Number of function values = {res.nfev}   Least value of F =  {fmt(res.fun)}   Constraint violation =  0.0000000000000000E+000
 The corresponding X is:  {fmt(res.x[0])}   {fmt(res.x[1])}
+The constraint value is: {fmt(res.nlconstr[0])}  {fmt(res.nlconstr[1])}
+'''.replace('\n', '\r\n' if platform.system() == "Windows" else '\n')
+    elif backend_fixture == "Python":
+        assert outerr.out == f'''Return from COBYLA because the trust region radius reaches its lower bound.
+Number of function values = {res.nfev}   Least value of F = {res.fun:.16e}   Constraint violation = 0.0000000000000000e+00
+The corresponding X is: [{res.x[0]:.16e} {res.x[1]:.16e}]
+The constraint value is: [{res.nlconstr[0]:.16e} {res.nlconstr[1]:.16e}]
 '''
+    # Note that the Python backend does not require the \r\n conversion.
     assert outerr.err == ''
 
 
-def test_maxfev():
+def test_maxfev(backend_fixture):
     x0 = [0.0] * 2
-    options = {'maxfev': 10}
-    res = minimize(fun, x0, options=options)
+    options = {'maxfev': 10, 'backend': backend_fixture}
+    method = 'COBYLA' if backend_fixture == 'Python' else None
+    res = minimize(fun, x0, options=options, method=method)
     assert res.nfev == 10
 
 
@@ -100,21 +123,23 @@ def test_npt():
     assert res_with_npt.nfev != res_without_npt.nfev
 
 
-def test_rhobeg():
+def test_rhobeg(backend_fixture):
     x0 = [0.0] * 2
-    options = {'rhobeg': 1e-3}
-    res_with_rhobeg = minimize(fun, x0, options=options)
-    res_without_rhobeg = minimize(fun, x0)
+    options = {'rhobeg': 1e-3, 'backend': backend_fixture}
+    method = 'COBYLA' if backend_fixture == 'Python' else None
+    res_with_rhobeg = minimize(fun, x0, options=options, method=method)
+    res_without_rhobeg = minimize(fun, x0, method=method)
     # With a smaller rhobeg, we're taking smaller steps at first
     # and so we should converge more slowly
     assert res_with_rhobeg.nfev > res_without_rhobeg.nfev
 
 
-def test_rhoend():
+def test_rhoend(backend_fixture):
     x0 = [0.0] * 2
-    options = {'rhoend': 1e-2}
-    res_with_rhoend = minimize(fun, x0, options=options)
-    res_without_rhoend = minimize(fun, x0)
+    options = {'rhoend': 1e-2, 'backend': backend_fixture}
+    method = 'COBYLA' if backend_fixture == 'Python' else None
+    res_with_rhoend = minimize(fun, x0, options=options, method=method)
+    res_without_rhoend = minimize(fun, x0, method=method)
     # With a smaller rhoend we have a larger tolerance for the final
     # trust region radius, and so we should converge more quickly
     assert res_with_rhoend.nfev < res_without_rhoend.nfev
