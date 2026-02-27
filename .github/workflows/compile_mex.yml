@@ -170,7 +170,7 @@ jobs:
             testprima;
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: prima-${{ matrix.os }}-${{ matrix.matlab }}
           path: |
@@ -228,7 +228,7 @@ jobs:
   #           testprima;
 
   #     - name: Store artifacts
-  #       uses: actions/upload-artifact@v6
+  #       uses: actions/upload-artifact@v7
   #       with:
   #         name: prima-macos-arm64-${{ env.MATLAB_VERSION }}
   #         path: |
