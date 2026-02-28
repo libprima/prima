@@ -191,7 +191,7 @@ task:
 
     $MK clean && $MK gtest_i${IK}_r${RK}_d1_tst.$SOLVER
     if type flang &> /dev/null ; then
-        RK=$((2**((${NS:-0} % 2) + 2)))  # Use 0 if completely empty
+        RK=$((2**((${NS:-0} % 2) + 2)))  # Use 0 if completely empty; LLVM flang does not support RK=16 as of LLVM 22.1.0
         echo $RK
         $MK clean && $MK ftest_i${IK}_r${RK}_d1_tst.$SOLVER
     fi
