@@ -10,7 +10,7 @@ if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
     exit 1
 fi
 
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ "$(uname)" == Darwin || "$(uname)" == FreeBSD ]] ; then
     SEDI='sed -i ""'
 else
     SEDI='sed -i'

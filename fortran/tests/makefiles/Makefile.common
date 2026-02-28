@@ -302,16 +302,18 @@ else
 	GDB := bash $(TOOLS_DIR)/run_gdb
 endif
 
-# Define SEDI.
-# When calling "sed -i" on macOS, it is obligatory to specify a string (e.g., .bak) after -i as the
-# extension for saving a backup. If the string is "", then no backup will be saved. If no string is
-# specified, then an error will be raised, saying "invalid command code".
-SEDI :=
-ifeq ($(OSTYPE), MAC)
-	SEDI := sed -i ""
-else
-	SEDI := sed -i
-endif
+## Define SEDI.
+## When calling "sed -i" on macOS and FreeBSD, it is obligatory to specify a string (e.g., .bak)
+## after -i as the extension for saving a backup. If the string is "", then no backup will be saved.
+## If no string is specified, then an error will be raised, saying "invalid command code".
+#SEDI :=
+#ifeq ($(OSTYPE), MAC)
+#	SEDI := sed -i ""
+#else ifeq ($(OSTYPE), FREEBSD)
+#	SEDI := sed -i ""
+#else
+#	SEDI := sed -i
+#endif
 
 # Define NPROCS to be the number of processors available to make tests in parallel.
 NPROCS :=
@@ -1109,22 +1111,6 @@ source_%: $(SRC_DIRS)
 		bash $(TOOLS_DIR)/9src ./ ; \
 	fi
 	@printf "Done.\n"
-
-# Adapt the header file for the test.
-# Zaikun 20230411: Instead of modifying the header file, we should use the -D option of the
-# preprocessors (cpp or fpp). See the definition of $(EXTRA_FLAGS) for details.
-#header_%: IK = $(shell expr 8 \* $$(echo $@ | sed "s/.*_i//" | sed "s/_.*//"))
-#header_%: RP = $(shell expr 8 \* $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//"))
-#header_%: DBG = $(shell echo $@ | sed "s/.*_d//" | sed "s/_.*//")
-#header_%: QPAVLB = $(shell expr $$(echo $@ | sed "s/.*_r//" | sed "s/_.*//") / 16)
-#header_%: source_%
-#	@printf "\nPreparing the header file for the test.\n"
-#	$(SEDI) "s|^#define PRIMA_QP_AVAILABLE [0-9]*|#define PRIMA_QP_AVAILABLE $(QPAVLB)|" $(HEADERS)
-#	$(SEDI) "s|^#define PRIMA_INTEGER_KIND [0-9]*|#define PRIMA_INTEGER_KIND $(IK)|" $(HEADERS)
-#	$(SEDI) "s|^#define PRIMA_REAL_PRECISION [0-9]*|#define PRIMA_REAL_PRECISION $(RP)|" $(HEADERS)
-#	$(SEDI) "s|^#define PRIMA_DEBUGGING [0-9]*|#define PRIMA_DEBUGGING $(DBG)|" $(HEADERS)
-#	$(SEDI) "s|^#define PRIMA_AGGRESSIVE_OPTIONS [0-9]*|#define PRIMA_AGGRESSIVE_OPTIONS $(AGGRESSIVE)|" $(HEADERS)
-#	@printf "Done.\n"
 
 
 ####################################################################################################
