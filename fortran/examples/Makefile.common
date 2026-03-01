@@ -22,6 +22,12 @@ FFORT := "$(shell find -L /usr/local/llvm* /usr/lib/llvm* /opt/homebrew /usr/loc
 ifeq ($(FFORT),"")  # The quotation marks are necessary
 	FFORT := "$(shell command -v flang)"
 endif
+# On Windows, we need to specify the --resource-dir
+ifeq ($(OS),Windows_NT)
+	VERSION := $(shell $(FFORT) --version | grep version | sed -E 's/.*version ([0-9]+).*/\1/')
+	FFORT := $(FFORT) --resource-dir="$(shell dirname $(FFORT))/../lib/clang/$(VERSION)"
+endif
+# On macOS, we need to link against the system libraries.
 ifeq ($(shell uname -s),Darwin)
 	SDKROOT := $(shell /usr/bin/xcrun --show-sdk-path -sdk macosx)
 	FFORT := $(FFORT) -lSystem -L$(SDKROOT)/usr/lib
