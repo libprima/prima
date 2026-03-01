@@ -24,7 +24,7 @@ ifeq ($(FFORT),"")  # The quotation marks are necessary
 endif
 # On Windows, we need to specify the clang_rt.
 ifeq ($(OS),Windows_NT)
-	ARCH := $(shell $(FFORT) -dumpmachine | cut -d- -f)
+	ARCH := $(shell $(FFORT) -dumpmachine | cut -d- -f1)
 	CLANGRT := "$(shell find "/c/Program Files/LLVM" -name "clang_rt.builtins*$(ARCH)*" 2>/dev/null)"  # Note the quotation marks to handle spaces in the path.
 	FFORT := $(FFORT) $(CLANGRT)
 endif
