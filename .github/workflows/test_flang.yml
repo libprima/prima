@@ -78,7 +78,7 @@ jobs:
         if: runner.os != 'Windows'
         uses: equipez/run-bash-command@v2
         with:
-          timelimit: 320m
+          timelimit: 180m
           command: |
             bash .github/scripts/install_llvm \
               || { echo "Warning: LLVM Flang installation failed!!" >&2; exit 0; }
