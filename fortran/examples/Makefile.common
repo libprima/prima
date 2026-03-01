@@ -22,9 +22,10 @@ FFORT := "$(shell find -L /usr/local/llvm* /usr/lib/llvm* /opt/homebrew /usr/loc
 ifeq ($(FFORT),"")  # The quotation marks are necessary
 	FFORT := "$(shell command -v flang)"
 endif
-# On Windows, we need to specify the --resource-dir
+# On Windows, we need to specify the clang_rt.
 ifeq ($(OS),Windows_NT)
-	CLANGRT := "$(shell find "/c/Program Files/LLVM" -name "clang_rt.builtins*" 2>/dev/null)"
+	ARCH := $(shell uname -m)
+	CLANGRT := "$(shell find "/c/Program Files/LLVM" -name "clang_rt.builtins*$(ARCH)" 2>/dev/null)"  # Note the quotation marks to handle spaces in the path.
 	FFORT := $(FFORT) $(CLANGRT)
 endif
 # On macOS, we need to link against the system libraries.
