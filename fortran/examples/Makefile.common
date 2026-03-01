@@ -24,8 +24,8 @@ ifeq ($(FFORT),"")  # The quotation marks are necessary
 endif
 # On Windows, we need to specify the --resource-dir
 ifeq ($(OS),Windows_NT)
-	VERSION := $(shell $(FFORT) --version | grep version | sed -E 's/.*version ([0-9]+).*/\1/')
-	FFORT := $(FFORT) -resource-dir="$(shell dirname $(FFORT))/../lib/clang/$(VERSION)"
+	VERSION := $(shell clang --version | grep version | sed -E 's/.*version ([0-9]+).*/\1/')
+	FFORT := $(FFORT) -resource-dir="$(shell dirname $(dirname $(FFORT)))/lib/clang/$(VERSION)"
 endif
 # On macOS, we need to link against the system libraries.
 ifeq ($(shell uname -s),Darwin)
