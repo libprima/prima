@@ -74,7 +74,16 @@ jobs:
         shell: bash
         run: bash .github/scripts/misc_setup
 
-      - name: Install LLVM Flang
+      - name: Install LLVM Flang on non-Windows; treat timeout as SUCCESS (exit 0), which may happen on macos-intel.
+        if: runner.os != 'Windows'
+        uses: equipez/run-bash-command@v2
+        with:
+          timelimit: 320m
+          command: |
+            bash .github/scripts/install_llvm \
+              || { echo "Warning: LLVM Flang installation failed!!" >&2; exit 0; }
+      - name: Install LLVM Flang on Windows
+        if: runner.os == 'Windows'
         shell: bash
         run: |
           bash .github/scripts/install_llvm \
@@ -143,6 +152,18 @@ jobs:
           fi
           ##########################################################################################
 
+          # On macos-intel, the installation of LLVM Flang with Homebrew may fail. If so and if the
+          # current day is not divisible by 3, then we skip the test.
+          if ! type flang >/dev/null 2>&1 ; then
+            if [[ ${{ runner.os }} == macOS && ${{ runner.arch }} == X64 && $(( $(date +%-d) % 3 )) -ne 0 ]] ; then
+              echo "Warning: flang not found!! Skipping the test." >&2
+              exit 0
+            else
+              echo "Error: flang not found!! Skipping the test." >&2
+              exit 1
+            fi
+          fi
+
           export FFLAGS=${{ matrix.fflags }}
           export TESTDIM=${{ matrix.testdim }}
           IK=i$(( 2**(1 + $(date +%-d) % 3) ))
@@ -175,5 +196,3 @@ jobs:
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         shell: bash  # Important; otherwise, `rm -rf` will not work on Windows.
         run: rm -rf ${{ env.TEST_DIR }}
-
-

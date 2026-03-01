@@ -106,5 +106,3 @@ jobs:
       - name: Remove the test data
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         run: rm -rf ${{ env.TEST_DIR }}
-
-
