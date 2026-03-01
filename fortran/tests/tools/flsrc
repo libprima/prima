@@ -19,9 +19,10 @@ if ! basename "$DIR" | grep -q ".test\|test." || ! [[ -d "$DIR" ]] ; then
 fi
 
 if [[ -f "$LINALG" ]] ; then
-    # See https://github.com/llvm/llvm-project/issues/89528
-    STR="Y is NaN if and only if X contains NaN"
-    $SEDI "/$STR/d" "$LINALG"
+    echo "!!! Warning: $0 is DOING NOTHING !!!" >&2
+    # # See https://github.com/llvm/llvm-project/issues/89528
+    # STR="Y is NaN if and only if X contains NaN"
+    # $SEDI "/$STR/d" "$LINALG"
 
     # The following should have been fixed by commit 399df3ae055566c3f6133118ebab6fdcc16cebb5
     # # See https://github.com/llvm/llvm-project/issues/180957
