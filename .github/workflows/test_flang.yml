@@ -134,6 +134,25 @@ jobs:
       - name: Conduct the test
         shell: bash
         run: |
+          ##########################################################################################
+          # Skip the test on windows-latest if flang is not found and LLVM version is less than 22,
+          # as LLVM 21 installed by choco on windows-latest does not include flang. See
+          # https://github.com/llvm/llvm-project/issues/181348
+          if [[ "${{ matrix.os }}" == windows-latest ]] ; then
+            echo "We are on ${{ matrix.os }}. LLVM installed by choco may not provide flang."
+            # Infer the version of LLVM from llvm-ar. We should have used `llvm-config --version`,
+            # but it is not available on windows-latest after LLVM 21.1.8 is installed with choco.
+            LLVM_VERSION=$(llvm-ar --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | cut -d. -f1)
+            echo "LLVM version inferred from llvm-ar: $LLVM_VERSION"
+            FLANG_PATH=$(command -v flang 2>/dev/null || echo "NOT_FOUND")
+            echo "Flang path: $FLANG_PATH"
+            if [[ "$LLVM_VERSION" -lt 22 && "$FLANG_PATH" == "NOT_FOUND" ]] ; then
+              echo "Warning: flang not found!! Skipping the test." >&2
+              exit 0
+            fi
+          fi
+          ##########################################################################################
+
           # On macos-intel, the installation of LLVM Flang with Homebrew may fail. If so and if the
           # current day is not divisible by 3, then we skip the test.
           if ! type flang >/dev/null 2>&1 ; then
