@@ -24,7 +24,7 @@ ifeq ($(FFORT),"")  # The quotation marks are necessary
 endif
 # On Windows, we need to specify the --resource-dir
 ifeq ($(OS),Windows_NT)
-	CLANGRT := $(shell find "/c/Program Files/LLVM" -name "clang_rt.builtins*" 2>/dev/null)
+	CLANGRT := "$(shell find "/c/Program Files/LLVM" -name "clang_rt.builtins*" 2>/dev/null)"
 	FFORT := $(FFORT) $(CLANGRT)
 endif
 # On macOS, we need to link against the system libraries.
