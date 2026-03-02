@@ -28,7 +28,7 @@ ifeq ($(OS),Windows_NT)
 	ARCH := $(shell $(FFORT) -dumpmachine | cut -d- -f1)
 	# Note the quotation marks to handle spaces in the path.
 	CLANGRT := "$(shell find "/c/Program Files/LLVM/lib" -name clang_rt.builtins*$(ARCH)* 2>/dev/null)"
-	# In case nothing is found above, we try to find clang_rt without the architecture part
+	# In case nothing is found above, we try clang_rt without the architecture part
 	ifeq ($(CLANGRT),"")
 		CLANGRT := "$(shell find "/c/Program Files/LLVM/lib" -name "clang_rt.builtins*" -print -quit 2>/dev/null)"
 	endif
