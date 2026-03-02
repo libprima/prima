@@ -10,14 +10,14 @@ MFORT := "$(shell command -v amdflang)"
 mtest: FC := $(MFORT) -std=f$(FSTD)
 
 # AMD AOCC Flang
-DFORT := "$(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2> /dev/null | sort | tail -n 1)"
+DFORT := "$(shell find -L /opt/AMD -type f -name flang -exec test -x {} \; -print 2> /dev/null | sort -V | tail -n 1)"
 dtest: FC := $(DFORT) -Wall -Wextra -std=f$(FSTD) -Mstandard
 
 # LLVM Flang
 # Note that AOMP and AOCC also provide "flang". We define FFORT as follows to make sure the correct
 # one is being called. Otherwise, flang may be resolved to the one provided by AOMP or AOCC, which
 # did happen in our tests.
-FFORT := "$(shell find -L /usr/local/llvm* /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort | tail -n 1)"
+FFORT := "$(shell find -L /usr/local/llvm* /usr/lib/llvm* /opt/homebrew /usr/local/opt /usr/local/Cellar -type f -name flang -exec test -x {} \; -print 2>/dev/null | sort -V | tail -n 1)"
 # If the above command fail to find flang (it happens on Windows), we try setting FFORT manually.
 ifeq ($(FFORT),"")  # The quotation marks are necessary
 	FFORT := "$(shell command -v flang)"
@@ -27,10 +27,10 @@ ifeq ($(OS),Windows_NT)
 	# Architecture part of the target triple, e.g., "x86_64" or "aarch64".
 	ARCH := $(shell $(FFORT) -dumpmachine | cut -d- -f1)
 	# Note the quotation marks to handle spaces in the path.
-	CLANGRT := "$(shell find "/c/Program Files/LLVM/lib" -name clang_rt.builtins*$(ARCH)* 2>/dev/null)"
+	CLANGRT := "$(shell find "/c/Program Files/LLVM/lib" -name clang_rt.builtins*$(ARCH)* 2>/dev/null | sort -V | tail -n 1)"
 	# In case nothing is found above, we try clang_rt without the architecture part
 	ifeq ($(CLANGRT),"")
-		CLANGRT := "$(shell find "/c/Program Files/LLVM/lib" -name "clang_rt.builtins*" -print -quit 2>/dev/null)"
+		CLANGRT := "$(shell find "/c/Program Files/LLVM/lib" -name "clang_rt.builtins*" 2>/dev/null | sort -V | tail -n 1)"
 	endif
 	FFORT := $(FFORT) $(CLANGRT)
 endif

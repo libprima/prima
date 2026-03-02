@@ -94,9 +94,9 @@ jobs:
           ARCH=$(flang -dumpmachine | cut -d- -f1)
           echo "Flang target architecture: ${ARCH}"
           echo "Looking for clang_rt.builtins*${ARCH} in /c/Program Files/LLVM/lib"
-          find "/c/Program Files/LLVM/lib" -name clang_rt.builtins*${ARCH}* 2>/dev/null || echo "clang_rt.builtins*${ARCH} not found!!"
-          echo "Looking for clang_rt.builtins* in /c/Program Files/LLVM/lib (the first one found will be printed)"
-          find "/c/Program Files/LLVM/lib" -name "clang_rt.builtins*" -print -quit 2>/dev/null || echo "clang_rt.builtins not found!!"
+          find "/c/Program Files/LLVM/lib" -name clang_rt.builtins*$(ARCH)* 2>/dev/null | sort -V | tail -n 1 || echo "clang_rt.builtins*${ARCH} not found!!"
+          echo "Looking for clang_rt.builtins* in /c/Program Files/LLVM/lib (the last one found will be printed)"
+          find "/c/Program Files/LLVM/lib" -name "clang_rt.builtins*" 2>/dev/null | sort -V | tail -n 1 || echo "clang_rt.builtins not found!!"
           echo "Looking for clang_rt.builtins* in /c/Program Files/LLVM/lib (all found will be printed)"
           find "/c/Program Files/LLVM/lib" -name "clang_rt.builtins*" 2>/dev/null || echo "clang_rt.builtins not found!!"
 
