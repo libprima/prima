@@ -89,6 +89,17 @@ jobs:
           bash .github/scripts/install_llvm \
             || { echo "Warning: LLVM Flang installation failed!!" >&2; exit 0; }
 
+          # Check where is clang_rt.builtins
+          ls -alR "/c/Program Files/LLVM/lib" || echo "LLVM/lib not found!!"
+          ARCH=$(flang -dumpmachine | cut -d- -f1)
+          echo "Flang target architecture: ${ARCH}"
+          echo "Looking for clang_rt.builtins*${ARCH} in /c/Program Files/LLVM/lib"
+          find "/c/Program Files/LLVM/lib" -name clang_rt.builtins*${ARCH}* 2>/dev/null || echo "clang_rt.builtins*${ARCH} not found!!"
+          echo "Looking for clang_rt.builtins* in /c/Program Files/LLVM/lib (the first one found will be printed)"
+          find "/c/Program Files/LLVM/lib" -name "clang_rt.builtins*" -print -quit 2>/dev/null || echo "clang_rt.builtins not found!!"
+          echo "Looking for clang_rt.builtins* in /c/Program Files/LLVM/lib (all found will be printed)"
+          find "/c/Program Files/LLVM/lib" -name "clang_rt.builtins*" 2>/dev/null || echo "clang_rt.builtins not found!!"
+
       - name: Revise maxtr
         # This is to see whether "GitHub Actions xx lost communication with the server" was caused
         # by maxtr = huge(maxtr) - 1_IK. We suspect this because the error occurs with IK = i8
