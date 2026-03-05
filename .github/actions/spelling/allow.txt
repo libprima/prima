@@ -2562,3 +2562,14 @@ actionlint
 timelimit
 euo
 ftrampoline
+asanyarray
+builddir
+flatnonzero
+mastsif
+nontriangular
+pybindings
+sifdecode
+SKBUILD
+testsetup
+unconstr
+uvx

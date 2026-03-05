@@ -1,0 +1,128 @@
+name: Python run all tests including pycutest
+
+on:
+  # Trigger the workflow on push or pull request
+  push:
+  pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
+  # Trigger the workflow manually
+  workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
+
+# Show the git ref in the workflow name if it is invoked manually.
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}', inputs.git-ref) || '' }}
+
+
+jobs:
+  run_all_tests:
+    name: Build and run coverage on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-latest, windows-2022, windows-latest, macos-15-intel, macos-latest]
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    steps:
+      - name: Clone Repository (Latest)
+        uses: actions/checkout@v6.0.2
+        if: github.event.inputs.git-ref == ''
+        with:
+          submodules: recursive
+          fetch-depth: 0  # Get tags for use with git describe
+      - name: Clone Repository (Custom Ref)
+        uses: actions/checkout@v6.0.2
+        if: github.event.inputs.git-ref != ''
+        with:
+          ref: ${{ github.event.inputs.git-ref }}
+          submodules: recursive
+          fetch-depth: 0  # Get tags for use with git describe
+
+      - name: Set the MACOSX_DEPLOYMENT_TARGET
+        # https://cibuildwheel.pypa.io/en/stable/faq/#macos-library-dependencies-do-not-satisfy-target-macos
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | cut -d'.' -f 1)
+          echo "MACOSX_DEPLOYMENT_TARGET is $MACOSX_DEPLOYMENT_TARGET"
+          echo "MACOSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET" >> $GITHUB_ENV
+
+      - name: Set up Fortran on MacOS
+        uses: fortran-lang/setup-fortran@main
+        if: ${{ runner.os == 'macOS' }}
+
+      # Copied from https://github.com/scipy/scipy/blob/main/.github/workflows/wheels.yml
+      # For rtools, see https://github.com/r-windows/rtools-installer/releases, which has been
+      # archived since 20231027.
+      - name: win_amd64 - install rtools
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          # mingw-w64
+          choco install rtools -y --no-progress --force --version=4.0.0.20220206
+          echo "c:\rtools40\ucrt64\bin;" >> $env:GITHUB_PATH
+
+      - name: Check the versions of tools
+        shell: bash
+        run: |
+          which cmake && cmake --version
+          which gcc && gcc --version
+          which gfortran && gfortran --version
+          if [[ $(uname) == "Darwin" ]]; then
+              xcodebuild -version
+          fi
+
+      - name: Install pycutest
+        shell: bash
+        # pycutest does not support windows
+        if: ${{ runner.os != 'Windows' }}
+        run: |
+          pip install meson
+          mkdir /tmp/constr_unconstr_test_env
+          cd /tmp/constr_unconstr_test_env
+          git clone https://github.com/ralna/SIFDecode ./sifdecode
+          git clone https://github.com/ralna/CUTEst ./cutest
+          git clone https://bitbucket.org/optrove/sif ./mastsif
+          echo "MASTSIF=$(pwd)/mastsif/" >> $GITHUB_ENV
+          cd sifdecode
+          meson setup --prefix $(pwd)/install builddir
+          meson compile -C builddir
+          meson install -C builddir
+          echo "SIFDECODE=$(pwd)/install/" >> $GITHUB_ENV
+          cd ../cutest
+          meson setup --prefix $(pwd)/install builddir
+          meson compile -C builddir
+          meson install -C builddir
+          echo "CUTEST=$(pwd)/install/" >> $GITHUB_ENV
+          cd ..
+          mkdir cache
+          echo "PYCUTEST_CACHE=$(pwd)/cache/" >> $GITHUB_ENV
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.10.0"
+
+      - name: Build wheel, run tests, and capture coverage
+        shell: bash
+        run: |
+          make -C python coverage-html
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report-${{ matrix.os }}
+          path: ./prima_htmlcov
+
+      - uses: actions/upload-pages-artifact@v3
+        # TODO: Switch this to main once it's merged
+        if: matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/consolidate2'
+        with:
+          path: ./prima_htmlcov
+
+      - uses: actions/deploy-pages@v4
+        # TODO: Switch this to main once it's merged
+        if: matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/consolidate2'
