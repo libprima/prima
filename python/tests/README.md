@@ -5,7 +5,7 @@ These are high level requirements for the python package. Next to the requiremen
 within that file which implements it. The testfile/testname is written in such a way that it can be passed as an argument to `pytest` in
 order to run that test by itself.
 
-Not all tests apply to all backends. In particular, the Python backend only implements COBYLA and so cannot participate in any of the tests related to non-COBLYA algorithms. Each requirement will be prefaced with an array specifying the backends to which it applies. `[F, P]` indicates that it applies to both the Fortran and Python backend and should be implemented as such. `[F]` or `[P]` implies that it only applies to the Fortran or to the Python backend. `[N/A]` implies that the test is focused on the interface logic and the choice of backend is irrelevant.
+Not all tests apply to all backends. In particular, the Python backend only implements COBYLA and so cannot participate in any of the tests related to non-COBYLA algorithms. Each requirement will be prefaced with an array specifying the backends to which it applies. `[F, P]` indicates that it applies to both the Fortran and Python backend and should be implemented as such. `[F]` or `[P]` implies that it only applies to the Fortran or to the Python backend. `[N/A]` implies that the test is focused on the interface logic and the choice of backend is irrelevant.
 
 
 ## Requirements for basic functionality, algorithm autoselection, and explicit algorithm selection

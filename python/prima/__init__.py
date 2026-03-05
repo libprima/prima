@@ -240,7 +240,7 @@ def minimize(fun, x0, args=(), method=None, bounds=None, constraints=(), callbac
                 * - 101
                 - The Fortran code reached an assertion.
                 * - 102
-                - The Fortran code reached a validation faillure (similar to assertion).
+                - The Fortran code reached a validation failure (similar to assertion).
                 * - 103
                 - Memory allocation failure.
 
