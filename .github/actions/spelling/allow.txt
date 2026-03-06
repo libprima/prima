@@ -2562,3 +2562,5 @@ actionlint
 timelimit
 euo
 ftrampoline
+CLANGRT
+dumpmachine
