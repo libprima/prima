@@ -172,6 +172,10 @@ jobs:
                 RK=8
             fi
             echo "RK = " $RK
+            if [[ ${{ matrix.compiler }} == m ]] && ! type amdflang ; then
+              echo "WARNING!!! amdflang does not work after AOMP installation, which probably failed!!!" 2>&1
+              echo "WARNING!!! mtest is skipped because amdflang is not available!!!" 2>& 1
+            fi
             make ${{ matrix.compiler }}test_i2_r${RK}_d1_tst.${{ matrix.solver }}
 
       - name: Store artifacts
