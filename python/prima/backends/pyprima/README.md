@@ -2,8 +2,8 @@
 
 This is a Python translation of [Zaikun Zhang](https://www.zhangzk.net)'s [modern-Fortran reference implementation](https://github.com/libprima/prima/tree/main/fortran)
 for Powell's derivative-free optimization solvers, which is available at `fortran/` under the root directory.
-It is supposed to be a faithful translation, [producing bit-for-bit identical results](https://github.com/scipy/scipy/pull/22350#issue-2795978526).
-as the modern-Fortran reference implementation.
+It is supposed to be a faithful translation, [producing bit-for-bit identical results](https://github.com/scipy/scipy/pull/22350#issue-2795978526)
+as compared to the modern-Fortran reference implementation.
 If you notice a difference, [raise an issue](https://github.com/libprima/prima/issues/new).
 
 Due to [bug-fixes](https://github.com/libprima/prima#bug-fixes) and [improvements](https://github.com/libprima/prima#improvements),
@@ -19,20 +19,12 @@ However, if function evaluations are not the dominant cost in your application, 
 solvers are likely to be faster, as they are more efficient in terms of memory usage and flops
 thanks to the careful and ingenious (but unmaintained and unmaintainable) implementation by Powell.
 
-As of April 2025, only the COBYLA solver is available in this Python translation
-(many thanks to [Nickolai Belakovski](http://www.nickolai.me/)), and SciPy 1.16.0
+As of March 2026, only the COBYLA solver is available in this Python translation
+(many thanks to [Nickolai Belakovski](https://www.linkedin.com/in/nickolai-belakovski-8b34595/)), and SciPy 1.16.0
 integrates it to replace the original Fortran 77 implementation of [COBYLA underlying the
 `scipy.optimize.minimize` function](https://docs.scipy.org/doc/scipy/reference/optimize.minimize-cobyla.html).
 The other solvers will be translated from the Fortran reference implementation in the future.
 If you are interested in doing so, contact [Zaikun Zhang](https://www.zhangzk.net).
-
-## Development notes
-
-To develop, `cd` into the `src` directory and run
-
-```pip install --editable .```
-
-This will install PRIMA locally in an editable fashion. From there you can run the examples/cobyla/cobyla_example.py (from any directory) and go from there.
 
 ### Style notes
 
@@ -54,7 +46,7 @@ This will install PRIMA locally in an editable fashion. From there you can run t
 The difference between `maxval` and `maximum` is that `maximum` will return NaN if the input contains NaN. Python's `max`
 and numpy's `np.max` have a similar distinction.
 
-Fortran's `max` and numpy's `mp.maximum` accept two arguments, either of which can be a scalar or an array,
+Fortran's `max` and numpy's `np.maximum` accept two arguments, either of which can be a scalar or an array,
 and returns an elementwise maximum of the two arguments. In the case of a scalar and an array argument it
 returns an elementwise maximum of the scalar and each element of the array.
 
@@ -66,8 +58,8 @@ This note applies to `minval`, `minimum`, and `min` as well.
 Consider the following Fortran code
 
 ```
-do i=0:5
-  print *, *
+do i=0,5
+  print *, i
 end do
 ```
 
@@ -81,7 +73,7 @@ for i in range(0, 6):
 Now consider the following similar loop
 
 ```
-do i=1:5
+do i=1,5
   print *, some_array(i)
 end do
 ```
