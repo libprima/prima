@@ -177,6 +177,8 @@ for COMP in $COMP_LIST; do
                     | grep -vi "pedantic-errors\|Werror\|warn errors\|diag-error-limit\|colour=error\|rounding error\|constraint violation\|default" \
                     | grep -vi "INFO_DFT\|==\s*info\|errorid\|errormsg" \
                     | grep -vi "\[xopt, fopt, info, nf, xhist, fhist\] = FUNCTION_NAME" \
+                    | grep -vi "warning: future releases of the clang compiler will prefer GCC installations containing libstdc" \
+                    | grep -vi "is DOING NOTHING" \
                     | grep -v "^- \|^| \|^\* \|^+ \|^X \|\# " \
                     )"
                 echo "$INFO" | grep -i --color "starts\|warning\|error\|info\|abort\|invalid\|violation\|fault\|illegal\|fail\|questionable\|remark\|attention\|Could not resolve"

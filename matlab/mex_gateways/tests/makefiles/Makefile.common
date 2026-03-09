@@ -568,6 +568,7 @@ $(TESTS) $(TESTS_INT):
 	| grep -v "This intrinsic function in an initialization expression is not standard Fortran 95" \
 	| grep -v "Fortran 95 does not allow type specification in an allocate statement" \
 	| grep -v "ipo: warning #11021: unresolved __ehdr_start" \
+	| grep -v "warning: future releases of the clang compiler will prefer GCC installations containing libstdc" \
 	| grep -v "\[-Wgcc-install-dir-libstdcxx\]" \
 	| tee -a "$(LOG_DIR)/$@.log"
 	@bash $(CHCKTST) --error "$(LOG_DIR)/$@.log"
