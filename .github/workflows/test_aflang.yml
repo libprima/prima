@@ -71,7 +71,6 @@ jobs:
           # not divisible by 3, then we keep going and skip the AOMP test. This is to decrease the
           # chance of workflow failure due to transient network issues, while still testing AOMP regularly.
           bash .github/scripts/install_aomp 8 2000 || [[ $(( $(date +%-d) % 3 )) -ne 0 ]]
-          type amdflang || echo "WARNING!!! amdflang does not work after AOMP installation, which probably failed!!!" 2>&1
 
       - name: Install AOCC
         run: bash .github/scripts/install_aocc
