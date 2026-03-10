@@ -2575,3 +2575,4 @@ SKBUILD
 testsetup
 unconstr
 uvx
+plibs
