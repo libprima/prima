@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import os
 from excludelist import excludelist
-from optiprofiler import set_cutest_problem_options, find_cutest_problems, run_benchmark
+from optiprofiler import run_benchmark
 import argparse
 from time import time
 
@@ -16,18 +16,21 @@ nondefault_options = lambda n, f0: {
 }
 
 def get_pyprima_options(n, f0):
+    options = {'backend': 'Python'}
     if os.environ.get('NONDEFAULT_PYPRIMA') == 'True':
-        options = nondefault_options(n, f0)
+        additional_options = additional_options(n, f0)
         # Change the option name
-        options['maxfun'] = options.pop('maxfev')
-        return options
-    return {}
+        additional_options['maxfun'] = additional_options.pop('maxfev')
+        options |= additional_options
+    return options
 
 
-def get_python_options(n, f0):
-    if os.environ.get('NONDEFAULT_PYTHON') == 'True':
-        return nondefault_options(n, f0)
-    return {}
+def get_bindings_options(n, f0):
+    options = {'backend': 'Fortran'}
+    if os.environ.get('NONDEFAULT_BINDINGS') == 'True':
+        additional_options = nondefault_options(n, f0)
+        options |= additional_options
+    return options
 
 
 def pyprima_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ub, c_eq):
@@ -53,7 +56,7 @@ def pyprima_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ub, c_eq):
     return result.x
 
 
-def python_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ub, c_eq):
+def bindings_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ub, c_eq):
     from prima import minimize, Bounds, LinearConstraint, NonlinearConstraint
 
     f0 = fun.__self__._fun(x0)
@@ -69,13 +72,8 @@ def python_cobyla(fun, x0, lb, ub, a_ub, b_ub, a_eq, b_eq, c_ub, c_eq):
     c_eq_x0 = c_eq(x0)
     if c_eq_x0.size > 0:
         constraints.append(NonlinearConstraint(c_eq, np.zeros_like(c_eq_x0), np.zeros_like(c_eq_x0)))
-    res = minimize(fun, x0, method='cobyla', bounds=bounds, constraints=constraints, options=get_python_options(len(x0), f0))
+    res = minimize(fun, x0, method='cobyla', bounds=bounds, constraints=constraints, options=get_bindings_options(len(x0), f0))
     return res.x
-
-
-def get_problems(description):
-    cutest_problem_names = find_cutest_problems(description)
-    return list(filter(lambda x: x not in excludelist(description), cutest_problem_names))
 
 
 if __name__ == '__main__':
@@ -90,7 +88,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
 
-    def run_three_benchmarks(pyprima_fun, python_fun, algorithm, cutest_problem_names, default_only, n_jobs):
+    def run_three_benchmarks(pyprima_fun, bindings_fun, algorithm, cutest_problem_names, default_only, n_jobs):
         '''
         Proper validation of both default and nondefault options requires 3 runs: Both default, both nondefault, and
         one default one nondefault. The first two should look identical, and so the third run confirms that our
@@ -103,20 +101,20 @@ if __name__ == '__main__':
         ALGORITHM = algorithm.upper()
         project_x0 = algorithm == 'lincoa'
         os.environ['NONDEFAULT_PYPRIMA'] = "False"
-        os.environ['NONDEFAULT_PYTHON'] = "False"
-        run_benchmark([pyprima_fun, python_fun], [f'PyPRIMA-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_default_options', n_jobs=n_jobs, project_x0=project_x0)
+        os.environ['NONDEFAULT_BINDINGS'] = "False"
+        run_benchmark([pyprima_fun, bindings_fun], [f'PyPRIMA-{ALGORITHM}', f'Bindings-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_default_options', n_jobs=n_jobs, project_x0=project_x0)
         if not default_only:
             os.environ['NONDEFAULT_PYPRIMA'] = "True"
-            os.environ['NONDEFAULT_PYTHON'] = "True"
-            run_benchmark([pyprima_fun, python_fun], [f'PyPRIMA-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_nondefault_options', n_jobs=n_jobs, project_x0=project_x0)
+            os.environ['NONDEFAULT_BINDINGS'] = "True"
+            run_benchmark([pyprima_fun, bindings_fun], [f'PyPRIMA-{ALGORITHM}', f'Bindings-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_nondefault_options', n_jobs=n_jobs, project_x0=project_x0)
             os.environ['NONDEFAULT_PYPRIMA'] = "True"
-            os.environ['NONDEFAULT_PYTHON'] = "False"
-            run_benchmark([pyprima_fun, python_fun], [f'PyPRIMA-{ALGORITHM}', f'Python-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_different_options', n_jobs=n_jobs, project_x0=project_x0)
+            os.environ['NONDEFAULT_BINDINGS'] = "False"
+            run_benchmark([pyprima_fun, bindings_fun], [f'PyPRIMA-{ALGORITHM}', f'Bindings-{ALGORITHM}'], cutest_problem_names, benchmark_id=f'{algorithm}_different_options', n_jobs=n_jobs, project_x0=project_x0)
 
     start = time()
     print("Running profiles for COBYLA")
     with open('cobyla.txt') as f:
         cutest_problem_names = f.read().splitlines()
     cutest_problem_names = list(filter(lambda x: x not in excludelist('cobyla'), cutest_problem_names))
-    run_three_benchmarks(pyprima_cobyla, python_cobyla, 'cobyla', cutest_problem_names, args.default_only, args.n_jobs)
+    run_three_benchmarks(pyprima_cobyla, bindings_cobyla, 'cobyla', cutest_problem_names, args.default_only, args.n_jobs)
     print(f'Completed COBYLA profile in {time() - start:.2f} seconds')
