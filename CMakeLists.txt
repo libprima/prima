@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.13)
+cmake_minimum_required (VERSION 3.15)
 
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type")
 
@@ -149,9 +149,10 @@ if(NOT GIT_EXECUTABLE OR NOT IS_REPO)
   # on macports which downloads the bundle from github (which uses git archive) and
   # so the version number should be in .git-archival.txt.
   # Alternatively it might mean that we're building the Python bindings, in which case
-  # the version is output in _version.txt. I know, it's complicated. I don't make the rules.
-  if(EXISTS _version.txt)
-    file(STRINGS _version.txt PRIMA_VERSION)
+  # the version is output in _version.py.
+  if(EXISTS python/prima/_version.py)
+    file(STRINGS python/prima/_version.py _version_line REGEX "^__version__")
+    string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+[^ '\"]*" PRIMA_VERSION "${_version_line}")
   else()
     file(STRINGS .git-archival.txt PRIMA_VERSION)
     if(PRIMA_VERSION MATCHES "describe")
@@ -181,7 +182,7 @@ if (PRIMA_ENABLE_PYTHON)
     message(WARNING "Compiling Python bindings with compilers other than GNU has not been tested and no support is planned at this time")
   endif()
   enable_language(CXX)
-  add_subdirectory(python)
+  add_subdirectory(python/prima/backends/bindings/)
 endif ()
 
 install(

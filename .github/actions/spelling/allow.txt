@@ -2564,3 +2564,15 @@ euo
 ftrampoline
 CLANGRT
 dumpmachine
+asanyarray
+builddir
+flatnonzero
+mastsif
+nontriangular
+pybindings
+sifdecode
+SKBUILD
+testsetup
+unconstr
+uvx
+plibs
