@@ -152,7 +152,7 @@ jobs:
 
 
       - name: Conduct the test
-        uses: matlab-actions/run-command@v2.4.0
+        uses: matlab-actions/run-command@v2.4.1
         with:
           command: |
             ver;
