@@ -884,7 +884,7 @@ else % invoker is in {'uobyqa_norma', ..., 'cobyla_norma'}
         wid = sprintf('%s:InvalidSolver', invoker);
         wmsg = sprintf('%s: a solver different from %s is specified; it is ignored.', invoker, invoker);
         % Do not display the value of solver in last message, because it
-        % can be 'unknow_solver'.
+        % can be 'unknown_solver'.
         warning(wid, '%s', wmsg);
         warnings = [warnings, wmsg];
     end

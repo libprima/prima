@@ -4,7 +4,7 @@
 
 DIR="$(realpath "$1")"
 LINALG="$DIR/common/linalg.f90"
-#GET_INTRISIC_LINALG="$DIR/common/get_intrinsic_linalg"
+#GET_INTRINSIC_LINALG="$DIR/common/get_intrinsic_linalg"
 #INTRINSIC_LINALG="$DIR/common/intrinsic_linalg.f90"
 
 if [[ "$(uname)" == Darwin || "$(uname)" == FreeBSD ]] ; then
@@ -34,8 +34,8 @@ if [[ -f "$LINALG" ]] ; then
     # # The following is a workaround the replaces matprod with the intrinsic matmul.
     # # Remove this and test again when flang is updated.
     # Update 20250906: With flang 21.1.0, matprod seems to work fine now.
-    # if [[ -f "$GET_INTRISIC_LINALG" ]] ; then
-    #     bash "$GET_INTRISIC_LINALG"
+    # if [[ -f "$GET_INTRINSIC_LINALG" ]] ; then
+    #     bash "$GET_INTRINSIC_LINALG"
     #     mv "$INTRINSIC_LINALG" "$LINALG"
     # fi
 fi
