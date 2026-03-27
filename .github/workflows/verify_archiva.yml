@@ -94,7 +94,7 @@ jobs:
         run: which gcc && gcc --version && which gfortran && gfortran --version
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2.6.1
+        uses: matlab-actions/setup-matlab@v2.7.0
         with:
           release: ${{ matrix.matlab }}
           cache: true
