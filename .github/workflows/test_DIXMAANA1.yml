@@ -30,6 +30,7 @@ jobs:
         os: [ubuntu-22.04, ubuntu-latest]
         matlab: [R2020b, R2021a, R2021b, R2022a, R2022b, R2023a, R2023b, R2024a, R2024b, R2025a, R2025b, latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
+        gfortran: [12, 13, 14, latest]
 
     steps:
 
@@ -93,7 +94,7 @@ jobs:
       - name: Decide gfortran version for MATLAB on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          GFVER=latest
+          GFVER=${{ matrix.gfortran }}
           # MATLAB R2021b- supports gfortran 9-
           MATLAB_VERSION_NUMBER=$(echo "${{ matrix.matlab }}" | sed -e 's/R\([0-9]*\)\([ab]\)/\1/')
           if [[ "${MATLAB_VERSION_NUMBER}" != "latest" && "${MATLAB_VERSION_NUMBER}" -le 2021 ]]; then
