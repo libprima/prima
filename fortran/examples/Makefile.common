@@ -57,7 +57,7 @@ ntest: FC := $(NFORT) -C -f$(FSTD) -fpp -nan -ieee=full  # `-nan -ieee=full` is 
 
 # NVIDIA nvfortran
 VFORT := "$(shell command -v nvfortran)"
-vtest: FC := $(VFORT) -C -Wall -Wextra -Mstandard
+vtest: FC := $(VFORT) -Wall -Wextra -Mstandard
 
 # Arm Flang
 RFORT := "$(shell command -v armflang)"
