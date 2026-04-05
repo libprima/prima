@@ -95,7 +95,8 @@ if contains(compiler_manufacturer, 'gnu')  % gfortran
     % a bug of MATLAB R2025a/b on Linux, which segfaults when handling Fortran MEX files with internal
     % procedures. For details, see the `support_internal_procedures` part below and
     % https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines/9919?u=zaikunzhang
-    % First, get the major version of GCC corresponding to the libgcc used by the Fortran MEX.
+    % First, get the major version of GCC corresponding to the libgcc used by the Fortran MEX
+    % (it is $MATLABROOT/sys/os/glnxa64/libgcc_s.so.1 by default, but we will not rely on this path).
     try
         gcc_version = getMexLibgcc().latestGccVersion;  % Latest gcc version string embedded in libgcc
     catch exception
@@ -153,26 +154,30 @@ common_mex_options = {verbose_option, compiler_options, linker_options};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Zaikun 20250720:
-% The following code is to circumvent a bug in MATLAB R2025a/b, which segfaults on Linux when the
+% The following code is to circumvent a problem in MATLAB R2025a+, which segfaults on Linux when the
 % Fortran files contain internal procedures that are passed as actual arguments to other procedures,
 % provided that the Fortran compiler is gfortran and the option -ftrampoline-impl=heap is not used.
-% To avoid this bug, we replace gateways/*_mex.F90 with gateways/R2025a/*_mex.F90, and
-% fortd/classical/cobyla/cobyla.f90 with gateways/R2025a/classical_cobyla.f90,
-% the latter of which use module variables instead of
-% internal procedures. The price is that PRIMA becomes thread-unsafe and recursion-unsafe.
-% See MathWorks Technical Support Case 07931486 and
+% To avoid this, if gfortran is being used without -ftrampoline-impl=heap (effectively means we are
+% on Linux and either gfortran or libgcc is below 14; see the definition of extra_compiler_options),
+% we replace gateways/*_mex.F90 with gateways/R2025a/*_mex.F90,
+% and fortd/classical/cobyla/cobyla.f90 with gateways/R2025a/classical_cobyla.f90,
+% the latter of which use module variables instead of internal procedures. The price is that PRIMA
+% becomes thread-unsafe and recursion-unsafe. See MathWorks Technical Support Case 07931486 and
+% https://www.mathworks.com/matlabcentral/answers/2179869-why-does-my-fortran-mex-file-with-internal-subroutines-crash-on-linux-with-matlab-r2025a
 % https://www.mathworks.com/matlabcentral/answers/2178414-bug-matlab-2025a-segfaults-on-ubuntu-when-handling-fortran-mex-files-with-internal-subroutines
 % https://stackoverflow.com/questions/79699706/matlab-2025a-vs-fortran-mex-files-with-internal-subroutines
 % https://fortran-lang.discourse.group/t/implementation-of-a-parametrized-objective-function-without-using-module-variables-or-internal-subroutines
 % https://stackoverflow.com/questions/79705107/fortran-implementating-a-parametrized-objective-function-without-using-module-v
-matlab_supports_ip = (isMATLABReleaseOlderThan('R2025a')  || ~isMATLABReleaseOlderThan('R2026a'));
+% When both gfortran and libgcc being used are of version 14+ (the latter depends on MATLAB),
+% -ftrampoline-impl=heap will be included in extra_compiler_options, and the problem will disappear.
+matlab_supports_ip = isMATLABReleaseOlderThan('R2025a');
 compiler_supports_ip = (~contains(compiler_manufacturer, 'gnu') || contains(compiler_options, '-ftrampoline-impl=heap'));
 support_internal_procedures = (matlab_supports_ip || compiler_supports_ip);
 if ~support_internal_procedures
     if verbose
         warning('prima:ThreadRecursionUnsafe', ...
-            ['MATLAB R2025a/b has a bug that causes segmentation faults when handling Fortran MEX files with internal procedures.\n', ...
-            '         PRIMA is adapted to circumvent this bug but it becomes thread-unsafe and recursion-unsafe.']);
+            ['MATLAB R2025a and above encounter segmentation faults when handling Fortran MEX files with internal procedures.\n', ...
+            '         PRIMA is adapted to circumvent this but it becomes thread-unsafe and recursion-unsafe.']);
     end
     % Replace the files. N.B.: The .*90 files have become .* after the code refactoring in setup.m.
     replacement_dir = fullfile(gateways, 'R2025a');
