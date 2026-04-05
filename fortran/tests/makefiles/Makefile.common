@@ -632,7 +632,8 @@ ifeq ($(TESTDIM),small)
 else
 	VFORT := $(VFORT) -Mnostack_arrays
 endif
-VFORT := $(VFORT) -C -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mbounds -Mchkstk -Mchkptr -traceback
+VFORT := $(VFORT) -Wall -Wextra -Minform=warn -Mstandard -Mrecursive -Mchkstk -Mchkptr -traceback
+#VFORT := $(VFORT) -C -Mbounds  # As of nvfortran 26.3, this will cause false-positive errors about array bounds when handling empty arrays.
 ifeq ($(OSTYPE),LINUX)
 	VFORT := $(VFORT) -Wl,-z,noexecstack
 endif
