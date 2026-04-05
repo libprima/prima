@@ -160,7 +160,7 @@ jobs:
         run: cmd.exe "/K" '".github\scripts\install_oneapi_windows.bat %ONEAPI_VERSION%"'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2.6.1
+        uses: matlab-actions/setup-matlab@v3.0.0
         with:
           release: ${{ matrix.matlab }}
           cache: true
@@ -168,7 +168,7 @@ jobs:
 
       - name: Conduct the test
         if: ${{ !(runner.os == 'macOS' && runner.arch == 'X64') }}
-        uses: matlab-actions/run-command@v2.4.0
+        uses: matlab-actions/run-command@v3.0.0
         with:
           command: |
             cd matlab/tests; testprima_ex();
