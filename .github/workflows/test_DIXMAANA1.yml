@@ -5,8 +5,8 @@ on:
   #push:
   pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
-  schedule:
-    - cron: '0 16 * * *'
+  #schedule:
+  #  - cron: '0 16 * * *'
   # Trigger the workflow manually
   workflow_dispatch:
     inputs:
@@ -20,7 +20,7 @@ run-name: ${{ github.event_name == 'workflow_dispatch' && format('Manual run {0}
 
 jobs:
   test:
-    name: Test MATLAB
+    name: Test the DIXMAANA1 problem
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -69,6 +69,13 @@ jobs:
       - name: Miscellaneous setup
         run: bash .github/scripts/misc_setup
 
+      - name: Clone MatCUTEst
+        uses: actions/checkout@v6.0.2
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY_ACT }} # This forces checkout to use SSH, not HTTPS
+          repository: matcutest/matcutest_compiled
+          path: matcutest
+
       - name: Revise fmxapi.F90
         shell: bash
         run: |
@@ -115,7 +122,12 @@ jobs:
         uses: matlab-actions/run-command@v3.0.0
         with:
           command: |
-            cd matlab/tests;
+            ver;
+            root_dir = pwd();
+
+            cd(fullfile(root_dir, 'matcutest')); install(); which macup
+
+            cd(fullfile(root_dir, 'matlab/tests'));
             opt.list = {'DIXMAANA1'};
             opt.verbose = true;
             verify('${{ matrix.solver }}', 'seq', opt);
