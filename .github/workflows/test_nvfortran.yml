@@ -28,12 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm]
-        #solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        # nvfortran 26.10 has a bug regarding empty arrays, leading to bogus run-time errors in
-        # line 337 of lincob.f90 and line 510 of cobyla.f90.
-        # See https://forums.developer.nvidia.com/t/a-bug-of-nvfortran-26-1-regarding-empty-arrays/358946/2
-        # Change this back to the full list of solvers once this bug is fixed.
-        solver: [newuoa, bobyqa, uobyqa]
+        solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
 
