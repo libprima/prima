@@ -13,6 +13,9 @@ for ic = 1 : length(ndftpath)
     fprintf('\n%s', ndftpath{ic});
 end
 
+fprintf('\n\nMatCUTEst path:\n');
+fprintf('\n%s', which('matcutest'));
+
 fprintf('\n\nSolver paths:\n');
 for isol = 1 : length(solvers)
     solver = solvers{isol};
@@ -25,4 +28,5 @@ for isol = 1 : length(solvers)
     solver = regexprep(solver, '_archiva$', '_norma');
     fprintf('\n%s: %s', solvers{isol}, which(solver));
 end
+
 fprintf('\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n');

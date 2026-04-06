@@ -73,16 +73,20 @@ try
         yw = year_week('Asia/Shanghai');
     end
     options.yw = yw;  % options.yw is needed in `isequiv`.
-    options.integer_kind = mod(yw, 4) * 2^(mod(yw, 4) + 3);  % 0, 16, 32, or 64
+    options.integer_kind = 2^(mod(yw, 4) + 3);  % 0, 16, 32, or 64, used in `get_solvers`.
+    if options.integer_kind == 8
+        options.integer_kind = 0;
+    end
+    fprintf('\n\n!!! Using integer kind %d (yw = %d). Watch out for segfaults when using non-default integers !!!\n\n', options.integer_kind, yw);
 
     % Make the solvers available. Note that the solvers are under `test_dir`.
     get_solvers(solvers, test_dir, options);
 
-    % Show current path information.
-    showpath(solvers);
-
     % Tell MATLAB where to find MatCUTEst.
     locate_matcutest();
+
+    % Show current path information.
+    showpath(solvers);
 
     % Record `olddir` in `options` so that we can come back to `olddir` during `isequiv` if
     % necessary (for example, when a single test fails).

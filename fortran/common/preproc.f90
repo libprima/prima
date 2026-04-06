@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Wed 11 Feb 2026 05:35:59 PM CET
+! Last Modified: Mon 06 Apr 2026 02:20:20 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -97,6 +97,8 @@ real(RP) :: x0_in(n)
 ! Preconditions
 if (DEBUGGING) then
     call validate(n >= 1, 'N >= 1', srname)
+    call validate(present(npt) .eqv. (lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. &
+        & lower(solver) == 'lincoa'), 'NPT is present if and only if SOLVER is NEWUOA, BOBYQA, or LINCOA', srname)
     if (present(m)) then
         call validate(m >= 0, 'M >= 0', srname)
         call validate(m == 0 .or. lower(solver) == 'cobyla', 'M == 0 unless the solver is COBYLA', srname)
@@ -191,9 +193,8 @@ if (is_nan(ftarget)) then  ! No warning if FTARGET is NaN, which is interpreted 
 end if
 
 ! Validate NPT
-if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver) == 'lincoa') &
-    & .and. present(npt)) then
-    if (npt < n + 2 .or. npt >= maxfun .or. 2 * npt > int(n + 2) * int(n + 1)) then  ! INT(*) avoids overflow when IK is 16-bit.
+if (present(npt)) then
+    if (npt < n + 2 .or. npt >= maxfun .or. 2 * int(npt) > int(n + 2) * int(n + 1)) then  ! INT(*) avoids overflow when IK is 16-bit.
         npt_in = npt
         npt = int(min(maxfun - 1, 2 * n + 1), kind(npt))
         call warning(solver, 'Invalid NPT: '//num2str(npt_in)// &
@@ -203,7 +204,7 @@ if ((lower(solver) == 'newuoa' .or. lower(solver) == 'bobyqa' .or. lower(solver)
 end if
 
 ! Validate MAXFILT
-if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cobyla')) then
+if (present(maxfilt)) then
     maxfilt_in = maxfilt
     if (maxfilt <= 0) then
         maxfilt = MAXFILT_DFT
@@ -216,7 +217,7 @@ if (present(maxfilt) .and. (lower(solver) == 'lincoa' .or. lower(solver) == 'cob
         unit_memo = int(n + 2) * int(cstyle_sizeof(0.0_RP))  ! INT(*) avoids overflow when IK is 16-bit.
     case ('cobyla')
         unit_memo = int(m_loc + n + 2) * int(cstyle_sizeof(0.0_RP))  ! INT(*) avoids overflow when IK is 16-bit.
-    case default
+    case default  ! The following should not be reached unless there is a bug, but we keep it for safety.
         unit_memo = 1
     end select
     ! We cannot simply set MAXFILT = MIN(MAXFILT, MAXHISTMEM/...), as they may not have
@@ -421,7 +422,8 @@ if (DEBUGGING) then
     call validate(maxfun >= min_maxfun, 'MAXFUN >= MIN_MAXFUN', solver)
     if (present(npt)) then
         call validate(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', solver)
-        call validate(npt >= 3, 'NPT >= 3', solver)
+        call validate(npt >= n + 2 .and. 2 * int(npt) <= int(n + 2) * int(n + 1), &
+            & 'N+2 <= NPT < MAXFUN and 2*NPT <= (N+1)(N+2)', solver)
     end if
     if (present(maxfilt)) then
         call validate(maxfilt >= min(MIN_MAXFILT, maxfun) .and. maxfilt <= maxfun, &
