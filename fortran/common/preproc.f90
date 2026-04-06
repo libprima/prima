@@ -6,7 +6,7 @@ module preproc_mod
 !
 ! Started: July 2020
 !
-! Last Modified: Mon 06 Apr 2026 02:20:20 PM CST
+! Last Modified: Mon 06 Apr 2026 03:23:48 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 ! N.B.:
@@ -421,8 +421,7 @@ if (DEBUGGING) then
     call validate(maxhist >= 0 .and. maxhist <= maxfun, '0 <= MAXHIST <= MAXFUN', solver)
     call validate(maxfun >= min_maxfun, 'MAXFUN >= MIN_MAXFUN', solver)
     if (present(npt)) then
-        call validate(maxfun >= npt + 1, 'MAXFUN >= NPT + 1', solver)
-        call validate(npt >= n + 2 .and. 2 * int(npt) <= int(n + 2) * int(n + 1), &
+        call validate(npt >= n + 2 .and. npt < maxfun .and. 2 * int(npt) <= int(n + 2) * int(n + 1), &
             & 'N+2 <= NPT < MAXFUN and 2*NPT <= (N+1)(N+2)', solver)
     end if
     if (present(maxfilt)) then
