@@ -29,7 +29,9 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Verification, small](https://github.com/libsprima/prima/actions/workflows/verify_small.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_small.yml)
     - [![Verification, big](https://github.com/libsprima/prima/actions/workflows/verify_big.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_big.yml)
     - [![Verification, large](https://github.com/libsprima/prima/actions/workflows/verify_large.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_large.yml)
-    - [![Plot performance profiles for lincoa](https://github.com/libsprima/prima/actions/workflows/profile_lincoa_small.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/profile_lincoa_small.yml)
+    - [![Verification, archiva nova](https://github.com/libsprima/prima/actions/workflows/verify_archiva_nova.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_archiva_nova.yml)
+    - [![Verification, archiva media](https://github.com/libsprima/prima/actions/workflows/verify_archiva_media.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_archiva_media.yml)
+    - [![Verification, archiva antiqua](https://github.com/libsprima/prima/actions/workflows/verify_archiva_antiqua.yml/badge.svg)](https://github.com/libsprima/prima/actions/workflows/verify_archiva_antiqua.yml)
 
 - <a name="profiling"></a> [Tests](https://github.com/primapack/prima/actions) at [primapack/prima](https://github.com/primapack/prima)
 
@@ -37,7 +39,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
     - [![Plot performance profiles for uobyqa, small](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_uobyqa_small.yml)
     - [![Plot performance profiles for newuoa, small](https://github.com/primapack/prima/actions/workflows/profile_newuoa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_newuoa_small.yml)
     - [![Plot performance profiles for bobyqa, small](https://github.com/primapack/prima/actions/workflows/profile_bobyqa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_bobyqa_small.yml)
-    - [![Plot performance profiles for PRIMA, small](https://github.com/primapack/prima/actions/workflows/profile_prima_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_prima_small.yml)
+    - [![Plot performance profiles for lincoa](https://github.com/primapack/prima/actions/workflows/profile_lincoa_small.yml/badge.svg)](https://github.com/primapack/prima/actions/workflows/profile_lincoa_small.yml)
 
 - [Tests](https://github.com/fortlab/prima/actions) at [fortlab/prima](https://github.com/fortlab/prima)
 
@@ -50,7 +52,7 @@ to distribute this large amount of tests to multiple Team accounts as follows.
 
 - [Tests](https://github.com/primalib/prima/actions) at [primalib/prima](https://github.com/primalib/prima)
 
-    - [![Verification, archiva](https://github.com/primalib/prima/actions/workflows/verify_archiva.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/verify_archiva.yml)
+    - [![Plot performance profiles for PRIMA, small](https://github.com/primalib/prima/actions/workflows/profile_prima_small.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_prima_small.yml)
     - [![Plot performance profiles for all problems](https://github.com/primalib/prima/actions/workflows/profile_all.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_all.yml)
     - [![Plot performance profiles, single](https://github.com/primalib/prima/actions/workflows/profile_single.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_single.yml)
     - [![Plot performance profiles, quadruple](https://github.com/primalib/prima/actions/workflows/profile_quadruple.yml/badge.svg)](https://github.com/primalib/prima/actions/workflows/profile_quadruple.yml)

@@ -1,4 +1,4 @@
-name: Verification, archiva
+name: Verification, archiva media (the archiva versions without GOTO, except for the two latest)
 
 on:
   # Trigger the workflow on push or pull request
@@ -6,8 +6,7 @@ on:
   #pull_request:  # DANGEROUS! MUST be disabled for self-hosted runners!
   # Trigger the workflow by cron. The default time zone of GitHub Actions is UTC.
   schedule:
-      #  - cron: '0 1,9,17 * * *'
-    - cron: '0 22 * * *'
+    - cron: '0 5 1-7 * *'  # The first 7 days of each month at 5:00 (UTC)
   # Trigger the workflow manually
   workflow_dispatch:
     inputs:
@@ -34,13 +33,8 @@ jobs:
         # See https://www.mathworks.com/matlabcentral/answers/2178414-bug-matlab-2025a-segfaults-on-ubuntu-when-handling-fortran-mex-files-with-internal-subroutines
         matlab: [R2024b]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        dim: [small, big, large]
-        version: [220208, 220227, 220513, 220531,220601,220616,220819,220926,221105,221128,230108,230305,230430,230509,230614,230804]
-        exclude:
-          - solver: lincoa
-            dim: large  # very few problems but takes too much time to run
-          - solver: newuoa
-            dim: large  # very few problems but takes too much time to run
+        dim: [small, big]
+        version: [220926, 221105, 221128, 230108, 230305, 230430, 230509]
 
     steps:
 
