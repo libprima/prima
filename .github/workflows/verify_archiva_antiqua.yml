@@ -1,4 +1,5 @@
-name: Verification, archiva antiqua (the archiva versions with GOTO)
+name: Verification, archiva antiqua
+# antiqua: the archiva versions with GOTO
 
 on:
   # Trigger the workflow on push or pull request

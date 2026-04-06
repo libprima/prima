@@ -1,4 +1,5 @@
-name: Verification, archiva nova (the two latest archiva versions)
+name: Verification, archiva nova
+# nova: the two latest archiva versions
 
 on:
   # Trigger the workflow on push or pull request

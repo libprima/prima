@@ -1,4 +1,5 @@
-name: Verification, archiva media (the archiva versions without GOTO, except for the two latest)
+name: Verification, archiva media
+# media: the archiva versions without GOTO, except for the two latest
 
 on:
   # Trigger the workflow on push or pull request
