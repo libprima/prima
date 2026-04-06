@@ -32,6 +32,12 @@ jobs:
         fflags: [-O1, -O2, -O3, -g, -fast]
         testdim: [small, big]
 
+        exclude: # nvfortran 26.3 encounters errors with the randomization in `rand.f90` and `noise.f90`.
+          - solver: newuoa
+            fflags: -O2
+          - solver: bobyqa
+            fflags: -O1
+
     steps:
 
       - name: Run `sudo apt update`
