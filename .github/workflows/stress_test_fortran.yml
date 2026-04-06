@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
-        compiler: [g, v, s, f, x, d, m, r]
+        compiler: [g, s, f, x, d, m, r]  # vtest is excluded because nvfortran is buggy and will be replaced by an LLVM-based compiler in the future.
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
         testdim: [large]
         exclude:
@@ -49,8 +49,6 @@ jobs:
 
           # Test only g and f on macOS, as other compilers are not available
           - os: macos-latest
-            compiler: v
-          - os: macos-latest
             compiler: s
           - os: macos-latest
             compiler: x
@@ -60,8 +58,6 @@ jobs:
             compiler: m
           - os: macos-latest
             compiler: r
-          - os: macos-15-intel
-            compiler: v
           - os: macos-15-intel
             compiler: s
           - os: macos-15-intel

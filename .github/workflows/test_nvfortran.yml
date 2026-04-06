@@ -29,14 +29,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm]
         solver: [newuoa, cobyla, lincoa, bobyqa, uobyqa]
-        fflags: [-O1, -O2, -O3, -g, -fast]
-        testdim: [small, big]
-
-        exclude: # nvfortran 26.3 encounters errors with the randomization in `rand.f90` and `noise.f90`.
-          - solver: newuoa
-            fflags: -O2
-          - solver: bobyqa
-            fflags: -O1
+        #fflags: [-O1, -O2, -O3, -g, -fast]
+        #testdim: [small, big]
 
     steps:
 
@@ -87,12 +81,21 @@ jobs:
         with:
           timelimit: 320m
           command: |
-            export FFLAGS=${{ matrix.fflags }}
-            export TESTDIM=${{ matrix.testdim }}
-            IK=i$(( 2**(1 + $(date +%-d) % 3) ))
-            echo "IK=${IK}"
-            echo "IK=${IK}" >> "$GITHUB_ENV"
-            cd "$ROOT_DIR"/fortran/tests && make vtest_${IK}.${{ matrix.solver }}
+            ########################################################################################
+            # Zaikun 20260406: Starting from today, for nvfortran we will only run the examples,
+            # not the extensive tests. nvfortran was quite useful as a reference for debugging the
+            # early versions of PRIMA, but in the past years our work concerning nvfortran has been
+            # mostly debugging the compiler itself (especially concerning empty arrays). In addition,
+            # nvfortran will likely be replaced with a LLVM-based compiler in the future. See
+            # https://forums.developer.nvidia.com/t/bug-of-nvfortran-25-7-with-empty-arrays/342404/2
+            # https://forums.developer.nvidia.com/t/bug-of-nvfortran-24-3-0-fort1-terminated-by-signal-11/289026/6
+            # export FFLAGS=${{ matrix.fflags }}
+            # export TESTDIM=${{ matrix.testdim }}
+            # IK=i$(( 2**(1 + $(date +%-d) % 3) ))
+            # echo "IK=${IK}"
+            # echo "IK=${IK}" >> "$GITHUB_ENV"
+            # cd "$ROOT_DIR"/fortran/tests && make vtest_${IK}.${{ matrix.solver }}
+            ########################################################################################
             cd "$ROOT_DIR"/fortran/examples/${{ matrix.solver }}
             export EXAMPLE_NUM=1 && make clean && make vtest
             export EXAMPLE_NUM=2 && make clean && make vtest
@@ -101,7 +104,8 @@ jobs:
         uses: actions/upload-artifact@v7
         if: always()  # Always run even if the workflow is canceled manually or due to overtime.
         with:
-          name: ${{ matrix.os }}-${{ matrix.solver }}-${{ env.IK }}-${{ matrix.fflags }}-${{ matrix.testdim }}
+          #name: ${{ matrix.os }}-${{ matrix.solver }}-${{ env.IK }}-${{ matrix.fflags }}-${{ matrix.testdim }}
+          name: ${{ matrix.os }}-${{ matrix.solver }}
           path: ${{ env.TEST_DIR }}/prima/fortran/tests/test.${{ matrix.solver }}/log/*.log
 
       - name: Remove the test data
