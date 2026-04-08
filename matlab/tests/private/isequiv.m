@@ -312,7 +312,7 @@ test_options.maxfilt = floor(randn*500);
 test_options.iprint = floor(0.5*abs(randn));
 test_options.quiet = (rand < 0.9);
 % Test all precisions. For unavailable precisions, the double-precision version will be called.
-if rand < 0.7  % Prob = 0.6
+if rand < 0.7  % Prob = 0.7
     test_options.precision = 'double';
 elseif rand < 0.9  % Prob = 0.27
     test_options.precision = 'single';
