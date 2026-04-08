@@ -17,7 +17,7 @@ module cobylb_mod
 !
 ! Started: July 2021
 !
-! Last Modified: Tue 16 Sep 2025 12:36:40 PM CST
+! Last Modified: Wed 08 Apr 2026 06:38:14 PM CST
 !--------------------------------------------------------------------------------------------------!
 
 implicit none
@@ -291,7 +291,7 @@ jdrop_geo = 0
 ! better than setting directly DELTA = MAX(NEW_DELTA, RHO).
 gamma3 = max(ONE, min(0.75_RP * gamma2, 1.5_RP))
 
-! MAXTR is the maximal number of trust-region iterations. Here, we set it to HUGE(MAXTR) so that
+! MAXTR is the maximal number of trust-region iterations. Here, we set it to HUGE(MAXTR) - 1 so that
 ! the algorithm will not terminate due to MAXTR. However, this may not be allowed in other languages
 ! such as MATLAB. In that case, we can set MAXTR to 10*MAXFUN, which is unlikely to reach because
 ! each trust-region iteration takes 1 or 2 function evaluations unless the trust-region step is short
