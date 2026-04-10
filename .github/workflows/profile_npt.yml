@@ -142,7 +142,7 @@ jobs:
 
 
       - name: Set up MATLAB with optimization toolbox
-        uses: matlab-actions/setup-matlab@v3.0.0
+        uses: matlab-actions/setup-matlab@v3.0.1
         with:
           release: ${{ matrix.matlab }}
           cache: true
