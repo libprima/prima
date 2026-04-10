@@ -94,7 +94,7 @@ jobs:
 
       - name: Set up MATLAB with optimization toolbox
         if: ${{ matrix.with_optim_toolbox == 'yes' }}
-        uses: matlab-actions/setup-matlab@v3.0.0
+        uses: matlab-actions/setup-matlab@v3.0.1
         with:
           release: ${{ matrix.matlab }}
           cache: true
@@ -102,7 +102,7 @@ jobs:
 
       - name: Set up MATLAB without optimization toolbox
         if: ${{ matrix.with_optim_toolbox != 'yes' }}
-        uses: matlab-actions/setup-matlab@v3.0.0
+        uses: matlab-actions/setup-matlab@v3.0.1
         with:
           release: ${{ matrix.matlab }}
           cache: true
