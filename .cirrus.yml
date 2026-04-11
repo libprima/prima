@@ -2,6 +2,8 @@ task:
 
   name: "Cirrus tests"
 
+  # Circus CI will shut down on Monday, June 1, 2026. See https://cirruslabs.org/ for details.
+
 
   #
   # Status as of 20260226:
