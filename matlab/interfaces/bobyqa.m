@@ -87,8 +87,13 @@ function [x, fx, exitflag, output] = bobyqa(varargin)
 %       default: 2*length(x0)+1
 %   *** fortran: a boolean value indicating whether to call Fortran code or
 %       not; default: true
+%   *** precision: a string indicating the precision of the real numbers used in
+%       the internal calculations of the package; possible values are 'half',
+%       'single', 'double', and 'quadruple'; if it is set to a value other than
+%       'double', then fortran will be set to true; default: 'double'
 %   *** classical: a boolean value indicating whether to call the classical
-%       version of Powell's Fortran code or not; default: false
+%       version of Powell's Fortran code or not; if it is set to true, then fortran
+%       will be set to true; default: false
 %   *** eta1, eta2, gamma1, gamma2 (only if classical = false)
 %       eta1, eta2, gamma1, and gamma2 are parameters in the updating scheme
 %       of the trust region radius. Roughly speaking, the trust region radius
