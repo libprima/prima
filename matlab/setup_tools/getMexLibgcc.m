@@ -31,7 +31,7 @@ function info = getMexLibgcc()
         clear(mexName);
         evalc('mex(''-outdir'', outDir, ''-output'', mexName, exampleFile)');
     catch exception
-        error('%s: Failed to build MEX from %s.\nThe error message is\n%s\nMake sure that MEX is properly set up.', funName, exampleFile, exception.message);
+        error('%s: Failed to build MEX from %s.\nThe error message is:\n\n%s\nMake sure that MEX is properly set up.', funName, exampleFile, exception.message);
     end
 
     % Find produced MEX
