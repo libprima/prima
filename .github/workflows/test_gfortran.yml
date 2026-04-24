@@ -111,6 +111,7 @@ jobs:
         shell: bash
         run: |
           which gcc && gcc --version && which gfortran && gfortran --version
+          gfortran -dumpmachine  # See https://github.com/fortran-lang/setup-fortran/issues/211#issuecomment-4313463378
 
       - name: Revise Makefile.common to exclude r16 tests when the dimension is big
         if: ${{ matrix.testdim == 'big' }}
