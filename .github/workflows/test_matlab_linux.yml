@@ -133,7 +133,7 @@ jobs:
           products: Parallel_Computing_Toolbox
 
       - name: Conduct the test
-        uses: matlab-actions/run-command@v3.0.1
+        uses: matlab-actions/run-command@v3.0.2
         with:
           command: |
             cd matlab/tests; testprima_ex();
