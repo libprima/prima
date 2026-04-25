@@ -33,13 +33,18 @@ jobs:
     strategy:
       fail-fast: false
 
-      # The matrix is the same as that of stress_test_matlab.yml, except for test
+      # The matrix is the same as that of stress_test_matlab.yml
       matrix:
         os: [ubuntu-latest, macos-26-intel, windows-latest]
         matlab: [R2023a, latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
         use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
 
+        exclude:
+          # MATLAB drops support for macOS on Intel starting from R2026a. We simply exclude the
+          # corresponding tests, as we have done extensive tests previously.
+          - os: macos-26-intel
+            matlab: latest
 
     steps:
 
@@ -218,6 +223,3 @@ jobs:
           name: ${{ matrix.solver }}
           path: |
             matlab_crash_dump*
-
-
-

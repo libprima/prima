@@ -32,11 +32,17 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-latest, macos-26-intel]
+        os: [ubuntu-latest, macos-26-intel, windows-latest]
         matlab: [R2023a, latest]
         solver: [uobyqa, newuoa, bobyqa, lincoa, cobyla]
-        test: [normal, tough]
         use_system_libgcc: [true]  # Whether to use the system libgcc or the one shipped with MATLAB.
+        test: [normal, tough]
+
+        exclude:
+          # MATLAB drops support for macOS on Intel starting from R2026a. We simply exclude the
+          # corresponding tests, as we have done extensive tests previously.
+          - os: macos-26-intel
+            matlab: latest
 
     steps:
 

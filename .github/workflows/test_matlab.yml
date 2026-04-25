@@ -57,6 +57,16 @@ jobs:
           - os: windows-latest
             matlab: R2022b
 
+          # MATLAB drops support for macOS on Intel starting from R2026a.
+          - os: macos-15-intel
+            matlab: R2026a
+          - os: macos-15-intel
+            matlab: latest
+          - os: macos-26-intel
+            matlab: R2026a
+          - os: macos-26-intel
+            matlab: latest
+
     steps:
 
       - name: Set http.postBuffer and core.compression
