@@ -199,9 +199,18 @@ end
 % - in matlab/setup_tools/official_mex_example.m, replace 'timestwo.F' with 'timestwo.F90' (prior to
 %   R2026a, the official MEX example is timestwo.F; R2026a provides both timestwo.F and timestwo.F90)
 % - in the root directory of the project, run the bash command
-%   grep -RiIn 'interform' --exclude-dir={benchmark,.development}
+%   grep -RiIn 'interform' --exclude-dir={benchmark,.development,tests,.github,.git}
 %   to search for 'interform' in the whole package and remove the code related to it
 % - remove matlab/setup_tools/interform.m
+% - update oldest_supported_release to R2026a
+% - update matlab/setup_tools/try_mex_setup.m concerning `isenv` and `unsetenv`, which have been
+%   available since R2022b
+% - update matlab/setup_tools/compile.m regarding the support for Fortran internal procedures in
+%   MATLAB R2025a+
+% - in the root directory of the project, run the bash command
+%   grep -RiIn 'R20' --exclude-dir={benchmark,.development,tests,.github,.git}
+%   grep -RiIn 'verLessThan\|matlabRelease\|isMATLABReleaseOlderThan' --exclude-dir={benchmark,.development,tests,.github,.git}
+%   to search for 'R20' in the whole package and update the code related to the MATLAB release
 fprintf('Refactoring the Fortran code ... ');
 interform(fortd);
 interform(gateways);
