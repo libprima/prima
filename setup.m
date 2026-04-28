@@ -183,6 +183,25 @@ end
 % Generate the intersection-form Fortran source code
 % We need to do this because MEX accepts only the (obsolescent) fixed-form Fortran code on Windows.
 % Intersection-form Fortran code can be compiled both as free form and as fixed form.
+%
+% Zaikun 20260428: Starting from R2026a, MATLAB officially supports free-form Fortran code (see
+% https://www.mathworks.com/help/matlab/ref/mex.html and
+% https://fortran-lang.discourse.group/t/matlab-mex-free-form-fortran-finally ). So this
+% can be skipped when we believe that most of our users have upgraded to R2026a or later.
+% At that time, we should at least do the following.
+% - in this script, remove the definition of `fortd_interform` and `gateways_interform`
+% - in this script, replace 'fortd_interform' and 'gateways_interform' with 'fortd' and 'gateways'
+% - in matlab/setup_tools/clean_generated_files.m, remove the input arguments `fortd_interform` and
+% `gateways_interform` and the code that deletes the files under these two directories
+% - in matlab/setup_tools/compile.m, replace '.f' with '.f90' and '.F' with '.F90'
+% - in matlab/setup_tools/compile.m, remove the following comment:
+%   % N.B.: The .*90 files have become .* after the code refactoring in setup.m.
+% - in matlab/setup_tools/official_mex_example.m, replace 'timestwo.F' with 'timestwo.F90' (prior to
+%   R2026a, the official MEX example is timestwo.F; R2026a provides both timestwo.F and timestwo.F90)
+% - in the root directory of the project, run the bash command
+%   grep -RiIn 'interform' --exclude-dir={benchmark,.development}
+%   to search for 'interform' in the whole package and remove the code related to it
+% - remove matlab/setup_tools/interform.m
 fprintf('Refactoring the Fortran code ... ');
 interform(fortd);
 interform(gateways);
