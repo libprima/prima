@@ -33,7 +33,7 @@ install (FILES include/prima/prima.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/pri
 
 macro (prima_add_c_test name)
   add_executable (example_${name}_c_exe EXCLUDE_FROM_ALL examples/${name}/${name}_example.c)
-  target_link_libraries (example_${name}_c_exe PRIVATE primac)
+  target_link_libraries (example_${name}_c_exe PRIVATE primac m)
   target_include_directories (example_${name}_c_exe PRIVATE ${CMAKE_SOURCE_DIR}/c/include)
   if (PRIMA_ENABLE_EXAMPLES)
     set_target_properties (example_${name}_c_exe PROPERTIES EXCLUDE_FROM_ALL FALSE)
