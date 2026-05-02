@@ -1,6 +1,13 @@
 
 set(CMAKE_C_STANDARD 99)
 
+# Locate libm portably. On Linux, *BSD and macOS this resolves to the system libm and must be linked
+# explicitly into any executable that calls functions from <math.h> (e.g. pow). Otherwise, if the
+# toolchain links with --as-needed and --no-copy-dt-needed-entries, the math functions will not be
+# found. On Windows, libm is part of the C runtime and does not need to be linked explicitly, so
+# MATH_LIBRARY will be NOTFOUND and the generator expression below will collapse to nothing.
+find_library(MATH_LIBRARY m)
+
 add_library (primac cintrf.f90 cobyla_c.f90 lincoa_c.f90 bobyqa_c.f90 newuoa_c.f90 uobyqa_c.f90 prima.c)
 if (WIN32)
   set_target_properties(primac PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
@@ -33,7 +40,10 @@ install (FILES include/prima/prima.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/pri
 
 macro (prima_add_c_test name)
   add_executable (example_${name}_c_exe EXCLUDE_FROM_ALL examples/${name}/${name}_example.c)
-  target_link_libraries (example_${name}_c_exe PRIVATE primac m)
+  # Link libm explicitly on platforms where it is a separate library (Linux, *BSD, macOS).
+  # MATH_LIBRARY is NOTFOUND on Windows, where libm is part of the C runtime, so the generator
+  # expression collapses to nothing there.
+  target_link_libraries (example_${name}_c_exe PRIVATE primac $<$<BOOL:${MATH_LIBRARY}>:${MATH_LIBRARY}>)
   target_include_directories (example_${name}_c_exe PRIVATE ${CMAKE_SOURCE_DIR}/c/include)
   if (PRIMA_ENABLE_EXAMPLES)
     set_target_properties (example_${name}_c_exe PROPERTIES EXCLUDE_FROM_ALL FALSE)
