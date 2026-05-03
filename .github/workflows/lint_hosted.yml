@@ -44,29 +44,6 @@ jobs:
           large-packages: true
           docker-images: true
           swap-storage: false  # Important, or the runner may be shut down due to memory starvation.
-      - name: Further clean up disk space
-        run: |
-          for dir in \
-            /opt/hostedtoolcache \
-            /usr/share/swift \
-            /usr/lib/jvm \
-            /usr/local/share/powershell \
-            /usr/local/julia* \
-            /usr/local/share/chromium \
-            /opt/microsoft \
-            /opt/az \
-            /usr/share/dotnet \
-            /usr/local/.ghcup \
-            /usr/local/lib/android \
-            /opt/google \
-            ; do
-            du -hs "$dir" || true
-            sudo rm -rf "$dir"
-          done
-          docker system prune -af || true
-          docker builder prune -af || true
-          echo "Cleaned up disk space by removing unnecessary directories. Remaining disk usage:"
-          df -h
 
       - name: Clone Repository (Latest)
         uses: actions/checkout@v6.0.2
