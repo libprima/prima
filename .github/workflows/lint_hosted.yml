@@ -98,12 +98,12 @@ jobs:
         # to run anyway!
         run: bash .github/scripts/install_aomp 3 1800 || true
 
-      # - name: Install gfortran
-      #   uses: fortran-lang/setup-fortran@main
-      #   id: setup-fortran
-      #   with:
-      #     compiler: gcc
-      #     version: latest
+      - name: Install gfortran
+        uses: fortran-lang/setup-fortran@main
+        id: setup-fortran
+        with:
+          compiler: gcc
+          version: latest
 
       - name: Install Intel oneAPI
         run: bash .github/scripts/install_oneapi_linux.sh
