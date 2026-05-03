@@ -47,18 +47,18 @@ jobs:
       - name: Further clean up disk space
         run: |
           for dir in \
-            /usr/local/jvm /usr/lib/jvm \
-            /usr/share/dotnet \
+            /opt/hostedtoolcache \
             /usr/share/swift \
-            /usr/local/.ghcup \
+            /usr/lib/jvm \
+            /usr/local/share/powershell \
             /usr/local/julia* \
-            /usr/local/lib/android \
             /usr/local/share/chromium \
             /opt/microsoft \
-            /opt/google \
             /opt/az \
-            /usr/local/share/powershell \
-            /opt/hostedtoolcache \
+            /usr/share/dotnet \
+            /usr/local/.ghcup \
+            /usr/local/lib/android \
+            /opt/google \
             ; do
             du -hs "$dir" || true
             sudo rm -rf "$dir"
@@ -121,12 +121,12 @@ jobs:
         # to run anyway!
         run: bash .github/scripts/install_aomp 3 1800 || true
 
-      - name: Install gfortran
-        uses: fortran-lang/setup-fortran@main
-        id: setup-fortran
-        with:
-          compiler: gcc
-          version: latest
+      # - name: Install gfortran
+      #   uses: fortran-lang/setup-fortran@main
+      #   id: setup-fortran
+      #   with:
+      #     compiler: gcc
+      #     version: latest
 
       - name: Install Intel oneAPI
         run: bash .github/scripts/install_oneapi_linux.sh
