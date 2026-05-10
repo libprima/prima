@@ -113,7 +113,7 @@ jobs:
           products: Parallel_Computing_Toolbox
 
       - name: Conduct the test
-        uses: matlab-actions/run-command@v3.1.0
+        uses: matlab-actions/run-command@v3.1.1
         with:
           command: |
             if strcmpi('${{ matrix.compiler }}', 'mingw')
