@@ -102,6 +102,8 @@ else
     clflag_list = {true, false}; % clflag: call the solvers in classical mode (true) or not (false)
 end
 
+clflag_list = {true}; % For test
+
 for irun = 1 : nrun
     fprintf ('\n');
     if (nrun > 1)
@@ -136,7 +138,6 @@ for irun = 1 : nrun
                     options.solver = solver;
                     options.classical = clflag;
                     options.iprint = round(4*(2*rand() - 1)) * verbose;
-                    options.iprint = -abs(options.iprint); % For test
                     problem.options = options;
 
                     switch type
