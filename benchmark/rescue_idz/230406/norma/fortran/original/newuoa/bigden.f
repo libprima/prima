@@ -138,7 +138,7 @@ C
       WVEC(IP,4)=ZERO
   120 WVEC(IP,5)=ZERO
 C
-C     Put the coefficents of THETA*Wcheck in PROD.
+C     Put the coefficients of THETA*Wcheck in PROD.
 C
       DO 190 JC=1,5
       NW=NPT

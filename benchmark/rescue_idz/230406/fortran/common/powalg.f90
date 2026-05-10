@@ -362,7 +362,7 @@ end if
 ! After this is done for each K = 1, ..., N-1, we obtain the QR factorization of the matrix that
 ! rearranges columns [I, I+1, ..., N] of A as [I+1, ..., N, I].
 ! Powell's code, however, is slightly different: before everything, he first exchanged columns K and
-! K+1 of Q (as well as rows K and K+1 of R). This makes sure that the entires of the update RDIAG
+! K+1 of Q (as well as rows K and K+1 of R). This makes sure that the entries of the updated RDIAG
 ! are all positive if it is the case for the original RDIAG.
 do k = i, n-1_IK
     !hypt = hypotenuse(Rdiag(k+1), inprod(Q(:, k), A(:, k+1)))

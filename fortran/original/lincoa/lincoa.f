@@ -21,7 +21,7 @@ C     N must be set to the number of variables and must be at least two.
 C     NPT must be set to the number of interpolation conditions, which is
 C       required to be in the interval [N+2,(N+1)(N+2)/2]. Typical choices
 C       of the author are NPT=N+6 and NPT=2*N+1. Larger values tend to be
-C       highly inefficent when the number of variables is substantial, due
+C       highly inefficient when the number of variables is substantial, due
 C       to the amount of work and extra difficulty of adjusting more points.
 C     M must be set to the number of linear inequality constraints.
 C     A is a matrix whose columns are the constraint gradients, which are
