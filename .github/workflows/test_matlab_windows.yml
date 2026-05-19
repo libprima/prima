@@ -121,6 +121,7 @@ jobs:
       - name: Conduct the test
         uses: matlab-actions/run-command@v3.1.1
         with:
+          startup-options: -nodesktop
           command: |
             if strcmpi('${{ matrix.compiler }}', 'mingw')
                 if exist('C:\ProgramData\mingw64\mingw64', 'dir')
