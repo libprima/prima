@@ -1,0 +1,41 @@
+name: Test CPP
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run CPP tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install eigen
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: vcpkg install eigen3 --triplet x64-windows
+
+      - name: Set vcpkg toolchain (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: echo "CMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" >> $env:GITHUB_ENV
+
+      - name: Build
+        run: |
+          cmake -DPRIMA_ENABLE_TESTING=ON -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=TRUE -DCMAKE_BUILD_TYPE=Release -B build -S cpp
+          cmake --build build -j3 --config Release
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --timeout 100 --schedule-random -V -j3 -C Release

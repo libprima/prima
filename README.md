@@ -7,6 +7,7 @@
 - [Current status](#current-status)
     - [Modern Fortran](#modern-fortran)
     - [C](#c)
+    - [C++](#cpp)
     - [Python](#python)
     - [MATLAB](#matlab)
     - [Julia](#julia)
@@ -166,6 +167,19 @@ cd c/examples/cobyla
 cmake -S . -B build -DCMAKE_INSTALL_PREFIX=install -DPRIMA_DIR=$PWD/../../../install/lib/cmake/prima/
 cmake --build build --target install
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/../../../install/lib ./install/bin/cobyla_example
+```
+
+#### Cpp
+
+A native **header-only** C++ implementation is available in the [`cpp/` folder](./cpp).
+It provides the same API as the Python version and supports COBYLA with bounds,
+linear constraints, and nonlinear constraints. It requires only Eigen3 and a C++17 compiler.
+
+```bash
+cd cpp
+cmake -S . -B build -DPRIMA_ENABLE_TESTING=ON
+cmake --build build
+ctest --test-dir build
 ```
 
 #### Python
