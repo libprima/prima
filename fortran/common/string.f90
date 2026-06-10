@@ -151,7 +151,7 @@ ndgt_loc = min(ndgt_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0))  ! Safeguard
 if (present(nexp)) then
     nexp_loc = nexp
 else
-    nexp_loc = ceiling(log10(real(range(x) + 0.1)))  ! Use + 0.1 in case RANGE(X) = 10^k.
+    nexp_loc = ceiling(log10(real(range(x) + 0.1_RP)))  ! Use + 0.1 in case RANGE(X) = 10^k.
 end if
 nexp_loc = min(nexp_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0))
 
@@ -254,7 +254,7 @@ ndgt_loc = min(ndgt_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0))  ! Safeguard
 if (present(nexp)) then
     nexp_loc = nexp
 else
-    nexp_loc = ceiling(log10(real(range(x)) + 0.1))  ! Use + 0.1 in case RANGE(X) = 10^k.
+    nexp_loc = ceiling(log10(real(range(x)) + 0.1_RP))  ! Use + 0.1 in case RANGE(X) = 10^k.
 end if
 nexp_loc = min(nexp_loc, floor(real(MAX_NUM_STR_LEN - 5) / 2.0))
 

@@ -429,7 +429,7 @@ do tr = 1, maxtr
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(d, xpt, gopt, pq, hq)  ! QRED = Q(XOPT) - Q(XOPT + D)
-    trfail = (.not. qred > 1.0E-6 * rho**2)  ! QRED is tiny/negative or NaN.
+    trfail = (.not. qred > 1.0E-6_RP * rho**2)  ! QRED is tiny/negative or NaN.
 
     if (shortd .or. trfail) then
         ! In this case, do nothing but reducing DELTA. Afterward, DELTA < DNORM may occur.
@@ -534,7 +534,7 @@ do tr = 1, maxtr
     ! verify a curvature condition that really indicates that recent models are sufficiently
     ! accurate. Here, however, we are not really sure whether they are accurate or not. Therefore,
     ! ACCURATE_MOD is not the best name, but we keep it to align with the other solvers.
-    accurate_mod = all(dnorm_rec <= rho) .or. all(dnorm_rec(2:size(dnorm_rec)) <= 0.2 * rho)
+    accurate_mod = all(dnorm_rec <= rho) .or. all(dnorm_rec(2:size(dnorm_rec)) <= 0.2_RP * rho)
     ! Powell's version (note that size(dnorm_rec) = 5 in his implementation):
     !accurate_mod = all(dnorm_rec <= HALF * rho) .or. all(dnorm_rec(3:size(dnorm_rec)) <= TENTH * rho)
     ! CLOSE_ITPSET: Are the interpolation points close to XOPT?
