@@ -364,7 +364,7 @@ end if
 ! After this is done for each K = 1, ..., N-1, we obtain the QR factorization of the matrix that
 ! rearranges columns [I, I+1, ..., N] of A as [I+1, ..., N, I].
 ! Powell's code, however, is slightly different: before everything, he first exchanged columns K and
-! K+1 of Q (as well as rows K and K+1 of R). This makes sure that the entires of the update RDIAG
+! K+1 of Q (as well as rows K and K+1 of R). This makes sure that the entries of the updated RDIAG
 ! are all positive if it is the case for the original RDIAG.
 ! Zaikun 20230903: It turns out that Powell's code does not ensure that the original RDIAG is
 ! positive (see QRADD_RDIAG), and hence the updated RDIAG may contain negative values.
