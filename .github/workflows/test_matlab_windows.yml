@@ -112,7 +112,7 @@ jobs:
         run: choco install mingw --version=${{ matrix.mingw }} -y --no-progress
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v3.0.1
+        uses: matlab-actions/setup-matlab@v3.0.2
         with:
           release: ${{ matrix.matlab }}
           cache: true
