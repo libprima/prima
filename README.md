@@ -449,11 +449,11 @@ Zaikun Zhang](https://www.zhangzk.net).
 - GitHub: [https://github.com/libprima/prima](https://github.com/libprima/prima)
 
 
-### <a href="https://star-history.com/#libprima/prima&Date">Star history</a>
+### <a href="https://star-history.dera.page/#libprima/prima&Date">Star history</a>
 
 [stardev](https://stardev.io/) ranking: [28 among 37,983](https://stardev.io/top/repos/fortran?developer=libprima&repo=prima) Fortran repos as of April 2025.
 
-<img src="https://api.star-history.com/svg?repos=libprima/prima&type=Date">
+<img src="https://star-history.dera.page/svg?repos=libprima/prima&type=Date">
 
 
 <p align="center"><strong>Thank you for your support.</strong></p>
