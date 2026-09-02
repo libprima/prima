@@ -290,7 +290,7 @@ if (present(xl)) then
         xl_loc = xl
     end if
 end if
-xl_loc(trueloc(is_nan(xl_loc) .or. xl_loc < -BOUNDMAX)) = -BOUNDMAX
+where (is_nan(xl_loc) .or. xl_loc < -BOUNDMAX) xl_loc = -BOUNDMAX
 
 xu_loc = BOUNDMAX
 if (present(xu)) then
@@ -298,7 +298,7 @@ if (present(xu)) then
         xu_loc = xu
     end if
 end if
-xu_loc(trueloc(is_nan(xu_loc) .or. xu_loc > BOUNDMAX)) = BOUNDMAX
+where (is_nan(xu_loc) .or. xu_loc > BOUNDMAX) xu_loc = BOUNDMAX
 
 ! The solver requires that MINVAL(XU-XL) >= 2*RHOBEG, and we return if MINVAL(XU-XL) < 2*EPS.
 ! It would be better to fix the variables at (XU+XL)/2 wherever XU and XL almost equal, as is done

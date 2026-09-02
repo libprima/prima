@@ -708,7 +708,7 @@ function errbd(crvmin, d, gopt, hq, moderr_rec, pq, rho, sl, su, xopt, xpt) resu
 use, non_intrinsic :: consts_mod, only : RP, IK, HALF, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, diag, issymmetric, trueloc
+use, non_intrinsic :: linalg_mod, only : matprod, diag, issymmetric
 use, non_intrinsic :: powalg_mod, only : hess_mul
 
 implicit none
@@ -766,8 +766,8 @@ end if
 xnew = xopt + d
 gnew = gopt + hess_mul(d, xpt, pq, hq)
 bfirst = maxval(abs(moderr_rec))
-bfirst(trueloc(xnew <= sl)) = gnew(trueloc(xnew <= sl)) * rho
-bfirst(trueloc(xnew >= su)) = -gnew(trueloc(xnew >= su)) * rho
+where (xnew <= sl) bfirst = gnew * rho
+where (xnew >= su) bfirst = -gnew * rho
 bsecond = HALF * (diag(hq) + matprod(xpt**2, pq)) * rho**2
 ebound = minval(max(bfirst, bfirst + bsecond))
 if (crvmin > 0) then

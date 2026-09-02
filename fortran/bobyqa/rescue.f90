@@ -98,7 +98,7 @@ use, non_intrinsic :: evaluate_mod, only : evaluate
 use, non_intrinsic :: history_mod, only : savehist
 use, non_intrinsic :: infnan_mod, only : is_nan, is_posinf, is_finite
 use, non_intrinsic :: infos_mod, only : MAXFUN_REACHED, INFO_DFT
-use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update, r2update, trueloc
+use, non_intrinsic :: linalg_mod, only : issymmetric, matprod, inprod, r1update, r2update
 use, non_intrinsic :: message_mod, only : fmsg
 use, non_intrinsic :: pintrf_mod, only : OBJ
 use, non_intrinsic :: powalg_mod, only : hess_mul, setij
@@ -255,9 +255,12 @@ call r2update(hq, ONE, xopt, v)
 ptsaux(1, :) = min(delta, su)
 ptsaux(2, :) = max(-delta, sl)
 mask = (ptsaux(1, :) + ptsaux(2, :) < 0)
-ptsaux([1, 2], trueloc(mask)) = ptsaux([2, 1], trueloc(mask))
+where (mask)
+    ptsaux(1, :) = max(-delta, sl)
+    ptsaux(2, :) = min(delta, su)
+end where
 mask = (abs(ptsaux(2, :)) < HALF * abs(ptsaux(1, :)))
-ptsaux(2, trueloc(mask)) = HALF * ptsaux(1, trueloc(mask))
+where (mask) ptsaux(2, :) = HALF * ptsaux(1, :)
 
 ! Set the identifiers of the artificial interpolation points that are along a coordinate direction
 ! from XOPT, and set the corresponding nonzero elements of BMAT and ZMAT.
@@ -394,8 +397,8 @@ do iter = 1, maxiter
     ! For all K with PTSID(K) > 0, calculate the denominator DEN(K) = SIGMA in the updating formula
     ! of H for XPT(:, KORIG) to replace XPT_PROV(:, K).
     den = ZERO
-    hdiag(trueloc(ptsid > 0)) = sum(zmat(trueloc(ptsid > 0), :)**2, dim=2)
-    den(trueloc(ptsid > 0)) = hdiag(trueloc(ptsid > 0)) * beta + vlag(trueloc(ptsid > 0))**2
+    where (ptsid > 0) hdiag = sum(zmat**2, dim=2)
+    where (ptsid > 0) den = hdiag * beta + vlag(1:npt)**2
 
     ! Attempt setting KPROV to the index of the provisional point to be replaced with the KORIG-th
     ! original interpolation point. We choose KPROV by maximizing DEN(KPROV), which will be the
@@ -551,7 +554,7 @@ if (nprov > 0) then
         moderr = f - vquad
         gopt = gopt + moderr * bmat(:, kpt)
         pqinc = moderr * matprod(zmat, zmat(kpt, :))
-        pq(trueloc(ptsid <= 0)) = pq(trueloc(ptsid <= 0)) + pqinc(trueloc(ptsid <= 0))
+        where (ptsid <= 0) pq = pq + pqinc
         do k = 1, npt
             if (ptsid(k) <= 0) then
                 cycle
