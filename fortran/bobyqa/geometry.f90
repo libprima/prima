@@ -41,7 +41,7 @@ function setdrop_tr(kopt, ximproved, bmat, d, delta, rho, xpt, zmat) result(knew
 use, non_intrinsic :: consts_mod, only : RP, IK, ONE, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : issymmetric, trueloc
+use, non_intrinsic :: linalg_mod, only : issymmetric
 use, non_intrinsic :: powalg_mod, only : calden
 
 implicit none
@@ -140,7 +140,7 @@ if (.not. ximproved) then
 end if
 
 ! SCORE(K) = NaN implies DEN(K) = NaN. We exclude such K as we want DEN to be big.
-score(trueloc(is_nan(score))) = -ONE
+where (is_nan(score)) score = -ONE
 
 knew = 0
 ! The following IF works slightly better than `IF (ANY(SCORE > 0))` from Powell's BOBYQA/LINCOA code.
@@ -198,7 +198,7 @@ function geostep(knew, kopt, bmat, delbar, sl, su, xpt, zmat) result(d)
 use, non_intrinsic :: consts_mod, only : RP, IK, ZERO, ONE, TWO, HALF, TEN, EPS, DEBUGGING
 use, non_intrinsic :: debug_mod, only : assert
 use, non_intrinsic :: infnan_mod, only : is_nan, is_finite
-use, non_intrinsic :: linalg_mod, only : matprod, inprod, trueloc, norm, issymmetric
+use, non_intrinsic :: linalg_mod, only : matprod, inprod, norm, issymmetric
 use, non_intrinsic :: powalg_mod, only : hess_mul, calden
 
 implicit none
@@ -374,8 +374,8 @@ do k = 1, npt
 
     ! First, revise SLBD. Note that SLBD_TEST <= 0 unless the input violates XOPT >= SL.
     slbd_test = slbd
-    slbd_test(trueloc(xdiff > 0)) = lfrac(trueloc(xdiff > 0))
-    slbd_test(trueloc(xdiff < 0)) = ufrac(trueloc(xdiff < 0))
+    where (xdiff > 0) slbd_test = lfrac
+    where (xdiff < 0) slbd_test = ufrac
     if (any(slbd_test > slbd)) then
         ilbd = int(maxloc(slbd_test, mask=(.not. is_nan(slbd_test)), dim=1), kind(ilbd))
         slbd = slbd_test(ilbd)
@@ -387,8 +387,8 @@ do k = 1, npt
 
     ! Second, revise SUBD. Note that SUBD_TEST >= 0 unless the input violates XOPT <= SU.
     subd_test = subd
-    subd_test(trueloc(xdiff > 0)) = ufrac(trueloc(xdiff > 0))
-    subd_test(trueloc(xdiff < 0)) = lfrac(trueloc(xdiff < 0))
+    where (xdiff > 0) subd_test = ufrac
+    where (xdiff < 0) subd_test = lfrac
     if (any(subd_test < subd)) then
         iubd = int(minloc(subd_test, mask=(.not. is_nan(subd_test)), dim=1), kind(iubd))
         subd = max(sumin, subd_test(iubd))
@@ -512,8 +512,8 @@ do uphill = 0, 1
     end if
     s = ZERO
     mask_free = (min(xopt - sl, glag) > 0 .or. max(xopt - su, glag) < 0)
-    s(trueloc(mask_free)) = bigstp
-    ggfree = sum(glag(trueloc(mask_free))**2)
+    where (mask_free) s = bigstp
+    ggfree = sum(glag**2, mask=mask_free)
     ! In Powell's code, the subroutine returns immediately if GGFREE is 0. However, GGFREE depends
     ! on GLAG, which in turn depends on UPHILL. It can happen that GGFREE is 0 when UPHILL = 0 but
     ! not so when UPHILL= 1. Thus we skip the iteration for the current UPHILL but do not return.
@@ -538,22 +538,22 @@ do uphill = 0, 1
         mask_fixl = (s >= bigstp .and. xtemp <= sl)  ! S == BIGSTP & XTEMP == SL
         mask_fixu = (s >= bigstp .and. xtemp >= su)  ! S == BIGSTP & XTEMP == SU
         mask_free = (s >= bigstp .and. .not. (mask_fixl .or. mask_fixu))
-        s(trueloc(mask_fixl)) = sl(trueloc(mask_fixl)) - xopt(trueloc(mask_fixl))
-        s(trueloc(mask_fixu)) = su(trueloc(mask_fixu)) - xopt(trueloc(mask_fixu))
-        sfixsq = sfixsq + sum(s(trueloc(mask_fixl .or. mask_fixu))**2)
-        ggfree = sum(glag(trueloc(mask_free))**2)
+        where (mask_fixl) s = sl - xopt
+        where (mask_fixu) s = su - xopt
+        sfixsq = sfixsq + sum(s**2, mask=(mask_fixl .or. mask_fixu))
+        ggfree = sum(glag**2, mask=mask_free)
         if (.not. (sfixsq > ssqsav .and. ggfree > 0)) then
             exit
         end if
     end do
 
     ! Set the remaining free components of S and all components of XCAUCHY. S may be scaled later.
-    x(trueloc(glag > 0)) = sl(trueloc(glag > 0))
-    x(trueloc(glag <= 0)) = su(trueloc(glag <= 0))
-    x(trueloc(abs(s) <= 0)) = xopt(trueloc(abs(s) <= 0))
+    where (glag > 0) x = sl
+    where (glag <= 0) x = su
+    where (abs(s) <= 0) x = xopt
     xtemp = max(sl, min(su, xopt - grdstp * glag))
-    x(trueloc(s >= bigstp)) = xtemp(trueloc(s >= bigstp))  ! S == BIGSTP
-    s(trueloc(s >= bigstp)) = -grdstp * glag(trueloc(s >= bigstp))  ! S == BIGSTP
+    where (s >= bigstp) x = xtemp  ! S == BIGSTP
+    where (s >= bigstp) s = -grdstp * glag  ! S == BIGSTP
     gs = inprod(glag, s)
 
     ! Set CURV to the curvature of the KNEW-th Lagrange function along S. Scale S by a factor less
