@@ -215,10 +215,10 @@ else
             iprint = int(randn(), kind(iprint))
             maxfun = int(1.0E2_RP * rand() * real(n, RP), kind(maxfun))
             maxhist = int(TWO * rand() * real(max(10_IK * n, maxfun), RP), kind(maxhist))
-            if (rand() <= 0.1) then
+            if (rand() <= 0.1_RP) then
                 maxhist = -maxhist
             end if
-            if (rand() <= 0.8) then
+            if (rand() <= 0.8_RP) then
                 ftarget = -TEN**abs(real(min(range(ftarget), 12), RP) * rand())
             elseif (rand() <= 0.5) then  ! Note that the value of rand() changes.
                 ftarget = REALMAX
@@ -228,9 +228,9 @@ else
 
             rhobeg = noisy(prob % Delta0)
             rhoend = max(1.0E-5_RP, rhobeg * 10.0_RP**(6.0_RP * rand() - 5.0_RP))
-            if (rand() <= 0.1) then
+            if (rand() <= 0.1_RP) then
                 rhoend = rhobeg
-            elseif (rand() <= 0.1) then  ! Note that the value of rand() changes.
+            elseif (rand() <= 0.1_RP) then  ! Note that the value of rand() changes.
                 rhobeg = ZERO
             end if
 

@@ -368,7 +368,7 @@ do tr = 1, maxtr
     ! Evaluate PREREM, which is the predicted reduction in the merit function.
     ! In theory, PREREM >= 0 and it is 0 iff CPEN = 0 = PREREF. This may not be true numerically.
     prerem = preref + cpen * prerec
-    trfail = (.not. prerem > 1.0E-6 * min(cpen, ONE) * rho)  ! PREREM is tiny/negative or NaN.
+    trfail = (.not. prerem > 1.0E-6_RP * min(cpen, ONE) * rho)  ! PREREM is tiny/negative or NaN.
 
     if (shortd .or. trfail) then
         ! Reduce DELTA if D is short or D fails to render PREREM > 0. The latter can happen due to
@@ -387,7 +387,7 @@ do tr = 1, maxtr
         distsq(1:n) = [(sum((x - (sim(:, n + 1) + sim(:, j)))**2), j=1, n)]  ! Implied do-loop
         !!MATLAB: distsq(1:n) = sum((x - (sim(:,1:n) + sim(:, n+1)))**2, 1)  % Implicit expansion
         j = int(minloc(distsq, dim=1), kind(j))
-        if (distsq(j) <= (1.0E-4 * rhoend)**2) then
+        if (distsq(j) <= (1.0E-4_RP * rhoend)**2) then
             f = fval(j)
             constr = conmat(:, j)
             cstrv = cval(j)
@@ -582,7 +582,7 @@ do tr = 1, maxtr
         distsq(1:n) = [(sum((x - (sim(:, n + 1) + sim(:, j)))**2), j=1, n)]  ! Implied do-loop
         !!MATLAB: distsq(1:n) = sum((x - (sim(:,1:n) + sim(:, n+1)))**2, 1)  % Implicit expansion
         j = int(minloc(distsq, dim=1), kind(j))
-        if (distsq(j) <= (1.0E-4 * rhoend)**2) then
+        if (distsq(j) <= (1.0E-4_RP * rhoend)**2) then
             f = fval(j)
             constr = conmat(:, j)
             cstrv = cval(j)

@@ -294,7 +294,7 @@ do tr = 1, maxtr
     ! Set QRED to the reduction of the quadratic model when the move D is made from XOPT. QRED
     ! should be positive. If it is nonpositive due to rounding errors, we will not take this step.
     qred = -quadinc(pq, d, xpt(:, kopt))  ! QRED = Q(XOPT) - Q(XOPT + D)
-    trfail = (.not. qred > 1.0E-6 * rho**2)  ! QRED is tiny/negative or NaN.
+    trfail = (.not. qred > 1.0E-6_RP * rho**2)  ! QRED is tiny/negative or NaN.
 
     if (shortd .or. trfail) then
         ! Powell's code does not reduce DELTA as follows. This comes from NEWUOA and works well.
@@ -310,7 +310,7 @@ do tr = 1, maxtr
         distsq = [(sum((x - (xbase + xpt(:, k)))**2, dim=1), k=1, npt)]  ! Implied do-loop
         !!MATLAB: distsq = sum((x - (xbase + xpt))**2, 1)  % Implicit expansion
         k = int(minloc(distsq, dim=1), kind(k))
-        if (distsq(k) <= (1.0E-4 * rhoend)**2) then
+        if (distsq(k) <= (1.0E-4_RP * rhoend)**2) then
             f = fval(k)
         else
             ! Evaluate the objective function at X, taking care of possible Inf/NaN values.
@@ -474,7 +474,7 @@ do tr = 1, maxtr
         distsq = [(sum((x - (xbase + xpt(:, k)))**2, dim=1), k=1, npt)]  ! Implied do-loop
         !!MATLAB: distsq = sum((x - (xbase + xpt))**2, 1)  % Implicit expansion
         k = int(minloc(distsq, dim=1), kind(k))
-        if (distsq(k) <= (1.0E-4 * rhoend)**2) then
+        if (distsq(k) <= (1.0E-4_RP * rhoend)**2) then
             f = fval(k)
         else
             ! Evaluate the objective function at X, taking care of possible Inf/NaN values.
