@@ -14,8 +14,8 @@ contains
 
 
 subroutine bobyqa_c(cobj_ptr, data_ptr, n, x, f, xl, xu, nf, rhobeg, rhoend, &
-    & ftarget, maxfun, npt, iprint, callback_ptr, info) bind(C)
-use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER, C_F_POINTER
+    & ftarget, maxfun, npt, iprint, honour_x0, callback_ptr, info) bind(C)
+use, intrinsic :: iso_c_binding, only : C_DOUBLE, C_INT, C_FUNPTR, C_PTR, C_ASSOCIATED, C_F_PROCPOINTER, C_F_POINTER, C_BOOL
 use, non_intrinsic :: bobyqa_mod, only : bobyqa
 use, non_intrinsic :: cintrf_mod, only : COBJ, CCALLBACK
 use, non_intrinsic :: consts_mod, only : RP, IK
@@ -38,6 +38,7 @@ real(C_DOUBLE), intent(in), value :: ftarget
 integer(C_INT), intent(in), value :: maxfun
 integer(C_INT), intent(in), value :: npt
 integer(C_INT), intent(in), value :: iprint
+logical(C_BOOL), intent(in), value :: honour_x0
 type(C_FUNPTR), intent(in), value :: callback_ptr
 integer(C_INT), intent(out) :: info
 
@@ -62,7 +63,7 @@ real(RP), allocatable :: rhobeg_loc
 real(RP), allocatable :: rhoend_loc
 real(RP), allocatable :: xl_loc(:)
 real(RP), allocatable :: xu_loc(:)
-
+logical:: honour_x0_loc
 ! Read the inputs and convert them to the Fortran side types
 
 ! The following inputs correspond to compulsory arguments in the Fortran code.
@@ -100,6 +101,8 @@ if (npt /= 0) then
     npt_loc = int(npt, kind(npt_loc))
 end if
 iprint_loc = int(iprint, kind(iprint_loc))
+honour_x0_loc = logical(honour_x0, kind(.true.))
+
 
 ! Call the Fortran code
 if (c_associated(callback_ptr)) then
@@ -108,10 +111,12 @@ if (c_associated(callback_ptr)) then
     call c_f_procpointer(callback_ptr, cb_ptr)
     ! We then provide the closure to the algorithm.
     call bobyqa(calfun, x_loc, f_loc, xl=xl_loc, xu=xu_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
-        & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, callback_fcn=callback_fcn, info=info_loc)
+        & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, &
+        & honour_x0=honour_x0_loc, callback_fcn=callback_fcn, info=info_loc)
 else
     call bobyqa(calfun, x_loc, f_loc, xl=xl_loc, xu=xu_loc, nf=nf_loc, rhobeg=rhobeg_loc, rhoend=rhoend_loc, &
-        & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, info=info_loc)
+        & ftarget=ftarget_loc, maxfun=maxfun_loc, npt=npt_loc, iprint=iprint_loc, & 
+        & honour_x0=honour_x0_loc, info=info_loc)
 end if
 
 ! Write the outputs
