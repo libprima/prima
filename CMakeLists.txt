@@ -129,6 +129,12 @@ if (PRIMA_ENABLE_C)
   set(primac_target "primac")
 endif ()
 
+option (PRIMA_ENABLE_CPP "C++ binding" OFF)
+if (PRIMA_ENABLE_CPP)
+  enable_language(CXX)
+  add_subdirectory(cpp)
+endif ()
+
 # Get the version number
 find_package(Git)
 set(IS_REPO FALSE)

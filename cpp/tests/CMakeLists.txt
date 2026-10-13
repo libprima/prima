@@ -1,0 +1,22 @@
+option (PRIMA_ENABLE_TESTING "Build tests" OFF)
+
+if (NOT TARGET tests)
+  add_custom_target (tests)
+endif ()
+
+macro (prima_add_cpp_test name)
+  add_executable(${name}_cpp_exe EXCLUDE_FROM_ALL ${name}.cpp)
+  if (PRIMA_ENABLE_TESTING)
+    set_target_properties (${name}_cpp_exe PROPERTIES EXCLUDE_FROM_ALL FALSE)
+  endif ()
+  target_link_libraries(${name}_cpp_exe PRIVATE primacpp)
+  add_dependencies(tests ${name}_cpp_exe)
+  add_test(NAME ${name}_cpp COMMAND ${name}_cpp_exe)
+endmacro ()
+
+prima_add_cpp_test(test_bounds)
+prima_add_cpp_test(test_get_lincon)
+prima_add_cpp_test(test_end_to_end)
+prima_add_cpp_test(test_miscellaneous)
+prima_add_cpp_test(test_pycutest)
+prima_add_cpp_test(test_threading)

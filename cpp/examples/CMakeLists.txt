@@ -1,0 +1,5 @@
+add_executable (cobyla_example_exe EXCLUDE_FROM_ALL cobyla_example.cpp)
+add_executable (rosenbrock_example_exe EXCLUDE_FROM_ALL rosenbrock.cpp)
+
+target_link_libraries (cobyla_example_exe PRIVATE primacpp)
+target_link_libraries (rosenbrock_example_exe PRIVATE primacpp)
